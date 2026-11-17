@@ -62,6 +62,8 @@
             # Runs while the source is a REAL directory; skips once the symlink
             # cutover is done (ConditionPathIsDirectory is false for symlinks)
             # and on fresh installs before ActivityWatch ever created its dir.
+            # deliberate: evo-x2 single-user — ActivityWatch lives under lars's
+            # XDG state; no other host/user shape is supported.
             ConditionPathIsDirectory = "/home/lars/.local/share/activitywatch";
             RequiresMountsFor = [ "/mnt/pool" ];
           };
@@ -93,6 +95,8 @@
               # CAP_DAC_OVERRIDE (same capability set as data-to-pool-migration).
               CapabilityBoundingSet = "CAP_SYS_ADMIN CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH";
               ReadWritePaths = [
+                # deliberate: evo-x2 single-user — lars's XDG state dir is the
+                # data source this mover owns; host-pinned by design.
                 "/home/lars/.local/share"
                 "/mnt/pool"
                 "/run/user/1000"
@@ -108,7 +112,7 @@
             set -u
             failures=0
 
-            src="/home/lars/.local/share/activitywatch"
+            src="/home/lars/.local/share/activitywatch" # deliberate: evo-x2 single-user — host-pinned source tree
             dest="/mnt/pool/services/activitywatch"
 
             user_systemd() {

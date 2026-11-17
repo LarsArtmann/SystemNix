@@ -528,6 +528,8 @@ lib.mkIf cfg.components.nodeExporter {
                     chmod 644 "$TMP"
                     trap 'rm -f "$TMP"' EXIT
 
+                    # deliberate: evo-x2 single-user — this collector reads THE
+                    # SystemNix checkout; host-pinned by design.
                     REPO="/home/lars/projects/SystemNix"
                     # Fail-closed: an unreadable repo must emit scrape_error 1,
                     # never stale zeros (the unreadable-surface doctrine).
