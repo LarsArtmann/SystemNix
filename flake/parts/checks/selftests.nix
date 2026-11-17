@@ -1777,7 +1777,7 @@
                 pass=$(grep -c '^PASS' "$scratch/$s.log" || true)
                 legs=$(grep -c '^leg .*: OK' "$scratch/$s.log" || true)
                 case "$s" in
-                  takeout-verify) want_pass=9; want_legs=0 ;;
+                  takeout-verify) want_pass=11; want_legs=0 ;;
                   takeout-dedup) want_pass=0; want_legs=21 ;;
                   takeout-intake) want_pass=0; want_legs=14 ;;
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
