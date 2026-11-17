@@ -166,9 +166,10 @@ let
 
         if [ -L "$link" ]; then
           if [ "$(readlink -- "$link")" = "$cache_dir" ]; then
-            # Repair-class: the GC cold-prune can wipe rust/* while links
-            # stay path-correct — cargo would ENOENT through the dangling
-            # link. Recreate the dir (empty; rebuilds via sccache).
+            # Repair-class: a manual cargo clean or partial wipe can leave the
+            # cache dir missing while the link stays path-correct — cargo
+            # would ENOENT through the dangling link. Recreate the dir
+            # (empty; rebuilds via sccache).
             if [ ! -d "$cache_dir" ]; then
               mkdir -p -- "$cache_dir"
               echo "rust-cache-links: recreated missing cache dir $cache_dir (post-GC)"
