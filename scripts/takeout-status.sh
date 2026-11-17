@@ -211,26 +211,26 @@ selftest() {
   printf 'sha256\th1\t100\tacctA\t2030-01-01\tTakeout/Drive/a\n' >>"$fx/ledger.tsv"
   printf 'sha256\th2\t200\tacctA\t2030-01-01\tTakeout/Drive/b\n' >>"$fx/ledger.tsv"
 
-  check parts-count "2/3" "$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $3 }')"
+  check parts-count "2/3" "$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $3 }')"
 
-  check ledger-rows "2 rows / 300 B" "$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $4 }')"
+  check ledger-rows "2 rows / 300 B" "$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $4 }')"
 
   # reg1 HAS zips -> preflight runs (PASS with COLD products); the missing-
   # staging account is the SKIP leg below.
-  check preflight-pass "PASS" "$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $5 }')"
+  check preflight-pass "PASS" "$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $5 }')"
 
-  check verify-stamp-green "GREEN 2030-01-02 03:04:05" "$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $6 }')"
+  check verify-stamp-green "GREEN 2030-01-02 03:04:05" "$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $6 }')"
 
   printf '# Takeout verification report — 2030-02-03 04:05:06\n\n- Hard failures: 3; warnings: 0\n' >"$fx/reg1/verification-report.md"
-  check verify-stamp-fail "FAIL(3) 2030-02-03 04:05:06" "$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $6 }')"
+  check verify-stamp-fail "FAIL(3) 2030-02-03 04:05:06" "$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $6 }')"
   printf '# Takeout verification report — 2030-01-02 03:04:05\n\n- Hard failures: 0; warnings: 1\n' >"$fx/reg1/verification-report.md"
 
   # reg2 exists but has NO parts.tsv and no zips — the row must tolerate a
   # staging without manifests: parts 0/0 + preflight SKIP.
-  check missing-staging-skip "SKIP (no zips downloaded yet)" "$(run_status --account acctB | awk -F'\t' 'NR == 3 { print $5 }')"
+  check missing-staging-skip "SKIP (no zips downloaded yet)" "$(run_status --account acctB | awk -F'\t' 'NR == 1 { print $5 }')"
 
   printf 'acctC\tretire\t/nonexistent/takeout-path\tone-shot\tg0\tbaseline\tnote\n' >>"$fx/accounts.tsv"
-  check missing-staging-root "SKIP (staging root missing)" "$(run_status --account acctC | awk -F'\t' 'NR == 3 { print $5 }')"
+  check missing-staging-root "SKIP (staging root missing)" "$(run_status --account acctC | awk -F'\t' 'NR == 1 { print $5 }')"
 
   # Unbalanced extract must surface as preflight FAIL (mismatch is the
   # fail-closed signal that blocks imports).
@@ -238,7 +238,7 @@ selftest() {
   mkdir -p "$fx/reg1/extracted/Takeout/Drive"
   printf 'wrong-bytes' >"$fx/reg1/extracted/Takeout/Drive/c"
   (cd "$fx/reg1/extracted" && TAKEOUT_LEDGER="$fx/ledger.tsv" bash "$SELF_DIR/takeout-dedup.sh" index --from-extract . --account acctA --cycle 2030-01-01 >/dev/null 2>&1) || true
-  got=$(run_status --account acctA | awk -F'\t' 'NR == 3 { print $5 }')
+  got=$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $5 }')
   case $got in
     FAIL*) echo "leg preflight-fail-on-mismatch: OK" ;;
     *)

@@ -173,14 +173,6 @@
                 timeoutStartSec = "110min";
                 calendar = "*-*-* 05:53:00";
                 randomizedDelaySec = 600;
-                # AI key: the ai-meter runtime mint (cvagent client,
-                # OPENAI_API_KEY) — the direct-sops key stopped being read
-                # when routing moved behind the proxy; the sops cvagent-env
-                # template stays declared but unconsumed (rotate/remove is
-                # an owner secrets decision). Dash-prefix: a missing minted
-                # file (ai-meter-keys not yet run) must not fail the unit —
-                # AI extraction then falls back to rule-based per repo.
-                environmentFile = "-/run/ai-meter-keys/cvagent.env";
               };
 
               mesh = {
@@ -210,6 +202,17 @@
               serviceConfig = lib.mkMerge [
                 {
                   Environment = [ "HOME=/home/${primaryUser}" ];
+                  # AI key: the ai-meter runtime mint (OPENAI_API_KEY), loaded
+                  # OPTIONAL: a missing minted file (ai-meter-keys not yet run)
+                  # must not fail the unit — AI extraction then falls back to
+                  # rule-based per repo. The dash lives HERE, not in the typed
+                  # scan.environmentFile option (nullOr path rejects the
+                  # systemd "-prefix" — the 2026-11-17 15:04 placement broke
+                  # every evo-x2 eval). mkForce beats the upstream module's
+                  # plain optional-of-null rendering; the sops cvagent-env
+                  # template stays declared but unconsumed (rotate/remove is
+                  # an owner secrets decision).
+                  EnvironmentFile = lib.mkForce [ "-/run/ai-meter-keys/cvagent.env" ];
                 }
                 # The export writes the CV checkout and the fact store under
                 # /home, and scans read across the projects tree — the
