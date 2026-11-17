@@ -479,9 +479,10 @@
           touch $out
         '';
 
-        # psi-wait-gate selftest: the waiting twin's 9-scenario fixture run
+        # psi-wait-gate selftest: the waiting twin's 11-scenario fixture run
         # (first-check admit, band boundary, budget-exhaustion-proceeds,
-        # storm→calm re-check, trip-window hold, fail-open PSI-less) — the
+        # storm→calm re-check, trip-window hold, fail-open PSI-less,
+        # on-exhausted refuse + refuse-admits-when-calm — freeze #56) — the
         # M16 socket-activation ordering primitive. Same store-artifact
         # proof shape as the gate above.
         psi-wait-gate-selftest = pkgs.runCommand "psi-wait-gate-selftest" { } ''

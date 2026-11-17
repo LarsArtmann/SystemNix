@@ -129,7 +129,22 @@ in
     # bug, hung_task, future policy change) the vmcore lands in /var/crash
     # and the postmortem is a 10-minute read instead of archaeology.
     # Retention is bounded by kdump-retention.service below (root fs is tight).
-    crashDump.enable = true;
+    crashDump = {
+      enable = true;
+      # TRAP (found 2026-11-17, live-verified): the nixpkgs crashDump loader
+      # (boot.postBootCommands, executed by initrd-nixos-activation at every
+      # boot) kexec-loads the SAME kernel AND the same ~65 MB initrd into the
+      # crashkernel reservation, and the default 128M could not place the
+      # segments — every boot journaled (initrd-nixos-activation-start):
+      #   kexec_file_load failed: Cannot assign requested address
+      # leaving /sys/kernel/kexec_crash_loaded = 0, so the Nov 14/15/17 2026
+      # softlockup panics skipped crash_kexec entirely, hit the 10 s
+      # kernel.panic timeout and wrote 0x6 to 0xCF9 (reset reason 0x00080800)
+      # with ZERO vmcore. 512M = 0.4 % of 124 GiB: kernel + initrd +
+      # capture-kernel runtime fit inside the region. Post-deploy proof:
+      # /sys/kernel/kexec_crash_loaded must read 1.
+      reservedMemory = "512M";
+    };
 
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
@@ -188,7 +203,19 @@ in
       # ── pstore: kernel panic/oops log capture in UEFI NVRAM ──────────
       # Survives reboots — critical for diagnosing GPU driver hangs and kernel
       # panics when journald never gets to flush. systemd-pstore auto-mounts /sys/fs/pstore.
-      "pstore.backend=efi"
+      # TRAP (found 2026-11-17): do NOT set pstore.backend — the EFI backend
+      # registers under its module name "efi_pstore" (efi-pstore.c:
+      # .name = KBUILD_MODNAME) and pstore_register() REJECTS any backend
+      # whose name differs from the pstore.backend= param (fs/pstore/platform.c
+      # strcmp → -EBUSY, logged misleadingly as "backend 'efi' already in use:
+      # ignoring 'efi_pstore'" — nothing was actually in use). The old
+      # pstore.backend=efi therefore left pstore with NO backend at all:
+      # /sys/fs/pstore empty across every freeze cut, systemd-pstore skipping
+      # on ConditionDirectoryNotEmpty. With no param there is no name filter
+      # and this board's sole backend self-registers — positive boot signal:
+      # "Registered efi_pstore as persistent store backend". Deliberately NOT
+      # re-pinned to "efi_pstore": an explicit name would silently re-break on
+      # any future upstream module rename, exactly the class that burned us.
       "pstore.record_console=true"
       "pstore.max_reason=3" # PANIC, OOPS, and WARN
       # Blacklist serial8250 — no physical serial ports on this hardware.
@@ -578,6 +605,43 @@ in
           done
         '';
       };
+
+      # ── kdump capture-side: write the evidence nixpkgs never writes ────
+      # nixpkgs' boot.crashDump ONLY loads the panic kernel (postBootCommands
+      # kexec -p) and boots the capture kernel into rescue (cmdline "… 1
+      # boot.shell_on_fail") — it ships NO service that reads /proc/vmcore,
+      # which is why /var/crash has never existed here despite crashDump
+      # since 2026-08-22. This unit runs ONLY in the kexec-ed capture boot
+      # (ConditionPathExists=/proc/vmcore — that file exists exclusively in a
+      # crash-kexec boot; conditioned no-op otherwise). Budget: the capture
+      # boot races the 90 s hardware WDT (watchdogd's last pet dies at panic,
+      # the timer runs through kexec), so save the seconds-cheap evidence and
+      # reboot — a full 124 GiB vmcore copy is deliberately NOT attempted.
+      # kdump-retention above bounds what lands here.
+      kdump-save = {
+        description = "Save vmcore-dmesg evidence after crash-kexec boot";
+        wantedBy = [ "rescue.target" ];
+        unitConfig = {
+          ConditionPathExists = "/proc/vmcore";
+        };
+        serviceConfig = {
+          Type = "oneshot";
+        };
+        script = ''
+          set -euo pipefail
+          ${pkgs.coreutils}/bin/mkdir -p /var/crash
+          dest="/var/crash/$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S)"
+          ${pkgs.coreutils}/bin/mkdir "$dest"
+          if ${pkgs.kexec-tools}/bin/vmcore-dmesg /proc/vmcore > "$dest/vmcore-dmesg.txt"; then
+            echo "kdump-save: wrote $dest/vmcore-dmesg.txt"
+          else
+            echo "kdump-save: vmcore-dmesg FAILED (rc=$?) — check pstore as fallback" >&2
+          fi
+          ${pkgs.util-linux}/bin/dmesg > "$dest/capture-boot-dmesg.txt" || true
+          ${pkgs.coreutils}/bin/sync
+          ${pkgs.systemd}/bin/reboot -f
+        '';
+      };
     };
 
     user.services = {
@@ -770,6 +834,15 @@ in
   # the DAILY cadence, not boot-time catch-up: a trim skipped on a reboot
   # night simply runs at the next daily slot.
   systemd.timers.fstrim.timerConfig.Persistent = lib.mkForce false;
+
+  # /var/crash must exist from boot: the kdump-save capture unit mkdir -p's
+  # at run time (tmpfiles can silently skip re-running on a plain switch —
+  # the 2026-11-04 monitor365 class), but the pre-created dir keeps
+  # kdump-retention's `[ -d ] || exit 0` honest and makes the evidence
+  # location inspectable before the first panic ever lands a dump.
+  systemd.tmpfiles.rules = [
+    "d /var/crash 0755 root root -"
+  ];
 
   # kdump vmcore retention — bound /var/crash growth (boot + weekly)
   systemd.timers.kdump-retention = {
