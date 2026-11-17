@@ -160,11 +160,11 @@
                 # already holds >= cap AI facts, the ENTIRE run goes rule-based —
                 # spend is bounded even on manual triggers/double runs. Calls ≈
                 # facts/20 and linear in credits, so a fact cap is a spend cap.
-                # 32 repos since 2026-11-15 (24 + 8 minecraft-era): normal day
-                # ≈ 640 AI facts (32 × ~20), so the cap moved 600 → 800; it
+                # 31 repos since 2026-11-15 (23 + 8 minecraft-era): normal day
+                # ≈ 620 AI facts (31 × ~20), so the cap moved 600 → 800; it
                 # still trips on anomalies/double runs.
                 aiDailyFactCap = 800;
-                # Scan budget: 32 repos at ~2.5 min per repo WITH AI (live
+                # Scan budget: 31 repos at ~2.5 min per repo WITH AI (live
                 # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
                 # facts in 2.6 min; the 20min budget killed the run at repo
                 # ~13/24, OnFailure paged). Sequential AI calls ≈ 80 min for
