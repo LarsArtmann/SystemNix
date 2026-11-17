@@ -5,6 +5,8 @@
 **Host:** evo-x2 (gen `pf9iri4bc` live, my built gen `z5imykjf` waits)
 **Verdict one-liner:** both root causes found and FIXED UPSTREAM + FLOATED + PRE-BUILT, but the activation that makes them live is still queued behind another session's deploy and the `post-crash-calm-gate` (60-min wait cap; a memory-guard trip at 11:08 blocks admission until ~12:08). **Both vHosts are still broken live.**
 
+**OUTCOME (updated 2026-11-17 19:1x, continuation session):** RESOLVED LIVE. The concurrent session's switch landed ~14:07 2026-11-15 as gen system-1015 (`0ail8450…`) carrying BOTH fixed binaries; anchor verified == newest system-N-link and survived the 2026-11-17 15:11 reboot intact. Verified live 2026-11-17 18:39-18:41: `invoices.home.lan` **200** + `/health` `{"status":"healthy"}` (database + read-models green; zero failures across 2 days incl. the fresh boot — no "already exists" recurrence); `timesheets.home.lan` `/` **302 → /health** (200), `/version` `{"version":"e90e7a1"}`, unknown paths still 404; live process exes resolve to `invoices-935a044d` + `timesheet-e90e7a1`. `scripts/post-deploy-check.sh`: **178 PASS / 8 FAIL / 4 SKIP / 17 WARN** — every FAIL is out of this fix's scope (tq-agent-pool 310% CPU, papdashboard 357 journal lines/min, cvagent /health 503, llama.cpp embeddings). Lock floated further (invoices `4c4512b8b7f8`, timesheets `5c32b1ad2e48` — both merge-base-verified DESCENDANTS of the fix revs `935a044d`/`e90e7a1`). §f.12 harvest: backup-verify row executed + drift-healed (TODO_LIST), canonical-schema split brain + red-gates rows queued to docs/todo/upstream.md. The §g questions below still stand.
+
 ---
 
 ## 1. What the user sees right now (live-probed 11:17)
