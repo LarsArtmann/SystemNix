@@ -10961,11 +10961,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794773715,
-        "narHash": "sha256-QQbfpRuMGNshHjdjDtHNqYdVob7ztExjoUVmndYYwgk=",
+        "lastModified": 1794941728,
+        "narHash": "sha256-lRkIIF3+RZ5DBUEQnGrHLNUPn+I05PU6WuHu5Zu9nLg=",
         "ref": "refs/heads/master",
-        "rev": "5c32b1ad2e48f3f2c1642c51f143fca207408877",
-        "revCount": 1063,
+        "rev": "0372bb89fb4abaeaa7174c72facff5d9637b6bf3",
+        "revCount": 1064,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/timesheets"
       },

@@ -172,6 +172,19 @@ _: {
             if ${lib.getExe' pkgs.systemd "journalctl"} -u llama-vlm-${name}.service --since "${s.keepAlive} ago" --grep "processing task" -n 1 --output cat 2>/dev/null | grep -q .; then
               exit 0
             fi
+            # Freeze #56 (2026-11-17) local fallback: short /v1/models probes
+            # (visionreviewd, 10-min cadence) start AND finish a bridge between
+            # two idle-check runs, so the live-bridge check above never sees
+            # one, yet every probe IS traffic. Any bridge-unit journal line
+            # inside the keepAlive window counts as activity; without this leg
+            # the idle TTL unloads the model and the next probe cold-loads
+            # 8-9G (the idle-TTL reload treadmill: 47 reloads across the
+            # freeze-#56 death boot; the 13:10:49 reload is the fatal
+            # 35->75% IO-PSI step). Upstream leg (probe counts as keep-alive
+            # natively) stays owned by docs/todo/stability.md [blocked:push].
+            if ${lib.getExe' pkgs.systemd "journalctl"} -u 'llama-vlm-${name}@*.service' --since "${s.keepAlive} ago" -n 1 --output cat 2>/dev/null | grep -q .; then
+              exit 0
+            fi
             systemctl stop 'llama-vlm-${name}@*.service' llama-vlm-${name}.service
           '';
         };
