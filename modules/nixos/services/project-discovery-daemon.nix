@@ -88,30 +88,26 @@
           # 5B2hM6qB (first-hand keep-going,
           # ~/.cache/toplevel-fix-20261118/enumeration.log; value AGREES
           # with the sibling session's keepgoing-1118.log stamp).
-          # THREE surfaces since the admin-bridge wiring (2026-11-18): the
-          # daemon package here, the admin package below, and lib/
-          # lars-packages.nix — same value (identical go.mod → identical
-          # vendored content), all must move together.
-          package = lib.mkDefault (
-            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-              vendorHash = "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
-            }
-          );
+          # vendorHash shim DROPPED (2026-11-18 admin-bridge wave, ALL
+          # surfaces with lib/lars-packages.nix + the admin package below):
+          # the lock float to 64f5f1b refreshed pdd's nested go-daemon/SDK
+          # inputs to match its flake.nix URL rev pins, and BOTH pdd FODs
+          # (daemon + admin) now produce got Nldg+4vI… = the hash upstream
+          # bakes at 64f5f1b (first-hand keep-going,
+          # ~/.cache/pdd-toplevel-build2.log) — the documented drop
+          # condition. Re-add ONLY via nix-hash-fix evidence, never by hand.
+          package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service
           # users cannot see a 0700 home).
           user = lib.mkDefault config.users.primaryUser;
 
           # Admin WebUI bridge: loopback dashboard + gatus's HTTP window
-          # into the daemon. Same shim class/value as the daemon package
-          # above (identical go.mod); port from the registry, never a
-          # literal.
+          # into the daemon. No shim (upstream bakes the correct hash at
+          # 64f5f1b — see the daemon package comment above); port from the
+          # registry, never a literal.
           admin = {
-            package = lib.mkDefault (
-              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin.overrideAttrs {
-                vendorHash = "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
-              }
-            );
+            package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };

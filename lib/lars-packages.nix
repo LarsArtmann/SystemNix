@@ -580,9 +580,14 @@ lib.filterAttrs (_: v: v != null) {
   # re-add ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-11-18 FOD-storm wave: at f0b6381 spec Rd4vxqsi, got
   # 5B2hM6qB (first-hand keep-going, keepgoing-1118.log).
-  project-discovery-daemon =
-    flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
+  # vendorHash shim DROPPED (2026-11-18 admin-bridge wave): the lock float
+  # to 64f5f1b refreshed pdd's nested go-daemon/SDK inputs to match its
+  # flake.nix URL rev pins, and BOTH pdd FODs (daemon + admin) now produce
+  # got Nldg+4vI… = the hash upstream's own flake bakes at 64f5f1b
+  # (first-hand keep-going, ~/.cache/pdd-toplevel-build2.log) — the
+  # documented drop condition. Re-add ONLY via nix-hash-fix evidence,
+  # never by hand.
+  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
