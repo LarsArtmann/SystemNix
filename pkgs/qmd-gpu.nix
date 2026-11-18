@@ -96,7 +96,12 @@ runCommand "qmd-${lib.getVersion qmd}-gpu"
     # default ICD discovery must not depend on live boot state.
     {
       echo '#!${bash}/bin/bash -e'
-      echo "export LD_LIBRARY_PATH='${glibc}/lib:${vulkan-loader}/lib${lib.optionalString (kept != "") ":''${kept}"}'"
+      ldlBase="${glibc}/lib:${vulkan-loader}/lib"
+      if [ -n "$kept" ]; then
+        echo "export LD_LIBRARY_PATH='$ldlBase:$kept'"
+      else
+        echo "export LD_LIBRARY_PATH='$ldlBase'"
+      fi
       echo 'export VK_DRIVER_FILES=/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json'
       printf '%s\n' "$mcpLine"
       echo "exec \"$out/lib/bun\" \"$out/lib/qmd/src/cli/qmd.ts\" \"\$@\""
