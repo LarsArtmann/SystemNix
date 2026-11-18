@@ -159,15 +159,18 @@
           ];
         };
 
-        # Bridge unit: light 2s poller over the unix socket — NO ioTier
-        # (negligible IO; the daemon pays the heavy reads). Fleet bounds
-        # only; the unit shape lives upstream. No WatchdogSec is CORRECT:
-        # the bridge has no sd_notify sender.
+        # Bridge unit: light 2s poller over the unix socket — background
+        # tier (uniform with the daemon; the io-tier-coverage audit requires
+        # every boot-gated unit to carry a tier, and BE/6 costs a socket
+        # poller nothing). Fleet bounds only; the unit shape lives
+        # upstream. No WatchdogSec is CORRECT: the bridge has no sd_notify
+        # sender.
         systemd.services.project-discovery-admin = {
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
             (harden { MemoryMax = lib.mkForce "512M"; })
+            ioTier.background
             (serviceDefaults { })
           ];
         };
