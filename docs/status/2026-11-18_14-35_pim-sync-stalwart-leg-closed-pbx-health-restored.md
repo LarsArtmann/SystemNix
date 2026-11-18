@@ -1,0 +1,140 @@
+# pim-sync Stalwart leg closed + pbx health cascade restored — full session status
+
+**Session window:** 2026-11-18 ~11:00–14:35 CET · single crush session on evo-x2
+**Trigger:** owner ask "Is ~/projects/pim-sync deployed? If so what is the problem?" → escalated to "we need to fucking link it all properly" → execute-until-done directive (repeated 3×).
+**HEAD at authoring:** c8d2ca59 (a parallel session was LIVE throughout: nh-switch RCA doc, crm-liveness watchdog, lock floats — it committed my runbook/sops.nix doc edits inside its 55b18140f, message honestly names "pim-sync Stalwart leg closed").
+**Deploy posture:** evo-x2 NOT switched this session (my commits are secrets+docs only; drvPath equality re-checked — the flip deploy comes after tokens). pbx.artmann.tech WAS switched to my closure ckl5blrq (account provision live).
+
+---
+
+## a) FULLY DONE (each verified live, not asserted)
+
+| # | Item | Evidence |
+| - | ---- | -------- |
+| a1 | **bot.pim-sync@larsartmann.cloud provisioned declaratively** — added to pbx-artmann `hosts/pbx/mail.nix` Account set (credential-less doctrine, roles User), committed as 60530c21 there | pbx switch landed closure ckl5blrq; `stalwart-provision` journal: "Done: 0 destroyed, 46 updated, 2 created (0 failed)"; `stalwart-cli query account --where name=bot.pim-sync` returns id `g` |
+| a2 | **Stalwart app password minted + landed in sops** (`pim_sync_stalwart_dav_user` = bot.pim-sync@larsartmann.cloud, `pim_sync_stalwart_dav_pass` = 40-char `app_…`) | commit 36244fdd1 (gitleaks green); decrypt-extract shape check: pass = 40 bytes, user echoed |
+| a3 | **CardDAV auth verified LIVE with the real credential** | `/.well-known/carddav` → 307 → `/dav/card`; PROPFIND 200 on `/dav/card/bot.pim-sync%40larsartmann.cloud/` with default addressbook present; `/.well-known/caldav` 307 |
+| a4 | **The 0.16 JMAP recipe reverse-engineered + documented** — the blocker was protocol, not permissions: stalwart 0.16 renamed the envelope (`methods` → `methodCalls`, capability `urn:stalwart:jmap`, method `x:AppPassword/set`, `accountId` at the SET-ARGS level). Captured the CLI's exact request via a loopback perl capture server, replayed against production | mint response: `{"accountId":"g","created":{"n0":{"id":"b","secret":…}}}`; destroy round-trip proven on the leaked first mint; recipe now in `modules/nixos/services/sops.nix` cv_pipeline comment + `docs/services/pim-sync.md` |
+| a5 | **pbx deploy freshness-guard repaired the canonical way** — `/tmp/pbx-toplevel-root` + `/tmp/pbx-toplevel-current` staging roots re-staged via `nix run .#repair-current` (walked 12 commits, found deployed rev cc84981d, outPath-identical relink) | repair output "OK — … (outPath-identical rebuild of cc84981d)"; deploy guards then green |
+| a6 | **crm-server restored after ~19h unnoticed outage** — the ROOT CAUSE of the entire pbx health cascade (webphone `/healthz` `crm` check 502 → telephony-health + pbx-surface-health fail-storms ×692/24h). It was CLEANLY STOPPED Nov 17 22:31:47 and never restarted (no evo-x2 deploy since Nov 7; gen 1015 = 20261107). `sudo systemctl start crm-server` → active, webphone healthz `{"status":"ok",…,"crm":{"status":"ok"}}` within 50 s | journalctl trail; healthz body captured |
+| a7 | **sops scaffold state verified precisely**: 7 keys declared in sops.nix; 2 now real, 5 placeholders remain (`pim_sync_oauth_client_secret` + 4 token keys) — exactly the OAuth-gated set | decrypt + `grep -c PLACEHOLDER` = 5 |
+| a8 | **Runbooks updated to the new truth** — `docs/services/pim-sync.md` State section + flip ladder (gate 2 marked DONE with recipe pointer); `configuration.nix` gate comment rewritten; `sops.nix` cv rotation comment carries the 0.16 recipe | landed in 55b18140f (parallel session, honest attribution in message) |
+| a9 | **OAuth wall CONFIRMED airtight** — pim-sync binds `127.0.0.1:0` (random port, `callback.go:38`); random-port loopback redirects are auto-allowed ONLY for Desktop-type clients; Desktop clients + External consent screens have no gcloud API (the 2026-11-11 openseo sweep, reconfirmed: `gcloud alpha iam oauth-clients` rejects data scopes; IAP makes web-type only) | `LoadClientSecret` accepts installed+web (`oauth.go:38`) but random port kills the web path regardless |
+| a10 | **Three pbx red units correctly CLASSIFIED** (not mine, pre-existing): `netbird-provision` = expired PAT (401, 46 fails/24h); `pbx-fetcher-stall` = canary-blind (exit 4, "no pop3-scoped journal entries at all", 48 fails/24h); `health-dashboard` = NEVER green in 7 days (DynamicUser+LoadCredential EACCES — see d3/e3) | journal fail counts + unit journal tails captured |
+
+## b) PARTIALLY DONE
+
+| # | Item | Done | Missing |
+| - | ---- | ---- | ------- |
+| b1 | **pim-sync go-live ladder** | Stalwart leg (gate 2 of 4) closed; wrapper verified flip-ready (2026-11-10 smoke) | GCP client (owner console), 4 consent tokens, doctor, enable=true dry-run, journal review, live flip w/ maxChanges+metrics+Gatus |
+| b2 | **pbx health restoration** | crm restarted; healthz green; telephony-health + pbx-crm-reachability green (oneshot inactive = passed) | health-dashboard + pbx-surface-health still failed (hub crash-loops — see d3); netbird-provision + fetcher-stall red with owner-queue causes |
+| b3 | **Secret hygiene after my two transcript leaks** | first-mint app password DESTROYED + clean re-mint (secret confined to a 0600 pbx file, pulled via runtime var, never echoed); pbx temp files shredded (`/tmp/mint*.json`, capture files) | `stalwart_fallback_admin` NOT rotated (printed once by my unverified `cut -f1` — see d1); both leaks live in this session transcript (.crush DB) |
+| b4 | **pbx-artmann train** | committed (60530c21); switch DONE from the local tree | NOT pushed (11 commits ahead; CI gates pushed state; lock-drift probe WARNs; owner push call) |
+| b5 | **Cross-repo doc sync** | 0.16 recipe recorded in SystemNix sops.nix + pim-sync.md | CV repo plan §3 still carries the dead 0.15-era recipe (I documented around it, didn't edit the CV repo) |
+
+## c) NOT STARTED (correctly gated or out of scope)
+
+| # | Item | Why |
+| - | ---- | --- |
+| c1 | GCP Desktop OAuth client creation | console-only, owner's 5 minutes (a9) |
+| c2 | 4 consent flows (`auth --account personal\|work [--calendar]`) | needs the client JSON first; then I launch, owner clicks |
+| c3 | `pim-sync doctor` against real creds | needs client secret + tokens |
+| c4 | `pim-sync.enable = true` (dry-run) + deploy + first-run journal review | needs c1–c3 |
+| c5 | live flip (`live=true`, `maxChanges` cap, `metricsFile` textfile wiring, Gatus freshness on `pimsync_leg_last_success_unix`) | owner GO after dry-run review; anchored-pat doctrine defers Gatus to this step |
+| c6 | Real Twenty import | its own owner gate (docs/todo/services.md) |
+| c7 | crm `carddavProjection` flip (T13, needs `crm_stalwart_dav_password` in crm.yaml — same bot credential family, still placeholder) | books must exist + flip ladder order |
+| c8 | Rotation of `stalwart_fallback_admin` | owner-window call (touches stalwart.service env + telephony-secrets + canary units) |
+| c9 | TODO_LIST / docs/todo harvest rows for this session's findings | superseded by this report §f (explicitly recorded here per the harvest rule; rows should be cut from it on next queue pass) |
+
+## d) TOTALLY FUCKED UP (own them)
+
+| # | What | Cost | Repair state |
+| - | ---- | ---- | ------------ |
+| d1 | **Printed the pbx `stalwart_fallback_admin` secret into the transcript** — ran `cut -d: -f1` on `/var/lib/telephony-secrets/stalwart_fallback_admin` WITHOUT verifying the file format first (assumed `user:pass`, got the raw password) | one live admin credential exposed to this transcript | value is live; rotation queued (c8). This was exactly the "quote-scrutiny — verify one known value through the pipeline first" rule violated |
+| d2 | **Printed the first-mint app password** — `cat`-ed the mint response containing `"secret":"app_…"` instead of piping to a confined file first | one credential exposed → then PROPERLY rotated (destroyed id b, re-minted into a 0600 file, ingested via runtime var) | resolved; pattern captured for the runbook |
+| d3 | **~25 tool calls burned rediscovering the 0.16 JMAP break** — I hit `notRequest` ~6 times and tried: raw REST (404s), netcat capture (nc closes after one request), a broken sed-patched perl server, schema greps — before (a) checking the server VERSION and (b) reading the upstream source via sourcegraph. A version check + `methodCalls` envelope search up front saves the entire detour | ~45 min session time | the capture-server technique DID crack it and is reusable; recipe documented so the next session doesn't pay this tax |
+| d4 | **Fired the pbx switch without pre-checking the freshness-guard staging roots** — 2 aborted deploy attempts (`/tmp/pbx-toplevel-root` then `/tmp/pbx-toplevel-current` ENOENT) before reading the guard's own repair messages + runbooks | 2 wasted deploy cycles (~6 min) | repaired via `repair-current` (a5); the guard's FATAL text was self-explanatory — I should have read it before the first attempt |
+| d5 | **`nix fmt` from the wrong repo** — ran SystemNix's treefmt against pbx-artmann paths (path-outside-tree error), redone from the pbx checkout | 1 wasted call | trivial |
+| d6 | **`rg -rn` replace-flag trap — AGAIN (3rd host strike)** — blocked twice by the hook this session while searching for the account mapping and DAV URL | 2 blocked calls | the hook message is right; muscle memory must change to `rg -n` |
+| d7 | **Rabbit-hole discipline slipped** — the go-health-dashboard EACCES rabbit hole (nsenter attempts, start-limit cooldown fights, credential-dir stabs) ran ~10 calls past the point where the classification "never green, upstream bug, needs module fix" was already clear | time; NOT committed to (correctly stopped before store surgery) | classification + evidence captured for the fix session |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Check server/product VERSION before protocol debugging.** Every 404/notRequest in the JMAP detour was explained by 0.15→0.16. One `ExecStart` version look = 45 min saved.
+2. **Secret-file access gets a format probe first** (`head -c 20 | grep -c ':'`), never a blind field cut — d1 was a 100%-preventable leak.
+3. **Mint/rotate flows go to confined files by default**: response → 0600 file → field-extract into var → sops → shred. I got there only after leaking (d2); make it the FIRST move.
+4. **Read a guard's FATAL message + its repair script BEFORE retrying the command** (d4) — the repo already codifies repairs (`repair-current` exists precisely for this).
+5. **Deploy-freshness pre-flight belongs in the runbook header**: "staging roots present? `ls /tmp/pbx-toplevel-*`" before any `nix run .#deploy` on the pbx.
+6. **Per-repo formatter discipline**: `nix fmt` must run from the target repo's checkout (d5); a `cd` + path check is cheaper than the error loop.
+7. **Time-box protocol rabbit holes**: when a classification is actionable ("upstream bug, needs module fix"), STOP diagnosing and queue — the extra nsenter/stabs added no fix value (d7).
+8. **The §f harvest debt is real**: I'm writing the follow-up queue into this report per the harvest rule instead of editing TODO_LIST mid-flight (parallel session live on the tree) — next queue pass must cut rows from §f, not re-derive.
+9. **Cross-repo doc mirroring**: sops.nix got the 0.16 recipe but CV plan §3 didn't — one session, two repos, one recipe → mirror it everywhere it lives (b5).
+10. **Parallel-session hygiene worked, credit where due**: daemon-race pathspec repair (pbx-artmann), content-pin before writes, and honest attribution in 55b18140f all held under live concurrency. Keep doing exactly this.
+
+## f) NEXT (prioritized; ★ = owner-gated, everything else agent-actionable)
+
+**pim-sync go-live (the actual mission):**
+1. ★ GCP console flow → `pim-sync-prod` project, People+Calendar APIs, External consent screen (readonly scopes, both test users), **Desktop** client, publishing → In production, download client JSON (docs/oauth-setup.md §2)
+2. Ingest client JSON into `pim_sync_oauth_client_secret` (runtime-var path, never inline)
+3. Launch 4 consent flows (`auth --account personal|work × contacts/calendar`), owner clicks; verify token files
+4. Ingest 4 token JSONs into `pim_sync_token_{personal,work}{,_calendar}`; re-check placeholders = 0
+5. `pim-sync doctor` against real creds (machine-pinned goldens; expect a "Contacts" book-name warn — OUT leg creates it)
+6. Flip `enable=true`, keep `live=false` → deploy → first dry-run journal review 🧑 (Stalwart-single-truth §7.5)
+7. Derive `maxChanges` from the first dry-run report (cap is live in dry-run, default 50, first live run needs headroom — mesh invariant)
+8. ★ GO → `live=true` + `maxChanges` + `metricsFile` textfile wiring (btrfs-health shared-group precedent) + Gatus freshness on `pimsync_leg_last_success_unix{leg,account}`
+9. Verify receipts dir (`/var/lib/pim-sync/receipts`) gets its first JSONL line on the first live run
+10. Day-8 refresh-token survival check per account (oauth-setup §4 table)
+11. Phase B (`--rw` contacts write scope) re-consent when the OUT leg ships
+12. Real Twenty import gate (separate owner decision)
+13. pim-sync Forgejo Actions CI (pending TODO row; runs-on native precedent)
+14. GitHub twin post-deploy verification for pim-sync (push_mirrors + sync_on_commit — pending TODO row)
+15. Branch protection check for the canonical repos (pending row)
+16. Soak week kickoff once legs live
+
+**pbx cleanup from this session:**
+17. ★ Rotate `stalwart_fallback_admin` (leaked d1): mint-successor flow — new value into `/var/lib/telephony-secrets/` + push-secrets + stalwart restart; canaries use it
+18. ★ Rotate the pbx NetBird API PAT (`netbird_api_pat` expired, 401) in the NetBird console → `push-secrets.sh` → netbird-provision green
+19. Fix `pbx-fetcher-stall` canary blindness (pop3-scoped journal query returns nothing — unit name or journal namespace drift; 48 fails/24h)
+20. go-health-dashboard upstream fix: drop DynamicUser+LoadCredential for static-user + direct secret reads (webphone pattern) — the hub has NEVER been green; EACCES on a credential dir that never materializes
+21. pbx `secrets-perms.nix`: add the `health_oauth2_client_secret` + `health_session_secret` legs (chgrp the hub's group, 0640) when 20 lands
+22. After 20/21: reset-failed + restart health-dashboard, pbx-surface-health, telephony-health → verify all green; then the exit-4 trap on pbx deploys clears
+23. Attribute the 2026-11-17 22:31 crm-server stop (clean systemd stop, actor unknown — /proc is gone; .crush DB + the parallel session's nh-switch RCA are the leads)
+24. Verify the parallel session's crm-liveness watchdog actually fires on a down/slow healthz (it exists precisely because of a6)
+25. Mirror the 0.16 JMAP recipe into CV plan §3 (dead recipe lives there too)
+26. Confirm CV replyloop unaffected (I only restarted crm-server on evo-x2, not applications@ creds — cheap verify)
+27. Push the pbx-artmann train (11 commits) once CI is green — owner push call
+28. Re-evaluate the lock-drift WARNs (telephony relock target CI-red; webphone pin divergence) — parallel session's floats may have moved this; re-probe before ritual
+29. Consider a plan-side declarative home for app-password metadata (name/expiry policy) WITHOUT secrets-in-plan (doctrine stays)
+30. Check whether TODO row "pim-sync pbx production provisioning — port demo-VM provision objects" (TODO_LIST 3052) is fully superseded by my mail.nix port (books/other objects may remain in the demo set)
+31. Decide crm projection credentials: `crm_stalwart_dav_password` (crm.yaml placeholder) vs reusing the bot.pim-sync app password — one credential family or two? (my Q3)
+
+**SystemNix housekeeping:**
+32. Cut §f rows into `docs/todo/services.md` + tick/commit in one pass (harvest rule)
+33. evo-x2: no deploy needed now (docs+secrets only; drvPath equality verified) — next deploy rides the flip
+34. After the flip deploy: §0.5 quiescence probe + anchor check (`readlink /run/current-system` vs newest `system-N-link`)
+35. Add the "version-before-protocol-debug" lesson + "secret-file format probe first" lesson to AGENTS.md session discipline (both cost real time/leak risk this session)
+36. Gatus: confirm no false-freshness alarm exists for pim-sync yet (deferred by doctrine — verify none was pre-created)
+37. pim-sync integration entry: `monitored=true` now that the unit will exist at flip — verify system-health picks it up post-deploy
+38. Verify sops-nix renders the DAV env template correctly at flip (tmpfiles trap: live `stat` as the service user, never a config cite)
+39. OAuth client JSON shape check at ingest: `.installed.client_id` (the wrapper config-check asserts it)
+40. Token JSON shape check at ingest: `.refresh_token != null` per file (config-check asserts)
+41. Confirm the seed-dir (`/var/lib/pim-sync-seed`) tmpfiles/ownership story renders at flip (only-into-empty-slots seeding, upstream owns rotation)
+42. After first live run: verify receipt JSONL (actor bot:pim-sync, per-leg counts, caps, quarantine lists) + 5 MiB rotation behavior
+43. Mesh invariant spot-check on the first real listing: quarantine behavior for foreign/hand-made cards (never merge sources; `--book` applies to every account in one invocation)
+44. Decide the calendar leg posture: `--calendar` consent for both accounts at flip, or defer calendar to its own wave
+45. pim-sync Kith projection spoke (crm journal read-only spoke + WHERE-IS-MY-DATA re-point) — pending row, after flip
+46. Forgejo-side posture decisions (issue tracker home, tag/release flow) — pending [decision] rows
+47. Forgejo SSH remote hostname standardization (evo-x2.home.lan vs forgejo.home.lan split-brain) — pending row
+48. READMEs for the new canonical repos (pim-sync included) — pending row
+49. Sub-repo remote audit scope decision (~80 container repos) — pending [decision] row
+50. Purge-or-annotate the leaked values in session transcripts: the fallback admin password + first app password live in this session's .crush DB messages — annotate this report as the leak record (rotation in 17 kills the risk)
+
+## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
+
+1. **Which Google account is `personal` and which is `work`?** gcloud shows `lartyhd@gmail.com` and `lars@helpless.ai`; the token files + sops keys are named personal/work, and the consent flows must target the right inboxes. I found no explicit mapping anywhere in the pim-sync repo or SystemNix.
+2. **Fresh GCP project (`pim-sync-prod`, the oauth-setup.md recommendation) or reuse an existing one?** The doc recommends fresh for blast-radius + honest consent screen, and the client type is Desktop either way — but the console clicks are yours, so the project choice is yours to confirm. (If fresh: do you want me to pre-write the exact deep-link URLs for each console step?)
+3. **Rotate `stalwart_fallback_admin` NOW or in a maintenance window?** The rotation touches the telephony-secrets file + stalwart.service env + every canary unit that reads it (pbx-maumi-quiet-canary, stalwart-provision, stalwart itself). I printed the current value once; the risk window is transcript-local, but it is a production PBX admin credential — restart timing is your call.
+
+---
+
+*Report authored 2026-11-18 14:35 CET. Per the harvest rule, §f rows 17/18/19/20/25/31/47 are the ones with external dependencies; the rest ride the existing flip ladder. Nothing in this report required re-research — every claim is from this session's captured evidence.*
