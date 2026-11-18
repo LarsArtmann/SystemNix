@@ -983,11 +983,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794947916,
-        "narHash": "sha256-4LmZLYsOKIv2Vq1AA/U6HSGvOjXB9yF9cOxYeNkOVbA=",
+        "lastModified": 1794997846,
+        "narHash": "sha256-Zh8UNVP5VvrLWi8A+bigzKEPkjSqJpZlRK2xcenFscQ=",
         "ref": "refs/heads/master",
-        "rev": "e987de4b85b51859ab2d3ab052dbf54429e4a2e1",
-        "revCount": 420,
+        "rev": "3b0b608c739f0b09fdb724dc50812a0da523e397",
+        "revCount": 422,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       },
