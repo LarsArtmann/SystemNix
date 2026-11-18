@@ -956,11 +956,11 @@
         "nixpkgs-dprint": "nixpkgs-dprint"
       },
       "locked": {
-        "lastModified": 1794894318,
-        "narHash": "sha256-z5M7Y6qIWqCE5hQ8ETvUJeTZx4h/r/KYnu7hIYEb56w=",
+        "lastModified": 1794736791,
+        "narHash": "sha256-h0DL96bDaoo7mYJCkgrdd2oPe9+egO2a77+SWv9V1js=",
         "ref": "refs/heads/master",
-        "rev": "4bdc3c2628044bce8c36592fca710c3be471727f",
-        "revCount": 1347,
+        "rev": "b7f86159e6f984873b7f14f40232dfc7056c6957",
+        "revCount": 1344,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },

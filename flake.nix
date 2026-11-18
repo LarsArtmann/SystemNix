@@ -1099,6 +1099,19 @@
       # roll with a FULL lock-free package build and no override. The pin is
       # dropped: within hours master had moved to f6ccd43 (also probed
       # green) — the rev pin was only ever buying staleness.
+      # LOCK ROLLBACK 2026-11-18 (deploy session, cv interim-rollback
+      # precedent): master regressed — 4bdc3c2 ("enable templ-freshness
+      # gate" C9 wave, 2026-11-17) reintroduced PRE-templ-1100 generated
+      # files (companies_templ.go calls templ.JoinURLErrs/
+      # ResolveAttributeValue, deleted in templ 0.3.1100) while go.mod
+      # still requires v0.3.1100 → kith-crm compile-broken at 4bdc3c2 AND
+      # tip b3b1382 (tip only adds pin-convergence commits; the *_templ.go
+      # files are untouched). First-hand: deploy toplevel build died in
+      # buildPhase, "undefined: templ.ResolveAttributeValue". Lock rolled
+      # BACK to b7f8615 (revCount 1344, the gen-1012-running rev — its
+      # generated files carry ZERO dead-API calls; narHash from lock
+      # history 0f6af1a46). Re-float when upstream regenerates its templ
+      # files for 0.3.1100 (their freshness gate should force it).
       url = "git+ssh://git@github.com/LarsArtmann/crm?ref=refs/heads/master";
     };
 
