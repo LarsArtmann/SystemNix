@@ -52,10 +52,15 @@ let
       inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      # PROBE 2026-11-18: hash temporarily "" — the b106d86 float's
-      # frontend lockfile adds moment@2.31.0 (ERR_PNPM_NO_OFFLINE_TARBALL
-      # at the old hash); stamping the probe's got-hash back below.
-      hash = "";
+      # STAMPED 2026-11-18: the signoz-src float to b106d86 changed the
+      # frontend lockfile (adds moment@2.31.0 — the old hash died
+      # ERR_PNPM_NO_OFFLINE_TARBALL in the 12:1x keep-going enumeration).
+      # Probe-then-stamp per the fetchPnpmDeps failure recipe: hash ""
+      # build at xiwhlhap…-signoz-frontend-pnpm-deps got KWzSc1U4
+      # (first-hand, ~/.cache/toplevel-fix-20261118/signoz-pnpm-probe.log).
+      # npm tarballs are immutable, so unlike the private-Go FODs this
+      # stamp is deterministic — no flap risk.
+      hash = "sha256-KWzSc1U4dOxcqtH1KhqL/iITNnFd9XDwPuqWrismCJI=";
     };
 
     nativeBuildInputs = [
