@@ -149,11 +149,14 @@ Agent-executable work landed while §g waits on the owner:
 | h4 | §f.50 leak-record annotation | DONE — §d d1/d2 ARE the canonical leak record: the fallback-admin risk dies with the §f.17 rotation; the first app password is already dead (destroyed + clean re-mint). The .crush DB transcript rows stay historical; no purge attempted |
 | h5 | §f.32 / §e.8 harvest | DONE this pass: rows 17/18/19-remainder/20-22-remainder/23/25/31/35 cut into TODO_LIST + docs/todo/{services,pipeline}.md; rows 36-44 deliberately NOT harvested — docs/services/pim-sync.md owns the flip ladder step-for-step and re-queueing would drift it; rows 46-49 already exist in the queue (3302-3312 zone); row 36 verified CLOSED 2026-11-18 evening — no Gatus freshness/pim-sync reference exists anywhere in modules/ or lib/ (nothing pre-created to remove) |
 | h6 | Attribution | the parallel session's trunk-profile-split tick + telephony/webphone lock floats rode the same flake.lock heuristic commit as my go-health-dashboard float (0e6856c4) — both float sets are deliberate owner-repo floats, one train |
+| h7 | §g ANSWERED (owner, 2026-11-18 evening) + consequences executed | (1) mapping CONFIRMED: `personal` = `lartyhd@gmail.com`, `work` = `lars@helpless.ai` — recorded in docs/services/pim-sync.md flip-ladder + the pim-sync repo's oauth-setup.md §4 table. (2) fresh project CHOSEN: `pim-sync-prod-larsartmann` created + People/Calendar APIs enabled via gcloud (the suggested `pim-sync-prod` id is globally taken); oauth-setup §2 steps 1-2 marked DONE — console work shrinks to steps 3-6. (3) rotate NOW chosen: successor 32-byte no-newline value minted into `~/.pbx-prod-secrets/stalwart_fallback_admin` (0600, sha prefix a85c44a, format-matched to the live file — host/local byte-shape probed first); ONE push-secrets run completes rotation + health_session_secret together; queue rows 17/20-22 re-tagged [blocked:push] |
 
-§g remains fully open: all three questions + the GCP client JSON path are
-with the owner. The go-live ladder is otherwise agent-ready — the moment the
-client JSON lands, ingest → 4 consents → token ingest → doctor → flip runs
-as documented in §f.1-6.
+§g2 UPDATE: all three questions ANSWERED 2026-11-18 evening (see h7) — the
+only §g item still open is the GCP console client-creation flow (steps 3-6
+of oauth-setup §2, ~5 minutes) and the two pbx owner commands (push-secrets
++ switch). The go-live ladder is otherwise agent-ready: the moment the
+client JSON path lands, ingest → 4 consents → token ingest → doctor → flip
+runs as documented in §f.1-6.
 
 ---
 
