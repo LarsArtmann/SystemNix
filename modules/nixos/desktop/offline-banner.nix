@@ -35,6 +35,17 @@
 
       config.services.offline-banner.layerNamespace = "systemnix:offline-banner";
 
+      # The DNS leg's name must be EXTERNAL, unblocked, and outside the
+      # local zones. Upstream's default (one.one.one.one) sits in
+      # HaGeZi-doh, so dnsblockd answered it with the block page
+      # 192.168.1.200 from config alone — no upstream lookup — and the
+      # leg read green through any WAN outage (2026-11-18 live:
+      # `getent ahostsv4 one.one.one.one` -> 192.168.1.200). lars.software
+      # is ours (Firebase 199.36.158.100), absent from dns_local_records
+      # and every blocklist. Cache caveat: TTL 3600, so dnsblockd can hold
+      # the leg green up to ~1 h into an outage.
+      config.services.offline-banner.dnsProbeName = "lars.software";
+
       # Consumer-side pin (queue row 1453, executed 2026-11-10): the
       # RESOLVED unit's Environment must keep the probe contract — the env
       # keys the live recipes and drop-in docs name, and a PATH whose
