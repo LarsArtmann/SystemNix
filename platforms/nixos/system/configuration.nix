@@ -1588,6 +1588,19 @@ in
       # docs/services/llama-chat.md). Serves the qwen3.6-35b-a3b abliterated
       # tune with native tool calls at 127.0.0.1:8850/v1.
       #
+      # RE-ENABLED 2026-11-18 per the module's own return recipe: BOTH
+      # pairing requirements are now met — (1) the guard ioPause pattern
+      # entry landed 2026-11-03 ("the re-enable-day guard"), and (2) the
+      # on-demand activation design (freeze-41 report item 30) is
+      # implemented in the module: socket-activated (llama-vlm pattern) —
+      # public :8850 socket → per-connection socat bridge → psi-wait-gated
+      # backend on private :8851, idle TTL 60 min, ensure-timer RETIRED.
+      # Nothing cold-loads at boot or at deploy; the 23.4 GB load fires only
+      # on first client traffic and only outside io-PSI storms. The T13
+      # crmpeople extraction half (LLM signature extraction via ai-meter)
+      # needs this backend; InboxClean /chat + paperless-gpt extraction
+      # (auto-follow, 2026-11-10 directive) return with it.
+      #
       # DISABLED 2026-11-03 (owner directive: "we shouldn't crash at all" —
       # 5 consecutive WDT cuts Nov 2-3). Evidence ledger: llama-server
       # OOM-killed in freezes #34/#38/#43 (41.7 GB VM, adj 300 — the
@@ -1601,8 +1614,8 @@ in
       # re-enable: flip to true + deploy — pair it with the guard
       # ioPause pattern entry (memory-emergency-guard) and an on-demand
       # activation design (freeze-41 report item 30) so it never
-      # cold-loads into a storm again.
-      llama-chat.enable = false;
+      # cold-loads into a storm again. [Both halves landed — see above.]
+      llama-chat.enable = true;
 
       file-and-image-renamer = {
         enable = true;

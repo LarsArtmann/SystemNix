@@ -2,7 +2,27 @@
 # llama.cpp chat server — the interactive agent brain behind InboxClean's
 # dashboard chat (/chat) and any other local OpenAI-compatible consumer.
 #
-#   llama-chat  127.0.0.1:8850  qwen3.6-35b-a3b-aggressive  --jinja (native tool calls)
+#   llama-chat.socket   127.0.0.1:8850  (public, Accept=true)
+#   llama-chat@.service                (per-connection socat bridge → :8851)
+#   llama-chat.service                 (backend, private :8851, model resident)
+#
+# ON-DEMAND since 2026-11-18 (freeze-41 report item 30 — this module's
+# sanctioned return path): the freeze #41-#44 chain (Nov 2-3, 5 WDT cuts)
+# retired the always-on posture — the 23.4 GB GGUF cold page-in was the
+# boot-time storm seed (#40: ~110 GB of reads in the first 75 min) and
+# llama-server at OOMScoreAdjust=300 was the kernel's preferred victim at
+# every memory cliff (#34/#38/#43). Socket activation (the proven
+# llama-vlm pattern, generalized from fastflowlm) kills the re-arm class
+# entirely: nothing cold-loads at boot, the socket spawns a per-connection
+# socat bridge on first client traffic, the bridge pulls the backend up
+# (psi-wait-gated: the 23.4 GB load WAITS for io-PSI calm — clients see a
+# slow first answer queued in the socket backlog, never a refused one),
+# and the idle TTL unloads the model after cfg.keepAlive without traffic.
+# The llama-chat-ensure convergence timer is RETIRED with the always-on
+# posture — the socket IS the convergence now. Pairing defense that landed
+# with this return (per the configuration.nix re-enable recipe):
+# memory-emergency-guard ioPause cgroupPatterns += llama-chat.service
+# (2026-11-03, "the re-enable-day guard") and the psi-wait-gate below.
 #
 # Why CPU and NOT the GPU: the llama.cpp/ROCm path on gfx1150 WEDGES under
 # systemd units regardless of version — freeze #5 (2026-09-18) proved the
@@ -17,7 +37,11 @@
 # so CPU inference still streams interactive-fast tokens while the full
 # 23.4 GB expert pool sits in page cache (128 GB host).
 #
-# Why a dedicated always-on server and NOT the existing options:
+# Why a dedicated server and NOT the existing options (posture note
+# 2026-11-18: llama-chat itself is now ALSO socket-activated — the on-demand
+# tradeoff is the same one FastFlowLM made, accepted because the crash
+# history makes "resident at boot" unsellable on this host; interactive
+# consumers pay a first-token cold load, queued not refused):
 #   - FastFlowLM (:52625, NPU): socket-activated with a 2-5 min cold load,
 #     idle-unloads after 1h, and is the memory-emergency-guard's designated
 #     sacrifice — perfect for ASYNC workloads (paperless-gpt tagging,
@@ -91,7 +115,10 @@ _: {
         + " -m ${cfg.modelPath}"
         + " --alias ${cfg.alias}"
         + " --host ${cfg.host}"
-        + " --port ${toString cfg.port}"
+        # Backend binds the PRIVATE port (one proxy hop behind the public
+        # socket, llama-vlm pattern): cfg.port is served by
+        # systemd.sockets.llama-chat, never by llama-server itself.
+        + " --port ${toString cfg.backendPort}"
         + " --ctx-size ${toString cfg.ctxSize}"
         + " --threads ${toString cfg.threads}"
         + " --jinja"
@@ -100,25 +127,65 @@ _: {
         # (2026-10-10 deploy: llama-server received "{e" and exited 1).
         + " --chat-template-kwargs '{\"enable_thinking\":false}'";
 
-      # Convergence helper (2026-10-08): ConditionPathExists is evaluated
-      # once per start attempt — a unit skipped at boot (model still a .part
-      # download) stays skipped forever after the file completes. The ensure
-      # timer re-attempts convergence: model present + unit not running →
-      # systemctl start. Zero manual systemd state (owner doctrine 2026-10-08:
-      # "everything should be nix managed"; polkit bars agents from starts).
-      ensureScript = pkgs.writeShellApplication {
-        name = "llama-chat-ensure";
-        runtimeInputs = [ pkgs.systemd ];
+      # Per-connection bridge (llama-vlm pattern): the public socket hands
+      # each accepted connection's fd to one of these; it waits for the
+      # backend to become reachable (the psi-gated cold load can take
+      # minutes) and then pipes bytes. Starting a bridge starts the backend
+      # (wants/after below) — that IS the on-demand activation.
+      bridgeConn = pkgs.writeShellApplication {
+        name = "llama-chat-proxy-conn";
+        runtimeInputs = [ pkgs.coreutils ];
         text = ''
-          if [ ! -e ${cfg.modelPath} ]; then
-            echo "llama-chat-ensure: model ${cfg.modelPath} absent — nothing to converge"
+          host="${cfg.host}"
+          port="${toString cfg.backendPort}"
+          deadline=$((SECONDS + 1800))
+          until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "llama-chat-proxy: backend $host:$port not reachable within 1800 s (psi-wait-gate holding a 23.4 GB cold load?)" >&2
+              exit 1
+            fi
+            sleep 1
+          done
+          exec ${lib.getExe' pkgs.socat "socat"} - "TCP:$host:$port"
+        '';
+      };
+
+      # Idle TTL (llama-vlm pattern, freeze-#56 legs): stop the backend
+      # after cfg.keepAlive with NO traffic. Traffic signal = per-connection
+      # bridge units — every real client connection spawns one (Accept=true),
+      # so a live bridge OR any bridge journal line inside the keepAlive
+      # window counts as activity; a held-open HTTP keep-alive pool
+      # connection (ai-meter) keeps the model resident by design.
+      idleCheck = pkgs.writeShellApplication {
+        name = "llama-chat-idle-check";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gawk
+          pkgs.gnugrep
+          pkgs.systemd
+        ];
+        text = ''
+          if ! systemctl is-active --quiet llama-chat.service; then
             exit 0
           fi
-          if systemctl is-active --quiet llama-chat.service; then
+          # Live per-connection bridges = active traffic; also the only
+          # reliable cold-load guard (no request is served before the first
+          # bridge dials in).
+          if systemctl list-units 'llama-chat@*.service' --state=active --no-legend 2>/dev/null | grep -q .; then
             exit 0
           fi
-          echo "llama-chat-ensure: model present, llama-chat not active — starting"
-          systemctl start llama-chat.service
+          now_us=$(awk '{printf "%d", $1 * 1000000}' /proc/uptime)
+          active_us=$(systemctl show llama-chat.service -p ActiveEnterTimestampMonotonic --value) || true
+          if [ -z "$active_us" ] || [ $((now_us - active_us)) -lt 600000000 ]; then
+            exit 0
+          fi
+          # Freeze-#56 fallback leg (llama-vlm): short probes start AND
+          # finish a bridge between two idle-check runs, yet every probe IS
+          # traffic — any bridge-unit journal line inside the window counts.
+          if ${lib.getExe' pkgs.systemd "journalctl"} -u 'llama-chat@*.service' --since "${cfg.keepAlive} ago" -n 1 --output cat 2>/dev/null | grep -q .; then
+            exit 0
+          fi
+          systemctl stop 'llama-chat@*.service' llama-chat.service
         '';
       };
     in
@@ -167,7 +234,19 @@ _: {
         port = lib.mkOption {
           type = lib.types.port;
           default = ports.llama-chat;
-          description = "Port for the OpenAI-compatible API (/v1).";
+          description = "Public port (served by systemd.sockets.llama-chat, the on-demand activation surface).";
+        };
+
+        backendPort = lib.mkOption {
+          type = lib.types.port;
+          default = ports.llama-chat-backend;
+          description = "Private port the llama-server backend binds behind the socat bridge (one proxy hop, llama-vlm pattern).";
+        };
+
+        keepAlive = lib.mkOption {
+          type = lib.types.str;
+          default = "60min";
+          description = "Idle TTL: stop the backend after this much time with no bridge traffic. Longer than llama-vlm's because the 23.4 GB reload is the most expensive on the host (~110 GB reads cold).";
         };
 
         user = lib.mkOption {
@@ -192,32 +271,20 @@ _: {
         ];
 
         systemd.services.llama-chat = {
-          description = "llama.cpp chat server (${cfg.alias}, CPU MoE, native tool calls)";
-          # Model load is APPLICATION READINESS, not boot work (owner ruling
-          # 2026-10-17, closes session §g.1): the 23.4 GB GGUF cold page-in +
-          # readiness probe ran INSIDE the boot transaction (10m49s on the
-          # 2026-10-17 storm boot — the single largest bounded contributor to
-          # FinishTimestamp, and the gatus boot-userspace regression line's
-          # "usual suspect"). After=multi-user.target moves the unit PAST the
-          # target's wait set (same post-boot pattern as netbird-evox2-login):
-          # boot finishes without the load; the server then maps at its own
-          # pace with the same start contract ("Started" == /health 200) and
-          # the 10-min ensure-timer converging a skipped load. Consumers see
-          # connection-refused until ready — InboxClean chat/ai-meter degrade
-          # gracefully (no gatus check probes llama-chat directly; verified
-          # 2026-10-17 before this move).
-          #
+          description = "llama.cpp chat server (${cfg.alias}, CPU MoE, native tool calls — backend, socket-activated)";
+          # ON-DEMAND (2026-11-18, freeze-41 item 30): deliberately NOT
+          # wantedBy anything — the public socket owns activation. History:
+          # the always-on posture rode late-applications.target (itself the
+          # 2026-10-26 fix for the 2026-10-17 boot-transaction load), and its
+          # boot-time cold page-in was the freeze #40/#43 storm seed. The
+          # per-connection bridge (llama-chat@.service) wants+after this
+          # unit, so first client traffic starts the load; the psi-wait-gate
+          # below holds it out of IO storms; the idle TTL unloads it after
+          # cfg.keepAlive quiet.
           # NO network-online.target (owner catch 2026-10-17): loopback-only
           # binder (host assertion) + local GGUF + loopback probe — `lo` is
           # up before multi-user on every boot (redis/postgres bind loopback
-          # with no network gating). network-online would order the load
-          # behind NM-wait-online's FULL-link verdict — minutes-long during
-          # wifi-failover windows, for zero benefit.
-          # late-applications (2026-10-26 ordering-cycle class fix):
-          # membership replaces the old after=multi-user.target edge —
-          # same post-boot start, no backward edge into the boot
-          # transaction (the gitea-runner cycle class).
-          wantedBy = [ "late-applications.target" ];
+          # with no network gating).
           unitConfig.ConditionPathExists = cfg.modelPath;
 
           serviceConfig = lib.mkMerge [
@@ -243,12 +310,17 @@ _: {
               # time the quota grants, so a 400% quota would silently quarter
               # the measured ~17 tok/s interactive throughput.
               CPUQuota = "1200%";
-              # Same D-state rationale as llama-rag: a stop during saturated
-              # disk I/O cannot complete until the mmap reads finish. The
-              # initial 23.4 GB page-in is IO-heavy but one-shot at boot —
-              # 15min covers a cold page-in under an IO storm PLUS the
-              # ExecStartPost probe budget below (was 10min).
-              TimeoutStartSec = "15min";
+              # psi-wait-gate (M10.3 pattern, llama-vlm form): holds the
+              # 23.4 GB GGUF cold page-in until io-PSI calms — the freeze
+              # #40/#43 class was exactly a cold load landing inside an IO
+              # storm. --on-exhausted refuse (freeze #56): an exhausted
+              # proceed admitted a 9 G read 7 s before that cut; exhaustion
+              # fails the unit, restart backoff retries, bridges keep
+              # queuing in the socket backlog. 15-min gate.
+              ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-chat --psi-max 30 --max-wait-sec 900 --on-exhausted refuse";
+              # Gate budget (15 min) + cold page-in + probe budget below:
+              # the 23.4 GB load measured ~8.3 min cold under concurrent IO.
+              TimeoutStartSec = "35min";
               TimeoutStopSec = "2min";
               ExecStart = execStart;
               # Start contract (2026-10-08, same doctrine as the daemon
@@ -263,7 +335,7 @@ _: {
               # TimeoutStartSec: 240 exhausted at exactly 8min on the
               # 2026-10-12 boot (page-in starved by the IO storm), wasting
               # the 8min load and forcing a full remap on the restart.
-              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 400 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.port}/health";
+              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 400 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.backendPort}/health";
             }
             # harden derives MemoryHigh (the throttle watermark) as 80% of
             # the MemoryMax ARGUMENT — calling `harden {}` bare merges its
@@ -285,32 +357,94 @@ _: {
           startLimitIntervalSec = 300;
         };
 
-        systemd.services.llama-chat-ensure = {
-          description = "Converge llama-chat when its model file exists (ConditionPathExists never re-evaluates)";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${ensureScript}/bin/llama-chat-ensure";
+        # Public activation surface (llama-vlm pattern): Accept=true —
+        # every client connection spawns one llama-chat@<conn>.service
+        # bridge that dials the backend. Template name MUST match the
+        # socket name (systemd 261 naming rule).
+        systemd.sockets.llama-chat = {
+          description = "llama.cpp chat server '${cfg.alias}' (public socket, on-demand)";
+          wantedBy = [ "sockets.target" ];
+          listenStreams = [ "${cfg.host}:${toString cfg.port}" ];
+          socketConfig = {
+            Accept = true;
+            # llama-server default n_slots=4; cap concurrent bridges below
+            # it — beyond that, connections queue in the backlog (slow
+            # answer, never refused).
+            MaxConnections = 4;
           };
         };
 
-        systemd.timers.llama-chat-ensure = {
-          description = "Re-attempt llama-chat convergence every 10 minutes";
+        # Per-connection bridge — template name MUST match the socket
+        # (systemd 261). The "llama-chat@" template and the plain
+        # "llama-chat" backend never collide as unit names.
+        systemd.services."llama-chat@" = {
+          description = "llama-chat per-connection proxy: client fd ↔ backend TCP";
+          after = [ "llama-chat.service" ];
+          wants = [ "llama-chat.service" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "exec";
+              ExecStart = "${bridgeConn}/bin/llama-chat-proxy-conn";
+              StandardInput = "socket";
+              StandardOutput = "socket";
+              # socat bridge exits 143 on any planned stop (idle TTL, unit
+              # churn, memory-guard sacrifice, shutdown) — without this
+              # every planned stop parks the bridge FAILED and exit-4s a
+              # deploy running at that moment (fastflowlm 2026-10-07 class).
+              # Per-connection bridges are stateless; the socket re-spawns
+              # them per client.
+              SuccessExitStatus = [ 143 ];
+            }
+            (harden { MemoryMax = "64M"; })
+          ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+        };
+
+        systemd.services.llama-chat-idle = {
+          description = "Stop llama-chat backend after idle TTL expires";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${idleCheck}/bin/llama-chat-idle-check";
+          };
+        };
+
+        systemd.timers.llama-chat-idle = {
+          description = "Probe llama-chat idle state every 5 minutes";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "5min";
-            OnUnitActiveSec = "10min";
+            OnUnitActiveSec = "5min";
             AccuracySec = "1min";
           };
+        };
+
+        # Port hygiene: the private backend port joins the audit allowlist
+        # beside the registry-covered public port (llama-vlm does the same
+        # for its hop).
+        services.gatus-coverage-audit = lib.optionalAttrs (options ? services.gatus-coverage-audit) {
+          allowPorts = [
+            cfg.port
+            cfg.backendPort
+          ];
         };
 
         # Service-integration registry entry: loopback-only daemon exposed
         # via the Layer 2 vHost (https://llama.<domain>) — llama-server's
         # built-in web UI (/) + OpenAI API (/v1) behind oauth2-proxy
         # forward-auth for external clients, LAN bypass; the loopback-bind
-        # assertion above still holds (Caddy proxies, the port never binds
-        # externally). Gatus /health is the wedge detector (the freeze-#5
-        # class): without it the port is served but nothing notices a
-        # wedged/missing brain until InboxClean chat turns start failing.
+        # assertion above still holds (Caddy proxies to the PUBLIC SOCKET,
+        # the port never binds externally — external requests activate the
+        # backend on demand like loopback ones).
+        # NO gatus check + monitored = false (2026-11-18, on-demand posture):
+        # an active /health probe is a cold-load treadmill — every probe
+        # spawns a bridge, starts the backend, reloads 23.4 GB after the
+        # idle TTL (the freeze-#56 visionreviewd class, but at 60 s gatus
+        # cadence it would be PERMANENT residency). Wedge detection moves
+        # to: the ExecStartPost start contract (a wedged load FAILS the
+        # unit, restart backoff heals) + the idle TTL (a wedged serving
+        # process stops logging traffic and gets stopped) + consumer-side
+        # alerting (ai-meter upstream 502s).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           llama-chat = {
             inherit (cfg)
@@ -319,29 +453,13 @@ _: {
               ;
             subdomain = "llama";
             vHost.layer = "protected";
-            monitored = true;
-            checks = [
-              {
-                # /health is 200 only after the GGUF is mapped and the model
-                # is serving; it 503s while loading and refuses when the unit
-                # is down or skipped (ConditionPathExists with a missing GGUF).
-                name = "llama.cpp Chat";
-                group = "AI";
-                url = "http://localhost:${toString cfg.port}/health";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 2000"
-                ];
-                alert = "llama.cpp chat server down — InboxClean /chat agent brain unreachable. Check: systemctl status llama-chat, journalctl -u llama-chat -n 50 (freeze-#5 class: 94% single-thread CPU spin after the vocab warning means the ROCm/CPU path wedged).";
-              }
-            ];
+            monitored = false;
+            checks = [ ];
             homepage = {
               name = "llama.cpp Chat";
               group = "AI";
-              description = "Qwen3.6 35B-A3B brain — OpenAI-compatible, native tool calls";
+              description = "Qwen3.6 35B-A3B brain — OpenAI-compatible, native tool calls (on-demand: first request may wait for the model load)";
               icon = "open-webui.png";
-              checkUrl = "http://127.0.0.1:${toString cfg.port}/health";
             };
           };
         };

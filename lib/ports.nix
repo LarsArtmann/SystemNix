@@ -179,11 +179,15 @@
         # a real listener target needs an owner of record).
         llama-soak = 18848;
 
-        # llama.cpp chat server (ROCm GPU, always-on) — the interactive agent
-        # brain for InboxClean's dashboard chat (services.llama-chat). OpenAI-
-        # compatible /v1 with native tool calls; distinct from FastFlowLM's
-        # socket-activated NPU endpoint (:52625, async workloads only).
+        # llama.cpp chat server (CPU, socket-activated since 2026-11-18) —
+        # the interactive agent brain for InboxClean's dashboard chat
+        # (services.llama-chat). OpenAI-compatible /v1 with native tool
+        # calls; public socket + private backend (the socat bridge forwards
+        # only when the backend binds), same hop shape as llama-vlm's
+        # 812x/813x pair. Distinct from FastFlowLM's socket-activated NPU
+        # endpoint (:52625, async workloads only).
         llama-chat = 8850;
+        llama-chat-backend = 8851;
 
         # llama.cpp vision-language servers (CPU, socket-activated) — NSFW-audit
         # captioning/verdict stack (services.llama-vlm). Public socket on 812x,
