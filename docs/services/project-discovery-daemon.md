@@ -80,6 +80,11 @@ ALL THREE surfaces together (same value — identical `go.mod`):
 2. same module → `admin.package`
 3. `lib/lars-packages.nix` → PATH surface
 
+**Currently DROPPED (2026-11-18):** the 64f5f1b lock float refreshed
+pdd's nested go-daemon/SDK inputs to match its flake.nix URL rev pins, so
+both FODs produce the hash upstream itself bakes (`Nldg+4vI…`). Re-add
+only when a future float re-drifts, with nix-hash-fix evidence.
+
 ## Ops
 
 - Redeploy runbook (upstream): `deploy/README.md` in the project repo —

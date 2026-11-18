@@ -96,7 +96,9 @@
           # bakes at 64f5f1b (first-hand keep-going,
           # ~/.cache/pdd-toplevel-build2.log) — the documented drop
           # condition. Re-add ONLY via nix-hash-fix evidence, never by hand.
-          package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package =
+            lib.mkDefault
+              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service
           # users cannot see a 0700 home).
@@ -107,7 +109,9 @@
           # 64f5f1b — see the daemon package comment above); port from the
           # registry, never a literal.
           admin = {
-            package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
+            package =
+              lib.mkDefault
+                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };
