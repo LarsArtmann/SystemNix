@@ -392,6 +392,28 @@
               (serviceOneshotDefaults { })
             ];
           };
+
+          # Liveness watchdog (2026-11-18): OnFailure covers crashes only —
+          # the 2026-11-17 22:31 CLEAN stop sat unnoticed for 19h while an
+          # entire mission queued behind it. The probe asks /healthz (the
+          # dumb-on-purpose unauthenticated liveness surface) and alarms
+          # on down/slow; script + thresholds live in the crm repo
+          # (scripts/liveness-check.py, same contract as the alarm pair).
+          crm-liveness = {
+            description = "Kith CRM liveness watchdog (/healthz down or slow)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = user;
+                Group = group;
+                ExecStart = [
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/liveness-check.py"
+                ];
+              }
+              (serviceOneshotDefaults { })
+            ];
+          };
         };
 
         systemd.timers.crm-backup = {
@@ -425,6 +447,17 @@
             # 04:10 — after the backup window, before work hours.
             OnCalendar = "*-*-* 04:10:00";
             RandomizedDelaySec = "10min";
+            Persistent = true;
+          };
+        };
+
+        systemd.timers.crm-liveness = {
+          description = "Kith CRM liveness watchdog schedule (every 5 min)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "5min";
+            AccuracySec = "30s";
             Persistent = true;
           };
         };

@@ -35,7 +35,14 @@ let
   # hosts/pbx/mail.nix plan). Rotation runbook (never hand-edit the
   # value): mint app password via admin JMAP → sops set this key →
   # restart cv-server / deploy; destroy the old object via
-  # x:AppPassword/set destroy. Full recipe incl. revocation: CV
+  # x:AppPassword/set destroy. 0.16 recipe (2026-11-18, pim-sync mint
+  # live-proven): the JMAP envelope RENAMED — "methodCalls" not
+  # "methods", capability urn:stalwart:jmap, method x:AppPassword/set,
+  # and accountId at the SET-ARGS level {"accountId":"<principal-id>",
+  # "create":{...}} / "destroy":["<id>"]; the old methods-envelope body
+  # 400s notRequest. Admin cross-account mint works (accountId honored
+  # for x:AppPassword/set); principal ids come from x:Principal/get.
+  # Full recipe incl. revocation: CV
   # docs/planning/2026-11-10_01-45_centralized-project-email-plan.md §3.
   # History: the declaring session left the key unset with every deploy
   # wedged behind the sops-key-audit gate — briefly shipped as a

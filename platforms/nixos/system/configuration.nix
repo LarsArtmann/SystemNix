@@ -984,10 +984,13 @@ in
       # + 5min jittered timer; Stalwart single truth, Google a sync edge).
       # DORMANT until the owner gates complete (docs/services/pim-sync.md):
       # (1) GCP OAuth client, publishing status "In production" (testing
-      # tokens die after 7 days — InboxClean lesson), (2) Stalwart DAV
-      # creds + OAuth client JSON into sops, (3) per-account browser
-      # consent tokens, (4) flip pim-sync.enable + deploy (dry-run timer
-      # first, journal review, then live=true + maxChanges cap).
+      # tokens die after 7 days — InboxClean lesson; console-only, the
+      # Desktop client has no gcloud API), (2) DONE agent-side
+      # 2026-11-18: bot.pim-sync@larsartmann.cloud provisioned on the pbx
+      # + app password in sops (CardDAV auth verified live), (3)
+      # per-account browser consent tokens, (4) flip pim-sync.enable +
+      # deploy (dry-run timer first, journal review, then live=true +
+      # maxChanges cap).
       # enable = false DELIBERATE: upstream has NO idle no-op — an enabled
       # unit without token files fails every 5min (discoverAccounts errors
       # on an empty tokensDir, cmd/pim-sync/sync.go:359) → OnFailure alert
