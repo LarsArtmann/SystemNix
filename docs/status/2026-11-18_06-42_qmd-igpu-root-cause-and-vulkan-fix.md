@@ -90,7 +90,13 @@ qmd's GGUF inference goes through node-llama-cpp, whose Linux backends are CPU /
 6. **Prototype → package faster**: the prototype proved every layer; the package only needed to re-encode it — next time wire the derivation WHILE the last probes run.
 7. **Guard the shared `result` symlink**: leaf-package builds should `--out-link` a named link (e.g. `result-qmd-gpu`) instead of clobbering/reading the generic `result` other sessions use.
 
-## f) NEXT (up to 50 — awaiting your triage, deliberately not harvested)
+## f) NEXT — HARVESTED 2026-11-18 ~07:5x per owner go (queue + domain files carry all open rows; ledger below)
+
+**Executed in-session:** 1 float vetted (cvagent + go-nix-helpers owner-input FORWARD floats — policy-clean, no third-party pins touched) · 19 CHANGELOG entry · 20 shell-devtools cross-link · 22 this harvest · 23 prototypes trashed (~1.5G: qmd-tree-copy 1.3G + qmd-vk-fixed 77M + nlc3223 73M + shim/logs; real `~/.cache/qmd` state untouched) · 39 gotchas-archive row · 42 resolved (foreign CHANGELOG edit committed in 68cdfca51) · 45 no secrets typed ✓
+
+**No-op verdicts (verified):** 21 — no 2026-11-17/18 status report mentions qmd besides this one (nothing to cross-link) · 35 — sole node-llama-cpp consumer on the box is the qmd wiring itself (configuration.nix; no other crushrc/service touches it) · 36 — bun copy is incompressible (original 794M apparent ≈ 792.9M physical; gpu build +96M same story; compress=zstd correctly no-ops on binaries) · 41 — repo-root `result` now points at a FRESH cv-go-modules drv (rebuilt 07:36 by another session, actively in use — foreign, left alone) · 44 — no pin needed, GC collects the two vulkan-loader paths
+
+**Deliberately skipped:** 2 push — never-push-without-explicit-ask stands; deploy needs no push (owner can push the wave when ready)
 
 **Deploy & verify (the fix's last mile)**
 1. Vet the foreign flake.lock float in 98dfd8643 (3 rev moves — identify inputs, find the owning session) before push.
