@@ -1,7 +1,20 @@
 # llama-chat — InboxClean's chat agent brain
 
-Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
-35B-A3B MoE with native tool calls, OpenAI-compatible at `127.0.0.1:8850/v1`.
+Socket-activated CPU llama-server (llama.cpp) serving Lars's abliterated
+Qwen3.6 35B-A3B MoE with native tool calls, OpenAI-compatible at
+`127.0.0.1:8850/v1`. On-demand since 2026-11-18 (freeze-41 report item 30,
+the module's sanctioned return path after the Nov 2-3 freeze chain retired
+the always-on posture): a public systemd socket (`llama-chat.socket`,
+Accept=true) owns :8850, each client connection spawns a per-connection
+socat bridge (`llama-chat@<conn>.service`) that dials the private backend
+(`llama-chat.service`, :8851), and the backend's 23.4 GB cold load is
+**psi-wait-gated** — it waits for io-PSI calm (≤30%, up to 15 min) before
+mapping the model, so a first request under an IO storm queues in the
+socket backlog (slow answer, never a refused one). An idle TTL (60 min
+without bridge traffic) unloads the model; the next connection reloads
+it. Nothing cold-loads at boot or at deploy anymore — the
+`llama-chat-ensure` convergence timer is retired with the always-on
+posture (the socket IS the convergence).
 
 ## Why this shape
 
@@ -60,13 +73,14 @@ sha256 `8d344a4336d8ea7da0cbfc12792d1471e568be7abe8930c52260698bfd01d731`
 (locally measured 2026-10-08; the earlier `1c6a4813…` noted here was the HF
 xet-bridge ETag, not a sha256), completed 2026-10-08 — the April download had been
 interrupted). Part of the Jan model tree; no service fetch unit. If the
-file is missing the unit skips (`ConditionPathExists`) — but conditions
-never RE-evaluate, so the `llama-chat-ensure` 10-min convergence timer
-(unit + timer in the module, added 2026-10-08) starts the unit once the
-file completes; "started" additionally means `/health` serves 200
-(ExecStartPost start-contract; TimeoutStartSec 15min covers a cold 23.4 GB
-page-in + probe). First convergence live 2026-10-08 20:23–20:26: timer
-fired, model cold-loaded 3m16s, `/v1/models` serving — zero sudo.
+file is missing the backend unit skips (`ConditionPathExists`) and the
+socket's bridges time out after 30 min — the model file is the one
+external dependency. "Started" still means `/health` serves 200 on the
+BACKEND port :8851 (ExecStartPost start-contract; TimeoutStartSec 35min
+covers the psi-wait gate + a cold 23.4 GB page-in + probe budget). The
+2026-10-08 ensure-timer convergence machinery (timer re-starting a
+condition-skipped unit) was RETIRED with the always-on posture on
+2026-11-18 — the socket IS the convergence now.
 
 Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive>
 
@@ -91,11 +105,16 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 
 ## Operations
 
-- Exposed: `https://llama.home.lan` (integration-registry entry: `subdomain = "llama"`, Layer 2 `protected` vHost — oauth2-proxy forward-auth for external clients, LAN bypass; the daemon keeps its loopback bind, Caddy proxies to 127.0.0.1:8850). Serves llama-server's built-in web UI at `/` and the OpenAI API at `/v1`. PapDashboard "AI" tab tile `llama.cpp Chat` probes the loopback `/health` via `checkUrl`.
-- Monitored: gatus check `llama.cpp Chat` probes `/health` every 60s (200 =
-  model mapped and serving; 503 while loading; red when the unit is down or
-  skipped) and the unit is in system-health's monitored set
-  (`monitored = true`). The integration-registry entry lives in this module.
+- Exposed: `https://llama.home.lan` (integration-registry entry: `subdomain = "llama"`, Layer 2 `protected` vHost — oauth2-proxy forward-auth for external clients, LAN bypass; Caddy proxies to the PUBLIC SOCKET, so external requests activate the backend on demand like loopback ones). Serves llama-server's built-in web UI at `/` and the OpenAI API at `/v1`.
+- NOT actively probed (on-demand posture, 2026-11-18): no gatus check and
+  no dashboard checkUrl — an active /health probe is a cold-load treadmill
+  (the freeze-#56 visionreviewd class; at gatus's 60 s cadence it would
+  mean permanent residency, defeating the whole design). Wedge detection:
+  the ExecStartPost start contract fails a wedged load (restart backoff
+  heals), the idle TTL stops a wedged server that stopped serving traffic,
+  and consumers alert (ai-meter upstream 502s). `monitored = false` in the
+  registry because a socket-activated backend's inactive state is NORMAL,
+  not a health signal.
 - Swap the brain: change `services.llama-chat.modelPath` + `alias` (the
   inboxclean `LLM_MODEL` follows automatically) — e.g. the dense 27B
   sibling, or a future GPU re-enable once the ROCm wedge is fixed upstream.
@@ -106,9 +125,11 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
     elsewhere (configuration.nix etc., leaving this module's default stale)
     is INVISIBLE to that derive — pass `MODEL=<gguf>` to the bench
     explicitly in that case.
-- Verify: `curl :8850/v1/models` must list the alias;
-  `journalctl -u llama-chat -n 50` for load/wedge signatures (the freeze-#5
-  class: 94% single-thread CPU spin after a vocab warning).
+- Verify: `curl :8850/v1/models` must list the alias (first request after
+  an idle unload pays the cold load — watch `systemctl status
+  llama-chat@*.service` for live bridges and `journalctl -u llama-chat -n 50`
+  for load/wedge signatures, the freeze-#5 class: 94% single-thread CPU
+  spin after the vocab warning).
 - The 23.4 GB expert pool lives in page cache (charged to the unit on a
   cold cache); measured idle-serving footprint ~32.3 GB (weights + ~8.9 GB
   anon KV/compute), so `memoryMax = "48G"` and harden derives
