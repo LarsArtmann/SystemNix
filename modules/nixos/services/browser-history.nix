@@ -64,8 +64,17 @@
       # deploy while upstream was already green). Upstream owns its hashes —
       # re-add ONLY via nix-hash-fix evidence, never by hand (class comment
       # at buildflow; probe protocol docs/agents/go-ecosystem.md).
+      # VENDORHASH SHIM RE-ADDED 2026-11-18 FOD-storm wave (bootstrap
+      # exception): the lock float to browser-history@f2ddc0c re-staled the
+      # server FOD under our graph — spec RPUMNb…, got BdJyCEvl… (first-hand
+      # keep-going, ~/.cache/lockfloat/keepgoing-1118.log; 9-FOD re-serve
+      # day). Upstream owns its hashes — drop when upstream bakes the got
+      # hash; re-add ONLY via nix-hash-fix evidence, never by hand
+      # (class comment at buildflow; probe protocol docs/agents/go-ecosystem.md).
       serverPkg =
-        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
+        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server.overrideAttrs {
+          vendorHash = "sha256-BdJyCEvleDd/wxCQ8eMUqNopIkK07GK99ZOh10DO8RE=";
+        };
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;

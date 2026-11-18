@@ -253,9 +253,12 @@ lib.filterAttrs (_: v: v != null) {
   # 11-12 upstream bake, stale for the new rev), got POIy8+72 (first-hand
   # keep-going, ~/.cache/signoz-fod-fix/keepgoing-post5.log). Drop when
   # upstream bakes POIy8+72; re-add ONLY via first-hand evidence.
+  # RE-STALE 2026-11-18 FOD-storm wave: at erraudit@38c306a (lock moved
+  # to master tip) spec POIy8+72, got Y0go8KKA (first-hand keep-going,
+  # ~/.cache/lockfloat/keepgoing-1118.log; 9-FOD re-serve day).
   erraudit =
     flakePkgShim inputs.erraudit "default"
-      "sha256-POIy8+72rjYmP+FMhXim8MbV8tu6NetX9M0m4BsEGWM=";
+      "sha256-Y0go8KKAEFDQglb06UMq1D7RuZ5QJVEdF1Yqm3+wNyI=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -340,9 +343,11 @@ lib.filterAttrs (_: v: v != null) {
   # at d338a0d1 is STILL stale (buildflow-managed, paste pushed this
   # session) — shim carries the got-hash until a re-lock carries the
   # bake, then drop. Re-add ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE 2026-11-18 FOD-storm wave: at 19b75a02 spec tXX142O1, got
+  # QLQWBZhx (first-hand keep-going, keepgoing-1118.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-tXX142O1SZhTSIB5BTlZQXcql+0bi6Fuu8Dh9RemwI4=";
+      "sha256-QLQWBZhxPw+xzbRJvLkY+vEDcS/dXMRtNAHlXmdM1no=";
   # invoices — billing CLI + dashboard backend (`invoices dashboard`,
   # deployed as the invoices-dashboard unit since 2026-11-10: loopback
   # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
@@ -479,9 +484,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 0faa5414 spec
   # EQqX6jma, got h6T875PJ (cqrs-shim-toplevel-proof.log). Same follower
   # re-derivation class. Drop when upstream bakes the got hash.
+  # RE-STALE 2026-11-18 FOD-storm wave: at 5d673111 spec h6T875PJ, got
+  # nMgP22rT (first-hand keep-going, keepgoing-1118.log).
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-h6T875PJxvvhn5K1EpU6LNd5dA6ohCW+Ztwkmm4zkh8=";
+      "sha256-nMgP22rTePMLsRCK8kXWqSoeQeohWYFwNPkTfZDe4qw=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
@@ -541,9 +548,11 @@ lib.filterAttrs (_: v: v != null) {
   # /var/log/systemnix-deploys/2026-11-13_09-17-57.log:16367). Drop when
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence,
   # never by hand.
+  # RE-STALE 2026-11-18 FOD-storm wave: at 84061403 spec TQB8jwNI, got
+  # ZzTU3Ja3 (first-hand keep-going, keepgoing-1118.log).
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-TQB8jwNI5N12IKiI+TWsMMIGu6K/I3kiPRGb9hu5o58=";
+      "sha256-ZzTU3Ja3hWRtJ6tUGWOWqYaFQ2PnwnhEe7EROg9E7Ns=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
@@ -569,9 +578,11 @@ lib.filterAttrs (_: v: v != null) {
   # hxcotRZ7 (float-proof-20261106-000533.log); pdd does not follow our
   # pins (own lock governs). Drop when upstream bakes the got hash;
   # re-add ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE 2026-11-18 FOD-storm wave: at f0b6381 spec Rd4vxqsi, got
+  # 5B2hM6qB (first-hand keep-going, keepgoing-1118.log).
   project-discovery-daemon =
     flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
+      "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
@@ -629,7 +640,15 @@ lib.filterAttrs (_: v: v != null) {
   # new got 7yqBeT02 (toplevel-proof-20261112-drop.log, got==bake); the
   # morning's f8YgjTEG paste re-staled within hours. Both surfaces
   # un-shimmed in the same pass. Re-add ONLY via nix-hash-fix evidence.
-  projects-management-automation = flakePkg inputs.projects-management-automation;
+  # RE-ADDED 2026-11-18 FOD-storm wave (bootstrap exception, same class as
+  # the 11-14 erraudit re-add): the lock float moved pma to f5c69f88,
+  # whose upstream bake hsRXenCu no longer reproduces under our graph —
+  # spec hsRXenCu, got bW3OHQ3D (first-hand keep-going,
+  # keepgoing-1118.log). Drop when upstream bakes the got hash; re-add
+  # ONLY via nix-hash-fix evidence, never by hand.
+  projects-management-automation =
+    flakePkgShim inputs.projects-management-automation "default"
+      "sha256-bW3OHQ3DKhFSBGc7U8D6D+uQfb5RaRK0N6/sg2wMl/U=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

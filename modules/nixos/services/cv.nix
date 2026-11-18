@@ -243,8 +243,12 @@
       # upstream bakes H+R596… (paste-upstream → push → re-lock,
       # docs/todo/upstream.md); re-add ONLY via first-hand nix-hash-fix
       # evidence, never by hand.
+      # TWENTY-THIRD RE-STALE 2026-11-18 FOD-storm wave: cv kept floating
+      # (ffb48b7 → 7e89bf3 → 178ccec within hours); at 178ccec spec
+      # H+R596…, got hDAVgn6… (first-hand keep-going,
+      # ~/.cache/lockfloat/keepgoing-1118.log). Same drop/re-add protocol.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-H+R596Cn+10IbFUCujrdJk7l9Nf/ptMXz4fsyGpRLng=";
+        vendorHash = "sha256-hDAVgn6WlnmjX3CENRJ6gFCvlTurbjpefXOGOxcTiTY=";
       };
     in
     {

@@ -1092,6 +1092,13 @@
     # bumps flow via `nix flake lock --update-input crm --refresh`; a stale
     # upstream-baked hash surfaces as a deploy-time FOD mismatch and gets
     # fixed upstream (house doctrine), never via a consumer shim.
+    # ROLLBACK REPLAY 2026-11-18 FOD-storm session: lock re-floated to tip
+    # b3b1382 (pin-convergence wave2, templ files untouched since 4bdc3c2)
+    # which still carries the 3 dead-API calls (templ.ResolveAttributeValue /
+    # templ.JoinURLErrs deleted in templ 0.3.1100) — the 11-04 session's
+    # forensics stand. Lock rolled BACK to b7f8615 (the RUNNING binary's rev,
+    # 0 dead calls, byte-identical store path = zero rebuild) until upstream
+    # regenerates the templ files (push-gated row, docs/todo/upstream.md).
     crm = {
       # Pin history (compressed): 197bdf1 (2026-11-06 templ-API hard pin) →
       # f2d1726 → e383ba9 → 9d96dad (login auto-forward) → 98cd15c
