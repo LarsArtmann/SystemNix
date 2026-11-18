@@ -110,7 +110,18 @@
           # ALREADY BAKES the new got 7yqBeT02 (got==bake); the morning's
           # f8YgjTEG paste re-staled within hours. Both surfaces
           # un-shimmed in the same pass.
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # RE-ADDED 2026-11-18 FOD-storm wave (MODULE surface — twin of the
+          # lars-packages re-add in 421a084ec; both surfaces must move
+          # together per the twin-surface rule): the lock float to f5c69f88
+          # staled upstream's baked hsRXenCu under our graph — spec hsRXenCu,
+          # got bW3OHQ3D (first-hand keep-going,
+          # ~/.cache/toplevel-fix-20261118/enumeration.log; value AGREES
+          # with the sibling session's keepgoing-1118.log stamp). Drop when
+          # upstream bakes the got hash; re-add ONLY via nix-hash-fix
+          # evidence, never by hand.
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-bW3OHQ3DKhFSBGc7U8D6D+uQfb5RaRK0N6/sg2wMl/U=";
+          };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

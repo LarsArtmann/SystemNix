@@ -71,9 +71,15 @@
           # upstream's own-lock hash OW+eywme… went stale through our graph
           # (spec OW+eyw, got hxcotRZ, float-proof-20261106-004759.log);
           # lars-packages surface re-shimmed in the same wave — edit BOTH.
+          # RE-STALE 2026-11-18 FOD-storm wave (MODULE surface — the
+          # lars-packages surface moved in 421a084ec the same wave; both
+          # surfaces must move together): at f0b6381 spec Rd4vxqsi, got
+          # 5B2hM6qB (first-hand keep-going,
+          # ~/.cache/toplevel-fix-20261118/enumeration.log; value AGREES
+          # with the sibling session's keepgoing-1118.log stamp).
           package = lib.mkDefault (
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-              vendorHash = "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
+              vendorHash = "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
             }
           );
           # Discovery runs git inside the search-path repos and reads
