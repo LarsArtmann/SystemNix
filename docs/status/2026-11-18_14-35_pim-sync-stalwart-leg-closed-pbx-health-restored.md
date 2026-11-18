@@ -94,10 +94,10 @@
 **pbx cleanup from this session:**
 17. ★ Rotate `stalwart_fallback_admin` (leaked d1): mint-successor flow — new value into `/var/lib/telephony-secrets/` + push-secrets + stalwart restart; canaries use it
 18. ★ Rotate the pbx NetBird API PAT (`netbird_api_pat` expired, 401) in the NetBird console → `push-secrets.sh` → netbird-provision green
-19. Fix `pbx-fetcher-stall` canary blindness (pop3-scoped journal query returns nothing — unit name or journal namespace drift; 48 fails/24h)
-20. go-health-dashboard upstream fix: drop DynamicUser+LoadCredential for static-user + direct secret reads (webphone pattern) — the hub has NEVER been green; EACCES on a credential dir that never materializes
-21. pbx `secrets-perms.nix`: add the `health_oauth2_client_secret` + `health_session_secret` legs (chgrp the hub's group, 0640) when 20 lands
-22. After 20/21: reset-failed + restart health-dashboard, pbx-surface-health, telephony-health → verify all green; then the exit-4 trap on pbx deploys clears
+19. Fix `pbx-fetcher-stall` canary blindness (pop3-scoped journal query returns nothing — unit name or journal namespace drift; 48 fails/24h) **[PREMISE CORRECTED + FIXED 2026-11-18 evening]** not unit-name/namespace drift: the unit answers, no journald namespace exists, and the tracer shape is intact (smtp entries carry `LISTENERID=smtp` in the same window) — the zero-pop3 reading was the 2026-10-26+ Gmail stall itself, and the classifier mislabeled it NO-EVIDENCE. Second live find: real `-o verbose` exports carry NO blank lines, so the RS='' block counters collapsed the export into one record and could cross-match a pop3 scanner block with an smtp "Logged in" elsewhere in the window (false-green class). Fixed in pbx-artmann 27ce7c7d: header-delimited per-entry counters, live-journal-with-zero-pop3 → STALL rc 1 (owner fix leg in the message), NO-EVIDENCE reserved for truly-empty exports; fixtures reshaped to the real anatomy; 4-row fixture contract green; real-6h replay verdicts STALL (8 entries, 0 pop3). REMAINING: the owner leg — restore the Gmail polling lane
+20. go-health-dashboard upstream fix: drop DynamicUser+LoadCredential for static-user + direct secret reads (webphone pattern) — the hub has NEVER been green; EACCES on a credential dir that never materializes **[DONE 2026-11-18 evening, upstream 39c3465 pushed]** root cause corrected: the credential copy DID materialize but kept the source's `0600 root` mode (LoadCredential preserves it), so the DynamicUser died opening the file — live journal line: `open /run/credentials/health-dashboard.service/client-secret: permission denied`, then start-limit-hit. Module now: static `health-dashboard` user/group, env points straight at the configured files, secret-file options str→path; standalone module eval green
+21. pbx `secrets-perms.nix`: add the `health_oauth2_client_secret` + `health_session_secret` legs (chgrp the hub's group, 0640) when 20 lands **[DONE 2026-11-18 evening]** legs landed + ordering pinned both directions (perms `before health-dashboard.service`, hub `after` provision + perms); rode heuristic commit 0e6856c4 with the runbook + lock — intent documented in §h; pbx toplevel eval green and the rendered unit contract verified (User/Group `health-dashboard`, group exists, Before/After lists correct)
+22. After 20/21: reset-failed + restart health-dashboard, pbx-surface-health, telephony-health → verify all green; then the exit-4 trap on pbx deploys clears **[BLOCKED on owner]** needs `~/.pbx-prod-secrets/push-secrets.sh` run (health_session_secret first ride — the file exists in `~/.pbx-prod-secrets/` and the derived push list already carries it) + the restage-and-gate switch; the hub would still crash-loop on the MISSING session secret if switched without the push
 23. Attribute the 2026-11-17 22:31 crm-server stop (clean systemd stop, actor unknown — /proc is gone; .crush DB + the parallel session's nh-switch RCA are the leads)
 24. Verify the parallel session's crm-liveness watchdog actually fires on a down/slow healthz (it exists precisely because of a6)
 25. Mirror the 0.16 JMAP recipe into CV plan §3 (dead recipe lives there too)
@@ -134,6 +134,26 @@
 1. **Which Google account is `personal` and which is `work`?** gcloud shows `lartyhd@gmail.com` and `lars@helpless.ai`; the token files + sops keys are named personal/work, and the consent flows must target the right inboxes. I found no explicit mapping anywhere in the pim-sync repo or SystemNix.
 2. **Fresh GCP project (`pim-sync-prod`, the oauth-setup.md recommendation) or reuse an existing one?** The doc recommends fresh for blast-radius + honest consent screen, and the client type is Desktop either way — but the console clicks are yours, so the project choice is yours to confirm. (If fresh: do you want me to pre-write the exact deep-link URLs for each console step?)
 3. **Rotate `stalwart_fallback_admin` NOW or in a maintenance window?** The rotation touches the telephony-secrets file + stalwart.service env + every canary unit that reads it (pbx-maumi-quiet-canary, stalwart-provision, stalwart itself). I printed the current value once; the risk window is transcript-local, but it is a production PBX admin credential — restart timing is your call.
+
+---
+
+## h) FOLLOW-UP SESSION (2026-11-18 evening)
+
+Agent-executable work landed while §g waits on the owner:
+
+| # | Item | State |
+| - | ---- | ----- |
+| h1 | §f.20 upstream module fix | DONE — 39c3465 pushed to go-health-dashboard: static `health-dashboard` user/group, direct secret reads, secret-file options str→path, CHANGELOG Fixed entry + binary doc comments; standalone module eval green (User/Group set, LoadCredential gone, env at deployment paths) |
+| h2 | §f.21 deployment glue | DONE in-tree (rode heuristic commit 0e6856c4 alongside the runbook + the lock float — intent documented here and in the §f row annotations): secrets-perms health legs 0640 root:health-dashboard + `before health-dashboard.service`, hub `after` provision + perms, runbook triage bullet for the new EACCES shape; pbx toplevel eval green; rendered contract pinned live |
+| h3 | §f.19 canary verdicts | DONE — pbx-artmann 27ce7c7d; premise corrected on row 19 (real bug found: blank-line-less exports broke the RS='' counters — cross-entry false-green class, pre-dating this session) |
+| h4 | §f.50 leak-record annotation | DONE — §d d1/d2 ARE the canonical leak record: the fallback-admin risk dies with the §f.17 rotation; the first app password is already dead (destroyed + clean re-mint). The .crush DB transcript rows stay historical; no purge attempted |
+| h5 | §f.32 / §e.8 harvest | DONE this pass: rows 17/18/19-remainder/20-22-remainder/23/25/31/35 cut into TODO_LIST + docs/todo/{services,pipeline}.md; rows 36-44 deliberately NOT harvested — docs/services/pim-sync.md owns the flip ladder step-for-step and re-queueing would drift it; rows 46-49 already exist in the queue (3302-3312 zone); row 36 verified CLOSED 2026-11-18 evening — no Gatus freshness/pim-sync reference exists anywhere in modules/ or lib/ (nothing pre-created to remove) |
+| h6 | Attribution | the parallel session's trunk-profile-split tick + telephony/webphone lock floats rode the same flake.lock heuristic commit as my go-health-dashboard float (0e6856c4) — both float sets are deliberate owner-repo floats, one train |
+
+§g remains fully open: all three questions + the GCP client JSON path are
+with the owner. The go-live ladder is otherwise agent-ready — the moment the
+client JSON lands, ingest → 4 consents → token ingest → doctor → flip runs
+as documented in §f.1-6.
 
 ---
 
