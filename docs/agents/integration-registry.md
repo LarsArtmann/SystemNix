@@ -189,7 +189,6 @@ drift red. Regenerate after any registry change:
 | alerts | alerts | — | — | — | — | — |
 | architecture-catalog | catalog | — | protected | architecture-catalog-sync | 3 | — |
 | attic | cache | 8200 | plain | attic | 2 | — |
-| audible-sync | — | — | none | audible-sync | — | — |
 | audiblesync | audiblesync | 8481 | protected | audiblesync | 2 | /mnt/pool/backups/audiblesync |
 | auth | auth | 1411 | — | — | — | — |
 | backup-coordination | — | — | none | backup-coordination | 1 | — |
@@ -204,7 +203,7 @@ drift red. Regenerate after any registry change:
 | crowdsec | — | 8082 | none | crowdsec | 1 | — |
 | crush-daily | daily | 8081 | protected | crush-daily | 1 | /mnt/pool/backups/crush-daily |
 | crush-events | — | — | none | crush-events-collector | 1 | — |
-| cv | cv | 8098 | plain | cv | 10 | /mnt/pool/backups/cv |
+| cv | cv | 8098 | plain | cv | 12 | /mnt/pool/backups/cv |
 | cvagent | cvagent | 8787 | protected | cvagent | 2 | — |
 | discordsync | discordsync | 8085 | protected | discordsync | 4 | /mnt/pool/backups/discordsync |
 | dmarc-monitor | — | — | — | — | — | — |
@@ -240,7 +239,7 @@ drift red. Regenerate after any registry change:
 | opencloud | cloud | 9500 | plain | opencloud | 2 | — |
 | openseo | seo | 3002 | none | openseo | 1 | — |
 | overview | overview | 8083 | protected | overview | 1 | — |
-| papdashboard | dash | 8088 | protected | papdashboard | 2 | — |
+| papdashboard | dash | 8088 | protected | papdashboard | 4 | — |
 | paperless | paperless | 2892 | none | paperless | 1 | /mnt/pool/services/paperless/export |
 | paperless-consumer | — | — | none | paperless-consumer | — | — |
 | paperless-db | — | — | none | paperless-db | — | /mnt/pool/backups/paperless |
@@ -256,6 +255,7 @@ drift red. Regenerate after any registry change:
 | pocket-id | auth | — | none | pocket-id | 2 | /mnt/pool/backups/pocket-id |
 | pool-recovery | — | — | none | pool-recovery | 1 | — |
 | pool-smart-metrics | — | — | none | pool-smart-metrics | 3 | — |
+| project-discovery-admin | — | 8765 | none | project-discovery-admin | 2 | — |
 | projects-management-automation | — | — | none | projects-management-automation | 2 | — |
 | projects-subvol | — | — | none | projects-subvol | 1 | — |
 | restic-app-dumps | — | — | none | restic-app-dumps | — | /mnt/pool/backups/restic-app-dumps |
