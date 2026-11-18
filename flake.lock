@@ -403,11 +403,11 @@
         "securitymd": "securitymd"
       },
       "locked": {
-        "lastModified": 1794983911,
-        "narHash": "sha256-je6pzM7Abn+PM5nRW89sed0L6ef2jrpFS/MTgC1bcm4=",
+        "lastModified": 1794996493,
+        "narHash": "sha256-a2eNEniccxExvJK2Id5C8fXyhDLOaRKsdRtDwOMxcf0=",
         "ref": "refs/heads/master",
-        "rev": "78cad0d2e9b6ab213fb7a539752db8e44d3f1a1f",
-        "revCount": 8450,
+        "rev": "e2d5bffe08eff561b7b23ab1336181a183c76f09",
+        "revCount": 8452,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -1499,11 +1499,11 @@
     "erraudit_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1794944776,
-        "narHash": "sha256-/XzkCaKTgh4502bcjCSKpk6P4WfjhdFCWClNmB9VilQ=",
+        "lastModified": 1794986995,
+        "narHash": "sha256-+HQA7wnjMoGUvwT+kfBA4RWVGdR1JXhVD8eJmNm2TUM=",
         "ref": "refs/heads/master",
-        "rev": "b1d5ee84afcdb1fa35ffb385026570903609f855",
-        "revCount": 1920,
+        "rev": "38c306a980bf702e5617835455ab0044b1a47207",
+        "revCount": 1922,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/erraudit"
       },
@@ -7738,11 +7738,11 @@
     "golangci-lint-auto-configure": {
       "flake": false,
       "locked": {
-        "lastModified": 1794909277,
-        "narHash": "sha256-47B/3alXwZVrxghvwkYSqJ1sN7inxvIVivn+2RqluMo=",
+        "lastModified": 1794989597,
+        "narHash": "sha256-j7m/HwGC6s2MLhKnxA6rMOVoq/y3nQ77FJbm89owUIM=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "91e56d3b67b4cd8728f4e4ba87360b2afd9b8ea0",
+        "rev": "19b75a0206306a45f4d6c40852abdd06e5719f95",
         "type": "github"
       },
       "original": {
@@ -7958,11 +7958,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1794995820,
-        "narHash": "sha256-mdmtGE6M0eT5Ec26hpWl06pDGWL/5rbXBA25Z24HKw0=",
+        "lastModified": 1794996202,
+        "narHash": "sha256-rddR7A/19+VxDHF6QkCi8WyCd9PVJIb3oQlL4d4jcQc=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "fdbf938104447428489e3aecfe242a46e2f17579",
+        "rev": "e08851bd94ded778ebd47a832fca22f9826ed421",
         "type": "github"
       },
       "original": {
@@ -9890,11 +9890,11 @@
     "project-meta": {
       "flake": false,
       "locked": {
-        "lastModified": 1794908584,
-        "narHash": "sha256-g1hmw7qENI5FGJ41HOsKp43fQxzxXri4/nUkkl8wT2Q=",
+        "lastModified": 1794989454,
+        "narHash": "sha256-HPWH+DQBmCZGdfjh2ujo4mXIM8G9QMaPIeY7NwNBIP0=",
         "ref": "refs/heads/master",
-        "rev": "873436a0fc572009bd88d62f4a96f4be7cfc994c",
-        "revCount": 917,
+        "rev": "84061403ec16ae8d541f668e2b24b3e207c72646",
+        "revCount": 918,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
