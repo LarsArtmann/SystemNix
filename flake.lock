@@ -4214,14 +4214,14 @@
         "lastModified": 1791006350,
         "narHash": "sha256-HMpKUHgozDnBkC7fB0k9BX9pazg9xRaMOyxI1+DaZSQ=",
         "ref": "master",
-        "rev": "0a5d806f11b3e2e10f46b23b64cdcf15218147fe",
+        "rev": "411c0016374bad88ef0f56ba256382b420f2b6c2",
         "revCount": 95,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       },
       "original": {
         "ref": "master",
-        "rev": "0a5d806f11b3e2e10f46b23b64cdcf15218147fe",
+        "rev": "411c0016374bad88ef0f56ba256382b420f2b6c2",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       }
@@ -9617,11 +9617,11 @@
         "project-discovery-sdk": "project-discovery-sdk_11"
       },
       "locked": {
-        "lastModified": 1795000125,
-        "narHash": "sha256-O1LBlm4D0lSKaFaoLW+uuZ2zQDlOf1vPzq27DC+2uyQ=",
+        "lastModified": 1795004871,
+        "narHash": "sha256-C2Rgz8AAVyjJrOgvrje2xa18cU5LGjNiLOsoXN9sJY4=",
         "ref": "refs/heads/master",
-        "rev": "4c8d165086feffa29950ac42da56fa601e83bbeb",
-        "revCount": 181,
+        "rev": "64f5f1b21a3710f9f876e128ffd523e9c911a4ef",
+        "revCount": 192,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
@@ -9702,17 +9702,17 @@
     "project-discovery-sdk_11": {
       "flake": false,
       "locked": {
-        "lastModified": 1790644566,
-        "narHash": "sha256-QxVbCG5LEFqYa38Sw7h/zV2f9VZ+P+iwE5dKots+rqg=",
+        "lastModified": 1793742660,
+        "narHash": "sha256-Vafx2n9zkbfJu6pkcbIoP1FHHEZLQ1cnh4AQPoatWFU=",
         "ref": "master",
-        "rev": "db2781a2ce9ff2a1a722bd168ab0dc55fd51f473",
-        "revCount": 1308,
+        "rev": "e7fc061547faa8a6a58de0ad3b811bfd4ea66870",
+        "revCount": 1405,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
       "original": {
         "ref": "master",
-        "rev": "db2781a2ce9ff2a1a722bd168ab0dc55fd51f473",
+        "rev": "e7fc061547faa8a6a58de0ad3b811bfd4ea66870",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }

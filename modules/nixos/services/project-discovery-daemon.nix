@@ -29,7 +29,8 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.project-discovery-daemon =
     {
       config,
