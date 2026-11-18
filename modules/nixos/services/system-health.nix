@@ -1871,7 +1871,14 @@ _: {
               # Label = cgroup path minus the leading slash; backslashes are
               # doubled for the prometheus text format (kernel paths carry
               # systemd's \xNN byte escapes — the census label class).
-              grep -oE 'oom_memcg=[^,]*' "$MEMCG_OOM_RAW" 2>/dev/null \
+              # 2026-11-18: grep's exit 1 on NO matches (a healthy day:
+              # zero kernel memcg OOM kills in 24h) is VALID EMPTY, but
+              # errexit+pipefail killed the WHOLE sweep at this pipeline —
+              # system_health.prom went dark while healthy (node_textfile_
+              # scrape_error 1 live-verified 11-18 14:48, file stale since
+              # 07:54, the last window with an OOM line). Brace-guard ONLY
+              # the grep: sed/awk failures still fail the sweep.
+              { grep -oE 'oom_memcg=[^,]*' "$MEMCG_OOM_RAW" 2>/dev/null || true; } \
                 | sed 's|^oom_memcg=/||' \
                 | sort | uniq -c \
                 | awk '{
