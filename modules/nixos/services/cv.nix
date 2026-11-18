@@ -235,7 +235,17 @@
       # today (keepgoing-post4.log), so the shim STAYS DROPPED and
       # upstream's own H8atokSb bake governs. Re-add ONLY via fresh
       # first-hand nix-hash-fix evidence AT THE LOCKED REV, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TWENTY-SECOND RE-STALE 2026-11-18 deploy session: the lock float to
+      # cv@ffb48b7 re-staled the FOD under our graph — spec voTiN7…
+      # (upstream-baked at that rev, nix/packages.nix:123), got H+R596…
+      # (TWO first-hand proofs agree: the 07:31 deploy toplevel build and a
+      # standalone drv^* rebuild, ~/.cache/lockfloat/proof2.log). Drop when
+      # upstream bakes H+R596… (paste-upstream → push → re-lock,
+      # docs/todo/upstream.md); re-add ONLY via first-hand nix-hash-fix
+      # evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-H+R596Cn+10IbFUCujrdJk7l9Nf/ptMXz4fsyGpRLng=";
+      };
     in
     {
       imports = [
