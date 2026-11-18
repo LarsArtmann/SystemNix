@@ -11,20 +11,29 @@
 #
 # Monitoring: WatchdogSec covers liveness (the daemon sends WATCHDOG=1 via
 # sd_notify at half-interval — a verified sender, not a Type=notify-only
-# assumption). Overview's boot gate + its discovery watchdog cover the
-# functional path. No direct Gatus check: gatus cannot dial unix sockets,
-# and proxying discovery data through Caddy would expose it.
+# assumption). The daemon itself stays unix-socket-only (gatus cannot dial
+# unix sockets, and proxying discovery data through Caddy would expose it);
+# the admin WebUI bridge (project-discovery-admin.service, loopback
+# :8765) is the sanctioned HTTP window — the registry entry's gatus checks
+# probe the dashboard AND daemon health through it (reachable:true).
 #
 # DELEGATED 2026-11-08 (own-project upstreaming wave): the deployment
 # contract (options, unit, socket-start contract, portable hardening) lives
-# upstream — inputs.project-discovery-daemon.nixosModules.default. SystemNix
-# layers ONLY site specifics: the vendorHash shim (lock-graph staleness
-# class, see package below), the primary-user default, the projects-subvol
-# mount gate, onFailure alerting, ioTier, and the fleet harden bounds.
-{ inputs, ... }: {
+# upstream — inputs.project-discovery-daemon.nixosModules.default, which
+# also renders the admin WebUI bridge unit (services.project-
+# discovery-daemon.admin). SystemNix layers ONLY site specifics: the
+# vendorHash shim (lock-graph staleness class, see package below — now on
+# BOTH the daemon and admin package surfaces), the primary-user default,
+# the projects-subvol mount gate, onFailure alerting, ioTier, the fleet
+# harden bounds, the port-registry wiring, and the integration entry.
+{
+  inputs,
+  ...
+}: {
   flake.nixosModules.project-discovery-daemon =
     {
       config,
+      options,
       lib,
       pkgs,
       ...
@@ -36,6 +45,7 @@
         ioTier
         serviceDefaults
         onFailure
+        ports
         ;
     in
     {
@@ -77,6 +87,10 @@
           # 5B2hM6qB (first-hand keep-going,
           # ~/.cache/toplevel-fix-20261118/enumeration.log; value AGREES
           # with the sibling session's keepgoing-1118.log stamp).
+          # THREE surfaces since the admin-bridge wiring (2026-11-18): the
+          # daemon package here, the admin package below, and lib/
+          # lars-packages.nix — same value (identical go.mod → identical
+          # vendored content), all must move together.
           package = lib.mkDefault (
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
               vendorHash = "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
@@ -86,6 +100,19 @@
           # ~/.mrconfig: it must be the primary user (dedicated service
           # users cannot see a 0700 home).
           user = lib.mkDefault config.users.primaryUser;
+
+          # Admin WebUI bridge: loopback dashboard + gatus's HTTP window
+          # into the daemon. Same shim class/value as the daemon package
+          # above (identical go.mod); port from the registry, never a
+          # literal.
+          admin = {
+            package = lib.mkDefault (
+              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin.overrideAttrs {
+                vendorHash = "sha256-5B2hM6qBEgSosSqUJT5ZHKqdyQKliic/acFMSuY+HTo=";
+              }
+            );
+            port = lib.mkDefault ports.project-discovery-admin;
+          };
         };
 
         systemd.services.project-discovery-daemon = {
@@ -129,6 +156,60 @@
             ioTier.background
             (serviceDefaults { })
           ];
+        };
+
+        # Bridge unit: light 2s poller over the unix socket — NO ioTier
+        # (negligible IO; the daemon pays the heavy reads). Fleet bounds
+        # only; the unit shape lives upstream. No WatchdogSec is CORRECT:
+        # the bridge has no sd_notify sender.
+        systemd.services.project-discovery-admin = {
+          inherit onFailure;
+
+          serviceConfig = lib.mkMerge [
+            (harden { MemoryMax = lib.mkForce "512M"; })
+            (serviceDefaults { })
+          ];
+        };
+
+        # Registry entry: loopback-only (no subdomain → no vHost, no tile
+        # requirement), but the checks give the daemon its first functional
+        # gatus coverage — /api/health answers 200 with reachable:true only
+        # when the daemon actually responded on the socket.
+        services.integration = lib.optionalAttrs (options ? services.integration) {
+          project-discovery-admin = {
+            enable = cfg.admin.enable;
+            port = ports.project-discovery-admin;
+            vHost.layer = "none";
+            monitored = true;
+            checks = [
+              {
+                name = "project-discovery dashboard";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.project-discovery-admin}/";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "project-discovery dashboard unreachable (admin bridge down). Check: journalctl -u project-discovery-admin -n 50";
+              }
+              {
+                # Functional daemon health THROUGH the bridge — the unix
+                # socket was unmonitorable before this HTTP window existed.
+                # 200 alone only proves the bridge; reachable:true proves
+                # the daemon answered (JSON v2 compact body).
+                name = "project-discovery daemon";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.project-discovery-admin}/api/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"reachable\":true*)"
+                ];
+                alert = "project-discovery daemon not answering through the admin bridge — overview/PMA discovery degraded. Check: journalctl -u project-discovery-daemon -n 50";
+              }
+            ];
+          };
         };
       };
     };

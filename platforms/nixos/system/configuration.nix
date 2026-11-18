@@ -2097,6 +2097,10 @@ in
         extraEnvironment = {
           PROJECT_DISCOVERY_REFRESH_INTERVAL = "60s";
         };
+        # Admin WebUI bridge (loopback :8765 from lib/ports.nix): dashboard
+        # + gatus's HTTP window into daemon health. Runbook:
+        # docs/services/project-discovery-daemon.md
+        admin.enable = true;
       };
 
       # Minecraft server (local network only, whitelisted)
