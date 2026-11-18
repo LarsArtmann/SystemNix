@@ -52,7 +52,10 @@ let
       inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      hash = "sha256-2K8s6PrNAPkElH7X4HwKS3m7UBck4Ju73l2PBv7WeZE=";
+      # PROBE 2026-11-18: hash temporarily "" — the b106d86 float's
+      # frontend lockfile adds moment@2.31.0 (ERR_PNPM_NO_OFFLINE_TARBALL
+      # at the old hash); stamping the probe's got-hash back below.
+      hash = "";
     };
 
     nativeBuildInputs = [
