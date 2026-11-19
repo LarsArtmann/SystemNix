@@ -6323,11 +6323,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795029015,
-        "narHash": "sha256-cQYqWJ9w1RASu+LVSx0apAoUh3eLs1VAHtOUfygP39Q=",
+        "lastModified": 1795046572,
+        "narHash": "sha256-ysO2q66RDs/mc9YZVQv5T6yyhm8u38JUdXBnz2zg5qY=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "52dc6f8f90a05dcdc7e18ae1b01b010005c4a853",
+        "rev": "88fe3804725067271fdfd3d5fd7ecbb278716309",
         "type": "github"
       },
       "original": {
@@ -9096,11 +9096,11 @@
     },
     "nixpkgs_12": {
       "locked": {
-        "lastModified": 1794537146,
-        "narHash": "sha256-Wpz/7x/YWnDIBu7yj6ixe8j6fIMsidd9Y+o1PqPF3iM=",
+        "lastModified": 1794890597,
+        "narHash": "sha256-lME2lHoDHAaSHP3/okgiVoJ0icVEvsQH8LeU3We7tcc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d5cc6833999746cffdfe0598f7bc801a57b887a9",
+        "rev": "04906337b6d53e8bb0eaf0470ae9f070a4d4eb55",
         "type": "github"
       },
       "original": {
@@ -9550,11 +9550,11 @@
         "samber-do-auditlog": "samber-do-auditlog_11"
       },
       "locked": {
-        "lastModified": 1795029324,
-        "narHash": "sha256-Wf6gebwHQQ+GUoYeK0Rd95mSDtHPm5NJ5L/kleTOvg8=",
+        "lastModified": 1795070659,
+        "narHash": "sha256-cX8wiSiYIrgXCvk10Fnft0PmKN7dVP3VC4oPAe2eT/k=",
         "ref": "refs/heads/master",
-        "rev": "fa1fce40bc6693ff3341721d8329dac2ea2b0682",
-        "revCount": 1768,
+        "rev": "dc35838dacb321f96ae80b6c2cb04e9d1d2b8f97",
+        "revCount": 1769,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-dependency-graph"
       },
@@ -10129,11 +10129,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795026347,
-        "narHash": "sha256-JxQ/++qwbvTzLRHVETnfLkgHIWbpQkMQtdeT4EfATvY=",
+        "lastModified": 1795070813,
+        "narHash": "sha256-814kWE6iQ1NsefgsFk7j1QrfF2mmpNV/NGSF/E2sb64=",
         "ref": "refs/heads/master",
-        "rev": "4bc1aebd5d070e6d69d76c765201b8a347fb7a03",
-        "revCount": 331,
+        "rev": "4650f981aa8389048998b2394497eab4f1cc44b9",
+        "revCount": 333,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/quotaboard"
       },
