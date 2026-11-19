@@ -1,0 +1,112 @@
+# Status: pbx health hub + canary fixed upstream, GCP pre-created, rotation staged — pim-sync flip is now a 3-owner-action ladder
+
+Authored 2026-11-19 01:01 CET. Continuation of
+`docs/status/2026-11-18_14-35_pim-sync-stalwart-leg-closed-pbx-health-restored.md`
+(same evening, one session). Scope: everything agent-executable around the
+pim-sync go-live ladder's two red pbx services, plus the owner's three
+decisions and their consequences. No research beyond this session's probes.
+
+## a) FULLY DONE (each verified live, not asserted)
+
+| # | What | Evidence |
+| - | ---- | -------- |
+| a1 | **go-health-dashboard upstream fix pushed** (`39c3465`): the NixOS module dropped DynamicUser+LoadCredential for a static `health-dashboard` user/group with DIRECT secret reads (env points at the configured paths), secret-file options `str → path`, CHANGELOG Fixed entry + binary doc comments | Live journal line was the smoking gun: `open /run/credentials/health-dashboard.service/client-secret: permission denied` → start-limit-hit within 15s, every restart since first boot. Standalone module eval green (User/Group set, LoadCredential gone, env at deployment paths); `nix fmt` 0-changed; repo `nix flake check` green; pushed `b608db0..39c3465`, origin in sync |
+| a2 | **pbx deployment glue landed** (rode heuristic `0e6856c4` with the runbook + lock float — intent documented here + row annotations): secrets-perms `health_oauth2_client_secret` + `health_session_secret` legs (0640 root:health-dashboard), perms `before health-dashboard.service`, hub `after` provision + perms, health-dashboard runbook triage bullet for the new EACCES shape + missing-push tell | pbx toplevel eval green (`nixos-system-pbx-26.11…d5cc683.drv`); rendered contract verified: `User`/`Group` = `health-dashboard`, group exists, Before/After lists exactly right (one re-run after an eval-cache SQLite race gave a false reading) |
+| a3 | **Fetcher-stall canary verdicts fixed** (pbx-artmann `27ce7c7d`, proper commit over the swept core): (1) live-journal-with-zero-pop3 → STALL rc 1 (was NO-EVIDENCE rc 4 — the "blindness" was the real 2026-10-26+ Gmail stall misverdicted); NO-EVIDENCE reserved for a truly empty export. (2) REAL pre-existing bug found and fixed: real `journalctl -o verbose` exports carry **zero blank lines**, so the RS='' paragraph-mode counters collapsed the export into ONE record and could cross-match a pop3 scanner block with an smtp "Logged in" elsewhere in the window — a false-green class the canary was built to prevent. Counters now header-delimited (both header shapes: fixtures' syslog style + live ISO style) | 4-row fixture contract green (incl. the new cross-contamination pin and the empty-export fixture); shellcheck + `bash -n` clean; **real 6h replay**: 8 entries, 0 pop3 → `STALL … the Gmail fetcher has not polled in the last 6h` rc 1 — the honest verdict the unit will page after the switch |
+| a4 | **GCP side pre-created** (owner chose fresh project): `pim-sync-prod-larsartmann` created, People API + Calendar API enabled via gcloud, both confirmed in `services list` | `pim-sync-prod` (the doc's suggested id) is globally taken — retried with the namespaced id on the first attempt's failure. oauth-setup.md §2 steps 1-2 marked DONE; the owner's console flow shrinks to steps 3-6 (consent screen, Desktop client, publish, download) |
+| a5 | **Rotation successor staged** (owner chose "rotate now"): 32-byte no-newline value minted into `~/.pbx-prod-secrets/stalwart_fallback_admin` (0600, sha prefix `a85c44a`), format-matched to the live file (host/local byte-shape probed FIRST: both 32 bytes, no newline, same sha — value never printed) | Host holds the leaked value until push; ONE push-secrets run completes rotation + the hub session secret together; post-push verify battery is written into the queue rows |
+| a6 | **Owner's three decisions asked + answered + executed**: personal = `lartyhd@gmail.com` (recorded in SystemNix flip-ladder + pim-sync oauth-setup §4 table), fresh project (a4), rotate-now (a5) | `question` tool, answered in-session; §h h7 of the previous report records the decisions and every consequence |
+| a7 | **§f harvest debt paid** (the 14:35 report's c9/§e.8 obligation): 8 rows cut into TODO_LIST + docs/todo/{services,pipeline}.md — rotation (re-tagged blocked:push after staging), NetBird PAT, Gmail lane, health-hub wave, crm attribution, CV §3 recipe mirror, crm credential decision, AGENTS.md lessons | Rows 36-44 deliberately NOT harvested (docs/services/pim-sync.md owns the flip ladder step-for-step — recorded in §h h5); rows 46-49 already existed (3302-3312 zone); row 36 verified CLOSED (no Gatus freshness/pim-sync reference anywhere in modules/ or lib/) |
+| a8 | **All commits landed properly across 4 repos** despite 4 daemon sweeps + 2 mixed-commit races: go-health `39c3465` (amend-forward over the sweep), pbx-artmann `27ce7c7d` (amend) with the hub chain documented over `0e6856c4`, SystemNix `81fa631da` (mixed-commit split via reset-soft + pathspec — the foreign flake.lock float left staged for the daemon), pim-sync oauth-setup riding `33847aa` (left as-swept: it mixed with the parallel session's live test files, splitting mid-flight was the higher-risk move — attribution noted here) | Identity checks before every amend; `git show --stat` verified every swept batch; commit-msg gate caught one 78-char subject (fixed to 72) |
+
+## b) PARTIALLY DONE
+
+| # | What | Done | Missing |
+| - | ---- | ---- | ------- |
+| b1 | Health-hub fix chain | 100% of code: upstream pushed, glue in-tree, eval green, rendered contract pinned | Deployment + green verification: blocked on the owner's push-secrets + switch. Until then the hub stays start-limit-hit red and the exit-4 deploy trap stays live. NOTE: switching WITHOUT the push leaves the hub crash-looping on the missing `health_session_secret` — the push MUST come first |
+| b2 | Fallback-admin rotation | Successor minted + placed in the push-secrets source | Live on the pbx: same push. Until then the leaked value is still the live admin credential and host/source are deliberately diverged (documented, recovery = read back from host) |
+| b3 | Fetcher-stall canary | Fixed in-tree, fixture-verified, real-replay-verified | The LIVE canary still runs the old script until the switch; and the honest STALL it will then page is REAL — the Gmail lane restore is the owner leg |
+| b4 | pim-sync go-live | GCP half pre-created (a4); mapping recorded; everything past the client JSON is agent-executable | The client JSON itself (owner console), then consents → tokens → doctor → flip |
+| b5 | Session discipline docs | Lessons captured in queue rows + this report | The AGENTS.md edit itself is queued (row 35), not written |
+
+## c) NOT STARTED (correctly gated)
+
+- ★ Owner console flow: oauth-setup §2 steps 3-6 (consent screen → Desktop client → In-production → download JSON)
+- ★ The pbx push + switch (the single unlock for b1-b3)
+- ★ NetBird PAT remint (expired 401; runbooked 401-vs-404 distinction)
+- ★ Gmail POP3 lane restore (Gmail "Check mail from other accounts" + stalwart abuse-ban list; the canary will page STALL honestly until this lands)
+- ★ pbx-artmann train push (~22 commits ahead incl. the parallel session's trunk-profile-split wave)
+- pim-sync token consents ×4, ingest, doctor, flip, ladder rung 3 — all gated on the client JSON
+- Post-switch verify battery (written into the queue rows, §f below)
+- AGENTS.md lessons edit; crm-stop attribution; CV §3 mirror; crm credential decision — all harvested rows with owners/scope
+
+## d) TOTALLY FUCKED UP (own them)
+
+| # | What | Cost | Repair state |
+| - | ---- | ---- | ------------ |
+| d1 | **First classifier draft trusted the fixtures' blank-line shape** — I built the total-counter on RS='' paragraph mode because the fixtures (and their doc comment, claiming a 2026-11-02 live-proven shape) use blank-line separators; the real replay then reported "1 journal entry" for an 8-entry export. The quote-scrutiny rule caught it ONE step later (a number that fails a known-value check must stop the line) — but the right order was: real-replay FIRST, then fixture trust. The "live-proven shape" claim in the old fixture doc was itself wrong | one redesign round + re-run of tests; nothing broken was committed | fixed same-session (header-delimited counters); the fixture doc comment now carries the correction; lesson logged in §e |
+| d2 | **`gcloud projects create pim-sync-prod` without an availability check** — the id is globally taken; the enable step then cascaded a scary AUTH_PERMISSION_DENIED against somebody else's project in the same chained command | one wasted create round + a misleading error cascade in one output block | immediate retry with `pim-sync-prod-larsartmann` (the repo's own project naming already showed ids get namespaced — inboxclean-493713, lars-cv); should have namespaced from the start |
+| d3 | **Commit subject over the 72-char house limit** (78) — the msg gate rejected; during that round-trip the daemon swept my staged files, converting a simple commit into a reset-soft + pathspec split repair | one extra repair cycle, and it directly caused d4's third race | split repair landed clean (`81fa631da`); the lesson is batch-then-commit-immediately, not commit-after-a-thinking-pause |
+| d4 | **Four daemon races lost in one session** (go-health module, SystemNix docs ×2, pim-sync oauth-setup mixed with the parallel session's in-flight test files). Repairs all landed via identity-checked amend/split, but the pattern is mine: in repos with a clustered ~10-min auto-commit daemon, the gap between "edits done" and "commit done" is the danger window | ~4 repair cycles + two mixed-attribution commits (one left as-swept deliberately) | the discipline exists (edit + commit in one tool call, pathspec commits, identity checks) — I applied it late each time instead of from the first edit |
+| d5 | **Relied on the ambient umask after `umask 077` failed as an unsupported builtin** — the minted secret landed 0600 by luck of the shell default, verified only by stat afterwards | zero (verified), but it is luck-adjacent for a credential file | always `chmod 600` explicitly after secret-file writes; noting the mvdan/sh builtin gap for the AGENTS.md session-discipline pass |
+| d6 | **Mixed-attribution commit in pim-sync left as-swept** (`33847aa` = my oauth-setup.md + the parallel session's live pages_test.go + golden file) — I chose not to reset-soft/split while that session was actively editing those exact files | their wiring-bug train carries one unrelated docs hunk in history; intent documented here | accepted-and-documented rather than repaired; a cleaner call would have been to note-and-wait, which is what I did — flagging it as the one attribution compromise of the session |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Daemon-race discipline from the FIRST edit, not after the first sweep**: edit + commit in one tool call in daemon repos; every thinking-pause between edit and commit is a race window (paid ×4).
+2. **Real-data replay BEFORE fixture trust**: a classifier fix is not verified by fixtures alone when the fixtures' shape claim is itself the question — pull the real export first, shape fixtures from it, then test.
+3. **Quote-scrutiny worked as designed** — "1 journal entry" failing the known-value smell stopped the line before commit. Keep that rule exactly where it fired.
+4. **Namespaced IDs from the start** for any globally-unique resource (GCP project ids included).
+5. **Explicit chmod after every secret-file write** — never inherit file modes from ambient state.
+6. **Read the guard messages before retrying** — d-class of the previous report again validated: the msg-gate's own hint (`Shorten the first line`) was the whole fix.
+7. **pbx AGENTS.md SSH rule needs a status decision**: it says "No SSH from the assistant" while the 2026-11-18 session demonstrably executed JMAP mutations over ssh. Either the rule gained a documented exception or it is stale — each session currently guesses. Queued (§f).
+8. **Mixed-parallel-session commits**: when a sweep mixes my files with a LIVE parallel session's files, do-not-split is right; but say so in the report immediately (done in a8/d6) so the other train's author knows their history carries a rider.
+
+## f) NEXT (prioritized; ★ = owner-gated, everything else agent-actionable; most rows already live in TODO_LIST from today's harvest — this list is the execution view)
+
+**The unlock chain (tonight/tomorrow, in order):**
+1. ★ Run `~/.pbx-prod-secrets/push-secrets.sh` — carries the fallback-admin successor AND `health_session_secret` (restarts stalwart, perms heal, webphone, health-dashboard)
+2. ★ `nix run .#restage-and-gate` in `~/projects/pbx-artmann` + the printed switch command
+3. Post-switch battery (agent, after 1+2): health-dashboard green + journal review; reset-failed + restart `pbx-surface-health` + `telephony-health` → all green; exit-4 deploy trap cleared; host sha == local sha on the rotated file; admin JMAP auth answers under the new value; canaries re-probe; tick go-health-dashboard's boot-verification TODO
+4. ★ GCP console steps 3-6 → client-secret JSON path to the agent
+5. Agent: ingest client JSON (`pim_sync_oauth_client_secret`, shape-check `.installed.client_id`, runtime-var only)
+6. ★ Four consent launches, owner clicks — personal (`lartyhd@gmail.com`) first, then work, then both `--calendar` variants; verify 4 token JSONs
+7. Agent: ingest 4 tokens into `pim_sync_token_{personal,work}{,_calendar}`; placeholders = 0
+8. Agent: `pim-sync doctor` against real creds (expect the Contacts book-name warn — OUT leg creates it live)
+9. Agent: flip `pim-sync.enable = true` (keep `live = false`) → evo-x2 deploy with §0.5 quiescence probe + anchor check (`readlink /run/current-system` == newest `system-N-link`)
+10. 🧑 First dry-run journal review (Stalwart-single-truth plan §7.5 gate)
+11. Agent: derive `maxChanges` from the dry-run report (cap live in dry-run; first live run needs headroom)
+12. Agent: verify sops-nix rendered the DAV env template (live `stat` as the service user — the tmpfiles trap) + seed-dir ownership story
+13. ★ GO → agent: `live = true` + `maxChanges` + `metricsFile` textfile wiring (btrfs-health shared-group precedent) + Gatus freshness on `pimsync_leg_last_success_unix{leg,account}`
+14. Agent: first live-run receipt JSONL in `/var/lib/pim-sync/receipts` + 5 MiB rotation check; mesh invariant spot-check (quarantine of foreign cards)
+15. Agent: day-8 refresh-token survival check per account (oauth-setup §4 table)
+
+**Parallel owner-gated legs:**
+16. ★ Gmail POP3 lane restore (the canary pages STALL until this lands)
+17. ★ NetBird PAT remint → push-secrets → netbird-provision green
+18. ★ pbx-artmann train push once CI is green (~22 commits; includes the parallel session's trunk-profile-split wave + coins for its post-switch dial proof)
+
+**Queued rows riding the existing libraries (sources in the rows):**
+19. AGENTS.md session-discipline lessons: version-before-protocol-debug + secret-file-format-probe (queued, pipeline.md)
+20. Attribute the 2026-11-17 22:31 crm-server stop (.crush DB + nh-switch RCA leads; then fire-test the crm-liveness watchdog) — queued, services.md
+21. Mirror the 0.16 JMAP recipe into CV plan §3 — queued, services.md
+22. crm projection credential decision (`crm_stalwart_dav_password` vs bot.pim-sync app password) — queued, services.md
+23. pim-sync pbx production provisioning supersession check (demo-VM provision objects vs the landed mail.nix port; books/other objects may remain) — existing row 3054
+24. pim-sync Forgejo Actions CI — existing row 3310
+25. GitHub twin post-deploy verification + branch-protection check — existing rows 3300/3301
+26. Decide the calendar-leg posture (consent both accounts' calendars at flip vs defer calendar to its own wave) — surfaced from the old report's §f.44; still open, fold into step 6
+
+**New from this session (cut into the queue with this report):**
+27. pbx-artmann AGENTS.md: resolve the SSH-rule vs mutation-precedent contradiction (read-only exception vs the 2026-11-18 JMAP-mint reality) — cut to services.md with this report
+28. scripts/review/mail.sh design leg: update the tracer-shape claim to the corrected anatomy (no blank lines, ISO headers) so the next fixture author doesn't inherit the wrong shape — cut to services.md with this report
+29. After the rotation goes live: decide .crush DB leak-row disposition (purge vs historical record — report §h h4 documents the current leave-as-record stance) — cut to services.md with this report
+
+## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
+
+1. **Hub login proof timing**: after the switch, the E2E proof of the health hub is a real Pocket-ID login landing on the dashboard (probes `/healthz` 200 + bare `/` 307 I can verify headless). Do you want to do the first login immediately post-switch so I can verify the full chain in one pass, or is the login leg yours to do whenever and I close on probes only?
+2. **pbx train order**: switch FIRST from the local tree (hub + rotation go live tonight, push afterwards) or push FIRST and let CI validate before switching (delays the health fix, gains CI validation of exactly the tree being switched)? The repo row says "push once CI is green" but doesn't fix the order against a pending switch.
+3. **Calendar-leg posture** (the flip's step 6): consent both `--calendar` flows at the flip (one session, four clicks, calendar leg live with contacts) or defer calendar to its own wave (contacts-only flip, smaller blast radius, a second consent round later)?
+
+---
+
+*Per the harvest rule: §f rows 1-26 correspond to queue rows already cut in today's harvest or existing rows (cited inline); rows 27-29 were cut into TODO_LIST + docs/todo/services.md in the same commit as this report. Nothing here required re-research — every claim is this session's captured evidence.*
