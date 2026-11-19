@@ -1964,7 +1964,16 @@ in
           "tq=http://127.0.0.1:${toString ports.tq}/health"
           "pma=http://127.0.0.1:${toString ports.pma-health}/readyz"
           "dnsblockd=http://127.0.0.1:${toString ports.dns-blocker-stats}/readyz"
-          "nsfw=http://127.0.0.1:${toString ports.nsfw}/health"
+          # nsfw EXCLUDED 2026-11-19 (down-by-design): the classifier is
+          # disabled on this host (owner decree), so federating it made the
+          # aggregate /readyz a PERMANENT 503 — a red pager nobody reads,
+          # which defeats the aggregate's purpose (the 2026-11-17 smoke
+          # triage). Exclusion is self-healing: the daily rediscover sweep
+          # probes 8104 unconditionally (gatus-coverage exemption) and fails
+          # the unit with the exact remotes line to re-add when the
+          # classifier re-enables — positive evidence, no silent absence.
+          # cvagent stays federated: its reachable flap is a REAL defect
+          # owned by the cvagent fix-wave row, not a baseline.
           "cvagent=http://127.0.0.1:${toString ports.cvagent-dashboard}/health"
         ];
       };

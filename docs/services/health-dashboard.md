@@ -45,7 +45,7 @@ service starts speaking go-health.
 
 ## Who federates today (full-registry sweep, 2026-11-02)
 
-EIGHT remotes — every go-health speaker on the host, found by sweeping ALL
+SEVEN remotes — every go-health speaker on the host, found by sweeping ALL
 77 `lib/ports.nix` ports on `/health`, `/readyz`, `/healthz` with
 `Accept: application/json` (a go-health document = status
 pass/warn/fail/off AND a `checks` object):
@@ -59,7 +59,20 @@ pass/warn/fail/off AND a `checks` object):
 | `tq` | 8100 `/health` | go-taskqueue serve dashboard |
 | `pma` | 9420 `/readyz` | no `/health`; `/healthz` is a liveness-only empty-checks stub |
 | `dnsblockd` | 9090 `/readyz` | the STATS port serves the canonical go-health document (blocklist-sources/database/dns checks), not just Prometheus |
-| `nsfw` | 8104 `/health` | nsfw-classifier |
+
+EXCLUDED (2026-11-19, down-by-design): `nsfw` (8104 `/health`) — the
+classifier is disabled on this host by owner decree, and federating a
+permanently-dark service made the aggregate `/readyz` a PERMANENT 503:
+a red pager nobody reads is alarm fatigue on the exact signal the hub
+exists to deliver (the post-deploy smoke red-holed every run on
+`nsfw/reachable`; the 2026-11-17 smoke-triage row). Exclusion is
+self-healing — the rediscover sweep probes 8104 unconditionally (the
+gatus-coverage exemption) and fails the unit with the exact `remotes`
+line to re-add the day the classifier re-enables. Re-federate by
+re-adding the line; do not "baseline" a permanent red.
+`cvagent/reachable` (8105-class flap) is the remaining known fail half
+and stays federated — it is a real defect owned by the cvagent fix-wave
+row, not a baseline.
 
 Still custom-JSON (NOT federatable without adopting go-health upstream):
 monitor365 (`{"status":"ok",...}` + rate-limited `/healthz`), overview,
@@ -80,8 +93,9 @@ exact `remotes` line to add when a registry port serves a go-health
 document that is not federated. Connection-refused, 4xx/5xx and
 undecodable bodies are skipped — the only failure mode is positive
 go-health evidence, so there is no false-positive class by construction
-(validated live against all 77 registry ports: with the 8 federated the
-sweep exits clean).
+(validated live against all 77 registry ports: with the 7 federated the
+sweep exits clean; nsfw's re-adoption ride is the sweep's own failure
+mode — a live go-health document on 8104 while unfederated).
 
 Why not DNS autodiscovery: `*.home.lan` records DERIVE from the platform
 catalog (ADR-008), but the catalog carries no health-PROTOCOL marker and
