@@ -54,11 +54,16 @@ let
     # the skip-check opt-out exists for isolated trusted executors exactly
     # like the Nix sandbox (docs: native-addon-carriers.md).
     env = {
-      SWC_NATIVE_BINDING_CACHE = "0";
       SWC_NATIVE_BINDING_CACHE_SKIP_SECURITY_CHECK = "1";
     };
     preBuild = ''
+      # Cache root AT $TMPDIR (its parent / is root-owned → passes the
+      # carrier's ancestor check that /build/.cache fails), plus belt-
+      # and-suspenders sticky bit on $TMPDIR ("trusted sticky protection").
+      export SWC_NATIVE_BINDING_CACHE="$TMPDIR"
+      chmod 1777 "$TMPDIR" 2>/dev/null || true
       echo "SWC-DIAG env: CACHE=$SWC_NATIVE_BINDING_CACHE SKIP=$SWC_NATIVE_BINDING_CACHE_SKIP_SECURITY_CHECK TMPDIR=$TMPDIR HOME=$HOME"
+      ls -ld "$TMPDIR" || true
       node -e "try { require('@swc/core'); console.log('SWC-DIAG: core loads OK') } catch(e) { (e.cause||[]).forEach(function(c){ console.error('SWC-DIAG CAUSE:', c.code, String(c.message).split('\n')[0]) }); console.error('SWC-DIAG FAIL:', String(e.message).split('\n')[0]); process.exit(0) }"
     '';
     installPhase = ''

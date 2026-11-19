@@ -172,6 +172,13 @@
             (harden { MemoryMax = lib.mkForce "512M"; })
             ioTier.background
             (serviceDefaults { })
+            # Upstream binary-rename ride-along (2026-11-19): at input rev
+            # a31024c7 the admin package builds bin/project-discovery-admin
+            # while the upstream module's ExecStart still names bin/admin —
+            # 203/EXEC at unit start, caught by the deploy battery's
+            # built-output introspection. Point at the binary that exists;
+            # drop this override when upstream aligns module and package.
+            { ExecStart = lib.mkForce "${cfg.admin.package}/bin/project-discovery-admin"; }
           ];
         };
 
