@@ -1,7 +1,8 @@
 # Runbook: docs/services/crush-daily.md
 # crush-daily — SystemNix hardening overlay for the crush-daily service
 #
-# The upstream crush-daily flake module (flake.nix) now declares
+# The upstream crush-daily flake module (deploy/nixos/crush-daily.nix since
+# the 2026-11-19 restore; previously inline in flake.nix) declares
 # `services.crush-daily.runAsUser`. SystemNix just wires SystemNix-specific
 # hardening: directory traversal permissions and per-host overrides.
 _: {
