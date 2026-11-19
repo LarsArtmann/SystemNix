@@ -299,15 +299,28 @@ the embedded UI has no auth) adds what native paperless AI cannot do: custom-fie
 extraction (Append/Update/Replace write modes) and tag-gated background
 processing (`paperless-gpt-auto` → `paperless-gpt-auto-complete`; retry cap 3 →
 `paperless-gpt-failed`). Package: `pkgs/paperless-gpt.nix` from the tag-pinned
-`paperless-gpt-src` input (v0.28.0, MIT). Token: runtime-minted
-(`paperless-gpt-token` oneshot, bank-sync pattern — zero sops). LLM: FastFlowLM
-(qwen3.6-moe) via the OpenAI-compatible path; suggestion language pinned German.
+`paperless-gpt-src` input (v0.31.0, MIT; version mirrors the input ref). Token:
+runtime-minted (`paperless-gpt-token` oneshot, bank-sync pattern — zero sops).
+LLM: llama-chat (qwen3.6-35b, always-on 32k window) via the OpenAI-compatible
+path — the `llmUpstream` default since 2026-11; traffic routes through
+ai-meter when that proxy is enabled. Suggestion language pinned German.
 Safe defaults: `CREATE_NEW_TAGS=false` (existing vocabulary only) +
 `PRESERVE_EXISTING_METADATA=true`. Vision OCR options exist but stay OFF
-(`ocrProvider = "off"`) until the B56 eval — and note the CONSTRAINT: the openai
-vision provider shares OPENAI_BASE_URL with the main LLM, so llama-vlm is NOT
-reachable as paperless-gpt's vision backend; the viable path is the ollama
-provider (qwen2.5vl:3b is already pulled).
+(`ocrProvider = "off"`) — and the route is DEAD, not just uneval'd: the openai
+vision provider shares OPENAI_BASE_URL with the main LLM (llama-vlm NOT
+reachable as a vision backend), and ollama was removed 2026-10-12 (never
+re-add); setting `ocrProvider = "llm"` throws at eval until a llama-vlm
+bridge or an upstream base-URL split lands.
+
+**Build trap — the swc carrier (2026-11-19):** pinned @swc/core 1.16.13
+ships its Linux addon as a read-only zstd "SWCNZSTD" carrier whose load-time
+security check fails under Nix with NO env-knob escape
+(SWC_NATIVE_BINDING_CACHE(_SKIP_SECURITY_CHECK) only exists ≥ 1.16.17), so
+`pkgs/paperless-gpt.nix`'s preBuild zstd-decodes every `swc.*.node` to the
+raw addon in-build (nixpkgs' bookorbit pattern — decode is hash-invisible to
+`npmDepsHash`). Consequence for bumps: the Go-side `vendorHash` (PAGZjn…)
+was only ever exercised AFTER the npm stage first went green — on an npm-tree
+change, expect one fresh FOD round (`got:` hash) before the build passes.
 
 **Stage-0 eval (A3):** `sudo scripts/paperless-ai-stage0-eval.sh` renders the
 per-field suggestion-quality table for 10 representative docs via
