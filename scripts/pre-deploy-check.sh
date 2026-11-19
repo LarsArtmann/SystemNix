@@ -665,6 +665,11 @@ fi
 # metric in any /metrics scrape. Only surfaced as a §10 hard-fail AFTER the
 # textfile collector was fixed (scrape_error 1→0 removed the infra
 # downgrade; live block on the gen-946 deploy attempt).
+# `rsend`/`send` (2026-11-19, the gen-1017 attempt) are the DNS-body class:
+# pat(*rsend-euw1.forge.rmta.net*) / pat(*send.forge.rmta.net*) assert the
+# Resend CNAME VALUES in the two "Resend rsend/send CNAME" DNS checks —
+# never metrics. They surfaced only one deploy AFTER those checks landed
+# (the gen-1016 new-metric loan masked them for exactly one cycle).
 extract_gatus_metrics() {
   # Also catch the anchored form pat(*\n<metric> — the leading real-newline
   # escape precedes the name there (2026-08-31: signoz-coverage checks were
@@ -679,7 +684,7 @@ extract_gatus_metrics() {
     grep -v '=$' |
     sed 's/pat(\*//;s/^\\n//;s/.$//' |
     sort -u |
-    grep -vE '^<|connected|email_states?|oidc$|forwarded$|[A-Z]'
+    grep -vE '^<|connected|email_states?|oidc$|forwarded$|rsend$|send$|[A-Z]'
 }
 
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
