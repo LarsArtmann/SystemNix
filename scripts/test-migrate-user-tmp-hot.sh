@@ -43,7 +43,7 @@ REAL_TAR=$(command -v tar)
 
 export TMP_MIGRATE_SRC="$SCRATCH/home/lars/tmp"
 export TMP_MIGRATE_SUBVOL="$SCRATCH/hot/users/lars/tmp"
-export TMP_MIGRATE_USER="$USER"
+export TMP_MIGRATE_USER="${USER:-$(id -un)}"
 export TMP_MIGRATE_AUX="$SCRATCH/aux"
 export TMP_MIGRATE_ARCHIVE_DIR="$SCRATCH/pool-backup"
 export TMP_MIGRATE_PSI_FILE="$SCRATCH/psi-ok"
