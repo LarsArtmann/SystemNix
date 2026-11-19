@@ -247,8 +247,11 @@
       # (ffb48b7 → 7e89bf3 → 178ccec within hours); at 178ccec spec
       # H+R596…, got hDAVgn6… (first-hand keep-going,
       # ~/.cache/lockfloat/keepgoing-1118.log). Same drop/re-add protocol.
+      # TWENTY-FOURTH RE-STALE 2026-11-19 00:12 fleet float: 178ccec →
+      # 5b2ca54; spec hDAVgn6…, got zYtPdB6… (first-hand keep-going,
+      # ~/.cache/lockfloat/keepgoing-1119.log). Same protocol.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-hDAVgn6WlnmjX3CENRJ6gFCvlTurbjpefXOGOxcTiTY=";
+        vendorHash = "sha256-zYtPdB6dngj73ZXT6TUNbkaU6rcgXE0xGeXBjg3+a4I=";
       };
     in
     {

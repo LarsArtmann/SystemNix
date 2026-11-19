@@ -119,8 +119,12 @@
           # with the sibling session's keepgoing-1118.log stamp). Drop when
           # upstream bakes the got hash; re-add ONLY via nix-hash-fix
           # evidence, never by hand.
+          # RE-STALE 2026-11-19 00:12 fleet float: f5c69f88 → a1ef3663; spec
+          # bW3OHQ3D, got +JUDdQKw (first-hand keep-going,
+          # keepgoing-1119.log; twin of the lars-packages surface — both
+          # move together).
           package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-bW3OHQ3DKhFSBGc7U8D6D+uQfb5RaRK0N6/sg2wMl/U=";
+            vendorHash = "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
           };
           user = primaryUser;
           group = "users";

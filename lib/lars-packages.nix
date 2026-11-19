@@ -484,11 +484,13 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 0faa5414 spec
   # EQqX6jma, got h6T875PJ (cqrs-shim-toplevel-proof.log). Same follower
   # re-derivation class. Drop when upstream bakes the got hash.
-  # RE-STALE 2026-11-18 FOD-storm wave: at 5d673111 spec h6T875PJ, got
+      # RE-STALE 2026-11-18 FOD-storm wave: at 5d673111 spec h6T875PJ, got
   # nMgP22rT (first-hand keep-going, keepgoing-1118.log).
+  # RE-STALE 2026-11-19 00:12 fleet float: at fa1fce40 spec nMgP22rT,
+  # got n54XnZ49 (first-hand keep-going, keepgoing-1119.log).
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-nMgP22rTePMLsRCK8kXWqSoeQeohWYFwNPkTfZDe4qw=";
+      "sha256-n54XnZ497MznaZelMle73WNPwjHbplKRvts8fs/5SHI=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
@@ -651,9 +653,11 @@ lib.filterAttrs (_: v: v != null) {
   # spec hsRXenCu, got bW3OHQ3D (first-hand keep-going,
   # keepgoing-1118.log). Drop when upstream bakes the got hash; re-add
   # ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE 2026-11-19 00:12 fleet float: f5c69f88 → a1ef3663; spec
+  # bW3OHQ3D, got +JUDdQKw (first-hand keep-going, keepgoing-1119.log).
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-bW3OHQ3DKhFSBGc7U8D6D+uQfb5RaRK0N6/sg2wMl/U=";
+      "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
