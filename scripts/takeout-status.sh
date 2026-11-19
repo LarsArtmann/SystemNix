@@ -277,11 +277,17 @@ selftest() {
 
   # Unbalanced extract must surface as preflight FAIL (mismatch is the
   # fail-closed signal that blocks imports).
-  printf 'sha256\th3\t999\tacctA\t2030-01-01\tTakeout/Drive/c\n' >>"$fx/ledger.tsv"
+  # 2026-11-19 (fixture-copy isolation): this leg MUTATES its ledger state —
+  # the appended mismatch row plus the index --from-extract partition merge
+  # — so it operates on a COPY of the shared fixture ledger. A leg appended
+  # after this one inherits clean fixture state instead of this pollution
+  # (benign today only because this leg is last).
+  cp "$fx/ledger.tsv" "$fx/ledger-pf.tsv"
+  printf 'sha256\th3\t999\tacctA\t2030-01-01\tTakeout/Drive/c\n' >>"$fx/ledger-pf.tsv"
   mkdir -p "$fx/reg1/extracted/Takeout/Drive"
   printf 'wrong-bytes' >"$fx/reg1/extracted/Takeout/Drive/c"
-  (cd "$fx/reg1/extracted" && TAKEOUT_LEDGER="$fx/ledger.tsv" bash "$SELF_DIR/takeout-dedup.sh" index --from-extract . --account acctA --cycle 2030-01-01 >/dev/null 2>&1) || true
-  got=$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $5 }')
+  (cd "$fx/reg1/extracted" && TAKEOUT_LEDGER="$fx/ledger-pf.tsv" bash "$SELF_DIR/takeout-dedup.sh" index --from-extract . --account acctA --cycle 2030-01-01 >/dev/null 2>&1) || true
+  got=$(run_status_ledger "$fx/ledger-pf.tsv" --account acctA | awk -F'\t' 'NR == 1 { print $5 }')
   case $got in
   FAIL*) echo "leg preflight-fail-on-mismatch: OK" ;;
   *)
