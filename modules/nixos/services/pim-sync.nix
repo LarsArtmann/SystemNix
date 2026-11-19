@@ -40,7 +40,7 @@
       ...
     }:
     let
-      inherit (import ../../../lib/default.nix lib) onFailure;
+      inherit (import ../../../lib/default.nix lib) ioTier onFailure;
       cfg = config.services.pim-sync;
 
       # Fail fast with an actionable message while the sops scaffold still
@@ -77,6 +77,7 @@
             echo "pim-sync:   3. Owner: dedicated Stalwart DAV account for bot:pim-sync on pbx.artmann.tech -> pim_sync_stalwart_dav_user / pim_sync_stalwart_dav_pass" >&2
             echo "pim-sync:   4. Owner: consents (pim-sync auth --account personal|work [--calendar]) -> paste token JSONs into pim_sync_token_*" >&2
             echo "pim-sync:   5. Redeploy (nix run .#deploy); dry-run timer first, then live=true + maxChanges cap." >&2
+            echo "pim-sync:   6. Dashboard token: openssl rand -hex 32 into sops key pim_sync_ui_token (editor, never a command line); redeploy — the restart re-reads it (ruling 2026-11-19)." >&2
             exit 1
           }
 
@@ -95,6 +96,34 @@
               exit 1
             }
           done
+        '';
+      };
+
+      # Dashboard bearer-token guard (fleet rows 2026-11-19): pim-sync-ui
+      # starts at BOOT (multi-user.target) — before any sync-side
+      # config-check could catch it — so a PLACEHOLDER token would become
+      # a weak bearer password on a mesh-visible bind. Fail closed: the ui
+      # unit refuses to start until the owner pastes the real
+      # `openssl rand -hex 32` value. Rotation flow (ruling 2026-11-19):
+      # paste + redeploy; the sops restartUnits bounce re-reads the file.
+      uiTokenCheck = pkgs.writeShellApplication {
+        name = "pim-sync-ui-token-check";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+        text = ''
+          set -euo pipefail
+          f=${toString cfg.dashboard.authTokenFile}
+          [ -s "$f" ] || {
+            echo "pim-sync: ui token file MISSING/empty: $f" >&2
+            exit 1
+          }
+          if grep -q PLACEHOLDER "$f"; then
+            echo "pim-sync: ui token still PLACEHOLDER: $f" >&2
+            echo "pim-sync: Owner: openssl rand -hex 32 into sops key pim_sync_ui_token (editor, never a command line), then redeploy — the restart re-reads it (ruling 2026-11-19)." >&2
+            exit 1
+          fi
         '';
       };
     in
@@ -144,6 +173,10 @@
             pim_sync_token_work.path = "/var/lib/pim-sync-seed/work.json";
             pim_sync_token_personal_calendar.path = "/var/lib/pim-sync-seed/personal-calendar.json";
             pim_sync_token_work_calendar.path = "/var/lib/pim-sync-seed/work-calendar.json";
+            # Dashboard bearer token (fleet rows 2026-11-19): the RUNBOOK
+            # path, read by pim-sync-ui at boot; rotation = sops redeploy
+            # restart (ruling 2026-11-19 — restartUnits in sops.nix).
+            pim_sync_ui_token.path = "/run/secrets/pim-sync/ui-token";
           };
 
           services.pim-sync = {
@@ -161,6 +194,24 @@
           systemd.services.pim-sync = {
             inherit onFailure;
             serviceConfig.ExecStartPre = [ (lib.getExe configCheck) ];
+          };
+
+          # The ui unit is the upstream module's; this layer ONLY adds the
+          # placeholder-token ExecStartPre guard. Gated on dashboard.enable
+          # TOO (not just the token file): the dormant shape must not
+          # synthesize an ExecStart-less unit shell. authTokenFile != null
+          # is guaranteed for every non-loopback bind by the upstream
+          # assertion, and loopback+token binds opt into the guard too —
+          # a placeholder is a weak password on ANY bind.
+          systemd.services.pim-sync-ui = lib.mkIf (cfg.dashboard.enable && cfg.dashboard.authTokenFile != null) {
+            # ioTier.background (BE/6): the ui unit is boot-gated
+            # (multi-user.target), so io-tier-coverage-audit demands a
+            # fragment — the dashboard reads small textfiles on 15s pollers,
+            # textbook background class.
+            serviceConfig = lib.mkMerge [
+              ioTier.background
+              { ExecStartPre = [ (lib.getExe uiTokenCheck) ]; }
+            ];
           };
 
           # Registry fan-out: no vHost/subdomain/port (no HTTP surface —
