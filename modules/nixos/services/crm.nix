@@ -352,9 +352,10 @@
             ];
           };
 
-          # Alarm pair (docs/ops/ALARMS.md is the unit-shaped source of
+          # Alarm trio (docs/ops/ALARMS.md is the unit-shaped source of
           # truth — keep both sides in sync): by-phone storm watch every
-          # 10 minutes, journal-growth watch nightly. The checks are
+          # 10 minutes, journal-growth watch nightly, projection-lag
+          # (read-model freshness) watch every 10 minutes. The checks are
           # read-only, exit 0 clean / 2 ALARM / 1 operational failure;
           # onFailure relays BOTH alarm and failure (any non-zero rc) to
           # the host's failure unit, and the journal line distinguishes
@@ -387,6 +388,22 @@
                 Group = group;
                 ExecStart = [
                   "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/journal-growth-check.py"
+                ];
+              }
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          crm-alarm-projection-lag = {
+            description = "Kith CRM projection-lag alarm (>50k events behind the journal)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = user;
+                Group = group;
+                ExecStart = [
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/projection-lag-check.py"
                 ];
               }
               (serviceOneshotDefaults { })
@@ -447,6 +464,17 @@
             # 04:10 — after the backup window, before work hours.
             OnCalendar = "*-*-* 04:10:00";
             RandomizedDelaySec = "10min";
+            Persistent = true;
+          };
+        };
+
+        systemd.timers.crm-alarm-projection-lag = {
+          description = "Kith CRM projection-lag alarm schedule (every 10 min)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "10min";
+            OnUnitActiveSec = "10min";
+            AccuracySec = "1min";
             Persistent = true;
           };
         };
