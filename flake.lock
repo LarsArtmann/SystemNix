@@ -6323,11 +6323,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795046572,
-        "narHash": "sha256-ysO2q66RDs/mc9YZVQv5T6yyhm8u38JUdXBnz2zg5qY=",
+        "lastModified": 1795093082,
+        "narHash": "sha256-67l2U/CfMManIMCwBpyoQwngRushVNYkgLW44RQ1Rv8=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "88fe3804725067271fdfd3d5fd7ecbb278716309",
+        "rev": "e0c4b7002621c89e66ef977b7a13380c5c0365e2",
         "type": "github"
       },
       "original": {
@@ -9547,14 +9547,15 @@
         "nixpkgs": "nixpkgs_12",
         "project-discovery-sdk": "project-discovery-sdk_10",
         "project-discovery-sdk-daemon": "project-discovery-sdk-daemon",
-        "samber-do-auditlog": "samber-do-auditlog_11"
+        "samber-do-auditlog": "samber-do-auditlog_11",
+        "templ": "templ_4"
       },
       "locked": {
-        "lastModified": 1795070659,
-        "narHash": "sha256-cX8wiSiYIrgXCvk10Fnft0PmKN7dVP3VC4oPAe2eT/k=",
+        "lastModified": 1795093338,
+        "narHash": "sha256-unzTA92TqxODEG9vQXjcGFfF7rLVPweOULnF1BAxkGY=",
         "ref": "refs/heads/master",
-        "rev": "dc35838dacb321f96ae80b6c2cb04e9d1d2b8f97",
-        "revCount": 1769,
+        "rev": "fdbd4da520c9aa2ea71fe15cf57b1160befe6a4b",
+        "revCount": 1771,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-dependency-graph"
       },
@@ -10122,7 +10123,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "templ": "templ_4",
+        "templ": "templ_5",
         "templ-components": "templ-components_9",
         "treefmt-nix": [
           "treefmt-nix"
@@ -10242,7 +10243,7 @@
         "storage-collector": "storage-collector_2",
         "superfile": "superfile",
         "systems": "systems",
-        "templ": "templ_5",
+        "templ": "templ_6",
         "timesheets": "timesheets",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
@@ -11021,6 +11022,23 @@
       }
     },
     "templ_5": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793004651,
+        "narHash": "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=",
+        "owner": "a-h",
+        "repo": "templ",
+        "rev": "ed4e7663123ae9169ff5b378b055a99012ba5f5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "a-h",
+        "ref": "v0.3.1100",
+        "repo": "templ",
+        "type": "github"
+      }
+    },
+    "templ_6": {
       "inputs": {
         "gitignore": "gitignore_5",
         "nixpkgs": "nixpkgs_14",

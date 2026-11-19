@@ -98,7 +98,7 @@ buildGoModule' {
   '';
 
   # go.mod requires go >= 1.27.1.
-  vendorHash = "sha256-81a3B16v4rF8ut2HcT0w/KgT8XaZahQ3GPv/oEenXPk=";
+  vendorHash = "sha256-PAGZjn8xOsEVNi+JbdgILmDLo1GjK4bBbri/gDKGEh0=";
 
   # Upstream tests are E2E (docker-compose paperless + LLM mock, pdfcpu
   # wants $HOME) — not hermetic. Binary verification happens via the
