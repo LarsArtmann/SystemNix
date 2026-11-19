@@ -317,6 +317,14 @@
         # (protected layer — billing data).
         invoices-dashboard = 8110;
 
+        # pim-sync dashboard — read-only receipt/metrics WebUI (`pim-sync ui`,
+        # upstream nixosModules.pim-sync dashboard unit), NetBird-mesh bind
+        # on evo-x2 with bearer-token auth (upstream eval assertion refuses
+        # non-loopback without a token). 8111, NOT the upstream default
+        # 8099: inboxclean owns 8099 on this host — the collision would
+        # have failed the ui unit's bind at the pim-sync flip.
+        pim-sync-ui = 8111;
+
         # cvagent dashboard — read-only CV-facts web UI (`cvagent serve`,
         # upstream nixosModules serve unit), loopback-only; Caddy proxies
         # cvagent.home.lan to it (protected layer — names repositories,

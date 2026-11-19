@@ -999,6 +999,19 @@ in
       # pin, onFailure, registry + catalog entries. Plan:
       # docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md
       pim-sync.enable = false;
+      # Dashboard fleet rows (2026-11-19 plan B3; owner ruling 2026-11-18
+      # fleet-ON): NetBird bind + sops-owned bearer token, so the flip
+      # exposes the dashboard over the mesh with auth REQUIRED by the
+      # upstream module's assertion (non-loopback without authTokenFile
+      # refuses eval). Port is pim-sync-ui (8111), NOT the upstream default
+      # 8099 — inboxclean owns 127.0.0.1:8099 on this host (lib/ports.nix).
+      # Token-rotation ruling (2026-11-19): rotation = restart-on-sops-
+      # redeploy; sops.nix restartUnits bounces pim-sync-ui.service, which
+      # re-reads the file at boot — no SIGHUP/hot-reload build.
+      pim-sync.dashboard = {
+        addr = "100.112.252.86:${toString ports.pim-sync-ui}";
+        authTokenFile = "/run/secrets/pim-sync/ui-token";
+      };
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
       # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
       # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each

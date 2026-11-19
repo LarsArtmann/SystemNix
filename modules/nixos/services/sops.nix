@@ -274,6 +274,22 @@ in
               # Seed-dir path overrides moved to the wrapper (2026-11-10,
               # single-source: they live next to services.pim-sync.tokenSeedDir
               # so one rename flips them together).
+              //
+              # Dashboard bearer token (fleet rows 2026-11-19): a SEPARATE
+              # mkSecrets because rotation restarts a DIFFERENT unit —
+              # token-rotation ruling 2026-11-19: a sops redeploy bounces
+              # pim-sync-ui.service, which re-reads the token at boot (no
+              # SIGHUP/hot-reload build). Path override lives in the
+              # wrapper next to the seed overrides. Value ships as
+              # PLACEHOLDER; the owner pastes `openssl rand -hex 32`
+              # interactively (never a command line).
+              mkSecrets "pim-sync.yaml"
+                {
+                  owner = "pim-sync";
+                  group = "pim-sync";
+                  restartUnits = [ "pim-sync-ui.service" ];
+                }
+                [ "pim_sync_ui_token" ]
             )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
