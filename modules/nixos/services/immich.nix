@@ -290,11 +290,22 @@ _: {
                 # cover the key-file handoff leg (chown to the consumer's
                 # uid, then chmod 0400 on the now-foreign-owned file —
                 # live 02:21 gen-1010 after INSERT already succeeded).
+                # CAP_DAC_OVERRIDE is leg 5 (live 2026-11-19 gen-1016, the
+                # discordsync/media-atlas consolidation's first deploy):
+                # without it root can neither READ a consumer's existing
+                # 0400 env file (sed EACCES, silently swallowed by `|| true`
+                # → fresh-mint path) nor mktemp inside the foreign-owned
+                # 0750/2770 consumer dirs — EACCES despite ReadWritePaths
+                # listing them (the exact "file writes across owners"
+                # leg-5 risk the 2026-11-15 review named). Bounded by the
+                # sandbox: ProtectSystem=strict leaves only the declared
+                # keyFile dirs writable, so the DAC bypass reaches nothing
+                # else.
                 # CAP_SYS_RESOURCE was runuser's pam_limits memlock leg —
                 # inert spare under setpriv, kept until a cleanup pass.
                 (harden {
                   MemoryMax = "128M";
-                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE CAP_CHOWN CAP_FOWNER";
+                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
                 })
                 (serviceOneshotDefaults { })
                 {
