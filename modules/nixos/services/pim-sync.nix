@@ -203,16 +203,18 @@
           # is guaranteed for every non-loopback bind by the upstream
           # assertion, and loopback+token binds opt into the guard too —
           # a placeholder is a weak password on ANY bind.
-          systemd.services.pim-sync-ui = lib.mkIf (cfg.dashboard.enable && cfg.dashboard.authTokenFile != null) {
-            # ioTier.background (BE/6): the ui unit is boot-gated
-            # (multi-user.target), so io-tier-coverage-audit demands a
-            # fragment — the dashboard reads small textfiles on 15s pollers,
-            # textbook background class.
-            serviceConfig = lib.mkMerge [
-              ioTier.background
-              { ExecStartPre = [ (lib.getExe uiTokenCheck) ]; }
-            ];
-          };
+          systemd.services.pim-sync-ui =
+            lib.mkIf (cfg.dashboard.enable && cfg.dashboard.authTokenFile != null)
+              {
+                # ioTier.background (BE/6): the ui unit is boot-gated
+                # (multi-user.target), so io-tier-coverage-audit demands a
+                # fragment — the dashboard reads small textfiles on 15s pollers,
+                # textbook background class.
+                serviceConfig = lib.mkMerge [
+                  ioTier.background
+                  { ExecStartPre = [ (lib.getExe uiTokenCheck) ]; }
+                ];
+              };
 
           # Registry fan-out: no vHost/subdomain/port (no HTTP surface —
           # outbound Google + Stalwart DAV calls only), so the tile
