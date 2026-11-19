@@ -225,14 +225,17 @@
         "gogenfilter": "gogenfilter_3",
         "nixpkgs": [
           "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
         ]
       },
       "locked": {
-        "lastModified": 1795030272,
-        "narHash": "sha256-SE2zYdGz7d5SMNSJ0Fx3tB2HDDe6iaoTFWZd22Vb2wI=",
+        "lastModified": 1794760583,
+        "narHash": "sha256-8unxgwoMFkDP7HfJQrqjLAEHnVh8dgFAWMatqzwrDbE=",
         "ref": "refs/heads/master",
-        "rev": "06b090d5f126106573cde9db9c9a5b0b02e8639d",
-        "revCount": 2888,
+        "rev": "a3dd18dc408bcd0d8a8cde8f1efe3095b1527605",
+        "revCount": 2883,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },

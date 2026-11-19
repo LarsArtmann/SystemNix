@@ -1258,6 +1258,12 @@
     # pinned go-nix-helpers); flake-parts is its only direct infra edge.
     crm.inputs.flake-parts.follows = "flake-parts";
     crush-config.inputs.treefmt-nix.follows = "treefmt-nix";
+    # branching-flow (pinned back to a3dd18dc 2026-11-19: the 00:12 fleet
+    # float landed a rev whose in-tree vendor/ is stale against its own
+    # go.mod replaces — "is replaced in go.mod, but not marked as replaced
+    # in vendor/modules.txt", no vendorHash can fix content). The old node
+    # brings its own treefmt-nix edge, so follow it per the audit's ask.
+    branching-flow.inputs.treefmt-nix.follows = "treefmt-nix";
     dankMaterialShell.inputs.flake-compat.follows = "flake-compat";
     dms-paste.inputs.nixpkgs.follows = "nixpkgs";
     dms-paste.inputs.treefmt-nix.follows = "treefmt-nix";
