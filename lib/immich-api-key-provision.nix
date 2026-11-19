@@ -24,6 +24,14 @@
 #   url          = null | "http://127.0.0.1:2283";  # non-null => env format
 #   restartUnits = [ "svc.service" ];     # try-restart after a FRESH mint only
 # }
+#
+# Stale-mktemp sweep: a mint crash between mktemp and mv (the chown/chmod
+# permission legs — gen-1010 class) leaves a root-owned 0400 orphan
+# .immich-api-key.* in the key dir. After ALL provisions succeed the unit
+# sweeps such files older than a day from every declared key dir; a failed
+# run keeps them as crash evidence. Pinned by
+# checks.immich-api-key-sweep-selftest (extraction-tests the SHIPPED
+# function text).
 { lib }:
 {
   pkgs,
@@ -35,6 +43,10 @@ let
   # Shell-safe: Immich permissions are dotted identifiers with no quoting needs.
   permissionsSql =
     permissions: "ARRAY[" + lib.concatMapStringsSep "," (p: "'${p}'") permissions + "]::varchar[]";
+
+  # Unique key-file dirs — the stale-mktemp sweep's targets (a custom keyFile
+  # outside keyDir is swept in its own dir, never another consumer's).
+  keyDirs = lib.unique (lib.mapAttrsToList (_: spec: builtins.dirOf spec.keyFile) keys);
 
   keyCall =
     name: spec:
@@ -55,6 +67,7 @@ pkgs.writeShellApplication {
     pkgs.openssl
     pkgs.util-linux
     pkgs.systemd
+    pkgs.findutils
     # psql CLIENT from pkgs (not config.services.postgresql.package): that
     # option has no value when postgres is disabled, which would break eval on
     # immich-less hosts. Client/server skew is immaterial for one INSERT.
@@ -152,6 +165,25 @@ pkgs.writeShellApplication {
     }
 
     ${lib.concatStringsSep "\n" (lib.mapAttrsToList keyCall keys)}
+
+    # A mint crash between mktemp and mv leaves a root-owned 0400 orphan
+    # (gen-1010 class). Sweep ONLY on full success — a failed run's tmp file
+    # is crash evidence — and only past a day, so an in-flight concurrent
+    # mint (deploy provisioner loop vs the daily timer) is never swept.
+    sweep_stale_tmp() {
+      local d swept
+      for d in "$@"; do
+        swept=$(find "$d" -maxdepth 1 -name '.immich-api-key.*' -type f -mtime +0 -print -delete 2>/dev/null | wc -l) || true
+        if [ "$swept" -gt 0 ]; then
+          log "swept $swept stale mktemp file(s) older than a day from $d"
+        fi
+      done
+    }
+    if [ "$fail" -eq 0 ]; then
+      sweep_stale_tmp ${lib.concatStringsSep " " keyDirs}
+    else
+      log "skipping stale-mktemp sweep: $fail provision leg(s) failed — crashed-mint tmp files kept as evidence"
+    fi
 
     exit "$fail"
   '';
