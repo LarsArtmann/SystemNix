@@ -1021,11 +1021,11 @@
         "templ-components": "templ-components_3"
       },
       "locked": {
-        "lastModified": 1795036168,
-        "narHash": "sha256-2E4tHDfiPWzFB5IfuMhBvCxIOsYtdq50JTomJlexJyM=",
+        "lastModified": 1795046109,
+        "narHash": "sha256-KsJkjOFF9LAaDHh/anEhmXXhMNEYDXEcgBxx0oJhCW0=",
         "ref": "refs/heads/master",
-        "rev": "71618a7c3f387d929bfe9aa1e3b072cffcc0d242",
-        "revCount": 1015,
+        "rev": "b16bdd2791b45d9748808f07fb4f3b18660003fa",
+        "revCount": 1016,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },

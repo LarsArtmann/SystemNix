@@ -1330,7 +1330,6 @@
     branching-flow.inputs.flake-parts.follows = "flake-parts";
     branching-flow.inputs.go-nix-helpers.follows = "go-nix-helpers";
     branching-flow.inputs.nixpkgs.follows = "nixpkgs";
-    branching-flow.inputs.treefmt-nix.follows = "treefmt-nix";
     browser-history.inputs.flake-parts.follows = "flake-parts";
     browser-history.inputs.go-nix-helpers.follows = "go-nix-helpers";
     browser-history.inputs.nixpkgs.follows = "nixpkgs";
@@ -1349,8 +1348,6 @@
     crush-daily.inputs.flake-parts.follows = "flake-parts";
     crush-daily.inputs.go-nix-helpers.follows = "go-nix-helpers";
     crush-daily.inputs.nixpkgs.follows = "nixpkgs";
-    crush-daily.inputs.systems.follows = "systems";
-    crush-daily.inputs.treefmt-nix.follows = "treefmt-nix";
     # DMS floats on master (owner: "always on latest", 2026-10-25). It rode
     # the (now-removed) nixpkgs-unstable follow from 2026-10-25 to
     # 2026-11-06 (tip go.mod floor go >= 1.27.3 vs the root pin's 1.27.2);
@@ -1516,7 +1513,6 @@
     overview.inputs.flake-parts.follows = "flake-parts";
     overview.inputs.go-nix-helpers.follows = "go-nix-helpers";
     overview.inputs.nixpkgs.follows = "nixpkgs";
-    overview.inputs.treefmt-nix.follows = "treefmt-nix";
     # overview.inputs.templ-cli.follows REMOVED 2026-10-25: overview pins
     # templ-cli v0.3.1070 to match its go.mod runtime. A newer generator
     # here emits templruntime.NewAttributeExpression, which that runtime
