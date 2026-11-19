@@ -119,8 +119,8 @@ seed_manifest_products_tsv() {
   local root=$1 manifest=$2
   [ -f "$root/products.tsv" ] && return 0
   [ -f "$manifest" ] || die "manifest file not found: $manifest (--manifest <path-to-products-tsv>; see scripts/takeout-manifests/)"
-  awk 'NR == 1 { exit ($0 == "# product\texpected-size\tpresent") ? 0 : 1 }' "$manifest" \
-    || die "manifest $manifest must start with the '# product<TAB>expected-size<TAB>present' header line"
+  awk 'NR == 1 { exit ($0 == "# product\texpected-size\tpresent") ? 0 : 1 }' "$manifest" ||
+    die "manifest $manifest must start with the '# product<TAB>expected-size<TAB>present' header line"
   cp "$manifest" "$root/products.tsv"
 }
 
@@ -586,6 +586,49 @@ selftest() {
     echo "PASS: $leg (undeclared zip WARNs, run stays green)"
   else
     echo "FAIL: $leg (undeclared zip not warned or run wrongly failed — see $fx/leg-undeclared.log)"
+    rc=1
+  fi
+
+  # 2026-11-19 (size-forms): the band parser is load-bearing on REAL fleet
+  # data twice — G2.1 parts bands AND the G2.3 manifest size gate — so a
+  # wrong unit parse would fail-closed at verify time. The fixture legs
+  # cover only 3 MB / LESS1MB / 900 KB / 1.8 MB; racedriver8k's live
+  # parts.tsv is EXACT INTEGERS and its manifest carries `<1 MB` plus
+  # decimal GB/MB/KB specs. Extract the SHIPPED size_band from this script
+  # itself (no drifted copy) and pin every real-world form to its band.
+  leg=size_forms
+  band_fn=$(sed -n '/^size_band()/,/^}$/p' "$0")
+  forms_ok=1
+  if [ -z "$band_fn" ]; then
+    echo "FAIL: $leg (could not extract size_band from $0)"
+    forms_ok=0
+  else
+    eval "$band_fn"
+    assert_band() {
+      local spec=$1 want_lo=$2 want_hi=$3 out lo hi
+      if ! out=$(size_band "$spec" 2>&1); then
+        echo "FAIL: $leg (size_band rejected '$spec': $out)"
+        forms_ok=0
+        return
+      fi
+      read -r lo hi <<<"$out"
+      if [ "$lo" != "$want_lo" ] || [ "$hi" != "$want_hi" ]; then
+        echo "FAIL: $leg ('$spec' -> $lo..$hi, wanted $want_lo..$want_hi)"
+        forms_ok=0
+      fi
+    }
+    assert_band 565 565 565
+    assert_band 53692741670 53692741670 53692741670
+    assert_band '<1 MB' 1 1150000
+    assert_band '543.33 GB' 461830500000 624829500000
+    assert_band '27.4 MB' 23290000 31510000
+    assert_band '474.3 KB' 403155 545445
+    assert_band LESS1MB 1 1600000
+    assert_band '3 MB' 2550000 3450000
+  fi
+  if [ "$forms_ok" -eq 1 ]; then
+    echo "PASS: $leg (every real-world size form resolves: exact ints, <N unit, decimal GB/MB/KB, LESS1MB)"
+  else
     rc=1
   fi
 
