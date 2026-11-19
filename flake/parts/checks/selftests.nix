@@ -1739,9 +1739,10 @@
         # member scoping, rc11 skip, corrupt zip, extra-file reconciliation,
         # listing reuse), rename-loop 8 (--once complete/incomplete, bounded
         # completion, same-size CRC corruption times out honestly + marker +
-        # log evidence), status 8 (parts count, ledger stats, preflight
+        # log evidence), status 9 (parts count, ledger stats, preflight
         # pass/fail/skip, verify stamps green+fail, missing staging +
-        # missing root).
+        # missing root, latest-ledger-cycle fallback on a no-date-suffix
+        # staging basename).
         takeout-selftests =
           pkgs.runCommand "takeout-selftests"
             {
@@ -1787,7 +1788,7 @@
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
                   takeout-extract) want_pass=9; want_legs=0 ;;
                   takeout-rename-loop) want_pass=0; want_legs=8 ;;
-                  takeout-status) want_pass=0; want_legs=8 ;;
+                  takeout-status) want_pass=0; want_legs=9 ;;
                 esac
                 if [ "$pass" -ne "$want_pass" ] || [ "$legs" -ne "$want_legs" ]; then
                   echo "LEG-COUNT MISMATCH: $s expected $want_pass PASS + $want_legs leg-OK, got $pass + $legs"

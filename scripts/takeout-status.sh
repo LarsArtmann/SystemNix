@@ -202,6 +202,13 @@ selftest() {
     TAKEOUT_REGISTRY="$fx/accounts.tsv" TAKEOUT_LEDGER="$fx/ledger.tsv" bash "$SELF_DIR/takeout-status.sh" --tsv "$@"
   }
 
+  run_status_ledger() {
+    # Same runner against a DIFFERENT ledger — the cycle-fallback leg below
+    # brings its own copy so the mutating preflight-fail leg can never
+    # pollute its fixture state.
+    TAKEOUT_REGISTRY="$fx/accounts.tsv" TAKEOUT_LEDGER="$1" bash "$SELF_DIR/takeout-status.sh" --tsv "${@:2}"
+  }
+
   # Account A: parts.tsv declares 3 parts, 2 REAL zips exist (unzip -l must
   # succeed — balance reads the zip listings). Ledger rows a=100 B, b=200 B
   # mirror the zip members exactly, so preflight sees a balanced state with
@@ -242,6 +249,32 @@ selftest() {
   printf 'acctC\tretire\t/nonexistent/takeout-path\tone-shot\tg0\tbaseline\tnote\n' >>"$fx/accounts.tsv"
   check missing-staging-root "SKIP (staging root missing)" "$(run_status --account acctC | awk -F'\t' 'NR == 1 { print $5 }')"
 
+  # 2026-11-19 (cycle fallback, §25 re-verify): a staging basename WITHOUT a
+  # date suffix must resolve the cycle from the LATEST ledger partition — a
+  # bare "unknown" filters the ledger to zero rows and balance reports a
+  # VACUOUS PASS. The fixture plants TWO cycles: the older (2030-01-01)
+  # row matches the zip bytes exactly, the latest (2030-01-02) claims 999 B
+  # vs the real 300 B. Verdict must FAIL — proof the fallback engaged the
+  # LATEST partition (an older-cycle pick or a bare-unknown vacuous PASS
+  # both show up as PASS and fail this leg). Own ledger copy: immune to the
+  # mutating preflight-fail leg below.
+  mkdir -p "$fx/reg3/zips" "$fx/tk3/Takeout/Drive"
+  head -c 300 /dev/zero | tr '\0' c >"$fx/tk3/Takeout/Drive/c"
+  (cd "$fx/tk3" && zip -qr "$fx/reg3/zips/part-01.zip" Takeout/Drive)
+  printf '# part\texpected\n1\t1 KB\n' >"$fx/reg3/parts.tsv"
+  printf 'ALGO\tHASH\tSIZE\tACCOUNT\tCYCLE\tRELPATH\n' >"$fx/ledger-fallback.tsv"
+  printf 'sha256\told\t300\tacctD\t2030-01-01\tTakeout/Drive/c\n' >>"$fx/ledger-fallback.tsv"
+  printf 'sha256\th9\t999\tacctD\t2030-01-02\tTakeout/Drive/c\n' >>"$fx/ledger-fallback.tsv"
+  printf 'acctD\tkeep\t%s/reg3\t2-monthly\tg3\t2\tnote\n' "$fx" >>"$fx/accounts.tsv"
+  got=$(run_status_ledger "$fx/ledger-fallback.tsv" --account acctD | awk -F'\t' 'NR == 1 { print $5 }')
+  case $got in
+  FAIL*) echo "leg cycle-fallback-latest: OK" ;;
+  *)
+    echo "leg cycle-fallback-latest: FAIL (want FAIL* via the LATEST ledger cycle, got '$got' — bare-unknown or older-cycle pick)"
+    rc=1
+    ;;
+  esac
+
   # Unbalanced extract must surface as preflight FAIL (mismatch is the
   # fail-closed signal that blocks imports).
   printf 'sha256\th3\t999\tacctA\t2030-01-01\tTakeout/Drive/c\n' >>"$fx/ledger.tsv"
@@ -250,11 +283,11 @@ selftest() {
   (cd "$fx/reg1/extracted" && TAKEOUT_LEDGER="$fx/ledger.tsv" bash "$SELF_DIR/takeout-dedup.sh" index --from-extract . --account acctA --cycle 2030-01-01 >/dev/null 2>&1) || true
   got=$(run_status --account acctA | awk -F'\t' 'NR == 1 { print $5 }')
   case $got in
-    FAIL*) echo "leg preflight-fail-on-mismatch: OK" ;;
-    *)
-      echo "leg preflight-fail-on-mismatch: FAIL (want FAIL*, got '$got')"
-      rc=1
-      ;;
+  FAIL*) echo "leg preflight-fail-on-mismatch: OK" ;;
+  *)
+    echo "leg preflight-fail-on-mismatch: FAIL (want FAIL*, got '$got')"
+    rc=1
+    ;;
   esac
 
   if [ "$rc" -eq 0 ]; then
