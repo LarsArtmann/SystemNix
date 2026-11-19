@@ -43,6 +43,11 @@ let
     nodejs = nodejs_24;
 
     # `npm run build` = `tsc -b && vite build --base=./` → dist/
+    preBuild = ''
+      echo "SWC-DIAG: @swc contents:"; ls -la node_modules/@swc/ || true
+      echo "SWC-DIAG: core pkg:"; ls node_modules/@swc/core/ | head -8 || true
+      node -e "try { require('@swc/core'); console.log('SWC-DIAG: core loads OK') } catch(e) { (e.cause||[]).forEach(function(c){ console.error('SWC-DIAG CAUSE:', c.code, String(c.message).split('\n')[0]) }); console.error('SWC-DIAG FAIL:', String(e.message).split('\n')[0]); process.exit(0) }"
+    '';
     installPhase = ''
       runHook preInstall
       cp -r dist $out
