@@ -4,7 +4,7 @@
 **Host:** evo-x2 (live state inspected, NOT deployed)
 **Scope:** exactly one thread — why `$XDG_RUNTIME_DIR/offline-banner/state` said `active:false`, what the DNS probe leg actually proved, and the fix for both the local config and the upstream module. Nothing unrelated was researched.
 **Repos touched:** `SystemNix` (config + docs + TODO), `github:LarsArtmann/offline-banner` (probe logic + check + docs; commit pushed by a parallel session mid-report)
-**Evidence revs (short form):** SystemNix module change `dda3c37e`; SystemNix lock float `6714e295`; upstream fix `47176c3`; upstream rev now locked by SystemNix `a8939fe`.
+**Evidence revs (short form):** SystemNix module change `dda3c37e`; SystemNix lock float `35a5536f`; upstream fix `47176c3`; upstream rev now locked by SystemNix `7eefb2a` (upstream master tip, contains the fix).
 
 ---
 
@@ -45,14 +45,14 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 8. **Upstream checks green at the fix rev:** `formatting`, `docs-drift`, `shell-scripts` (now gating `lib/net-probe.sh` with shellcheck `-S warning` + `shfmt`), `shell-content` (QML markers), `module-contract` (PATH resolution gate extended to `head`/`cut`), `smoke-script`, `unit-verify`, `waybar-consumer`, `leg-contract`.
 9. **End-to-end embed proof:** decoded the string literal out of the *built* `shell.qml` (`/nix/store/qilq3s9c…`), `bash -n` clean, then executed it → `lars.software` ⇒ `dns ok`, `one.one.one.one` ⇒ `dns fail`.
 10. **Upstream docs updated:** option description, README DNS-leg bullet + option table (including the resolver-cache caveat), website `configuration.mdx` row, CHANGELOG (later folded to 0.2.2 by a parallel session), FEATURES rows (new capability + 11-gate list).
-11. **Upstream commit authored properly:** daemon batch commit `c232c12` (my 3 files only, verified by `git show --stat`) amended into `47176c3` with a real message + the 4 doc files. **Pushed by a parallel session** (it is on `origin/master`; `a8939fe` — the rev SystemNix now locks — contains it).
-12. **SystemNix docs + TODO updated:** `docs/agents/desktop.md` DNS-leg text now names `lars.software` and the guard; CHANGELOG entry; TODO rows for the deploy, the low-TTL record, the runtime-gate decision, the RED gate, and an upstream wording fix (harvest described in §f).
+11. **Upstream commit authored properly:** daemon batch commit `c232c12` (my 3 files only, verified by `git show --stat`) amended into `47176c3` with a real message + the 4 doc files. **Pushed by a parallel session** (it is on `origin/master`; the rev SystemNix now locks, `7eefb2a`, contains it as an ancestor).
+12. **SystemNix docs + TODO updated:** `docs/agents/desktop.md` DNS-leg text now names `lars.software` and the guard; CHANGELOG entry; TODO rows for the deploy, the low-TTL record, the runtime-gate decision and an upstream wording fix (harvest described in §f; a RED-gate row was added and then removed once a parallel session fixed that gate).
 13. **SystemNix eval proofs:** unit env renders `OFFLINE_BANNER_DNS_NAME=lars.software` (both before and after the 01:20 float); toplevel drv eval was green at 2026-11-18 21:58 on the pre-float lock (`n34ax7d7…`).
 14. **`scripts/check-todo-system.sh`:** structure OK after every row edit.
 
 ## b) PARTIALLY DONE
 
-1. **Deploy.** Not run (agent shells cannot `sudo`; and the tree is now eval-RED for an unrelated reason). The live unit still serves `OFFLINE_BANNER_DNS_NAME=one.one.one.one` — verified post-report.
+1. **Deploy.** Not run (agent shells cannot `sudo`; ownership question in §g.3). The tree IS deploy-ready: evo-x2 toplevel eval green at 07:38 with the guard in the locked rev. The live unit still serves `OFFLINE_BANNER_DNS_NAME=one.one.one.one` — verified post-report.
 2. **SystemNix-side runtime/deploy gate.** I added the *upstream build-time* `leg-contract` check; I did **not** add a SystemNix post-deploy probe (§-numbered check) that would fail a deploy when the live probe name yields a synthesized answer. Recorded as a `[decision]` row instead of guessed at.
 3. **SystemNix verification breadth.** Only evo-x2 toplevel eval + scoped `nix fmt` were run. No `nix flake check --all-systems`, no `darwin`/`rpi3-dns` eval in this session; the final green toplevel predates the 01:20 lock float.
 4. **Upstream verification breadth.** The VM checks (`probe-transitions`, `render-smoke`) were *reasoned* unaffected (they stub the whole probe through `OFFLINE_BANNER_NET_PROBE_CMD`) but never executed in this session; upstream CI is the only proof for them.
@@ -61,7 +61,7 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 
 ## c) NOT STARTED
 
-1. `nix flake update offline-banner` — **already done by a parallel session** (lock `a8939fe`, commit `6714e295`); I never ran it.
+1. `nix flake update offline-banner` — **already done by parallel sessions** (now locked at upstream tip `7eefb2a`, float `35a5536f`); I never ran it.
 2. Post-deploy live verification (state file, journal, `niri msg layers`).
 3. A dedicated `probe.lars.software` record with TTL 60 at the DNS provider.
 4. A SystemNix pre-deploy/post-deploy gate for "probe name resolves to a public address".
@@ -73,7 +73,7 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 
 ## d) TOTALLY FUCKED UP (mistakes, near-misses, self-inflicted risk)
 
-1. **The tree is eval-RED right now — not from my change, but it blocks my deploy.** `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` fails with `flake.lock infra-follows audit failed: branching-flow locks its own treefmt-nix (rev 0ba5d672)`. It arrived with the same 01:20 float wave (`6714e295`) that moved my upstream rev. I did **not** fix it (outside my thread, one-line `follows`, possibly another session's live work) — it is harvested as a `[ready]` row in `TODO_LIST.md` + `docs/todo/pipeline.md`.
+1. **I reported a transient RED tree as the current state, and cited the wrong float.** At 07:2x `nix eval …toplevel` failed on `flake.lock infra-follows audit failed: branching-flow locks its own treefmt-nix` (introduced by the 01:20 float `6714e295`, which floated branching-flow; the offline-banner rev was untouched by it). While I was writing this report, a parallel session landed `35a5536f4` at 07:37 — it added `branching-flow.inputs.treefmt-nix.follows = "treefmt-nix";`, re-floated offline-banner to `7eefb2a`, and the toplevel eval is now GREEN (`jbf6j8ip…`, 07:38). My harvested `[ready]` row was already moot when it landed, so I removed it from `TODO_LIST.md` + `docs/todo/pipeline.md`. Two errors in one: stale state reported as live, and a rev (`a8939fe`) that the lock no longer pointed at.
 2. **I cited a hash that my own next command changed.** A TODO row recorded upstream `1d3d9e2`; ten seconds later I amended that commit into `47176c3`. The row then pointed at a commit that no longer exists in the branch. Corrected.
 3. **I overstated the fix in the upstream CHANGELOG** — "the banner sees the outage it exists for" ignores resolver-cache lag (TTL 3600). The honest statement is "sees it once the cached answer expires; tcp goes down immediately → degraded strip meanwhile". Queued as a `[blocked:push]` correction.
 4. **I marked my own todo "Extend deploy-time functional check" complete** when the gate I added lives upstream and is build-time, not a SystemNix deploy-time probe. Self-audit error, corrected by moving it to `[decision]`.
@@ -101,16 +101,16 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 
 **Harvested (rows now exist — queue and/or domain library):**
 
-1. `[blocked:deploy]` offline-banner: deploy the guard + live-verify the leg (also blocked by the RED gate) — `docs/todo/desktop.md`.
+1. `[blocked:deploy]` offline-banner: deploy the guard + live-verify the leg (eval is green; only the deploy step is open) — `docs/todo/desktop.md`.
 2. `[blocked:user]` offline-banner: short-TTL probe record (`probe.lars.software`, TTL 60) — `docs/todo/desktop.md`.
 3. `[decision]` offline-banner: SystemNix deploy-time gate for the probe name — `docs/todo/desktop.md`.
-4. `[ready]` Un-red the eval: `branching-flow.inputs.treefmt-nix.follows = "treefmt-nix"` — `TODO_LIST.md` + `docs/todo/pipeline.md`.
+4. ~~`[ready]` Un-red the eval: `branching-flow.inputs.treefmt-nix.follows`~~ — **DONE by a parallel session while this report was being written** (`35a5536f`); the harvested row was removed again because it was already moot.
 5. `[blocked:push]` offline-banner: correct the 0.2.2 CHANGELOG cache-lag overstatement — `docs/todo/upstream.md`.
 
 **Deliberately NOT harvested (listed here for the owner, no row):**
 
 6. Run `nix flake check --all-systems` on SystemNix once the gate is un-red, and record the result in the next report.
-7. Run upstream `nix flake check` (the VM checks `probe-transitions`, `render-smoke`) on `a8939fe`.
+7. Run upstream `nix flake check` (the VM checks `probe-transitions`, `render-smoke`) on the locked rev `7eefb2a`.
 8. Tag upstream `v0.2.2` once the wording fix lands (0.2.2 currently exists in the CHANGELOG without a tag).
 9. Add a negative fixture to upstream `probe-transitions`: "state file says dns ok because the resolver answered with the block IP" → must now read degraded.
 10. Assert in `leg-contract` that the script the QML embeds is byte-identical to `lib/net-probe.sh` (the embed is a second copy at build time).
@@ -130,7 +130,7 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 24. Consider probing a name that is guaranteed *not* cached by using a rotating subdomain of `lars.software` once the record exists (open question for the owner).
 25. Re-run the `leg-contract` teeth test as part of a documented negative-test script rather than an ad-hoc shell session (project doctrine: negative tests live in `scripts/negative-test-lints.sh` equivalents).
 26. Add the `leg-contract` check to upstream `FEATURES.md`'s "Flake checks" row — done (11 gates) but re-verify the count after any gate addition.
-27. Verify the 30+ upstream commits between my `47176c3` and the locked `a8939fe` did not touch the probe or the env contract (cheap: `git diff 47176c3 a8939fe -- module.nix lib/`).
+27. Verify the upstream commits between my `47176c3` and the locked `7eefb2a` did not touch the probe or the env contract (cheap: `git diff 47176c3 7eefb2a -- module.nix lib/`).
 28. Check `docs/agents/integration-registry.md` for whether the banner belongs to any service entry (it is desktop-only today).
 29. Add the offline-banner state file to the PapDashboard/gatus surfaces if the owner wants visibility (currently invisible to monitoring).
 30. Confirm `restartTriggers` semantics after the file split: the QML derivation path changes on any `lib/net-probe.sh` edit, so a deploy restarts the unit — verify `X-Restart-Triggers` includes the QML (it does) and document it.
@@ -149,7 +149,7 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 43. Assert the embedded script contains no Nix interpolation hazards (it has `${…}`-free `$VAR` only); a check could `grep -c '\${'` the file.
 44. Re-verify the unit's `MemoryMax=256M` headroom after the changed probe (unchanged code path, but the leg now runs `head`/`cut` subprocesses).
 45. Confirm quiescence before the eventual deploy (`scripts/deploy-when-quiescent.sh --probe`) since other sessions are actively floating inputs.
-46. Note for the deploy log: the fix is `dnsProbeName` only; the guard rides the same deploy because the lock already floats to `a8939fe`.
+46. Note for the deploy log: the visible change is `dnsProbeName`; the guard also rides this deploy because the lock already sits at `7eefb2a` (guard included).
 47. Consider a migration note for users of the upstream module: their `dnsProbeName` may be blocked too; the CHANGELOG says "switch to a public one" — a README "migrating from 0.2.1" line would be kinder.
 48. Check whether any other SystemNix probe uses a resolvable name that could be blocked (gatus checks, wifi-failover).
 49. Re-audit `docs/agents/monitoring.md`'s "phantom metrics" doctrine against this class — a probe that cannot fail is a phantom metric in disguise.
@@ -158,7 +158,7 @@ Secondary observation (from the user's `getent hosts` question): `getent hosts` 
 ## g) Three questions I cannot answer myself
 
 1. **DNS record:** do you want a dedicated `probe.lars.software` A record with a short TTL (60 s) at the provider, so the DNS leg is not TTL-lagged — and should I then point `services.offline-banner.dnsProbeName` at it, or keep the apex `lars.software` and accept the 1 h lag?
-2. **The RED gate:** `branching-flow` locking its own `treefmt-nix` now blocks every deploy. Do you want me to add the one-line `follows` (the gate's own suggested fix, eval-only dep) right now, or is another session already on it and I should stay out of `flake.nix`?
+2. **Other open banner-side decisions I hit:** is `lars.software` (apex, Firebase) an acceptable permanent probe target, or should the leg point at a name you consider more stable than the site? The `[decision]` row for a SystemNix deploy-time probe gate also needs your call (§f.3).
 3. **Deploy ownership:** after the gate is green, should I run `nix run .#deploy` from a session that can `sudo` (e.g. a sysadmin/yolo shell you launch), or do you deploy and I verify the live state afterward?
 
 ---
@@ -198,12 +198,15 @@ nix build .#checks.x86_64-linux.{leg-contract,shell-content,shell-scripts,module
 # embed proof: decoded the JS literal out of /nix/store/qilq3s9c…/shell.qml -> bash -n clean
 #   lars.software -> ['tcp fail','dns ok'] ; one.one.one.one -> ['tcp fail','dns fail']
 
-# after the parallel float (2026-11-19 01:20, 6714e295)
-git -C offline-banner merge-base --is-ancestor 47176c3 a8939fe   -> yes (guard is in the locked rev)
+# after the parallel floats (2026-11-19 01:20 6714e295 / 07:37 35a5536f)
+git -C offline-banner merge-base --is-ancestor 47176c3 7eefb2a   -> yes (guard is in the locked rev)
 nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath
-  -> error: flake.lock infra-follows audit failed:
+  -> 07:2x error: flake.lock infra-follows audit failed:
             branching-flow locks its own 'treefmt-nix' (rev 0ba5d672)
+  -> 07:38 OK after 35a5536f4 (adds branching-flow.inputs.treefmt-nix.follows):
+            /nix/store/jbf6j8ip…-nixos-system-evo-x2-26.11.20261107.f4a03c0.drv
+  -> lock offline-banner rev: 7eefb2a (upstream master tip, guard is an ancestor)
 grep -o 'OFFLINE_BANNER_DNS_NAME=[^"]*' /etc/systemd/user/offline-banner.service -> one.one.one.one  (NOT DEPLOYED)
 ```
 
-**Bottom line:** the defect is fixed in both repos and the tree already contains it, but **nothing is live yet** — the deploy is blocked by an unrelated eval gate (`branching-flow`/`treefmt-nix`) that arrived in the same 01:20 float wave, and the live unit still probes the blocked name.
+**Bottom line:** the defect is fixed in both repos, the locked upstream rev contains the guard, and the evo-x2 toplevel eval is GREEN (`jbf6j8ip…`, 2026-11-19 07:38) — but **nothing is live yet**: the running unit still probes the blocked name, so the next deploy is the only remaining step. Two facts changed under me during this session (push, float) and one was red-then-fixed by a parallel session; every rev in this report was re-verified against the tree at 07:40.
