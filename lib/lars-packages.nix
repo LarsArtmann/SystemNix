@@ -374,22 +374,23 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-10-29 float: journal@50b4941 bakes R6w7rVD9… but its
   # module graph fetches OzU6YCvB… (first-hand,
   # ~/.cache/lockfloat/float-proof-20261029-180630.log). Mirrored in
-  # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE. Drop when upstream
+  # _journal-package.nix (both module defaults import it since 2026-11-19). Drop when upstream
   # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
   # RE-STALE 2026-11-02 04:12 lock float: at journal@3542a958 spec
   # OzU6YCvB, got 1JuET6kA (first-hand,
   # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Mirrored in
-  # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
+  # _journal-package.nix (both module defaults import it since 2026-11-19).
   # RE-STALE 2026-11-05 float wave: at journal@4a63e7f spec 1JuET6kA,
   # got 65uOOb5j (float-proof-20261106-000533.log). Mirrored in
-  # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
+  # _journal-package.nix (both module defaults import it since 2026-11-19).
   # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
   # got OBIY8Nxi (pin-lift toplevel keep-going proof).
   # DROPPED 2026-11-12 (treadmill drop-protocol): the daemon float to
   # 0ed74483 re-staled OBIY8Nxi (got ANZD3eOm, toplevel-proof-
   # 20261112-drop.log), and upstream 0ed74483 ALREADY BAKES exactly
-  # ANZD3eOm (got==bake). All THREE surfaces un-shimmed in the same
-  # pass (lars-packages.nix + journal-serve.nix + journal-backup.nix).
+  # ANZD3eOm (got==bake). All surfaces un-shimmed in the same pass;
+  # module defaults consolidated to _journal-package.nix (2026-11-19) —
+  # a future re-stale edits TWO sites: here + _journal-package.nix.
   journal = flakePkg inputs.journal;
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,

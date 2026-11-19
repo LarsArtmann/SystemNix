@@ -63,23 +63,12 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          # Same store path as the PATH binary (lib/lars-packages.nix
-          # journal = flakePkg inputs.journal) — single source of truth.
-          # vendorHash shim 2026-11-02 04:12 lock float: journal@3542a958
-          # spec OzU6YCvB…, got 1JuET6kA… (first-hand,
-          # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log); mirrors
-          # the flakePkgShim in lars-packages.nix — edit ALL THREE.
-          # RE-STALE 2026-11-06 lock float: journal@4a63e7f spec 1JuET6kA,
-          # got 65uOOb5j (float-proof-20261106-000533.log); all three
-          # surfaces updated in the same pass.
-          # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
-          # got OBIY8Nxi (pin-lift toplevel keep-going proof); all three
-          # surfaces updated in the same pass.
-          # SHIM DROPPED 2026-11-12 (treadmill drop-protocol): the daemon
-          # float to 0ed74483 re-staled OBIY8Nxi (got ANZD3eOm), and
-          # upstream 0ed74483 ALREADY BAKES exactly ANZD3eOm — all three
-          # surfaces un-shimmed in the same pass.
-          default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # Single-site default: _journal-package.nix owns the vendorHash
+          # shim class + history — the next re-stale edits THAT file only.
+          default = import ./_journal-package.nix {
+            inherit inputs;
+            system = pkgs.stdenv.hostPlatform.system;
+          };
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to serve the dashboard with.";
         };
