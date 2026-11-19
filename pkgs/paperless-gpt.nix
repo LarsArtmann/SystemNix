@@ -43,9 +43,22 @@ let
     nodejs = nodejs_24;
 
     # `npm run build` = `tsc -b && vite build --base=./` → dist/
+    #
+    # @swc/core 1.16 (pulled in by @vitejs/plugin-react-swc 4, new in
+    # v0.31.0) ships self-loading compressed carriers: the first load
+    # materializes the verified addon into a user cache and validates the
+    # cache root's ANCESTOR permissions — the build sandbox's /build root
+    # fails that check (ERR_SWC_NATIVE_CACHE: "cache root has a parent
+    # writable by another user without trusted sticky protection"). Mode 0
+    # materializes a unique temp image instead of a persistent cache, and
+    # the skip-check opt-out exists for isolated trusted executors exactly
+    # like the Nix sandbox (docs: native-addon-carriers.md).
+    env = {
+      SWC_NATIVE_BINDING_CACHE = "0";
+      SWC_NATIVE_BINDING_CACHE_SKIP_SECURITY_CHECK = "1";
+    };
     preBuild = ''
-      echo "SWC-DIAG: @swc contents:"; ls -la node_modules/@swc/ || true
-      echo "SWC-DIAG: core pkg:"; ls node_modules/@swc/core/ | head -8 || true
+      echo "SWC-DIAG env: CACHE=$SWC_NATIVE_BINDING_CACHE SKIP=$SWC_NATIVE_BINDING_CACHE_SKIP_SECURITY_CHECK TMPDIR=$TMPDIR HOME=$HOME"
       node -e "try { require('@swc/core'); console.log('SWC-DIAG: core loads OK') } catch(e) { (e.cause||[]).forEach(function(c){ console.error('SWC-DIAG CAUSE:', c.code, String(c.message).split('\n')[0]) }); console.error('SWC-DIAG FAIL:', String(e.message).split('\n')[0]); process.exit(0) }"
     '';
     installPhase = ''
