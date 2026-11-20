@@ -3126,7 +3126,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_monitor365_buffer_pressure 0*)"
                 ];
-                alert = "Monitor365 DuckDB exceeds 1.6G — buffer pressure risk. Server may hit MemoryMax under load. Consider reducing retention or increasing MemoryMax.";
+                alert = "Monitor365 server cgroup memory pressure: usage >= ${toString monitor365MemPressurePct}% of memory.max or an OOM kill this boot. Post-shrink floor is ~1G/8G (13G DB, 1.4M rows); under sustained pressure, consider reducing retention or increasing MemoryMax.";
               }
               {
                 name = "CPU Runaway (Any Service)";
