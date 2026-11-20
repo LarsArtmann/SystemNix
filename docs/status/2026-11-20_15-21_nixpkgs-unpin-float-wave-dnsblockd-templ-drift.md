@@ -1,5 +1,7 @@
 # Status: nixpkgs UN-PIN + float wave — dnsblockd templ drift is the sole blocker
 
+> **SUPERSEDED 2026-11-20 ~16:55** by `docs/status/2026-11-20_16-55_nixpkgs-unpin-wave-harvest-landed-dnsblockd-fixed-upstream.md` — the dnsblockd templ drift was fixed UPSTREAM ~1 h after this report (tip bcdd194f: views regenerated at the declared v0.3.1100, pushed; attribution parallel-session/user, observed not executed by this session). Sections a/c/d here remain accurate for the 15:21 snapshot.
+
 **2026-11-20 15:21 CET — session: root nixpkgs un-pin (owner directive "nixpkgs SHOULD NEVER be REV-PINNED! NEVER!") + fix the cv-hash deploy failure.**
 
 **Scope line — what this report VERIFIED and how:**
