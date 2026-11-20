@@ -631,6 +631,15 @@ in
         # commits. Local dev origin = forgejo@evo-x2.home.lan, `github`
         # remote = fallback mirror target.
         "audiblesync"
+        # Native-since-inception (2026-11-20): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # Only .github/dependabot.yml (no workflow files), so the
+        # repo-scoped sync PAT suffices (business-networking precedent).
+        # Push mirror attached by hand at creation (phase-5-identical API
+        # call, 8h + sync_on_commit) and verified flowing; phase 5 stays
+        # idempotent.
+        "summit-planner"
       ];
       immich = {
         enable = true;
