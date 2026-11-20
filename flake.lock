@@ -1295,11 +1295,11 @@
         "templ-src": "templ-src"
       },
       "locked": {
-        "lastModified": 1795136523,
-        "narHash": "sha256-FLxYO4LXh6rPafyGvY6tuGnvCs6ceTfo0Ox/gTVeOg0=",
+        "lastModified": 1795174246,
+        "narHash": "sha256-46nT6tDDwMgU7mVRx1OMAt6e5i3/RJ4X+ky0hsTB/14=",
         "ref": "refs/heads/master",
-        "rev": "232eab375bf64d2c9d0044bf02a1ffd14c1989ae",
-        "revCount": 3255,
+        "rev": "985bd1bfb71d8027709bf52d11c01f40345777ed",
+        "revCount": 3256,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
