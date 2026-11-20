@@ -560,6 +560,24 @@ upload_document() {
   # upload_document <file> <title> <created> <doctype> <fieldid> <value> <extra-tag|"">
   local file=$1 title=$2 created=$3 doctype=$4 fieldid=$5 value=$6 extra=${7-}
   local out="$TMPDIR_RUN/upload-body" code task
+  # curl's -F "@file" parser cannot read paths containing a comma (curl 26,
+  # "Failed to open/read local data from file/application" — live-proven
+  # 2026-11-20: identical bytes succeed from a comma-free name and fail
+  # under a comma'd one; the ;filename= override breaks on commas the same
+  # way, while plain value parts like title= tolerate them). Route every
+  # comma-carrying source through a comma-free symlink; the ,->_ sanitized
+  # basename matches the corpus's own EUR-amount convention (EUR 45_23), so
+  # Paperless's stored original-filename stays faithful. This pinned the
+  # failures=11 stuck-convergence class (Nov 17-19 2026: merchant names
+  # like "HOTEL BRISTOL, WARSAW").
+  local orig=$file
+  if [[ $file == *[,\;]* ]]; then
+    local safe="$TMPDIR_RUN/${file##*/}"
+    safe=${safe//,/_}
+    safe=${safe//;/_}
+    ln -sf "$file" "$safe"
+    file=$safe
+  fi
   local args=(-sS -o "$out" -w '%{http_code}' -X POST
     "$URL/api/documents/post_document/"
     -F "document=@$file"
@@ -573,12 +591,12 @@ upload_document() {
   args+=(-F "custom_fields={\"$fieldid\":\"$value\"}")
   code=$(curl_with_token "${args[@]}")
   if [[ $code != 200 ]]; then
-    warn "upload failed for $file (HTTP $code): $(<"$out")"
+    warn "upload failed for $orig (HTTP $code): $(<"$out")"
     return 1
   fi
   task=$(jq -r '.' <"$out")
   [[ -n $task && $task != null ]] || {
-    warn "upload for $file returned no task id: $(<"$out")"
+    warn "upload for $orig returned no task id: $(<"$out")"
     return 1
   }
   wait_task "$task"
