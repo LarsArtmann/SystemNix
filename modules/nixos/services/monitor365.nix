@@ -646,9 +646,13 @@
 
         # ── Pool-interim off-NVMe copy (2026-10-27 plan S5) ─────────
         # Copies the NEWEST nightly backup to the HDD pool 25 min after the
-        # 03:00 quiesced backup (After= holds the start if the backup window
-        # — export + retention + VACUUM attempt, 30min budget — is still
-        # running). Runs as the service user: the source dir is its own
+        # 03:00 quiesced backup. `after` (NOT `wants`) keeps the ordering
+        # when the backup is still running at 03:25 but does NOT re-pull
+        # the backup unit: with `wants`, every fire re-STARTED the finished
+        # backup ~25 min later (oneshot, no RemainAfterExit), running
+        # export + retention TWICE per night (2026-11-20 fix, task
+        # 000001a1f6b5). The 03:25 timer is the sole trigger. Runs as the
+        # service user: the source dir is its own
         # 0750 stateDir, the dest is its own tmpfiles dir — no capabilities
         # needed, DAC-clean by construction. Pool-side freshness is wired
         # into backup-coordination below (stale >25h = alert).
@@ -656,7 +660,6 @@
           systemd.services.monitor365-pool-copy = {
             description = "Monitor365 newest DB backup copy to the HDD pool (off-NVMe interim leg)";
             after = [ "monitor365-server-backup.service" ];
-            wants = [ "monitor365-server-backup.service" ];
             inherit onFailure;
             unitConfig.RequiresMountsFor = [
               serverCfg.stateDir
