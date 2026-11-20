@@ -348,10 +348,17 @@
           # guards live in scripts/monitor365-retention.sh (fixture-
           # tested); WARN-not-die by design so this EXIT trap still
           # restores the server.
+          # RETENTION_COMPACT: ONE-SHOT final compact — the live file holds
+          # 1.4M rows but carries internal free blocks from the overnight
+          # 34M-row convergence (13G file, cosmetic); the script's
+          # .retention-compact-stamp makes it fire exactly once at the first
+          # deployed fire, then never again. Follow-up: once the stamp lands
+          # (journal "compact done"), remove this env line.
           STATE_DIR="$STATE_DIR" \
           RETENTION_DAYS="${toString retentionDays}" \
           VACUUM_INTERVAL_S="${toString vacuumIntervalSeconds}" \
           VACUUM_HEADROOM_B="${toString vacuumHeadroomBytes}" \
+          RETENTION_COMPACT="1" \
           ${lib.getExe monitor365RetentionScript}
 
           echo "monitor365-server-backup: backup complete, server restored"

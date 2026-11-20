@@ -110,6 +110,35 @@ echo "$OUT" | grep -q "full stderr: $D8/retention-stderr.log" &&
 [ -s "$D8/retention-stderr.log" ] &&
   pass "leg8 stderr file written" || fail "leg8 stderr file missing/empty"
 
+# ── Leg 9: RETENTION_COMPACT=1 rebuild-copies once, count-gated ──
+D9=$(mktemp -d)
+make_db "$D9/monitor365.duckdb" TIMESTAMP
+OUT=$(run_retention "$D9" RETENTION_COMPACT=1)
+echo "$OUT" | grep -q "compact done" &&
+  pass "leg9 compact ran" || fail "leg9 compact missing: $OUT"
+echo "$OUT" | grep -q "1 rows preserved" &&
+  pass "leg9 count preserved" || fail "leg9 count wrong: $OUT"
+[ -f "$D9/.retention-compact-stamp" ] &&
+  pass "leg9 compact stamp written" || fail "leg9 stamp missing"
+ROWS=$(duckdb "$D9/monitor365.duckdb" -noheader -list -c "SELECT COUNT(*) FROM events;" 2>/dev/null)
+[ "$ROWS" = "1" ] && pass "leg9 retention still applied" || fail "leg9 rows wrong: $ROWS"
+[ ! -e "$D9/monitor365.duckdb.compact-tmp" ] &&
+  pass "leg9 no tmp residue" || fail "leg9 tmp file left behind"
+OUT=$(run_retention "$D9" RETENTION_COMPACT=1)
+echo "$OUT" | grep -q "compact done" &&
+  fail "leg9 compact re-ran despite stamp: $OUT" || pass "leg9 stamp suppresses repeat"
+
+# ── Leg 10: compact failure keeps the original DB and writes no stamp ──
+D10=$(mktemp -d)
+printf 'not a duckdb database' >"$D10/monitor365.duckdb"
+OUT=$(run_retention "$D10" RETENTION_COMPACT=1)
+echo "$OUT" | grep -q "compact rebuild failed" &&
+  pass "leg10 failure warned" || fail "leg10 expected compact failure: $OUT"
+[ ! -f "$D10/.retention-compact-stamp" ] &&
+  pass "leg10 no stamp on failure" || fail "leg10 stamp written on failure"
+[ ! -e "$D10/monitor365.duckdb.compact-tmp" ] &&
+  pass "leg10 tmp cleaned" || fail "leg10 tmp residue: $(ls "$D10")"
+
 if [ "$FAILURES" -eq 0 ]; then
   echo "monitor365-retention fixture: ALL LEGS GREEN"
   exit 0

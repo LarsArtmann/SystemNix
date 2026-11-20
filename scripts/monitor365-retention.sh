@@ -18,6 +18,8 @@
 #   VACUUM_INTERVAL_S  (default 604800 = 7d) stamp-gated VACUUM cadence
 #   VACUUM_HEADROOM_B  (default 5368709120 = 5 GiB) free space required
 #                                      on top of the current DB size
+#   RETENTION_COMPACT  (default 0)   one-shot stamp-gated rebuild-copy
+#                                      compact (fires once, then never)
 #
 # duckdb stderr from failed statements is written IN FULL to
 # $STATE_DIR/retention-stderr.log — the journal only carries a 5-line
@@ -117,4 +119,45 @@ if [ $((NOW_S - LAST_S)) -ge "$VACUUM_INTERVAL_S" ]; then
   else
     echo "monitor365-retention: WARNING — VACUUM skipped, headroom $AVAIL_BYTES < needed $NEEDED_BYTES; retries next window"
   fi
+fi
+
+# ── One-shot rebuild-copy compact (RETENTION_COMPACT=1) ─────────────
+# DuckDB never returns freed blocks to the OS: after a large convergence
+# the file carries internal free space (13G file / 1.4M rows, 2026-11-12).
+# Plain VACUUM reuses free blocks but never shrinks the file (proven live
+# 2026-11-11: 0 bytes reclaimed). The rebuild-copy (ATTACH + COPY FROM
+# DATABASE into a fresh file) lands the true floor; the proven 11G-shrink
+# pattern from the 2026-11-11 session, stamp-gated so it runs ONCE.
+# Count-gated: the swap only happens when the rebuilt row count equals the
+# live count. Runs INSIDE the quiesce window by construction (called from
+# the backup script after the export).
+RETENTION_COMPACT=${RETENTION_COMPACT:-0}
+COMPACT_STAMP="$STATE_DIR/.retention-compact-stamp"
+if [ "$RETENTION_COMPACT" = "1" ] && [ ! -f "$COMPACT_STAMP" ]; then
+  TMP="$DB.compact-tmp"
+  rm -f "$TMP"
+  COMPACT_OK=0
+  if ERR=$(duckdb -c "$DUCK_SESSION ATTACH '$DB' AS src (READ_ONLY); ATTACH '$TMP' AS dst; COPY FROM DATABASE src TO dst;" 2>&1 >/dev/null); then
+    LIVE_N=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
+    NEW_N=$(duckdb "$TMP" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
+    if [ -n "$LIVE_N" ] && [ "$LIVE_N" != "?" ] && [ "$LIVE_N" = "$NEW_N" ]; then
+      OWNER="$(stat -c '%u:%g' "$DB")"
+      MODE="$(stat -c '%a' "$DB")"
+      BEFORE_B=$(stat -c %s "$DB")
+      mv -f "$TMP" "$DB"
+      chown "$OWNER" "$DB"
+      chmod "$MODE" "$DB"
+      date +%s >"$COMPACT_STAMP"
+      echo "monitor365-retention: compact done — file $BEFORE_B -> $(stat -c %s "$DB") bytes ($NEW_N rows preserved)"
+      COMPACT_OK=1
+    else
+      echo "monitor365-retention: WARNING — compact count-gate FAILED (live $LIVE_N vs rebuilt $NEW_N) — original kept; full stderr: $STATE_DIR/retention-stderr.log"
+      LOG_ERR "$ERR"
+    fi
+  else
+    echo "monitor365-retention: WARNING — compact rebuild failed — original kept, retries next window; full stderr: $STATE_DIR/retention-stderr.log"
+    LOG_ERR "$ERR"
+  fi
+  [ "$COMPACT_OK" -eq 0 ] && rm -f "$TMP"
+  echo "monitor365-retention: rows remaining: $(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")"
 fi
