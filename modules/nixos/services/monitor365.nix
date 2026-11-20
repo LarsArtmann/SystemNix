@@ -748,6 +748,15 @@
             # unchanged), everyone else traverse-only.
             "d ${agentStoragePath} 0711 monitor365 monitor365 - -"
             "d ${poolBackupDir} 0750 monitor365-server monitor365-server - -"
+            # Flight-recorder diagnostics cap (2026-11-20, sync-failure JSON
+            # spam observed 2026-10-21 era with NO rotation policy): the agent
+            # writes diagnostics/sync-failure-*.json on every failed sync
+            # cycle; unbounded growth on the pool. Age-capped at 14d via the
+            # daily systemd-tmpfiles-clean timer — post-mortem window wide
+            # enough, spam era bounded. Same-path duplicate trap does not
+            # apply: no other rule targets this path (upstream creates the
+            # dir implicitly).
+            "d ${agentStoragePath}/diagnostics 0750 monitor365 monitor365 - 14d"
           ];
 
           # Pool-side freshness entry: the local backup_healthy row only
