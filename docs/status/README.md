@@ -1,3 +1,16 @@
+## Live pool addendum (2026-11-20 03:0x)
+
+New live report: `2026-11-20_03-04_window-closeout-services-journal-noise-five-task-window.md`
+— full-pass close-out of the five-task window 2026-11-17 → 20 (dispatch-time
+dedup clean: no prior window report covers the span). Headlines: papdashboard
+674/min noise root-caused + fixed UPSTREAM (fleet landing blocked on the
+unpushed oci-go-standard-pilot branch), dnsblockd TRACK_METRICS fail-soft
+landed upstream unpushed, inboxclean 3.28 TB tile-poll storm driver fixed
+in-tree, takeout size_band proven on real racedriver8k data (row premise was
+wrong — real forms pinned), migrate-user-tmp sandbox red fixed. Band drift:
+none recorded (0 `task.reprioritized` facts since 2026-11-17, tq.db read
+fresh). 8 new rows + 3 blocked owner questions appended to TODO_LIST.
+
 ## Live pool addendum (2026-11-15 14:2x)
 
 New live report: `2026-11-15_14-21_task-queue-window-reverification.md`
