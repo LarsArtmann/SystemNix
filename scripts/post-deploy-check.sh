@@ -1844,12 +1844,23 @@ $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200"
 # Cutover gate (2026-10-02 micro-plan T28): while twenty.service lives it
 # owns the crm vHost; once the freeze removes it, crm-server claims the
 # subdomain (vHost goes plain-layer in the same deploy). Probe whichever
-# owns crm.$DOMAIN — with -auth the Kith CRM serves its login page at
-# /login (registered route, 200 HTML; / itself redirects to it).
+# owns crm.$DOMAIN — the Kith CRM is Pocket-ID-OIDC-ONLY since 2026-10-17:
+# unauthenticated /login 303s to /auth/oauth/pocket-id/begin, which 302s
+# to the IdP with PKCE. The healthy signature is that handoff, not an HTML
+# login page (the stale 200-on-/login expectation went red 2026-11-19 when
+# the app began redirecting; assert the redirect TARGET, not the first hop).
 if unit_enabled twenty.service; then
   check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
 elif unit_enabled crm-server.service; then
-  check "Kith CRM (HTTPS)" "https://crm.$DOMAIN/login" "200" "<html" 2>/dev/null || true
+  crm_oidc_target=$(curl -s -o /dev/null -w '%{redirect_url}' --max-time 10 "https://crm.$DOMAIN/auth/oauth/pocket-id/begin" 2>/dev/null || true)
+  if printf '%s' "$crm_oidc_target" | grep -q "^https://auth\.$DOMAIN/authorize?"; then
+    echo -e "${GREEN}PASS${NC} Kith CRM (HTTPS) - OIDC handoff to auth.$DOMAIN/authorize"
+    PASS=$((PASS + 1))
+  else
+    echo -e "${RED}FAIL${NC} Kith CRM (HTTPS) - expected 302 handoff to auth.$DOMAIN/authorize, got: ${crm_oidc_target:-no redirect}"
+    FAIL=$((FAIL + 1))
+    record_fail "Kith CRM - OIDC handoff broken"
+  fi
 fi
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
