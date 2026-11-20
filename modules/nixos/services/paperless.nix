@@ -582,6 +582,20 @@ _: {
             exporter.enable = true;
 
             settings = {
+              # Loopback host allowlist (v3.5 semantics change, hit live
+              # 2026-11-20 with the nixpkgs float): PAPERLESS_URL being set
+              # flips ALLOWED_HOSTS from ["*"] to [localhost + the URL's
+              # hostname] — and Django treats 127.0.0.1 as a DIFFERENT Host
+              # than localhost, so every loopback consumer (paperless-gpt's
+              # pre-start probe, triage/exporter API calls — Host:
+              # 127.0.0.1:2892) got DisallowedHost-400s and the gpt unit
+              # crash-looped 45 restarts post-deploy. Upstream appends only
+              # "localhost" (its Docker health check); 127.0.0.1 is the same
+              # trusted loopback class. The PAPERLESS_URL hostname
+              # (paperless.home.lan) is appended separately by upstream and
+              # remains the only routable host.
+              PAPERLESS_ALLOWED_HOSTS = "127.0.0.1,localhost";
+
               # Rebuilds tesseract with equ+osd plus every language named here
               # (the nixpkgs module splits this on "+" and feeds it to
               # tesseract5.override.enableLanguages).
