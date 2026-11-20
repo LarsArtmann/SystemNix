@@ -550,6 +550,17 @@
               group = "Sync & Backup";
               description = "Gmail AI Assistant — Backup, Sorting & Tagging";
               icon = "gmail.png";
+              # Storm-driver fix (2026-11-19, task 000001a1f5d5…): WITHOUT
+              # checkUrl the papdashboard monitor probes the tile HREF —
+              # https://inbox.home.lan/ — every 30s (servicestatus
+              # DefaultInterval; "when empty the monitor probes Href
+              # itself", servicestatus/config.go). Each `/` render runs the
+              # dashboard's top-senders query over the 1.5 GB DB; the 5s
+              # probeTimeout canceled it mid-scan and the next poll
+              # re-scanned from scratch — the 2026-10-21 review's "victim"
+              # was actually the poller (3.28 TB read, ~38×/h DB rescan).
+              # Pin the poll to the cheap /health endpoint instead.
+              checkUrl = "http://127.0.0.1:${toString ports.inboxclean}/health";
             };
             backup = {
               # Nightly online .backup of the event-store DB
