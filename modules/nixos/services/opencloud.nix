@@ -75,6 +75,37 @@ _: {
       ];
 
       config = lib.mkIf cfg.enable {
+        # ── eval-time guard: the ocis 7.2.4 port-behavior truth (pinned) ──
+        # Deploy #8 re-derived this from scratch after the nixpkgs module's
+        # `port` option implied configurability it does not have:
+        #   • PROXY_HTTP_ADDR IS honored — the proxy bind follows the
+        #     configured port exactly (10-27 "ignores env" was a misread of
+        #     the standalone `web` service's listener).
+        #   • `web` binds its ocis-COMPILED-IN loopback 9100 regardless of
+        #     env — NOT configurable in 7.2.4.
+        #   • NATS_PORT is a NO-OP — embedded NATS stays on compiled-in 9233.
+        # The 9500 move exists precisely to keep proxy and web apart
+        # (deploy-time EADDRINUSE race class, 2026-11-02 strace +
+        # /proc/net/tcp proof — lib/ports.nix opencloud/opencloud-nats).
+        assertions = [
+          {
+            assertion = cfg.port == 9500;
+            message = "services.opencloud.port must stay 9500: outside the ocis-compiled 9100-9304 internal band so the proxy (env-honored) cannot race the `web` service's compiled-in 9100 bind (EADDRINUSE → CSP-reload panic cascade, deploy #8, 2026-11-02).";
+          }
+          {
+            assertion = !(cfg.environment ? "NATS_PORT");
+            message = "services.opencloud.environment.NATS_PORT is a NO-OP in ocis 7.2.4 (embedded NATS binds compiled-in 9233); setting it implies configurability that does not exist.";
+          }
+          {
+            assertion = !(cfg.environment ? "PROXY_HTTP_ADDR");
+            message = "do not set services.opencloud.environment.PROXY_HTTP_ADDR: the module's `port` option already drives the proxy bind (env-honored) — a second source of truth re-creates the port-split trap.";
+          }
+          {
+            assertion = cfg.environment ? "PROXY_TLS" && cfg.environment.PROXY_TLS == "false";
+            message = "services.opencloud.environment.PROXY_TLS must stay \"false\": upstream default true serves self-signed TLS that Caddy's plain reverse_proxy rejects (HTTP-request-to-HTTPS-server 400 → ERR_HTTP2_PROTOCOL_ERROR, live 2026-11-02); TLS terminates at Caddy.";
+          }
+        ];
+
         services.opencloud = {
           # Production line: no downgrade support across lines — never switch
           # an initialized instance from opencloud-production to opencloud.
