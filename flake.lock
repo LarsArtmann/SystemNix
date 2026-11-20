@@ -1060,11 +1060,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795171487,
-        "narHash": "sha256-2XukwjSlx2InzTLY4NYqYEEJOXTImv6SImqiec43beE=",
+        "lastModified": 1795171849,
+        "narHash": "sha256-2khv+smSabBh/sIXXTXVC0O7cPHo2Q6MXifaMq71aT4=",
         "ref": "refs/heads/master",
-        "rev": "2584a9d048d85faffd4cda78769f2a84e456d573",
-        "revCount": 11375,
+        "rev": "53e9e8b88c5e4ff44d4c6ef7d4f8623429cfe32e",
+        "revCount": 11377,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -6376,11 +6376,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794981719,
-        "narHash": "sha256-vgK2OLSINGsL3F/0ykqQVQlbN2s7rcAJEU4SgOj0xsU=",
+        "lastModified": 1795093082,
+        "narHash": "sha256-67l2U/CfMManIMCwBpyoQwngRushVNYkgLW44RQ1Rv8=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "a393e23cbcff42c017e0cc769a03f197136983dc",
+        "rev": "e0c4b7002621c89e66ef977b7a13380c5c0365e2",
         "type": "github"
       },
       "original": {
