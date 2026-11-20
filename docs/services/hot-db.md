@@ -365,6 +365,40 @@ entries.postgres = {
 };
 ```
 
+Next wave — monitor365-server (unit list + stance verified in-tree
+2026-11-20, task 000001a1f72ccedd; NOT landed in configuration.nix —
+prepare/cutover MUST run first, the postgres incident is the precedent):
+
+```nix
+entries.monitor365-server = {
+  path = "/var/lib/monitor365-server";
+  # Same verdict family as postgres: a 36G DuckDB + 7 nightly ~22G backups
+  # are a large-file churn writer whose deleted bytes stay pinned in the
+  # QLC @ snapshot set; DuckDB provides its own integrity (nightly quiesced
+  # backup + pool-copy leg are the RPO), so nodatacow latency wins.
+  cow = false;
+  unit = "monitor365-server.service";
+  # Stance: the upstream server module sets StateDirectory=monitor365-server
+  # (implicit RequiresMountsFor → fail-closed on a detached Samsung —
+  # correct for a DATABASE store, never shadow-write WAL through the
+  # mount; keep, not the caddy treatment). The in-tree ExecStartPre heal
+  # scripts ride the server unit. The backup unit is root-run with
+  # StateDirectory already mkForce null in-tree but reads/writes the
+  # stateDir directly → wire it. monitor365-pool-copy already carries an
+  # explicit RequiresMountsFor on the stateDir → wire it (consistent).
+  # The watchdog units are deliberately NOT wired (HTTP + journalctl only,
+  # no dataDir file access).
+  extraUnits = [
+    "monitor365-server-backup.service"
+    "monitor365-pool-copy.service"
+  ];
+};
+```
+
+Window facts for the prepare (owner sudo): the state dir held 36G DB +
+7 nightly reflink backups (~154G logical) at the 2026-10-27 audit —
+verify Samsung free space covers the apparent size before `prepare`.
+
 ## Rollback
 
 Remove the entry from the config, deploy, `sudo systemctl start <units>`.
