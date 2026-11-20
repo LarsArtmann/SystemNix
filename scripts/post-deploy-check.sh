@@ -2695,9 +2695,9 @@ fi
 if sudo -n true 2>/dev/null; then
   _tk_row="$(sudo -n setpriv --reuid postgres --regid postgres --init-groups -- psql -d immich -At -c "SELECT count(*) || '/' || coalesce(max(array_length(permissions, 1)), 0) FROM api_key WHERE name = 'takeout-import (nix-managed)'" 2>/dev/null || echo "")"
   case "$_tk_row" in
-    "1/16") report_pass "Takeout Immich key - api_key row present with 16 permissions (takeout-import (nix-managed))" ;;
-    "") report_warn "Takeout Immich key - DB probe unavailable (sudo ok but psql failed; is the immich DB up?)" ;;
-    *) report_fail "Takeout Immich key - api_key row/count/permissions wrong: '$_tk_row' (expected 1 row / 16 permissions; converger re-converges via systemctl restart immich-api-key-provision)" ;;
+  "1/16") report_pass "Takeout Immich key - api_key row present with 16 permissions (takeout-import (nix-managed))" ;;
+  "") report_warn "Takeout Immich key - DB probe unavailable (sudo ok but psql failed; is the immich DB up?)" ;;
+  *) report_fail "Takeout Immich key - api_key row/count/permissions wrong: '$_tk_row' (expected 1 row / 16 permissions; converger re-converges via systemctl restart immich-api-key-provision)" ;;
   esac
   unset _tk_row
 else
