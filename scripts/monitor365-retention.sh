@@ -18,6 +18,10 @@
 #   VACUUM_INTERVAL_S  (default 604800 = 7d) stamp-gated VACUUM cadence
 #   VACUUM_HEADROOM_B  (default 5368709120 = 5 GiB) free space required
 #                                      on top of the current DB size
+#
+# duckdb stderr from failed statements is written IN FULL to
+# $STATE_DIR/retention-stderr.log — the journal only carries a 5-line
+# tail, which cut the OOM headline from the batch-20 failure evidence.
 # Needs: duckdb + coreutils on PATH (writeShellApplication runtimeInputs
 # in production; the fixture check provides them directly).
 #
@@ -40,6 +44,14 @@ VACUUM_HEADROOM_B=${VACUUM_HEADROOM_B:-5368709120}
 DUCKDB_MEMORY_LIMIT=${DUCKDB_MEMORY_LIMIT:-6G}
 DUCKDB_THREADS=${DUCKDB_THREADS:-4}
 DUCK_SESSION="SET memory_limit='$DUCKDB_MEMORY_LIMIT'; SET threads=$DUCKDB_THREADS;"
+
+LOG_ERR() {
+  # Full stderr capture to the state dir + a 5-line journal tail: the
+  # journal line names the file, the file carries the headline line the
+  # tail can cut (batch-20 lesson).
+  printf '%s\n' "$1" >"$STATE_DIR/retention-stderr.log"
+  printf '%s\n' "$1" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
+}
 
 DB="$STATE_DIR/monitor365.duckdb"
 if [ ! -s "$DB" ]; then
@@ -68,8 +80,8 @@ while [ "$BATCH_NO" -lt "$RETENTION_MAX_BATCHES" ]; do
   BEFORE_BATCH=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo 0)
   ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE rowid IN (SELECT rowid FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF' LIMIT $RETENTION_BATCH_SIZE);" 2>&1 >/dev/null) || DELETE_FAILED=1
   if [ "$DELETE_FAILED" -ne 0 ]; then
-    echo "monitor365-retention: WARNING — DELETE batch $((BATCH_NO + 1)) failed (boundary count: $BEFORE; deleted so far: $TOTAL_DELETED; DB left consistent — the next fire continues); tonight's export is intact"
-    printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
+    echo "monitor365-retention: WARNING — DELETE batch $((BATCH_NO + 1)) failed (boundary count: $BEFORE; deleted so far: $TOTAL_DELETED; DB left consistent — the next fire continues); tonight's export is intact; full stderr: $STATE_DIR/retention-stderr.log"
+    LOG_ERR "$ERR"
     break
   fi
   AFTER_BATCH=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "$BEFORE_BATCH")
@@ -99,8 +111,8 @@ if [ $((NOW_S - LAST_S)) -ge "$VACUUM_INTERVAL_S" ]; then
       date +%s >"$STAMP"
       echo "monitor365-retention: VACUUM done — file $DB_BYTES -> $(stat -c %s "$DB") bytes"
     else
-      echo "monitor365-retention: WARNING — VACUUM failed (stamp NOT updated; retries next window)"
-      printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
+      echo "monitor365-retention: WARNING — VACUUM failed (stamp NOT updated; retries next window); full stderr: $STATE_DIR/retention-stderr.log"
+      LOG_ERR "$ERR"
     fi
   else
     echo "monitor365-retention: WARNING — VACUUM skipped, headroom $AVAIL_BYTES < needed $NEEDED_BYTES; retries next window"

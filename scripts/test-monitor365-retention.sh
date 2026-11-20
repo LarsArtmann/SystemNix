@@ -98,6 +98,18 @@ echo "$OUT" | grep -q "batches: 2; deleted: 2" &&
 echo "$OUT" | grep -q "rows remaining: 1" &&
   pass "leg7 rows remaining" || fail "leg7 rows wrong: $OUT"
 
+# ── Leg 8: a failed DELETE writes the FULL duckdb stderr to the state dir ──
+# (the journal-only 5-line tail cut the batch-20 OOM headline)
+D8=$(mktemp -d)
+printf 'not a duckdb database' >"$D8/monitor365.duckdb"
+OUT=$(run_retention "$D8")
+echo "$OUT" | grep -q "DELETE batch 1 failed" &&
+  pass "leg8 failure warned" || fail "leg8 expected DELETE failure warning: $OUT"
+echo "$OUT" | grep -q "full stderr: $D8/retention-stderr.log" &&
+  pass "leg8 journal names the stderr file" || fail "leg8 stderr path missing: $OUT"
+[ -s "$D8/retention-stderr.log" ] &&
+  pass "leg8 stderr file written" || fail "leg8 stderr file missing/empty"
+
 if [ "$FAILURES" -eq 0 ]; then
   echo "monitor365-retention fixture: ALL LEGS GREEN"
   exit 0
