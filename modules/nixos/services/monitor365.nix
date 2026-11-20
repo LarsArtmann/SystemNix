@@ -86,6 +86,13 @@
       # runs weekly, stamp-gated + disk-headroom-guarded. Raise/lower the
       # window here; 90d balances dashboard history vs DB size (~2-6 GB
       # steady-state at post-cut collection rates).
+      # CONFIRMED 90d (2026-11-20, task 000001a1f6b5): chosen under the
+      # owner's "go fix it" delegation, LIVE in production since the
+      # 2026-11-12 03:13 converged fire (34.4M rows deleted, DB at floor,
+      # ~1.4M rows remaining), ratified without owner objection through
+      # 8 nights of fires. The window remains a one-line change here —
+      # older nights' exports on the HDD pool are the only recovery path
+      # for anything already deleted.
       retentionDays = 90;
       vacuumIntervalSeconds = 604800; # 7 days
       vacuumHeadroomBytes = 5368709120; # 5 GiB free required on top of DB size
