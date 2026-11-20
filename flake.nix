@@ -35,7 +35,17 @@
     # f4a03c00 is the proof2-proven graph. LIFT: unstable ships patchelf
     # >= 0.19 again AND the floated tools build green on the floated rev
     # (keep-going toplevel proof).
-    nixpkgs.url = "github:NixOS/nixpkgs/f4a03c008967841f2a0b3cb7c436fc6fc31671f6";
+    # PIN LIFTED 2026-11-20 (owner directive: "nixpkgs SHOULD NEVER be
+    # REV-PINNED! NEVER!") — root nixpkgs floats on nixos-unstable again.
+    # The patchelf half of the written LIFT is unmet (tip still ships
+    # patchelf 0.15.2, probed 2026-11-20) but stays DELEGATED to
+    # nixpkgs-hermes, exactly as the pin comment already routed it — the
+    # root never needed to freeze for hermes. The tools half is proof-gated
+    # like the 11-06 lift: keep-going toplevel with the floated tools
+    # realized before this float deploys; anything still broken upstream
+    # gets a fresh per-input pin with a concrete LIFT observable, never a
+    # blanket root rollback.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # nixpkgs-unstable follow input REMOVED 2026-11-06: created 2026-10-25
     # (inboxclean go-1.27.3 floor vs the pinned root's go_1_27 1.27.2),
     # extended 2026-11-06 to file-and-image-renamer, go-taskqueue,

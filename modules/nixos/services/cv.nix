@@ -250,9 +250,15 @@
       # TWENTY-FOURTH RE-STALE 2026-11-19 00:12 fleet float: 178ccec →
       # 5b2ca54; spec hDAVgn6…, got zYtPdB6… (first-hand keep-going,
       # ~/.cache/lockfloat/keepgoing-1119.log). Same protocol.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-zYtPdB6dngj73ZXT6TUNbkaU6rcgXE0xGeXBjg3+a4I=";
-      };
+      # SHIM DROPPED 2026-11-20 (drop-safety test, 25th cycle closes
+      # upstream-side): cv floated 2584a9d → 53e9e8b; spec zYtPdB6…,
+      # got 7w2Mw3Mh… (the 12:06 deploy keep-going enumeration) — and
+      # upstream nix/packages.nix:123 AT 53e9e8b bakes exactly 7w2Mw3Mh…
+      # (`git show 53e9e8b:nix/packages.nix`), so the got EQUALS the
+      # upstream bake at the locked rev: upstream's own hash governs again.
+      # Re-add ONLY via fresh first-hand nix-hash-fix evidence AT THE
+      # LOCKED REV, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [

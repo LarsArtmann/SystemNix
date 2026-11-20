@@ -82,14 +82,15 @@
     # toplevel proof with hermes-agent realized on the floated rev.
     hermes-agent = "REV-PINNED at 21ae0e12 (2026-11-12): upstream's nested patchelfFixed pair rejects 4/6 hunks (the 2026-11-09 gen-992 arc recurring). LIFT: upstream re-syncs their nested patchelf packaging + keep-going toplevel proof on the floated rev.";
     # ── 2026-11-12 root + hermes routing (the 0.15.2 patchelf mispairing) ──
-    # nixpkgs (root): unstable tip still ships patchelf 0.15.2 (probed) and
-    # its newer stdenv broke the 2026-11-11 tool floats (cvagent/journal/
-    # discordsync/pma — proof4 red under tip, proof2 green under f4a03c00).
-    # f4a03c00 is the proof2-proven graph; hermes's patchelf mispairing is
-    # neutralized separately via nixpkgs-hermes. LIFT: unstable ships
-    # patchelf >= 0.19 again AND the floated tools build green on the
-    # floated rev (keep-going toplevel proof).
-    nixpkgs = "REV-PINNED at f4a03c00 (2026-11-12): tip's stdenv broke the 2026-11-11 tool floats (proof4 vs proof2) and its patchelf 0.15.2 mispairs hermes — the hermes half is neutralized via nixpkgs-hermes. LIFT: unstable patchelf >= 0.19 + floated tools green on the floated rev.";
+    # nixpkgs row REMOVED 2026-11-20 (owner directive: "nixpkgs SHOULD NEVER
+    # be REV-PINNED! NEVER!") — root re-floated to nixos-unstable,
+    # proof-gated per the pin's own tools observable (keep-going toplevel
+    # with the 2026-11-11 tool floats realized before deploy). The patchelf
+    # half of the old LIFT was never the root's job — nixpkgs-hermes carries
+    # it (tip still ships patchelf 0.15.2, probed 2026-11-20, so that
+    # input's collapse LIFT stays unmet). Anything the float breaks gets a
+    # fresh per-input pin with a concrete observable, never a blanket root
+    # rollback (the 2026-11-06 lift precedent).
     nixpkgs-hermes = "REV-PINNED at f9a75f41 (2026-11-12): hermes-agent's patchelfFixed patch targets 0.19-era source; this dedicated input hands hermes the gen-992/997-proven graph while the root serves the fleet (nixpkgs-llama-rag precedent). LIFT: unstable's patchelf >= 0.19 again (probe + toplevel proof), then collapse the follows back to the root.";
     # ── 2026-10-23 deploy-rollback set (two of the original five remain) ─
     # The 2026-10-20 nixos-unstable tip broke the toplevel build in five
