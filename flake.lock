@@ -47,11 +47,11 @@
     "art-dupl-src_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791750253,
-        "narHash": "sha256-Nuw8lUHTHsfToSDOLm2lAQWBh2JxKNoGyxtbpRcOgcw=",
+        "lastModified": 1794742633,
+        "narHash": "sha256-hYsHlAYo5A+yiFcHv7w4GFdSc/J391iK1iT0vWYsrFU=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "8ce4b2df95917ecaece9aa77104fbd200d5b9ded",
+        "rev": "8ce90a478980f66e0e2e402a0e3123cb8dc46e27",
         "type": "github"
       },
       "original": {
@@ -292,11 +292,11 @@
     "brandid-lint-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1792323105,
-        "narHash": "sha256-wfeRIOPciX/DWF1KCsLngdzaCFgOjHH1lC8U5PSODyk=",
+        "lastModified": 1795172832,
+        "narHash": "sha256-b9OgeIlhE7Zh6wtUsKMFxDttT3sgcdLiQVMvRkrbwIs=",
         "owner": "LarsArtmann",
         "repo": "go-branded-id",
-        "rev": "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71",
+        "rev": "8e5daeb6d3f6afe91e323ef3cfc61214fc8d0db3",
         "type": "github"
       },
       "original": {
@@ -1295,11 +1295,11 @@
         "templ-src": "templ-src"
       },
       "locked": {
-        "lastModified": 1795174246,
-        "narHash": "sha256-46nT6tDDwMgU7mVRx1OMAt6e5i3/RJ4X+ky0hsTB/14=",
+        "lastModified": 1795184341,
+        "narHash": "sha256-R/MVso0kqw04gyO9CHwAv/B4BmKQwX4I8PB5AtxpDfw=",
         "ref": "refs/heads/master",
-        "rev": "985bd1bfb71d8027709bf52d11c01f40345777ed",
-        "revCount": 3256,
+        "rev": "bcdd194f5e7a227af61545661f9a2b45682f0f38",
+        "revCount": 3258,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
