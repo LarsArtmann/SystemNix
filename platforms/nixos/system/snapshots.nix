@@ -1020,6 +1020,14 @@ in
           {
             Type = "oneshot";
             User = primaryUser;
+            # The provisioner's flock opens under XDG_RUNTIME_DIR, which a
+            # SYSTEM unit never exports (user-session var) — the unit failed
+            # every run since 2026-11-17 with "user unit requires
+            # XDG_RUNTIME_DIR". Linger guarantees /run/user/1000 from boot;
+            # the uid literal matches the configuration.nix pin (deriving
+            # config.users.users.lars.uid here evals null — the pin's own
+            # comment). Hermes cron-dispatch precedent (FEATURES.md).
+            Environment = "XDG_RUNTIME_DIR=/run/user/1000";
             ExecStart = "${lib.getExe rustCacheLinkProjects} ${lib.concatStringsSep " " rustCacheProjects}";
           }
           ioTier.background
