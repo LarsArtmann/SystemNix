@@ -335,62 +335,19 @@ let
       clickhouse
       ;
   };
-  # taskchampionPkgConfigOverlay LIFTED 2026-11-10 (the self-removal contract
-  # was met: bare probe `nix build github:NixOS/nixpkgs/f9a75f41#taskchampion-sync-server`
-  # green WITHOUT the overlay — taskchampion-sync-server-0.7.1, ah978vnf…,
-  # proof log ~/.cache/lockfloat/taskchampion-lift-probe-20261110.log; the
-  # pkg-config/zstd/sqlite loss was f4a03c00-only and the pin holds f9a75f41,
-  # whose module ships pkg-config again). If the re-float pair ever lands on
-  # a rev with the loss (docs/todo/pipeline.md), re-add: nativeBuildInputs
-  # += pkg-config, buildInputs += sqlite + zstd.
-  # RE-ADDED 2026-11-12 (the predicted re-float landed: the durable
-  # f4a03c00 root pin re-exposes the loss, first-hand proof5-final.log —
-  # taskchampion zstd-sys probe panic, taskwarrior "Could NOT find
-  # PkgConfig", trunk zstd-sys custom-build failure; same three-package
-  # family). Remove when the root pin lifts (LIFT: the pin-audit nixpkgs
-  # row's condition — probe each package bare on the floated rev).
-  taskchampionPkgConfigOverlay = _final: prev: {
-    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (old: {
-      # doCheck: the sqlite concurrency test panics in-sandbox at the
-      # 2026-11-12 graph (proof6-final.log, concurrency.rs:75
-      # add_version_concurrency) — same sandbox-class as the tq git-in-test
-      # gap; upstream CI covers it. Re-enable when the test passes here.
-      doCheck = false;
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-      buildInputs = (old.buildInputs or [ ]) ++ [
-        _final.sqlite
-        _final.zstd
-      ];
-    });
-    taskwarrior2 = prev.taskwarrior2.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-    });
-    # taskwarrior3 leg 2026-11-12 (fixwave2/3 proofs): the actual consumers
-    # (programs.taskwarrior package override + the backup runtimeInputs)
-    # take taskwarrior3, whose 3.5.0 build dies at the taskchampion cxx
-    # bridge under f4a03c00 (undefined `sqlite3_*` at the CMake final link —
-    # corrosion's static archive loses the Rust-side -lsqlite3). This is the
-    # exact nixpkgs 5884fa73 backport ("taskwarrior3: fix build with system
-    # SQLite", 2026-11-10, three days AFTER our pin): upstream patch
-    # GothenburgBitFactory/taskwarrior#4223 propagates system SQLite through
-    # the CMake/Rust bridge when LIBSQLITE3_SYS_USE_PKG_CONFIG is set. Drop
-    # when the root pin lifts past 5884fa73 (bare probe).
-    taskwarrior3 = prev.taskwarrior3.overrideAttrs (old: {
-      patches = (old.patches or [ ]) ++ [
-        (_final.fetchpatch {
-          url = "https://github.com/GothenburgBitFactory/taskwarrior/commit/bd86de7a6e99b1bc8d1a8f5704a08571afd2cdef.patch";
-          hash = "sha256-6IAQlY5bExL9oCswIfs9D3MrcZKtQcSoNrEnAL46VXA=";
-        })
-      ];
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-      buildInputs = (old.buildInputs or [ ]) ++ [ _final.sqlite ];
-      LIBSQLITE3_SYS_USE_PKG_CONFIG = "1";
-    });
-    trunk = prev.trunk.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-      buildInputs = (old.buildInputs or [ ]) ++ [ _final.zstd ];
-    });
-  };
+  # taskchampionPkgConfigOverlay LIFTED 2026-11-20 (the root f4a03c00 pin
+  # lifted per owner directive — nixpkgs floats on nixos-unstable again,
+  # tip 0bb82723 — and the overlay's own LIFT fired on all three legs,
+  # first-hand): (1) tip's taskwarrior3 ALREADY carries the bd86de7
+  # system-SQLite fix natively (nix eval …0bb82723#…taskwarrior3.patches
+  # lists bd86de7a… + c1958786…, so our duplicate fetchpatch would
+  # double-apply and fail); (2) bare probe
+  # `nix build github:NixOS/nixpkgs/0bb82723#taskchampion-sync-server`
+  # green (0.7.1, cache-served, taskchampion-tip-probe-20261120.log);
+  # (3) bare probe `…#trunk` green (trunk-tip-probe-20261120.log). Same
+  # three-package family the 2026-11-12 re-add covered — re-add per-package
+  # with fresh bare-probe evidence if a future nixpkgs float re-loses
+  # pkg-config/sqlite/zstd (the 2026-11-10 f4a03c00-only loss pattern).
   # patchelfDefaultRestoreOverlay LIFTED 2026-11-10 (the self-removal contract
   # was met: the nixpkgs pin re-landed on f9a75f41, whose default patchelf is
   # 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
@@ -402,7 +359,6 @@ let
 in
 [
   clickhouseVersionPinOverlay
-  taskchampionPkgConfigOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
