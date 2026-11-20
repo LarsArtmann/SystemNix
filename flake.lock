@@ -1054,16 +1054,17 @@
           "nixpkgs"
         ],
         "nixpkgs-typst": "nixpkgs-typst",
+        "profileagent": "profileagent",
         "treefmt-nix": [
           "treefmt-nix"
         ]
       },
       "locked": {
-        "lastModified": 1795027402,
-        "narHash": "sha256-JKEhESp6gQZeao9KMZ8bl19ozVuzGa7B6D2wSdYDTe4=",
+        "lastModified": 1795171487,
+        "narHash": "sha256-2XukwjSlx2InzTLY4NYqYEEJOXTImv6SImqiec43beE=",
         "ref": "refs/heads/master",
-        "rev": "5b2ca542a2eedfc0421aa862df6eedd9c82a9e58",
-        "revCount": 11294,
+        "rev": "2584a9d048d85faffd4cda78769f2a84e456d573",
+        "revCount": 11375,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -9529,6 +9530,23 @@
         "ref": "refs/tags/v0.2.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/printer-monitor"
+      }
+    },
+    "profileagent": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795046226,
+        "narHash": "sha256-MXynjYpYlrGSth/m6TGauf9PkEIVh6HEpiQ+9Hg/cNA=",
+        "ref": "refs/heads/master",
+        "rev": "8d9361fd5093517251c0781cadd25831ffce9a73",
+        "revCount": 112,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/profileagent"
+      },
+      "original": {
+        "rev": "8d9361fd5093517251c0781cadd25831ffce9a73",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/profileagent"
       }
     },
     "project-dependency-graph": {
