@@ -420,16 +420,16 @@
     "clipboard-monitor": {
       "flake": false,
       "locked": {
-        "lastModified": 1788704679,
-        "narHash": "sha256-+8vJnhHEzYnJsuxN+hBjikdB3rKgk00Ya8WqGsqfH+w=",
-        "ref": "refs/tags/v0.2.1",
-        "rev": "fd2da4831e4e733d0e7259f8bebe0a64f5cb3d65",
-        "revCount": 66,
+        "lastModified": 1795039549,
+        "narHash": "sha256-zn4x9bwTQkRYlhFmoBHAL2oEHYXv32oy9i7+vk0gpHQ=",
+        "ref": "refs/heads/master",
+        "rev": "44cbe48e33467da17136edd6761999ee150e42fd",
+        "revCount": 85,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/clipboard-monitor"
       },
       "original": {
-        "ref": "refs/tags/v0.2.1",
+        "rev": "44cbe48e33467da17136edd6761999ee150e42fd",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/clipboard-monitor"
       }
@@ -704,6 +704,23 @@
         "type": "github"
       }
     },
+    "cordis": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794740639,
+        "narHash": "sha256-wJ765vBoTIG/WKANQzHTIfgKY3ZAu/cpMIKx2eOjzJg=",
+        "ref": "refs/heads/main",
+        "rev": "42d12e172bb032a2bbd39b6c3b56acc039c211c5",
+        "revCount": 661,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/cordis"
+      },
+      "original": {
+        "rev": "42d12e172bb032a2bbd39b6c3b56acc039c211c5",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/cordis"
+      }
+    },
     "cqrs-htmx": {
       "flake": false,
       "locked": {
@@ -910,11 +927,11 @@
     },
     "crane": {
       "locked": {
-        "lastModified": 1793836618,
-        "narHash": "sha256-TREenflwEjxOSq292FYwbc3kEm7TDRtXCZRNWEdjBmg=",
+        "lastModified": 1794962885,
+        "narHash": "sha256-zrweT2tXbcWiJMACOhOr2eYFJKVa6g59ouRaZ3BS5Do=",
         "owner": "ipetkov",
         "repo": "crane",
-        "rev": "79fd63528501446749c09f08cad486a58c7d173e",
+        "rev": "95e62def851e9d650f0eab63cb4f59a3306e20bd",
         "type": "github"
       },
       "original": {
@@ -8392,16 +8409,16 @@
     "mic-monitor": {
       "flake": false,
       "locked": {
-        "lastModified": 1788678560,
-        "narHash": "sha256-PCcXFYwIcN9ac9haXCsqwgM8fHqcdFpwUEEXjAcB0nI=",
+        "lastModified": 1794939051,
+        "narHash": "sha256-xAYviUBm/tP6CLWqSRUZtHslYnb9R8SDVeCK+oNn5eA=",
         "ref": "refs/heads/master",
-        "rev": "b49ef11270583fef8550e68ee1054faee73f9966",
-        "revCount": 68,
+        "rev": "259d2df220472a74b8f2bc064a93d2e0f79dfffb",
+        "revCount": 103,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mic-monitor"
       },
       "original": {
-        "rev": "b49ef11270583fef8550e68ee1054faee73f9966",
+        "rev": "259d2df220472a74b8f2bc064a93d2e0f79dfffb",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mic-monitor"
       }
@@ -8410,6 +8427,7 @@
       "inputs": {
         "clipboard-monitor": "clipboard-monitor",
         "collector-utils": "collector-utils",
+        "cordis": "cordis",
         "crane": "crane",
         "flake-parts": [
           "flake-parts"
@@ -8430,11 +8448,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1794938773,
-        "narHash": "sha256-7uhLEy/1khGJr0EGRE0UOO3POodIhJjqdsAQ2VxpFxA=",
+        "lastModified": 1795266271,
+        "narHash": "sha256-mcFK4ZPT9NBJScq8K8zHosAZD7ogFnmlIQRrjXRXakw=",
         "ref": "refs/heads/master",
-        "rev": "d293d3f46538d1f219bb613ad79ed5ed2c6425f7",
-        "revCount": 4670,
+        "rev": "184678bf65a208cae85f6e1b976797a839aab3b7",
+        "revCount": 4696,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -10296,11 +10314,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794733384,
-        "narHash": "sha256-VaXNWDU+9dXckN4BlZbrcYTTd9pIscLeiknbhHX4+lk=",
+        "lastModified": 1795168384,
+        "narHash": "sha256-aQ4Ns5O78Pg6B1i2hNRbI1HpRtnZst/jW34MSOOeaX4=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "67f1944c7c99d8dbb57fa3d83043bc0a92cbcc56",
+        "rev": "a5c999945da3991d7aa3cc2a6075cfd22bd387e9",
         "type": "github"
       },
       "original": {
@@ -10668,16 +10686,16 @@
     "ssh-key-monitor": {
       "flake": false,
       "locked": {
-        "lastModified": 1793181300,
-        "narHash": "sha256-SCZl+g9rtrPm37xTkJ4e/UC9gu5pkxyVo/CkGH+HX0I=",
-        "ref": "refs/tags/v0.5.0",
-        "rev": "b735d9b0291f20d637c3502075edb2594f9324d5",
-        "revCount": 452,
+        "lastModified": 1794944162,
+        "narHash": "sha256-kRZgkTkTeTBNhhI4xx0W8gBc4c77j6gbXsDNjt6/qS8=",
+        "ref": "refs/heads/master",
+        "rev": "d7b5248a1197a8860ea14b50c9e419b62956d52c",
+        "revCount": 486,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/ssh-key-monitor"
       },
       "original": {
-        "ref": "refs/tags/v0.5.0",
+        "rev": "d7b5248a1197a8860ea14b50c9e419b62956d52c",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/ssh-key-monitor"
       }
