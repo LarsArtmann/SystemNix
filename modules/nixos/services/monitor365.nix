@@ -79,6 +79,20 @@
       # own subdir, service-user-owned.
       poolBackupDir = "${agentStoragePath}/backups";
 
+      # Long-term Parquet event archives on the HDD pool (2026-11-21, owner
+      # directive: mic monitoring live + "store the audio on the HDD pool").
+      # Upstream's hourly cleanup task archives every event older than
+      # ARCHIVAL_CUTOFF_DAYS (90, hardcoded constants in crates/server) to
+      # `<parent-of-DB>/archives/events_<ts>.parquet` — payload column
+      # included, so audio bytes (mic_monitor snippets + audio_stream
+      # captures ride events as μ-law base64) survive archival. Without this
+      # dir that path is on the QLC root; the server unit BindPaths-redirects
+      # it here (see the archives block below). Same pool subvol as the
+      # buffer + backups: one snapshot set (per-service subvolume doctrine),
+      # and Parquet files are immutable once written, so btrbk-pool churn
+      # stays near zero.
+      poolArchivesDir = "${agentStoragePath}/archives";
+
       # Event retention (2026-10-23): the server ingested ~5.3M events/day
       # (597M backlog era average) with NO upstream retention — the DuckDB
       # hit 25.1 GB. DELETE-by-age runs nightly inside the quiesced backup
@@ -86,14 +100,22 @@
       # runs weekly, stamp-gated + disk-headroom-guarded. Raise/lower the
       # window here; 90d balances dashboard history vs DB size (~2-6 GB
       # steady-state at post-cut collection rates).
-      # CONFIRMED 90d (2026-11-20, task 000001a1f6b5): chosen under the
-      # owner's "go fix it" delegation, LIVE in production since the
-      # 2026-11-12 03:13 converged fire (34.4M rows deleted, DB at floor,
+      # CONFIRMED 90d hot window (2026-11-20, task 000001a1f6b5): chosen
+      # under the owner's "go fix it" delegation, LIVE in production since
+      # the 2026-11-12 03:13 converged fire (34.4M rows deleted, DB at floor,
       # ~1.4M rows remaining), ratified without owner objection through
       # 8 nights of fires. The window remains a one-line change here —
       # older nights' exports on the HDD pool are the only recovery path
       # for anything already deleted.
-      retentionDays = 90;
+      # RAISED to 100d 2026-11-21 (mic-audio session): upstream archives
+      # events to Parquet at age >= ARCHIVAL_CUTOFF_DAYS (90) on an HOURLY
+      # cadence — with the delete at the same 90d, a down/archiving-failed
+      # server lets the 03:00 retention DELETE win the race and events
+      # (incl. audio payloads) skip the pool archive forever. 100d gives
+      # the hourly task a ~240-attempt grace window per event before its
+      # deletion. Net retention semantics IMPROVE: nothing leaves the
+      # DuckDB without passing through the Parquet archive first.
+      retentionDays = 100;
       vacuumIntervalSeconds = 604800; # 7 days
       vacuumHeadroomBytes = 5368709120; # 5 GiB free required on top of DB size
 
@@ -131,6 +153,13 @@
         pkgs.grim
         pkgs.slurp
         pkgs.wtype
+        # mic_monitor + audio_stream collectors (2026-11-21): PactlBackend
+        # polls `pactl list source-outputs/sources`, audio_stream captures
+        # via `parecord` — both against the displayUser's pipewire-pulse
+        # socket (XDG_RUNTIME_DIR from display discovery). Missing binary =
+        # probe-once WARN + collector disabled, so this dep is what makes
+        # the mic collectors live.
+        pkgs.pulseaudioUtils
       ];
 
       # RETIRED 2026-10-27: monitor365-schema-migrate (ALTER tenants.version +
@@ -1001,6 +1030,43 @@
               ioTier.heavyDB
             ];
           };
+        })
+
+        # ── Parquet event/audio archives on the HDD pool (2026-11-21) ──
+        # Owner directive: mic monitoring live, audio stored on the HDD
+        # pool. Upstream's hourly cleanup task archives every event older
+        # than ARCHIVAL_CUTOFF_DAYS (90, hardcoded in crates/server) to
+        # <parent-of-DB>/archives/events_<ts>.parquet — payload column
+        # included, so mic_monitor snippets and audio_stream captures
+        # (μ-law base64 inside events) survive. BindPaths redirects that
+        # exact path onto the pool subvol: no upstream change, no lock
+        # float of the 199G-target repo, reversible in one line. The
+        # server process still "sees" $stateDir/archives; the bytes land
+        # on /mnt/pool. Mount gating: a detached DAS fails the server
+        # loudly via RequiresMountsFor (same posture as the agent's pool
+        # buffer) instead of silently skipping archives while retention
+        # still deletes — and the eval audit (226 class) would refuse an
+        # ungated /mnt ReadWritePaths entry anyway.
+        # NOTE: the root-run backup unit has its OWN namespace (no
+        # BindPaths) and only walks maxdepth-1 *.backup_* files in
+        # stateDir — it never sees or touches the archives bind.
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-server = {
+            unitConfig.RequiresMountsFor = [ poolArchivesDir ];
+            serviceConfig = {
+              BindPaths = [ "${poolArchivesDir}:${serverCfg.stateDir}/archives" ];
+              # Lists concatenate with upstream's ReadWritePaths = [ stateDir ].
+              ReadWritePaths = [ poolArchivesDir ];
+            };
+          };
+
+          # Provisioned like poolBackupDir (tmpfiles-setup runs after
+          # local-fs: the nofail pool mount precedes it; shadow-dir risk
+          # only while the DAS is absent at boot, and the mount-gated
+          # server never writes through an unmounted /mnt/pool).
+          systemd.tmpfiles.rules = [
+            "d ${poolArchivesDir} 0750 monitor365-server monitor365-server -"
+          ];
         })
 
         # Server health watchdog: detects DuckDB pool deadlock and other

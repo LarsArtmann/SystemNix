@@ -2272,6 +2272,35 @@ in
           notifications.enabled = lib.mkDefault true;
           app_usage.enabled = lib.mkDefault true;
           afk_status.enabled = lib.mkDefault true;
+          # Microphone monitoring (2026-11-21, owner directive: "mic-monitor
+          # installed on evo-x2, audio on the HDD pool"). Two collectors:
+          # mic_monitor = the extracted LarsArtmann/mic-monitor change-
+          # detection engine (RecordingStarted/Stopped per (device, process,
+          # pid) + DeviceConnected/Disconnected via pactl; a 5s μ-law
+          # snippet rides every RecordingStarted — capture_snippets). All
+          # recorded audio is OWNER-private telemetry, never leaves this
+          # host's monitor365 stack. audio_stream = periodic ambient mic
+          # capture (parecord from the default source, 10s every 5 min,
+          # captures below -60 dBFS RMS skipped as silence). Both need the
+          # graphical session (pactl/parecord against the displayUser's
+          # pipewire-pulse socket; headless = probe-once skip, the
+          # graphical-restart path unit re-arms them at login). Event
+          # lifecycle: DuckDB 100d hot window -> hourly Parquet archival at
+          # 90d (audio payload included) -> /mnt/pool/services/monitor365/
+          # archives (BindPaths wiring in monitor365.nix) — the pool copy
+          # is the durable one, the DuckDB rows age out. Volume at these
+          # settings: ~1-3 MB/day.
+          mic_monitor = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 10;
+            capture_snippets = lib.mkDefault true;
+            snippet_duration_seconds = lib.mkDefault 5;
+          };
+          audio_stream = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 300;
+            capture_duration_seconds = lib.mkDefault 10;
+          };
         };
       };
 
