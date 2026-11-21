@@ -156,10 +156,12 @@
         # mic_monitor + audio_stream collectors (2026-11-21): PactlBackend
         # polls `pactl list source-outputs/sources`, audio_stream captures
         # via `parecord` — both against the displayUser's pipewire-pulse
-        # socket (XDG_RUNTIME_DIR from display discovery). Missing binary =
-        # probe-once WARN + collector disabled, so this dep is what makes
-        # the mic collectors live.
-        pkgs.pulseaudioUtils
+        # socket (XDG_RUNTIME_DIR from display discovery). The client
+        # binaries ship with the pulseaudio package (daemon never runs;
+        # PATH presence only). Missing binary = probe-once WARN +
+        # collector disabled, so this dep is what makes the mic collectors
+        # live.
+        pkgs.pulseaudio
       ];
 
       # RETIRED 2026-10-27: monitor365-schema-migrate (ALTER tenants.version +
