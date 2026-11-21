@@ -348,6 +348,15 @@
                 ReadWritePaths = [ backupDir ];
               }
               (serviceOneshotDefaults { })
+              # Legit LONG leg (service-defaults.nix escape hatch): the
+              # WAL-safe copy is O(journal bytes). 520 MB took ~4.8 min —
+              # under the 5min mkDefault floor and green. At ~1.45 GB
+              # (2026-11-21) plus projection-replay contention it crossed
+              # the floor and systemd killed the nightly mid-copy, leaving
+              # the journal unprotected for the night (ledger-2026-11-21.db
+              # partial at 763 MB). 15min = ~3x headroom at ~175 MB/day
+              # growth; still bounded for shape-audit class 7.
+              { TimeoutStartSec = "15min"; }
               ioTier.background
             ];
           };
