@@ -371,6 +371,23 @@
           echo "monitor365-server-backup: backup complete, server restored"
         '';
       };
+      # Pool-copy concurrency guard (2026-11-21 review fix, task
+      # 000001a1f73f): the ordering the dropped `wants` edge used to claim
+      # does NOT exist — After= orders only units inside the same
+      # transaction, and the 03:25 timer's start job never pulls the
+      # backup unit in. This ExecStartPre is the real gate: refuse the
+      # copy while monitor365-server-backup is active/activating (racing
+      # the quiesced window — export, retention, VACUUM, the one-shot
+      # RETENTION_COMPACT mv — would duplicate a torn DB), fail closed on
+      # an unreadable state. Repo-file-backed so
+      # checks.monitor365-pool-copy-guard-selftest executes the SAME text
+      # the ExecStartPre runs.
+      poolCopyGuardScript = pkgs.writeShellApplication {
+        name = "monitor365-pool-copy-guard";
+        runtimeInputs = [ pkgs.systemd ];
+        text = builtins.readFile ../../../scripts/monitor365-pool-copy-guard.sh;
+      };
+
     in
     {
       imports = [
@@ -653,16 +670,25 @@
 
         # ── Pool-interim off-NVMe copy (2026-10-27 plan S5) ─────────
         # Copies the NEWEST nightly backup to the HDD pool 25 min after the
-        # 03:00 quiesced backup. `after` (NOT `wants`) keeps the ordering
-        # when the backup is still running at 03:25 but does NOT re-pull
-        # the backup unit: with `wants`, every fire re-STARTED the finished
-        # backup ~25 min later (oneshot, no RemainAfterExit), running
-        # export + retention TWICE per night (2026-11-20 fix, task
-        # 000001a1f6b5). The 03:25 timer is the sole trigger. Runs as the
-        # service user: the source dir is its own
+        # 03:00 quiesced backup. NO dependency edge on the backup unit:
+        # with `wants`, every fire re-STARTED the finished backup ~25 min
+        # later (oneshot, no RemainAfterExit), running export + retention
+        # TWICE per night (2026-11-20 fix, task 000001a1f6b5). The dropped
+        # edge also empties `after` below of any force — After= orders only
+        # units inside the SAME transaction, and the timer's start job does
+        # not pull the backup unit in, so between independent fires NO
+        # ordering exists (2026-11-21 review finding, task 000001a1f73f).
+        # The real gate is the ExecStartPre guard (poolCopyGuardScript,
+        # fixture-tested): it refuses to copy while monitor365-server-backup
+        # is active or activating — racing the quiesced window (export,
+        # retention, VACUUM, the one-shot RETENTION_COMPACT mv) would
+        # duplicate a torn DB — and fails closed on an unreadable unit
+        # state. A refused night fails the unit (onFailure alert); the
+        # next nightly fire catches up, and backup-coordination below
+        # alerts on >25h pool staleness. The 03:25 timer is the sole
+        # trigger. Runs as the service user: the source dir is its own
         # 0750 stateDir, the dest is its own tmpfiles dir — no capabilities
-        # needed, DAC-clean by construction. Pool-side freshness is wired
-        # into backup-coordination below (stale >25h = alert).
+        # needed, DAC-clean by construction.
         (lib.mkIf (serverCfg.enable && serverCfg.backup.enable) {
           systemd.services.monitor365-pool-copy = {
             description = "Monitor365 newest DB backup copy to the HDD pool (off-NVMe interim leg)";
@@ -688,6 +714,10 @@
                 User = "monitor365-server";
                 Group = "monitor365-server";
                 TimeoutStartSec = "60min";
+                # Backup-busy gate — the real ordering (see the block
+                # comment above and poolCopyGuardScript). Lifecycle key:
+                # stays OUTSIDE harden{} by contract.
+                ExecStartPre = lib.getExe poolCopyGuardScript;
               }
             ];
             script = ''

@@ -328,6 +328,44 @@
             touch $out
           '';
 
+        # monitor365 pool-copy concurrency guard (ExecStartPre): the REAL
+        # ordering after the wants-edge drop — After= alone orders nothing
+        # across independent timer transactions (2026-11-21 review
+        # finding: the dropped edge had silently emptied `after` of any
+        # force). The fixture stubs systemctl and walks the is-active
+        # state matrix: busy states refuse, dead states proceed, an
+        # unreadable state fails closed. Eval legs pin the un-couple: the
+        # unit must exec the guard, must keep the after= intent edge, and
+        # must NOT re-gain any hard dependency on the backup unit (the
+        # nightly double-fire regression this whole fix exists for).
+        monitor365-pool-copy-guard-selftest =
+          let
+            poolSvc = inputs.self.nixosConfigurations.evo-x2.config.systemd.services.monitor365-pool-copy;
+            preEntry = poolSvc.serviceConfig.ExecStartPre;
+            optList = v: if lib.isList v then v else [ ];
+            hardDeps =
+              (optList (poolSvc.wants or [ ]))
+              ++ (optList (poolSvc.requires or [ ]))
+              ++ (optList (poolSvc.bindsTo or [ ]));
+          in
+          assert lib.hasInfix "monitor365-pool-copy-guard" preEntry;
+          assert !(lib.elem "monitor365-server-backup.service" hardDeps);
+          assert lib.elem "monitor365-server-backup.service" (optList (poolSvc.after or [ ]));
+          pkgs.runCommand "monitor365-pool-copy-guard-selftest" { } ''
+            export PATH="${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+            scratch=$(mktemp -d)
+            cp ${root}/scripts/monitor365-pool-copy-guard.sh "$scratch/monitor365-pool-copy-guard.sh"
+            cp ${root}/scripts/test-monitor365-pool-copy-guard.sh "$scratch/test-monitor365-pool-copy-guard.sh"
+
+            echo "== repo text =="
+            bash "$scratch/test-monitor365-pool-copy-guard.sh"
+
+            echo "== rendered wrapper =="
+            MONITOR365_POOL_COPY_GUARD_SCRIPT=${preEntry} \
+              bash "$scratch/test-monitor365-pool-copy-guard.sh"
+            touch $out
+          '';
+
         # Rendered-artifact leg of the retention fixture: the repo-file
         # selftest above proves the repo text, but the 03:00 window runs
         # the RENDERED writeShellApplication output, called by the
