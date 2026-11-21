@@ -90,12 +90,14 @@ SECTION10_ONLY=false
 SECTION11_ONLY=false
 SECTION16_ONLY=false
 SECTION18_ONLY=false
+SECTION22_ONLY=false
 for arg in "$@"; do
   case "$arg" in
   --section-10-only) SECTION10_ONLY=true ;;
   --section-11-only) SECTION11_ONLY=true ;;
   --section-16-only) SECTION16_ONLY=true ;;
   --section-18-only) SECTION18_ONLY=true ;;
+  --section-22-only) SECTION22_ONLY=true ;;
   *)
     echo "unknown option: $arg" >&2
     exit 64
@@ -621,6 +623,105 @@ if [ "$SECTION16_ONLY" = true ]; then
   fi
   echo ""
   echo "✅ §16-only run passed — safe (full gate still runs inside nix run .#deploy)"
+  exit 0
+fi
+
+# §22 body shared by the --section-22-only cheap loop and the full battery
+# (F2.2d, federation plan 2026-11-16 00-37). Proves the to-be-deployed
+# evo-x2 config actually carries the PRIMARY posture end-to-end: option
+# values, the rendered unit Environment (PAP_FED_*), and the
+# LoadCredential→sops-secret pair — the "merge carried the values, dropped
+# the feature" class §16 exists for, applied to federation. Same
+# anti-blind-skip discipline: only the exact module-disabled shape may
+# SKIP; any other eval failure fails LOUD.
+pap_section22() {
+  echo ""
+  echo "22. PapDashboard federation wiring (primary posture, key delivery, peer shape)"
+  local fed_err fed_json env_json lc_json sops_declared
+  if ! fed_json=$(nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.federation \
+      --apply 'f: { enable = f.enable; role = f.role; peerUrl = f.peerUrl; nodeId = f.nodeId; keyFile = f.keyFile; }' 2>"/tmp/pap-fed-eval.err"); then
+    if grep -q "does not provide attribute" "/tmp/pap-fed-eval.err" && grep -q "papdashboard" "/tmp/pap-fed-eval.err"; then
+      warn "papdashboard not rendered (module disabled) — federation wiring check skipped"
+      return
+    fi
+    fail "papdashboard federation eval failed — NOT the known disabled shape; refusing to blind-skip (raw error follows):"
+    sed 's/^/    /' "/tmp/pap-fed-eval.err"
+    return
+  fi
+  local fed_enable fed_role fed_peer fed_node fed_keyfile
+  fed_enable=$(jq -r '.enable' <<<"$fed_json")
+  fed_role=$(jq -r '.role' <<<"$fed_json")
+  fed_peer=$(jq -r '.peerUrl' <<<"$fed_json")
+  fed_node=$(jq -r '.nodeId' <<<"$fed_json")
+  fed_keyfile=$(jq -r '.keyFile' <<<"$fed_json")
+  if [ "$fed_enable" != "true" ]; then
+    fail "services.papdashboard.federation.enable is false on evo-x2 — the primary must forward (docs/services/papdashboard.md Federation)"
+  else
+    pass "federation.enable = true (primary forwards its event log)"
+  fi
+  if [ "$fed_role" != "primary" ]; then
+    fail "federation.role = '$fed_role' — evo-x2 is the PRIMARY node (a role flip means the replica wiring landed on the wrong host)"
+  else
+    pass "federation.role = primary"
+  fi
+  # peerUrl shape: plain http against a NetBird CGNAT address (100.64/10).
+  # TLS terminates at the mesh boundary by design (ADR-0011-class posture);
+  # https or a public IP/host here means the posture drifted.
+  if [[ "$fed_peer" =~ ^http://100\.(6[4-9]|[7-9][0-9]|1[0-1][0-9]|12[0-7])\.[0-9]{1,3}\.[0-9]{1,3}:[0-9]{4,5}/?$ ]]; then
+    pass "peerUrl is mesh-CGNAT http ($fed_peer) — NetBird boundary posture intact"
+  else
+    fail "federation.peerUrl '$fed_peer' is not http://<100.64/10 mesh IP>:<port> — the replica must be reached over the NetBird mesh, not publicly (docs/services/papdashboard.md)"
+  fi
+  if [ -z "$fed_node" ] || [ "$fed_node" = "null" ]; then
+    fail "federation.nodeId is empty — upstream asserts enable requires nodeId"
+  else
+    pass "federation.nodeId = $fed_node"
+  fi
+  # Rendered unit environment: the module must have carried the options
+  # into PAP_FED_* (a stale module pin renders nothing and the forwarder
+  # silently never starts).
+  if ! env_json=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.serviceConfig.Environment 2>/dev/null); then
+    fail "papdashboard unit Environment eval failed — cannot verify PAP_FED_* rendering"
+  else
+    if jq -e --arg peer "$fed_peer" 'index("PAP_FED_ENABLED=true") and index("PAP_FED_KEY_FILE=%d/pap-fed-key") and (index("PAP_FED_PEER_URL=" + $peer) != null)' <<<"$env_json" >/dev/null; then
+      pass "unit env renders PAP_FED_ENABLED/PEER_URL/KEY_FILE (forwarder will start)"
+    else
+      fail "unit Environment missing PAP_FED_* vars — stale papdashboard module pin? Expected PAP_FED_ENABLED=true, PAP_FED_PEER_URL=$fed_peer, PAP_FED_KEY_FILE=%d/pap-fed-key; got: $(jq -c 'map(select(startswith("PAP_FED")))' <<<"$env_json")"
+    fi
+  fi
+  # LoadCredential ↔ keyFile ↔ declared sops secret: all three must name the
+  # SAME secret, or the unit fails at boot with a missing credential.
+  if ! lc_json=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.serviceConfig.LoadCredential 2>/dev/null); then
+    fail "papdashboard unit LoadCredential eval failed — cannot verify key delivery"
+  else
+    if jq -e --arg kf "$fed_keyfile" 'index("pap-fed-key:" + $kf) != null' <<<"$lc_json" >/dev/null; then
+      pass "LoadCredential pap-fed-key ↔ federation.keyFile (key delivered, never in the store)"
+    else
+      fail "LoadCredential $(jq -c . <<<"$lc_json") does not carry 'pap-fed-key:$fed_keyfile' — the forwarder would 401 against the replica"
+    fi
+  fi
+  if sops_declared=$(nix eval --json .#nixosConfigurations.evo-x2.config.sops.secrets --apply 's: s ? "papdashboard_federation_key"' 2>/dev/null); then
+    if [ "$sops_declared" = "true" ]; then
+      pass "sops secret papdashboard_federation_key declared (runtime file will exist at boot)"
+    else
+      fail "sops secret papdashboard_federation_key NOT declared — the unit's LoadCredential target will be missing at boot (§19 manifest class)"
+    fi
+  else
+    warn "sops.secrets eval failed — verify the papdashboard_federation_key declaration by hand"
+  fi
+}
+
+if [ "$SECTION22_ONLY" = true ]; then
+  pap_section22
+  echo ""
+  echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
+  if [ "$FAIL" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOY BLOCKED — fix failures above before deploying"
+    exit 1
+  fi
+  echo ""
+  echo "✅ §22-only run passed — safe (full gate still runs inside nix run .#deploy)"
   exit 0
 fi
 
@@ -1394,6 +1495,14 @@ if [ -f "${_BS_DIR}/check-contact-registry-drift.sh" ]; then
 else
   warn "check-contact-registry-drift.sh missing (degrade: WARN, never FAIL)"
 fi
+
+# 22. PapDashboard federation wiring (F2.2d, plan 2026-11-16 00-37).
+# Proves the to-be-deployed PRIMARY posture end-to-end: federation option
+# values (enable/role/nodeId), the peerUrl mesh-CGNAT shape, the rendered
+# PAP_FED_* unit environment, and the LoadCredential↔sops-secret pair —
+# the §16 anti-blind-skip discipline applied to the forwarder. Body lives
+# in pap_section22() above so --section-22-only can loop it cheaply.
+pap_section22
 
 # Summary
 echo ""
