@@ -886,6 +886,39 @@
           };
         })
 
+        # ── PulseAudio bridge for the mic collectors (2026-11-21) ──
+        # mic_monitor (pactl) + audio_stream (parecord) talk to the primary
+        # user's pipewire-pulse socket. The agent runs as the monitor365
+        # SYSTEM user while /run/user/1000 is 0700 lars:lars — the default
+        # $XDG_RUNTIME_DIR/pulse/native lookup EACCES at the directory
+        # traversal, before the (world-rw) socket is even reached. That DAC
+        # wall is the same reason NO graphical collector has ever produced
+        # an event on this deployment (:9421/metrics lists 28 headless
+        # collectors, zero screenshot/clipboard/afk). Fix for the AUDIO
+        # path: bind the socket into the agent's own traversable
+        # /run/monitor365 dir (already in ReadWritePaths) and point
+        # pactl/parecord at it via PULSE_SERVER, which libpulse prefers
+        # over the XDG_RUNTIME_DIR-derived default. '-' prefix: the agent
+        # starts at boot BEFORE login (socket absent) — systemd skips the
+        # bind then; the monitor365-graphical-restart path unit re-starts
+        # the agent after login, where the bind takes. Stale-bind window:
+        # if pipewire recreates the socket mid-session the bind still
+        # references the old inode until the next agent restart — the
+        # collector health degrades visibly (collector_errors), it does
+        # not silently pass. uid 1000 is deterministic on evo-x2 (same
+        # assumption as the graphical-restart path unit).
+        # The Wayland half (screenshots/clipboard) is a SEPARATE gap,
+        # deliberately not fixed here — tracked in docs/todo/services.md.
+        (lib.mkIf systemAgentCfg.enable {
+          systemd.services.monitor365 = {
+            serviceConfig = {
+              BindPaths = [ "-/run/user/1000/pulse/native:/run/monitor365/pulse/native" ];
+            };
+            # Lists concatenate with the unit's existing Environment set.
+            serviceConfig.Environment = [ "PULSE_SERVER=unix:/run/monitor365/pulse/native" ];
+          };
+        })
+
         # Agent health watchdog: periodically verify the agent is running,
         # its metrics endpoint responds, and the server sees it as a connected
         # device. If any check fails, reset start-limit and restart the agent.

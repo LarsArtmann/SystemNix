@@ -181,10 +181,11 @@
             # `services.pool-recovery.restartUnits = [...]` REPLACES the
             # list wholesale (never extend from the consumer module).
             "audiblesync.service"
-            # monitor365-server writes its ring buffer onto the pool
-            # (RequiresMountsFor /mnt/pool — the 30 GiB buffer move,
-            # 2026-11-21 wave) — same remount-dropout class; the gate
-            # flagged it the first eval after the float.
+            # monitor365-server writes its Parquet event/audio archives onto
+            # the pool (BindPaths + RequiresMountsFor
+            # /mnt/pool/services/monitor365/archives, 2026-11-21 mic-audio
+            # session) — same remount-dropout class; the gate flagged it the
+            # first eval after the float.
             "monitor365-server.service"
           ];
           description = ''
