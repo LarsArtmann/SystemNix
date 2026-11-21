@@ -1,3 +1,14 @@
+## Live pool addendum (2026-11-21 20:0x)
+
+New live report: `2026-11-21_19-57_window-reverify-monitor365-batch-plus-reviewfix-wave.md`
+— verification-only re-pass of the SAME five-task window the 2026-11-21 02:14
+closeout already covered (dispatch-time dedup HIT; double dispatch itself
+minted as a tq watermark improvement row). All §a landings re-grepped GREEN at
+HEAD `c702d9147`; night-1 evidence LANDED CLEAN (compact fired once 03:01,
+13.09G→3.85G, count-gate passed; backup + pool-copy each single-fire, fresh
+pool copy 04:10:42); the deploy carrying the guard + count-gate fix was
+MID-FLIGHT at report time. Ticked TODO rows 3814 + 3838; appended 2 new rows.
+
 ## Live pool addendum (2026-11-20 03:0x)
 
 New live report: `2026-11-20_03-04_window-closeout-services-journal-noise-five-task-window.md`
