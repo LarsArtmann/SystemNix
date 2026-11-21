@@ -3833,11 +3833,11 @@
     "go-cqrs-lite_10": {
       "flake": false,
       "locked": {
-        "lastModified": 1794982807,
-        "narHash": "sha256-KVk1HVQyaJNpgfi8gLtn66FA3OncqNzm6GJ1dCuzhBw=",
-        "owner": "larsartmann",
+        "lastModified": 1794766837,
+        "narHash": "sha256-iseCbh4cKJM0ENu+Q6SH1OlqoW1t1z8bL1zMgDsZxnU=",
+        "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "30d8c6c3972415817f0536ab522e557f4ff986dc",
+        "rev": "cc597bb319fd9d7ae05611d4cfb1ba7c34aae58a",
         "type": "github"
       },
       "original": {
@@ -4167,11 +4167,11 @@
     "go-daemon_6": {
       "flake": false,
       "locked": {
-        "lastModified": 1794982424,
-        "narHash": "sha256-ObRyFpCAQLESmkYs1A3OCYfZBIhT9BdKbZBgAoAc1Z0=",
+        "lastModified": 1793748425,
+        "narHash": "sha256-VmR5bWKR3YPKkHvrCc4hw8Btq4U1ADoZnBRwyOTi72k=",
         "ref": "refs/heads/master",
-        "rev": "b6af9f156e9ea26dc0e27b52715820d22c664d09",
-        "revCount": 133,
+        "rev": "e8e1a1fff5028d1e7fc292d0eeb87f8d65e2cf36",
+        "revCount": 127,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       },
@@ -6298,11 +6298,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795029015,
-        "narHash": "sha256-cQYqWJ9w1RASu+LVSx0apAoUh3eLs1VAHtOUfygP39Q=",
+        "lastModified": 1795093082,
+        "narHash": "sha256-67l2U/CfMManIMCwBpyoQwngRushVNYkgLW44RQ1Rv8=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "52dc6f8f90a05dcdc7e18ae1b01b010005c4a853",
+        "rev": "e0c4b7002621c89e66ef977b7a13380c5c0365e2",
         "type": "github"
       },
       "original": {
@@ -9498,11 +9498,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795047537,
-        "narHash": "sha256-MJZ6jRpoLU/Ebu/Fpk4HI9IPO4b2R2PiwaN1floD0k4=",
+        "lastModified": 1795245256,
+        "narHash": "sha256-4i6YdKDSgAcd+WWBNR1LmVkjSdHyEyR3k1feaHhoL14=",
         "ref": "refs/heads/master",
-        "rev": "ab83cc7bb8e2d9485c1d8f9044aa7de66c282a67",
-        "revCount": 1562,
+        "rev": "d5b4de303502a274215987133a88cce5729052f0",
+        "revCount": 1599,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/PapDashboard"
       },
