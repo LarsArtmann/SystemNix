@@ -133,6 +133,9 @@
             "rust-cache-init"
             "searxng-secret-key"
             "signoz-clickhouse-log-ttl"
+            # summit-planner-backup-dir: 3-line mkdir/chown leaf creator
+            # (crm-backup-dir class — trivial one-shot, no bulk IO).
+            "summit-planner-backup-dir"
             "tq-bootstrap"
             "tq-storage-dir"
             "timesheets-backup-dir"

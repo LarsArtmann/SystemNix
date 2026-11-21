@@ -225,6 +225,13 @@
         # (mr-sync dashboard).
         mr-sync = 7331;
 
+        # summit-planner — local single-user conference-attendance & budget
+        # planner (services.summit-planner), loopback-only by design (the
+        # app's WebAuthn posture is RPID localhost and its guard refuses
+        # non-loopback Host headers, so there is NO vHost). 7612 is the
+        # tool's own default port.
+        summit-planner = 7612;
+
         # GeoMetrikks — reverse-proxy access-log geo analytics (services.geometrikks),
         # loopback-only; Caddy proxies geo.home.lan to it.
         geometrikks = 8102;

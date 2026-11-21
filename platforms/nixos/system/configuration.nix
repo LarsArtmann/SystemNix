@@ -1871,6 +1871,18 @@ in
         enable = true;
       };
 
+      # summit-planner — local single-user conference-attendance & budget
+      # planner (Go + go-cqrs-lite, passkey-gated). Loopback-only by
+      # design: the app's WebAuthn posture is RPID localhost and its
+      # guard refuses non-loopback Host headers, so the owner browses
+      # http://localhost:7612 on this desktop (no vHost/tile). Runs as
+      # the primary user against the adopted-in-place
+      # ~/.config/summit-planner data (crm doctrine; the dev DB is the
+      # seed data). Runbook: docs/services/summit-planner.md.
+      summit-planner = {
+        enable = true;
+      };
+
       # Hermes AI Agent Gateway (Discord, cron jobs, messaging)
       hermes = {
         enable = true;

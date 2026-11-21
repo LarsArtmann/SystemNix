@@ -629,6 +629,22 @@
       url = "github:LarsArtmann/go-taskqueue?ref=master";
     };
 
+    # summit-planner — local single-user conference-attendance & budget
+    # planner (Go + go-cqrs-lite + cqrs-htmx identity bundle), served as
+    # the loopback summit-planner.service (modules/nixos/services/
+    # summit-planner.nix). PRIVATE repo: git+ssh + CI deploy key.
+    # NON-FOLLOWER class for nixpkgs (invoices precedent): upstream
+    # packages.default bakes a vendorHash that reproduces under its own
+    # lock (first-hand probe 2026-11-21 at 8573311 from the remote ref);
+    # see the summit-planner.nixpkgs deliberate row in lib/lock-audit.nix.
+    # flake-parts + treefmt-nix DO follow the root (eval-only deps, and the
+    # treefmt edge is guarded graph-wide).
+    summit-planner = {
+      url = "git+ssh://git@github.com/LarsArtmann/summit-planner?ref=refs/heads/master";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
+    };
+
     # qmd — on-device hybrid search (BM25 + vector embeddings + LLM rerank)
     # for markdown and code; global CLI + MCP server (stdio/HTTP) for Crush.
     # nixpkgs is deliberately NOT followed: upstream's nodeModules FOD hash
@@ -1461,7 +1477,9 @@
     # (hermes's patchelfFixed pairs against it); rerouted to nixpkgs-hermes
     # above, so the root serves the rest of the fleet on the f4a03c00 pin
     # below (proof2-proven for every floated tool; tip's newer stdenv broke
-    # cvagent/journal/discordsync/pma in proof4).
+    # cvagent/journal/discordsync/pma in proof4). PIN LIFTED 2026-11-20:
+    # the root floats again (0bb82723, proof3 green); hermes still rides
+    # nixpkgs-hermes below.
     hermes-agent.inputs.nixpkgs.follows = "nixpkgs-hermes";
     # Upstream pins its own uv2nix (2026-07-28) whose lib/build.nix still
     # uses the deprecated stdenv.isDarwin/isLinux accessors — eval warnings
@@ -1487,7 +1505,8 @@
     domains.inputs.treefmt-nix.follows = "treefmt-nix";
     # 2026-11-12: retargeted to nixpkgs-hermes (llama-rag follower-skew
     # pattern). The durable f4a03c00 root pin broke vanilla trunk's
-    # zstd-sys pkg-config probe, and monitor365's flake imports the
+    # zstd-sys pkg-config probe (pin LIFTED 2026-11-20: root floats at
+    # 0bb82723), and monitor365's flake imports the
     # followed nixpkgs WITHOUT our overlays (the hermes legacyPackages
     # class — consumer overlays cannot reach it), so the taskchampion
     # overlay is unreachable from here. f9a75f41 is the proven monitor365

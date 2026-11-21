@@ -223,6 +223,7 @@ drift red. Regenerate after any registry change:
 | invoices-dashboard | invoices | 8110 | protected | invoices-dashboard | 2 | /mnt/pool/backups/invoices |
 | journal-serve | journal | 8484 | protected | journal-serve | 1 | — |
 | lan-nic-watchdog | — | — | none | lan-nic-watchdog | — | — |
+| llama-chat | llama | 8850 | protected | llama-chat | — | — |
 | llama-embeddings | — | — | none | llama-embeddings | — | — |
 | llama-rag | — | — | none | llama-rag | 2 | — |
 | mail-relay | — | — | none | postfix | 3 | — |
@@ -243,7 +244,7 @@ drift red. Regenerate after any registry change:
 | paperless | paperless | 2892 | none | paperless | 1 | /mnt/pool/services/paperless/export |
 | paperless-consumer | — | — | none | paperless-consumer | — | — |
 | paperless-db | — | — | none | paperless-db | — | /mnt/pool/backups/paperless |
-| paperless-gpt | — | 8106 | — | — | — | — |
+| paperless-gpt | — | 8106 | none | paperless-gpt | 1 | — |
 | paperless-scheduler | — | — | none | paperless-scheduler | — | — |
 | paperless-task-queue | — | — | none | paperless-task-queue | — | — |
 | paperless-triage | — | — | none | paperless-triage | 2 | /var/lib/paperless-triage |
@@ -265,6 +266,7 @@ drift red. Regenerate after any registry change:
 | signoz | signoz | 8080 | protected | signoz | 3 | /mnt/pool/backups/clickhouse |
 | storage-collector-freshness | — | — | none | storage-collector-freshness | 1 | — |
 | storage-history | — | — | none | storage-history | — | /mnt/pool/backups/restic-storage-history |
+| summit-planner | — | 7612 | none | summit-planner.service | 1 | /mnt/pool/backups/summit-planner |
 | system-health | — | — | none | system-health | 43 | — |
 | systemd-graph | graph | 8847 | plain | systemd-graph | 1 | — |
 | systemd-timer-monitor | timers | — | none | systemd-timer-monitor | 1 | — |
