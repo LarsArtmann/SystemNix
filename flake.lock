@@ -8392,11 +8392,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795026201,
-        "narHash": "sha256-hr5c+69JcCXANTEs1tdcPBwQm3hD5gdm2QeV9Ox2s6w=",
+        "lastModified": 1795287879,
+        "narHash": "sha256-ZNC62icxD2UXIE08MmA/DNMO8yCmcGM32tW4FhOfbiM=",
         "ref": "refs/heads/master",
-        "rev": "c3259e6b3882901e53a7036f9dee70df44e514ba",
-        "revCount": 397,
+        "rev": "02f6f1a5a75d5caaaccb395709a96caf321065bf",
+        "revCount": 401,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/media-atlas"
       },
