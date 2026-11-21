@@ -151,6 +151,89 @@ icon = null                   →  monogram fallback (registry tiles: eval WARNI
 
 The SSE route's eventMap must always register the `events.Event` envelope (`"message": events.Event{}`): the stream only ever sends the envelope (the frontend routes on `data.type` inside the default message), and huma's stream writer prints `error: unknown event type` + a full `debug.PrintStack()` to stderr for every unregistered payload — the 11-08 smoke's "674 lines/min journal noise" (D1 report §f.25; measured ~6.3k lines/h at idle churn, scaling with tile-flap event rate). Fixed upstream `47ceb66` (oci-go-standard-pilot, regression test `internal/api/sse_stream_test.go`); reaches the fleet only after that branch lands on `origin/master` and the flake input floats. Residual after the fix: 4 projection unhandled-event WARNs per broadcast event + huma write-deadline notices. The D1 smoke's journal-noise PAIR was papdashboard + node-exporter (D1 §b); node-exporter is silent as of 2026-11-17 (1 line/h).
 
+## Federation (two-node event-log replication, plan 2026-11-16 00-37)
+
+evo-x2 is the **primary**: it runs every side-effectful worker (notifications,
+insight enrichment, expiry, renders) and forwards its event log to the
+**pbx-artmann replica** over the NetBird mesh (`http://100.112.17.187:8412`,
+port `lib/ports.nix` `papdashboard-pbx-replica`). The replica
+(`hosts/pbx/papdashboard.nix` in the pbx-artmann repo — see the handover
+below) applies batches to its own SQLite event log and serves replicated
+READS with workers derived off (`federation.role = "replica"`,
+`federation.enable = false`: one-way, evo → pbx — the replica never
+forwards). Owner scenario: evo-x2 down → the dashboard stays readable on
+the mesh up to the replication watermark. Failover (promoting the replica,
+rollback, split-brain acceptance): `PapDashboard docs/runbooks/federation-failover.md`.
+
+- **One machine key guards the whole keyed surface.** The replica's
+  `PAP_API_KEY` (pbx runtime env file `/var/lib/telephony-secrets/papdashboard_api_key`,
+  pushed via `~/.pbx-prod-secrets/push-secrets.sh`) holds the SAME value as
+  evo's sops `platforms/nixos/secrets/papdashboard-federation.yaml`
+  (`papdashboard_federation_key`, delivered as LoadCredential →
+  `PAP_FED_KEY_FILE=%d/pap-fed-key` — never in the store). Rotation is BOTH
+  hosts in one pass: `sops`-edit + deploy here, push-secrets + switch there.
+- **Health surface:** `curl -s localhost:8088/api/health | jq .federation`
+  (role, peer, watermark, `lagSeconds` — quiet-log-aware upstream, an idle
+  dashboard cannot fake lag). The gatus check
+  `PapDashboard Federation Lag` (60s) fires on `lagSeconds` ≥ 60.
+- **Metrics:** the `papdashboard__fed_*` family (double underscore — the
+  exporter-namespace convention; see `docs/agents/monitoring.md`). The crit
+  alert `PapDashboard Federation Forward Failures`
+  (`increase(papdashboard__fed_errors_total[5m]) > 5`) pages when the
+  forwarder repeatedly fails — dead peer, key mismatch, or version-gap
+  rejections.
+- **Gatus tiles:** `PapDashboard Federation Lag` (primary, warn leg) +
+  `PapDashboard Replica (pbx)` (the PRIMARY observes the REPLICA over the
+  mesh at `100.112.17.187:8412/api/health`).
+- **Replica state durability:** pbx `backup.nix` stages a nightly
+  sqlite-consistent snapshot of `/var/lib/papdashboard/papdashboard.db`
+  (the replica's ENTIRE replicated state — losing it means a full re-sync
+  from evo-x2, the failover runbook's watermark-reset chapter).
+- **Exposure (recorded deviation from plan F2.3c):** the replica answers
+  the NetBird mesh ONLY — firewall 8412 on the `nb-pbx` interface; no
+  public vHost/Caddy subdomain (the app binds wildcard, so the firewall is
+  the boundary). Public exposure of the replica is the F4.3 owner gate;
+  the plan's Q2 ruling stands (mirror-first).
+
+### Deploy order + the expected-red window
+
+The pairing rule is **pair-the-deploys**: evo-x2 deploys FIRST (the
+forwarder starts retry-looping against the still-missing replica), then the
+pbx handover below closes the window. Between the two:
+
+- `papdashboard__fed_errors_total` climbs (~30 failures/min at the 2s poll)
+  and the crit alert fires — **EXPECTED-RED**, resolves with the replica
+  deploy; do not "fix" it by disabling federation.
+- The gatus `PapDashboard Replica (pbx)` tile is red — same window.
+
+### pbx replica handover (USER-RUN — the assistant never SSHes/deploys pbx)
+
+Prereq (already staged by the wiring session): the federation key at
+`~/.pbx-prod-secrets/papdashboard_api_key` (env-file form `PAP_API_KEY=…`,
+mode 600 — `ls -la` to confirm it survived). Then, from
+`~/projects/pbx-artmann`:
+
+```bash
+nix run .#restage-and-gate        # atomic staging + deploy-freshness gate
+bash ~/.pbx-prod-secrets/push-secrets.sh   # ships papdashboard_api_key (first push)
+nix run .#deploy                  # guards, then PRINTS the owner switch command — run it
+```
+
+Post-switch checks (owner, over ssh):
+
+```bash
+systemctl status papdashboard                          # unit up, env file found
+curl -s localhost:8412/api/health | jq .federation   # role=replica, reads answer
+journalctl -u papdashboard -n 50 | grep -i fed         # no auth rejections
+```
+
+evo-side closure (automatic within ~2 min): the
+`PapDashboard Replica (pbx)` tile turns green, `papdashboard__fed_errors_total`
+stops climbing (the crit resolves), and `curl -s localhost:8088/api/health |
+jq .federation.lagSeconds` drops below 60. A persistent 401-shaped error
+rate after the switch means a key mismatch — re-run BOTH rotation halves
+(push-secrets there, sops+deploy here), never just one.
+
 ## Deploy verification (built into post-deploy-check)
 
 `scripts/post-deploy-check.sh` probes the surface on every deploy (all no-key, status-code +
