@@ -1,0 +1,147 @@
+# Status: summit-planner service wave — committed green, deploy NOT fired (pre-deploy handoff)
+
+**Session window:** 2026-11-21 ~02:50 → 03:4x (work), 07:34 (report; session slept ~4 h between)
+**Author:** crush session (summit-planner deploy wave, glm-5.3-flash)
+**Head at report time:** `6c0c2bbd2` (my wave, daemon-swept at 03:57) on top of `fceb43b8e` (my darwin-fix commit, 03:39)
+**Live system:** gen-1020, anchor verified (`readlink /run/current-system` == `system-1020-link` == `zfrqkk756…`) — **the wave is NOT deployed**
+**Owner ask that spawned the session:** "I want ~/projects/summit-planner deploied"
+
+---
+
+## Executive summary
+
+The summit-planner service wave is FULLY COMMITTED and eval-green end-to-end (`nix flake check --no-build --all-systems` passed at 03:4x after fixes), but **the deploy never fired** — the session was interrupted right after landing the second commit. Everything needed to deploy is in place: the private flake input floats at the probe-verified rev `8573311`, the service module passes every eval gate (after three gate-driven fix cycles), the runbook + registry + matrix + doc-count stamps are all landed, and the deploy will automatically carry the parallel paperless session's committed fix `14ec73b28` plus the monitor365 riders (their option (c) resolved by this wave's deploy).
+
+The session also landed, on the parallel paperless session's recommendation + my own blocking need, the **repo-wide darwin selftest fix** (`fceb43b8e`) that had frozen ALL `.nix` commits since the 2026-11-20 root-nixpkgs float.
+
+Coordination note: the parallel session (03:19 report) saw my mid-wave tree, correctly killed its armed patient deploy (its gate would have fired into my uncommitted float), and its staged flake.nix tense-refresh hunks + status report rode my wave commit `6c0c2bbd2` (daemon sweep, 03:57) — attribution inside that commit covers both.
+
+---
+
+## a) FULLY DONE
+
+| #  | Work                                                                                                                                                                                                                                                                                                                                                                          | Evidence |
+|----|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|
+| a1 | **Probe-before-lock PASSED**: built `git+ssh://git@github.com/LarsArtmann/summit-planner?ref=refs/heads/master#packages.x86_64-linux.default` from the REMOTE ref before touching the lock → store path `sgrqsnxxl5h40kaqsbq7gvwy8gm6zpa5` at rev `8573311` (also proves the GitHub mirror was in sync with Forgejo origin at wave time — `git ls-remote` both = `8573311`)      | job 022 output |
+| a2 | **flake input added** (`git+ssh://…summit-planner?ref=refs/heads/master`, floats per owner-pin policy; `flake-parts` + `treefmt-nix` follow root; `nixpkgs` deliberately NOT followed) + lock node verified: locked rev `8573311`, own `nixpkgs_14` node, follows resolve to root paths                                                                                          | flake.nix:632-647, python lock parse |
+| a3 | **lock-audit deliberate row** `summit-planner.nixpkgs` (invoices/journal wave class, probe-cited) — lock-audit green                                                                                                                                                                                                                                                            | lib/lock-audit.nix:61-62 |
+| a4 | **Port registered**: `summit-planner = 7612` (the tool's own default; loopback-only rationale in comment) — port-registry audit green                                                                                                                                                                                                                                           | lib/ports.nix:228-233 |
+| a5 | **Service module written** `modules/nixos/services/summit-planner.nix` (241 lines): system unit `User=lars` + `harden { ProtectHome = "read-only"; ReadWritePaths = [stateDir]; }` + `ioTier.service` + explicit `-addr/-db/-identity-db` flags; catalog entry (subdomain null); integration entry (layer none, gatus `/healthz` 1m, monitored, backup freshness); backup-dir leaf creator (allowlisted io-tier) + nightly 03:55 WAL-safe sqlite backup of BOTH dbs (crm pattern, 30-day retention; identity.db absent = skip-with-note — the MaxUsers-1-lifecycle deviation from crm is commented) + timer | modules/nixos/services/summit-planner.nix |
+| a6 | **Enable block** in configuration.nix (after crm-server, with the loopback-only + localhost-spelling rationale)                                                                                                                                                                                                                                                                  | configuration.nix:1874-1885 |
+| a7 | **deploy.sh converger registration**: `summit-planner-backup-dir` added to the provisioner loop (the `.*-backup-dir$` audit pattern demands it)                                                                                                                                                                                                                                 | scripts/deploy.sh:887 |
+| a8 | **Runbook** `docs/services/summit-planner.md` (55 lines): surfaces table, WebAuthn localhost-spelling trap, adopt-in-place state, lost-passkey runbook pointer, backup shape, CI-auth note                                                                                                                                                                                        | docs/services/summit-planner.md |
+| a9 | **Service matrix regenerated** into integration-registry.md (row: `summit-planner | — | 7612 | none | summit-planner.service | 1 | /mnt/pool/backups/summit-planner`) + `registry-matrix-drift` check green                                                                                                                                                                      | docs/agents/integration-registry.md:268 |
+| a10| **doc-counts re-stamped ×2 surfaces**: README modules 155→156 + gatus 312→314 (my /healthz check **+ the Backup Freshness endpoint the new registry entry creates** — the +2 was derived, not assumed) + FEATURES row 156 modules / 161 files + both Updated headers; `doc-counts` check green                                                                                      | README.md:82, FEATURES.md:5,28 |
+| a11| **Darwin selftest break FIXED** (`fceb43b8e`): `immich-api-key-sweep-selftest` gated linux-only with named darwin no-op (prom-tmp-janitor 2026-11-16 precedent) — unblocked ALL `.nix` commits repo-wide (parallel session's §f1 ask + my own commit blocker); sibling sweep for other `pkgs.systemd` references in checks: only the already-gated janitor remained            | flake/parts/checks/selftests.nix:1846-1860, 1922-1926 |
+| a12| **FULL eval gate GREEN**: `nix flake check --no-build --all-systems` → exit 0, "all checks passed" (03:4x tree = current HEAD content)                                                                                                                                                                                                                                           | ~/.cache/fc-summit4.log |
+| a13| **Wave committed** `6c0c2bbd2`: all 14 files (module, input+lock, ports, lock-audit, config enable, deploy.sh, runbook, matrix, README/FEATURES stamps, pipeline.md CI row) + the parallel session's staged report + flake.nix tense hunks — tree CLEAN at report time                                                                                                             | git show --stat 6c0c2bbd2 |
+| a14| **Coordination with the parallel paperless session**: read their 03:19 report mid-session; adopted their recommended darwin fix; their disarmed-deploy caution respected (no deploy fired while the tree was mid-edit); their deploy-vehicle option (c) is fulfilled by this wave's pending deploy (paperless fix `14ec73b28` verified committed at paperless.nix:597)               | docs/status/2026-11-21_03-19_*.md, git log -1 -- paperless.nix |
+| a15| **CI bundle leg triaged honestly**: bundle2 decrypt probed → host-key recipient, user key fails; typed+spawned sudo NNP-dead in this shell (2026-11-17 rule) → **no blind `gh secret set`** (would have destroyed the other repos' keys); gh auth verified (LarsArtmann, admin:public_key+repo) → whole recipe queued as ONE atomic row, no stranded key material                  | sops probe output, pipeline.md backlog row |
+
+## b) PARTIALLY DONE
+
+1. **The deploy itself** — everything pre-deploy is done (commits landed, eval green, tree clean, build cache warm from the probe); the actual `nix run .#deploy` never fired. gen-1020 still current; `summit-planner.service` inactive on the host. This is THE remaining deliverable of the owner's ask.
+2. **CI deploy-key bundle append** — recipe fully written + queued (pipeline.md backlog row with step-by-step + the sudo-block caveat); the `gh api` key-upload + sops decrypt + secret-set never ran (blocked).
+3. **TODO_LIST dispatch-queue harvest** — my CI row landed in `docs/todo/pipeline.md` but NOT as a `[ready]` one-liner in TODO_LIST.md (the edit-both rule); the tq pool cannot harvest it until the queue row exists. Admitted in §d8, queued in §f.
+4. **Parallel session's f5** ("commit the staged flake.nix tense refresh") — the hunks DID land, but via the daemon's sweep of my wave commit, not by their session; they should verify `6c0c2bbd2` covers their intent (it does contain exactly their 7-line staged diff).
+
+## c) NOT STARTED
+
+1. **Deploy** → then anchor-by-generation-NUMBER verification.
+2. **Post-deploy verification chain**: unit active + journal "ready" line with `url http://localhost:7612`; `/healthz` probe (bash /dev/tcp — plain HTTP loopback, typed curl banned); gatus "summit-planner" endpoint green; Backup Freshness: summit-planner endpoint green; first `summit-planner-backup` fire (03:55 timer — first window tonight) produces a real pool artifact; ExecStart exe matches the input rev's store path.
+3. **Rider verification (rides my deploy, owned by the parallel session's §f3-4)**: paperless-gpt ActiveState + restart-counter reset; paperless-web DisallowedHost rate → baseline; full post-deploy battery re-run.
+4. **CI bundle recipe execution** (needs owner shell or owner-launched yolo session for the sops decrypt).
+5. **TODO_LIST queue row** for the CI item (self-harvest completion).
+6. **Owner's first passkey registration** at http://localhost:7612 (bootstraps MaxUsers-1 identity; only the owner can hold the ceremony).
+7. **Runbook review** — the parallel session's §24 asked for the standard runbook review once the wave lands; `docs/services/summit-planner.md` exists but has not been reviewer-passed.
+8. **tq harvest** of the re-dispatch protocol items after deploy (per CONTRIBUTING five-step).
+
+## d) TOTALLY FUCKED UP
+
+1. **Two broken intermediate module states** (both caught by the pinned formatter's eval, both pure waste): first `_: {` discarded the outer args → `undefined variable 'inputs'`; fixing that, I ALSO dropped the module-body opening brace → syntax error. The crm.nix two-stage shape (`{ inputs, ... }:` + body braces) was known from research — I deviated from the reference for no reason.
+2. **Misnested systemd units**: wrote `summit-planner-backup-dir`/`-backup` at CONFIG level instead of under `systemd.services` → "option summit-planner-backup does not exist" eval failure. The crm reference nests them correctly; I inlined them wrong.
+3. **Matrix-regen script truncated the generated block**: my python replacement kept only the FIRST line of the 3-line sentinel comment, breaking the byte-exact contract the drift check pins — the check caught it, one repair cycle. A `cat`-replace between the sentinels was the correct mechanical move all along.
+4. **Multi-error blindness in gate output**: I filtered check output with `rg "error" | head` and treated the first throw as THE failure — the tree actually carried THREE independent failure classes across passes (io-tier, doc-counts, darwin). The `--keep-going` enumerate-ALL doctrine applies to flake check reads too; grep the captured log exhaustively before fixing one thing.
+5. **Started heavy eval run 054 (~6 min) BEFORE reading the parallel session's staged 03:19 report** — which named the darwin break and their full triage. The status-report pre-read discipline (`ls -t docs/status` first) was sitting right there; the report was staged on disk while I worked. One full eval cycle wasted re-discovering a known, root-caused, fix-prescribed break.
+6. **Doc-count undercount class on my own registry entry**: I stamped gatus +1 when my backup registry entry structurally adds a SECOND endpoint (Backup Freshness). Derived +2 only when the gate threw. This is the exact "+1 rode in unstamped" class the stamps exist for — self-inflicted on a brand-new entry.
+7. **TODO_LIST self-harvest gap** (§b3): the status-report/queue discipline requires queue + library edit in the same change; I edited only the library. The rule exists because the tq pool harvests ONLY TODO_LIST.md.
+8. **The gate runs I paid for**: five full `--all-systems` walks this session (fc-summit ×2 partial-aborted + 046 + 054 + 05D + the hook's own legs ×2). At ~5-7 min each on a PSI-sensitive box, at least two were avoidable (054 pre-fix; the first fc-summit could have been the exhaustive-capture one). Capture-once was followed, but capture-THEN-exhaustive-read was not.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Exhaustive-gate-read rule**: after ANY `nix flake check`, grep the captured log for EVERY failure class (`rg -c "error:|Failed assertions|asserts .* eval truth"`) and triage all of them before the first fix — one capture, N fixes, one re-run. This session's fix cadence would have collapsed 5 walks to 2-3.
+2. **Status-report pre-read BEFORE the first heavy eval**, not before the first commit — `ls -t docs/status/ + rg <topic>` is a 10-second gate that would have saved run 054 and surfaced the darwin fix 20 minutes earlier.
+3. **New-registry-entry stamp checklist**: adding a `checks = [...]` AND a `backup = {...}` entry = endpoint delta of (checks + 1 freshness). A one-line rule in integration-registry.md step 9 ("count = checks list length + 1 if backup set") would prevent the undercount class.
+4. **Module-authoring template**: the two-stage wrapper (`{ inputs, ... }:` + brace body) + unit nesting under `systemd.services` deserves a copy-paste skeleton in docs/CONTRIBUTING.md — both of my (d1)/(d2) errors are instantiations of "deviate from the reference module" and the reference (crm.nix) is 600 lines of site-specific layering, too big to crib from quickly.
+5. **Sentinel-block replacement tooling**: the registry-matrix regeneration should be a script (`scripts/regen-registry-matrix.sh`, python replace-between-sentinels) — hand-rolled one-liners keep re-breaking the wrapper (this session proves it; the drift check caught it).
+6. **Self-harvest at authoring time is still not automatic**: the CI row gap (d7) is the exact class the 2026-10-25 rule targeted. Consider extending the pre-commit todo-gate to WARN when `docs/todo/*.md` gains rows without a same-commit TODO_LIST.md touch (except deliberately-queued-only domains).
+7. **Deploy-vehicle coordination paid off** — the parallel session's disarmed-loop + my wave = zero deploy collisions. The 03:19 report's §e1 recommendation ("extend deploy-when-quiescent.sh, never write sibling loops") deserves landing as doctrine text if not already there.
+8. **CI-auth runbook for NEW private inputs** could carry the "atomic pass, no keygen-first" warning inline (the stranded-key-material trap I self-caught at planning time) — one sentence in go-ecosystem.md's bundle recipe.
+
+## f) NEXT THINGS (prioritized; ★ = this wave's critical path)
+
+**Deploy-critical path (this wave)**
+1. ★ **Deploy** (`nix run .#deploy`) at a quiescent moment — tree is clean + eval-green NOW; check deploy-flock holders + PSI first; it carries the paperless fix `14ec73b28` + monitor365 riders automatically.
+2. ★ **Anchor by generation NUMBER** post-switch (`readlink /run/current-system` == newest `system-N-link` by `sort -V`, never mtime).
+3. ★ **Service verification**: unit active, journal ready-line (`url http://localhost:7612`, `rpid localhost`), `/healthz` 200 `ok` (bash /dev/tcp probe), exe == `sgrqsnxxl5h40kaqsbq7gvwy8gm6zpa5-summit-planner-0.1.0` (probe-verified path).
+4. ★ **Gatus verification**: "summit-planner" endpoint green (200 <500ms); "Backup Freshness: summit-planner" endpoint appears and reads WARN-aware in its first window (no artifact until tonight's 03:55 fire).
+5. ★ **Open http://localhost:7612** (localhost spelling!) in the evo-x2 desktop browser → register the owner passkey (first registration closes MaxUsers-1 registration permanently).
+6. ★ **First backup artifact verify** (tomorrow morning): `summit-planner-backup.service` journal + `/mnt/pool/backups/summit-planner/{summit-planner,identity}-YYYY-MM-DD.db` present, identity 0600; freshness endpoint flips green.
+7. ★ **TODO_LIST queue row** for the CI bundle item (self-harvest completion — the tq pool gap).
+8. ★ **Post-deploy battery re-run** (capture-once) — expect the parallel session's 6 FAILs → ≤2 (cv render chronic + bank-sync remainder).
+
+**CI / private input**
+9. **Run the bundle recipe atomically** (owner shell or authorized yolo session): keygen → `gh api repos/LarsArtmann/summit-planner/keys` (read_only) → decrypt bundle2 → append under `@REPO summit-planner` → re-encrypt → `gh secret set NIX_DEPLOY_KEYS_BUNDLE_2` (recipe verbatim in pipeline.md backlog row).
+10. **First CI run after #9**: confirm nix-check fetches the input clean; then the repo's push protection stance on the new repo (GitHub twin) is untested — first push may need the GH013 playbook (docs/agents/git.md).
+11. **Decide push timing**: the wave is local-only (no push performed, per the never-push-unasked rule); CI stays green-without-the-key only until the next push that walks inputs.
+
+**Upstream (summit-planner repo, `/home/lars/projects/summit-planner`)**
+12. **LAN/vHost capability** (the only path to a dashboard tile + off-desktop access): relax `guardLocalRequest` for vHost + `-rpid`/`-origin` wiring — then flip the registry entry to a subdomain + plain layer (the vHost.unit harness already exists fleet-side; upstream change first, per runbook).
+13. **`docs/review`/TODO sweep upstream** — the repo's own TODO_LIST rows (crm-divergence doc row etc.) are untouched by this wave.
+
+**Fleet hygiene surfaced by this session**
+14. **Land the exhaustive-gate-read + stamp-checklist improvements** (§e1, §e3) as doc text.
+15. **`scripts/regen-registry-matrix.sh`** (§e5) — retire the hand-rolled regen.
+16. **CONTRIBUTING module skeleton** (§e4) — two-stage wrapper + unit nesting minimal example.
+17. **Reviewer pass on `docs/services/summit-planner.md`** (the parallel session's §24 ask).
+18. **paperless post-fix chain** (rides this deploy; parallel session §f3): paperless-gpt ActiveState + restart-counter reset, paperless-web rate → baseline, exe checks.
+19. **CV /admin render smoke re-run** post-deploy (their §f3 rider; chronic cvagent throttle caveat stands).
+20. **§20 post-fix `/health` startup latch re-probe** (their §f15, existing watch row).
+21. **monitor365 batch riders verify** (their §f19 — same deploy vehicle): guard + count-gate diagnostics.
+22. **Immich `.immich-api-key.*` debris + hub `/readyz`** (their §f23, blocked:deploy → this deploy unblocks).
+23. **§17 memory counters post-restart re-read** (their §f-adjacent): cvagent/forgejo counters reset on restart — this deploy restarts nothing of theirs unless the tree changed their units (it didn't), so this stays with their row's own vehicle.
+24. **Paperless catalog WARN** (their §f10): mint the missing catalog entry or opt out — same eval-warning family this wave avoided by declaring catalog + integration together.
+25. **CV graphrag inert-keys WARN** (their §f11) — owner call, pre-existing.
+26. **dnsblockd TRACK_METRICS dropped_total watch** (their §f8).
+27. **dnsblockd TLS handshake errors from 192.168.1.46** (their §f9).
+28. **Wise SCA approval** (owner, Wise app — their g3; also blocks bank-sync statement freshness endpoints).
+29. **Bank-sync SCA journal-check idea** (their §f13) + **battery mid-restart suppression** (their §f12/f16).
+30. **cvagent upstream read-model cache push** (their §f14 — now blocking two symptom classes).
+31. **Delete/rework the parallel session's `~/.cache/lockfloat/patient-deploy-20261121.sh` trap** (their §f17).
+32. **Post-float integration verify with guard DISARMED** (their §f20 — the darwin fix likely unblocked their gate; verify after this deploy).
+33. **flake.nix lines ~29-35 header tense** (their §f21, owner confirm).
+34. **`stc test`-class unrestarted-unit eval assertion** (their §f22).
+35. **linux-only-default checks doctrine** (their §f25 — whether to flip the hook's default walk; owner call).
+
+**Standing queue (pre-existing, pointers only — untouched this session)**
+36. The parallel session's 3 owner questions (their §g1-3) — g1 resolves via this deploy; g2 resolved by `fceb43b8e`; g3 (Wise SCA) still open.
+37. Prior 3 §g owner questions from their standing queue (their §f18).
+38. TODO_LIST dispatch queue rows unrelated to this wave — untouched, as required.
+39. summit-planner upstream: `templates`/`stack` re-audit cadence rows live in that repo's own docs (fleet-drift-watch/trigger-watch cadence) — next session-start there.
+40. Record this report's follow-ups in the queue per the self-harvest rule (items 7, 9-11 minimum).
+
+## g) QUESTIONS FOR THE OWNER (cannot self-answer)
+
+1. **Deploy now?** The wave is committed + eval-green; gen-1020 is 8h old; the deploy carries the paperless fix (their g1 option c) and the monitor365 riders. It's ~07:40 CET — outside all backup windows (03:00-03:40 monitor365, 04:23/04:27 restic/btrbk legs already past). Say "deploy" and I run it with full post-deploy verification; or name a window.
+2. **CI bundle leg**: will you run the atomic bundle recipe in an owner shell (or authorize a yolo session for it)? The sops decrypt needs the host-key-derived age identity, which typed/spawned sudo cannot reach from my shells (NNP, 2026-11-17 rule). Until then, ANY push of this tree breaks `nix-check.yml` on the input fetch — I deliberately have not pushed.
+3. **Identity bootstrap**: the service adopts the existing dev DB (`~/.config/summit-planner/summit-planner.db`, 323 KB — seeded catalog + whatever test decisions you made Nov 20) and has NO identity.db yet, so the first visitor bootstraps the single passkey and registration closes forever. Confirm (a) you'll do the first registration yourself at http://localhost:7612, and (b) adopting the dev DB is the wanted production start (vs wiping to a fresh seed).
+
+---
+
+### Handoff state (07:34)
+
+- **Live**: gen-1020 anchored (pre-wave); `summit-planner.service` not present on the host yet; paperless-gpt still `failed` per the 03:19 report (nothing restarted since); no deploy-flock actors verified at 03:4x (re-verify before firing — the parallel session's loop was killed 03:13 but re-check `pgrep -f 'bin/deploy'` + newest `/var/log/systemnix-deploys/*.log` tail).
+- **Tree**: HEAD `6c0c2bbd2`, CLEAN; all wave files committed; parallel session's report + flake.nix tense hunks inside `6c0c2bbd2`.
+- **Gates**: full `nix flake check --no-build --all-systems` GREEN at this content; `registry-matrix-drift` + `doc-counts` green individually.
+- **Logs**: `~/.cache/fc-summit{,2,3,4}.log` (gate passes), `~/.cache/fmt-summit.log` (formatter eval errors, the (d1) evidence), probe build store path `sgrqsnxxl5h40kaqsbq7gvwy8gm6zpa5-summit-planner-0.1.0` (warm cache).
+- **Armed actors**: none from this session. The auto-commit daemon remains the standing background actor (it swept the wave at 03:57).
