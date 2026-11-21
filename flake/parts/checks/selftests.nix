@@ -1844,6 +1844,14 @@
         # `.immich-api-key.*` debris dies from EVERY declared key dir, fresh
         # debris survives (in-flight mint grace), the real 0400 key file and
         # non-matching names survive.
+        # immich-api-key-sweep-selftest: LINUX-ONLY (prom-tmp-janitor
+        # precedent, 2026-11-16). The provision helper's script embeds
+        # systemd state, and the 2026-11-20 root-nixpkgs float (0bb82723)
+        # made `pkgs.systemd` unavailable on aarch64-darwin — the check
+        # died "systemd-262 not available" and blocked EVERY .nix commit
+        # repo-wide (the pre-commit hook walks --all-systems). On darwin
+        # the attr stays present as a named no-op so the check name set
+        # is stable across systems. 2026-11-21.
         immich-api-key-sweep-selftest =
           let
             provision = (import ../../../lib/default.nix lib).mkImmichApiKeyProvision {
@@ -1869,40 +1877,45 @@
               };
             };
           in
-          pkgs.runCommand "immich-api-key-sweep-selftest"
-            {
-              nativeBuildInputs = with pkgs; [
-                bash
-                coreutils
-                findutils
-                gnugrep
-                gnused
-              ];
-            }
-            ''
-              fn=$(sed 's/^    //' ${provision}/bin/immich-api-key-provision |
-                sed -n '/^sweep_stale_tmp()/,/^}$/p')
-              test -n "$fn" || { echo "FAIL: sweep_stale_tmp not extractable from the shipped script"; exit 1; }
-              log() { echo "TESTLOG: $*"; }
-              eval "$fn"
-              d1=$PWD/keys1
-              d2=$PWD/keys2
-              mkdir -p "$d1" "$d2"
-              printf x >"$d1/takeout-import.env" && chmod 0400 "$d1/takeout-import.env"
-              printf x >"$d1/.immich-api-key.fresh"
-              printf x >"$d1/.immich-api-key.stale"
-              printf x >"$d1/.immich-api-keynot"
-              printf x >"$d2/.immich-api-key.stale2"
-              touch -d '2 days ago' "$d1/.immich-api-key.stale"
-              touch -d '2 days ago' "$d1/.immich-api-keynot"
-              touch -d '3 days ago' "$d2/.immich-api-key.stale2"
-              sweep_stale_tmp "$d1" "$d2"
-              test -f "$d1/takeout-import.env" || { echo "FAIL: real key file swept"; exit 1; }
-              test -f "$d1/.immich-api-key.fresh" || { echo "FAIL: fresh debris swept (in-flight mint would break)"; exit 1; }
-              test ! -e "$d1/.immich-api-key.stale" || { echo "FAIL: stale debris kept"; exit 1; }
-              test -f "$d1/.immich-api-keynot" || { echo "FAIL: non-matching name swept"; exit 1; }
-              test ! -e "$d2/.immich-api-key.stale2" || { echo "FAIL: second key dir not swept"; exit 1; }
-              echo "PASS: sweep removes day-old mktemp debris from every key dir, keeps fresh debris + real keys"
+          if pkgs.stdenv.hostPlatform.isLinux then
+            pkgs.runCommand "immich-api-key-sweep-selftest"
+              {
+                nativeBuildInputs = with pkgs; [
+                  bash
+                  coreutils
+                  findutils
+                  gnugrep
+                  gnused
+                ];
+              }
+              ''
+                fn=$(sed 's/^    //' ${provision}/bin/immich-api-key-provision |
+                  sed -n '/^sweep_stale_tmp()/,/^}$/p')
+                test -n "$fn" || { echo "FAIL: sweep_stale_tmp not extractable from the shipped script"; exit 1; }
+                log() { echo "TESTLOG: $*"; }
+                eval "$fn"
+                d1=$PWD/keys1
+                d2=$PWD/keys2
+                mkdir -p "$d1" "$d2"
+                printf x >"$d1/takeout-import.env" && chmod 0400 "$d1/takeout-import.env"
+                printf x >"$d1/.immich-api-key.fresh"
+                printf x >"$d1/.immich-api-key.stale"
+                printf x >"$d1/.immich-api-keynot"
+                printf x >"$d2/.immich-api-key.stale2"
+                touch -d '2 days ago' "$d1/.immich-api-key.stale"
+                touch -d '2 days ago' "$d1/.immich-api-keynot"
+                touch -d '3 days ago' "$d2/.immich-api-key.stale2"
+                sweep_stale_tmp "$d1" "$d2"
+                test -f "$d1/takeout-import.env" || { echo "FAIL: real key file swept"; exit 1; }
+                test -f "$d1/.immich-api-key.fresh" || { echo "FAIL: fresh debris swept (in-flight mint would break)"; exit 1; }
+                test ! -e "$d1/.immich-api-key.stale" || { echo "FAIL: stale debris kept"; exit 1; }
+                test -f "$d1/.immich-api-keynot" || { echo "FAIL: non-matching name swept"; exit 1; }
+                test ! -e "$d2/.immich-api-key.stale2" || { echo "FAIL: second key dir not swept"; exit 1; }
+                echo "PASS: sweep removes day-old mktemp debris from every key dir, keeps fresh debris + real keys"
+                touch $out
+              ''
+          else
+            pkgs.runCommand "immich-api-key-sweep-selftest-linux-only-noop" { } ''
               touch $out
             '';
 
