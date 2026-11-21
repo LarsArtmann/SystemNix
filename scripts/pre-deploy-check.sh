@@ -637,7 +637,7 @@ fi
 pap_section22() {
   echo ""
   echo "22. PapDashboard federation wiring (primary posture, key delivery, peer shape)"
-  local fed_err fed_json env_json lc_json sops_declared
+  local fed_json env_json lc_json sops_declared
   if ! fed_json=$(nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.federation \
       --apply 'f: { enable = f.enable; role = f.role; peerUrl = f.peerUrl; nodeId = f.nodeId; keyFile = f.keyFile; }' 2>"/tmp/pap-fed-eval.err"); then
     if grep -q "does not provide attribute" "/tmp/pap-fed-eval.err" && grep -q "papdashboard" "/tmp/pap-fed-eval.err"; then
