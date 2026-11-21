@@ -151,8 +151,8 @@ if [ "$RETENTION_COMPACT" = "1" ] && [ ! -f "$COMPACT_STAMP" ]; then
       echo "monitor365-retention: compact done — file $BEFORE_B -> $(stat -c %s "$DB") bytes ($NEW_N rows preserved)"
       COMPACT_OK=1
     else
-      echo "monitor365-retention: WARNING — compact count-gate FAILED (live $LIVE_N vs rebuilt $NEW_N) — original kept; full stderr: $STATE_DIR/retention-stderr.log"
-      LOG_ERR "$ERR"
+      echo "monitor365-retention: WARNING — compact count-gate FAILED (live $LIVE_N vs rebuilt $NEW_N) — original kept; diagnostics: $STATE_DIR/retention-stderr.log"
+      LOG_ERR "count-gate mismatch at $(date -Is): live=$LIVE_N rebuilt=$NEW_N (rebuild exited 0; duckdb stderr was: ${ERR:-<empty>})"
     fi
   else
     echo "monitor365-retention: WARNING — compact rebuild failed — original kept, retries next window; full stderr: $STATE_DIR/retention-stderr.log"
