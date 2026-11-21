@@ -1,35 +1,103 @@
 # Window close-out: monitor365 batch + reviewer-fix wave (2026-11-20 02:39 → 2026-11-21 02:09)
 
-**Report time:** 2026-11-21 ~02:14 · **Window:** 5 completed tasks (`…a1f663640671c2715a50a`, `…a1f6b5cea37af43db6b541`, `…a1f7315ef9d55acfb2d91b`, `…a1f73f3fc5d86081479e34`, `…a1f73f3f65a75321626872`) · **Dispatch-time dedup:** clean — grepped `docs/status/README.md` + all window reports for the span dates and all 5 task IDs; the only hits are each task's OWN closeout files under `docs/status/tasks/`; the 2026-11-20 03:04 window report covers a DIFFERENT five tasks (`…a1ea328819`, `…a1ea64e363`, `…a1f5694e9d`, `…a1f5803cb3`, `…a1f5d5b5da`) → **full pass**.
+**Report time:** 2026-11-21 ~02:14 (filled through ~02:40) · **Window:** 5 completed tasks (`…a1f663640671c2715a50a`, `…a1f6b5cea37af43db6b541`, `…a1f7315ef9d55acfb2d91b`, `…a1f73f3fc5d86081479e34`, `…a1f73f3f65a75321626872`) · **Dispatch-time dedup:** clean — grepped `docs/status/README.md` + all window reports for the span dates and all 5 task IDs; the only hits are each task's OWN closeout files under `docs/status/tasks/`; the 2026-11-20 03:04 window report covers a DIFFERENT five tasks (`…a1ea328819`, `…a1ea64e363`, `…a1f5694e9d`, `…a1f5803cb3`, `…a1f5d5b5da`) → **full pass**.
 
-## a) FULLY DONE
+**Verification method:** each task's own closeout report read FIRST (cited throughout); every §a landing re-grepped at HEAD `704cf1a40` unless noted; live-state claims probed against the RUNNING system (`/run/current-system` == `system-1020-link` == `zfrqkk7567…`) and the deploy logs (`/var/log/systemnix-deploys/`); band drift read fresh from the tq facts table (`/mnt/pool/services/tq/tq.db`). Nothing re-derived from the closeouts beyond what HEAD/live confirms.
 
-(Skeleton — filling in.)
+## a) FULLY DONE (verified at HEAD / live)
+
+1. **Task `…a1f663640671c2715a50a` — 5-item services batch** (closeout `docs/status/tasks/2026-11-20_02-39_task-…000000000.md`, commits `09323b7c7`→`3de836d36`):
+   - **Item 1 — PapDashboard pre-commit reds repair `[x]`** (`09323b7c7`): ticked on the prior window's docs-gates green work (task `…a1f5d5b5da`); the two genuinely out-of-scope legs (file-size 49-finding split wave, fleet go-directive wave) were already minted rows, re-verified present.
+   - **Item 4 — SSO identity heal verification `[x]`** (`341f52bef`): heal chain green at every `monitor365-server` start through Nov 19; session-level evidence on the rebuilt DB (Nov 12 owner traffic: sse-ticket POST 200s ×5, refresh 200s, `get_sso_config` Ok(Some) enabled=1). The overclaim ("real UI login VERIFIED") was corrected to session-level wording by fix task `…a1f7315ef9d55acfb2d91b` — see item 3 below. Verified at HEAD: the reworded row stands at TODO_LIST:499 and `docs/todo/services.md:1235` with the caveat carried onto both surfaces.
+   - **Item 5 — buffer-pressure alert-text correction `[x]`** (`8d0e847ff`): the batch's inherited premise ("1.6G DB-size threshold keeps the check red") was FALSIFIED against the collector source — `BUFFER_PRESSURE` is cgroup-memory-pressure (≥90% of memory.max or any oom_kill this boot), so post-shrink it is green by construction (live 1.0G/8G, oom_kill 0). Fix = stale alert TEXT rewritten to real semantics. Eval green. **gen-1020's eval tree (21:58) post-dates the fix, so the corrected text is in the live generation's rendered gatus config; the live-serve spot-check row (TODO_LIST:3796) stays open for a real gatus probe.**
+2. **Task `…a1f6b5cea37af43db6b541` — monitor365 5-item batch** (closeout `docs/status/tasks/2026-11-20_04-49_task-…00000000.md`, 9 footer-bearing commits `4f2be2834`…`13ac60da3`):
+   - **Item 1 — retention stderr capture** (`4f2be2834`): both failure paths (DELETE batch + VACUUM) write full duckdb stderr to `$STATE_DIR/retention-stderr.log`, journal WARNING names the file, 5-line tail kept; fixture leg 8 asserts non-empty on failure. Verified at HEAD.
+   - **Item 2 — one-shot rebuild-copy compact** (`558c34773` + `ee30d8065`): ATTACH-pair `COPY FROM DATABASE` compact, count-gated swap, `.retention-compact-stamp` fire-once, ARMED via `RETENTION_COMPACT="1"` in the backup call site; fixture legs 9–10, 21/21 legs green. **Verified LIVE in gen-1020:** the running backup-quiesced script carries `RETENTION_COMPACT="1"` (`/nix/store/pnpb4fhi…-monitor365-server-backup-quiesced/bin/…:95`).
+   - **Item 3 — pool-copy un-couple** (`e777cfe33`+`74415cbce`+`86f3da0c6`): the `wants` edge dropped; **verified LIVE: the running `monitor365-pool-copy.service` unit has zero `Wants=` lines** (only the documentation-only `After=`). The 2026-11-20 journal shows the double-fire it killed: retention ran 03:00:05 AND 03:32:17 (two distinct pids).
+   - **Item 4 — fs_event semantics source-verified** (`b3fc103b3`): collector source read at the pinned lock rev — notify-crate event-driven, `interval_seconds` only gates the batch drain, zero watches → zero events; the 1s→60s change is detection-NEUTRAL. Runbook §Fixes item 0 recorded.
+   - **Item 5 — 90d retention ratified** (`ec13e3ab0`): standing-window rationale in `retentionDays`' comment block + runbook note; live since 2026-11-12 (journal: `window 90d` on every fire, rows remaining ~1.56M).
+3. **Task `…a1f7315ef9d55acfb2d91b` — reviewer fix: session-level evidence rewording** (closeout `docs/status/tasks/2026-11-20_05-36_task-…00000000.md`, `88096cdb2`): both surfaces reworded (TODO_LIST:499, services.md:1235), the refresh-token-survival caveat carried from the report onto the rows, heal-half VERIFIED wording kept, no duplicate rows minted (reused `[blocked:user]` row 3797). Verified at HEAD.
+4. **Task `…a1f73f3fc5d86081479e34` — reviewer fix: compact count-gate diagnostics** (`fae398442`): the count-gate failure branch no longer calls `LOG_ERR` with the stale/empty rebuild stderr (which clobbered `retention-stderr.log` with an empty file the journal had just pointed at); it now writes `count-gate mismatch at <ts>: live=$LIVE_N rebuilt=$NEW_N (rebuild exited 0; duckdb stderr was: <empty>)`. Verified at HEAD (`scripts/monitor365-retention.sh`). **In-tree, NOT in gen-1020** (deployed gen's eval pre-dates 01:11 today).
+5. **Task `…a1f73f3f65a75321626872` — reviewer fix: false `After=` ordering claim** (no footer commit — see §d.1): the fix replaced the false comment with the truth (After= orders only same-transaction units; the dropped wants edge leaves NO ordering) AND added the real guard the finding asked for: `scripts/monitor365-pool-copy-guard.sh` ExecStartPre on `monitor365-pool-copy` that refuses the copy while `monitor365-server-backup` is active/activating, fail-closed on unreadable state, repo-backed so `checks.monitor365-pool-copy-guard-selftest` executes the same text (`flake/parts/checks/selftests.nix:341`, `scripts/test-monitor365-pool-copy-guard.sh` 79-line fixture). All landed via daemon commit `7b81bfd3e` (5 files). **In-tree, NOT in gen-1020.**
 
 ## b) PARTIALLY DONE
 
-(Skeleton — filling in.)
+1. **Deploy-gated verification (the window's main open half).** gen-1020 (deployed 2026-11-20 21:58→23:23, `/run/current-system` anchored to it, profile self-repaired in-deploy after nh's activation hiccup) CARRIES: compact arm ✓, pool-copy un-couple ✓, 90d ✓, corrected alert text ✓. It does NOT carry: the count-gate diagnostics fix (`fae398442`, 01:11 today) or the pool-copy guard (`7b81bfd3e`, 01:47 today). So the two `[blocked:deploy]` verify rows (compact fire-once + disarm; pool-copy single-fire) become evidence-checkable at the FIRST post-gen-1020 backup fire — **tonight 2026-11-21 03:00, which is also the compact's first live fire**. Full tick needs two nights (the "NO repeat the following night" legs).
+2. **Tonight's first live compact fire runs the PRE-`fae398442` count-gate code** — if live vs rebuilt counts mismatch, the old branch clobbers `retention-stderr.log` empty while the journal points at it (the exact finding). The count-gate still FAILS CLOSED (original kept), and pool-copy's own size-match check removes a torn partial, so the realistic exposure is diagnostics quality + a possible one-night pool-copy miss, not data loss — but the sequencing (behavior armed before its diagnostic fix deployed) is the §e.3 lesson.
+3. **The un-couple's missing ordering is live for exactly this window**: until the guard deploys, a backup overrun past 03:25 meets an independently-fired pool-copy with no ordering (the finding's race, live in gen-1020). Mitigations in place: pool-copy's size-match check, pool retention keep-3. Guard is one calm-window deploy away; the 01:34 deploy attempt was PSI-refused (code=12, 3s).
+4. **02-39 batch residuals unchanged**: volume-batch deploy re-fire (row `3ed68be2c`, PSI-calm condition) and the pre-shrink DB trash (owner sudo, row `8455ef2bb`) both still open, untouched this window.
+5. **90d ratification**: the owner veto window is technically open (one-liner in monitor365.nix), but deletions have run 9+ nights; anything already deleted is recoverable only from the HDD-pool export copies (keep-2/keep-3). Documented in the 04-49 closeout §g.2; no new row minted.
+6. **The fifth task has NO footer commit** — its fix rides daemon commit `7b81bfd3e`. The queue's footer-derived attribution for that task is empty; the work is verifiable only via tree content + the code comment naming the task id. (Verdict WAS recorded — task status `completed` 02:09:01.)
 
-## c) NOT STARTED
+## c) NOT STARTED (window-skipped; each already routed)
 
-(Skeleton — filling in.)
+- **tick-todo-row helper** (`scripts/tick-todo-row.sh`) — minted by the 04-49 closeout (§e.2), not started.
+- **Evidence-truncation / silent-degradation sweep across `scripts/`** — minted, not started.
+- **Fleet audit: oneshot-wants-oneshot re-fire class** — minted, not started.
+- **Compact fixture legs: ownership/mode + count-gate WARN path** — minted, not started (note: `fae398442` changed the count-gate branch shape; the future leg must target the NEW diagnostics branch).
+- **Runbook: document the one-shot compact** (stamp, reset story, post-compact figures) — minted, not started; the guard's runbook line is new debt from tonight's fix (§f.5).
+- **Upstream the count-gated compact** (`[decision]`) — untouched.
+- **Fresh SSO login capture** (`[blocked:user]` row 3797) and **pre-shrink trash** (owner sudo row) — owner-gated, not started.
+- Nothing from the five tasks' own scopes was silently dropped: all five landed to the depth recorded in §a.
 
 ## d) TOTALLY FUCKED UP
 
-(Skeleton — filling in.)
+1. **Footer-invisible landing of the fifth task's fix (this window's worst artifact).** The After=-semantics fix (unit wiring + guard script + selftest + test) was swept whole into daemon commit `7b81bfd3e` ("chore: auto-commit 5 changed file(s)") — zero Task-Queue-ID footer, zero closeout report on disk. The exact lesson both prior sessions recorded ("edit-tick-commit in ONE chained call", `docs/status/tasks/2026-11-20_04-49…§d.1` four daemon races + ~40 min churn) was violated a third time, and this time the sweep took the ENTIRE fix so the queue↔git cross-reference for the task resolves to nothing. The repair pattern (verify `git show --stat` + HEAD identity, amend-forward) never ran because the session ended after the sweep.
+2. **The false `After=` claim itself** (reviewer-caught): the 04-49 batch shipped a comment documenting an ordering guarantee systemd does not provide (After= is transaction-scoped; without the wants edge there is NO ordering), and the finding cost a paid re-dispatch to correct. Root cause: a semantic claim about systemd written without reading the semantics — the same premise-check discipline the repo applies to config claims must extend to behavior/comment claims. Worse, the un-couple shipped with the race OPEN (no guard) and gen-1020 is running it tonight (§b.3).
+3. **The count-gate bug shipped armed**: `RETENTION_COMPACT="1"` went live in gen-1020 while the diagnostic fix for its failure branch (`fae398442`) sits undeployed — the first live exercise of the branch (possibly tonight) runs the broken diagnostics. Armed-before-fixed sequencing.
+4. **Evidence-scope overclaim (the 05-36 finding's root)**: the 02-39 batch ticked "one real UI login VERIFIED" while its own report §d carried the contradicting refresh-token caveat — the 2026-09-18 browser-history-gate class, rule already in AGENTS.md, violated anyway; the reviewer caught it; one paid fix dispatch repaired the rows (§a.3).
+5. **04-49 session's self-inflicted churn** (cited, not re-derived): four daemon races + repairs, two broken python tickers before a clean one, an amend onto the wrong HEAD after an aborted commit, a fixture leg-9 assertion written against the wrong pipeline order, and a third `rg -rn` strike. All repaired in-session; history clean; the cost was ~40% of wall time.
+6. **In passing (adjacent windows, noted for the record)**: the 21:58 deploy exited code=3 (activation status-4 after 1h8m + 6 failed units + new smoke failures); the deploy script's anchor check self-repaired the profile to zfrqkk and installed the boot entry. gen-1020 IS live and anchored (`readlink -f` match verified) — but the red exit means the post-deploy battery debts (paperless-gpt/triage, bank-sync-qonto, forgejo-github-sync, post-crash-calm-gate, service-health-check) ride the sibling window's rows.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-(Skeleton — filling in.)
+1. **Premise-check semantic/comment claims like config claims**: systemd semantics in comments need a source or doc cite at write time (`After=` transaction scoping cost one dispatch). Write the gotcha into `docs/agents/systemd.md` (minted row — I cannot edit that file under this task's scope).
+2. **Reviewer-fix tickets are exactly as daemon-race-prone as batch work** — 1 of this window's 3 fix tasks landed footer-invisible. The single-chained edit+add+commit call pattern must apply to fix tickets verbatim; consider a `tq`-side post-completion check that WARNS when a completed task has zero footer commits.
+3. **Armed-behavior vs diagnostic-fix sequencing**: when a new failure path ships (count-gate), the diagnostic fix must deploy in the same wave or the behavior should stay disarmed until both land. Concretely: `RETENTION_COMPACT` should have waited for `fae398442`'s deploy.
+4. **Deploy-gated rows should record the generation they unblock against** ("actionable when gen-1020 is live") so the next session can cheaply re-derive actionability instead of re-probing deploy state from scratch (this report had to reconstruct gen-1020's contents from the store tree).
+5. **Daemon-swept script surfaces need a standalone re-verify step** (shellcheck/selftest) — the guard selftest has never executed gate-side (row minted §f.1).
+6. **The 04-49 closeout's improvement list remains open and correct** (row-ticker library, whole-row reads before anchoring, fixture assertions derived from pipeline order) — do not re-derive, execute the minted rows.
+7. **Sibling-session contention is now routine**: this closeout hit `index.lock` twice and caught the sibling mid-commit with a stale-index TODO_LIST removal. Pathspec commits + worktree-state commits (what this session did) resolve it, but a short lock-wait discipline line in CONTRIBUTING would help (report-only; the existing daemon-race policy already covers most of it).
 
-## f) NEXT THINGS
+## f) NEXT THINGS (report-only; the ≤10 minted-to-TODO_LIST subset marked ⭐)
 
-(Skeleton — filling in.)
+1. ⭐ (minted) Standalone re-verify the two daemon-swept script surfaces: run `scripts/test-monitor365-pool-copy-guard.sh`, shellcheck the three scripts, confirm the selftest is wired and evaluable.
+2. ⭐ (minted) Sweep system-health.nix gatus alert TEXTS for stale numeric premises (the 1.6G class).
+3. ⭐ (minted) Verify journal consumers still parse retention lines after the "full stderr:" WARNING suffix.
+4. ⭐ (minted) Write the `After=` transaction-scoping gotcha into `docs/agents/systemd.md`.
+5. ⭐ (minted) Add the pool-copy ExecStartPre guard to `docs/services/monitor365.md` (§Fixes), alongside the pending compact runbook row.
+6. ⭐ (minted, blocked) Owner call: disarm the compact before tonight's 03:00 fire vs accept the one-night soft risk (§b.2/§b.3) — default if unanswered: accept; failure modes are diagnostics-quality and a possible pool-copy miss, both self-healing.
+7. Tonight ~03:1x: read the backup journal — compact fired exactly once (`compact done`, 13G→~1-2G, stamp written)? pool-copy single-fire, fresh copy landed? Evidence-checkable version of the two `[blocked:deploy]` rows; full tick after night 2.
+8. Land the next calm-window deploy carrying: pool-copy guard, count-gate diagnostics, paperless ALLOWED_HOSTS (`14ec73b28`), freeze-56 prom fix, nsfw exclusion, inboxclean checkUrl — one deploy closes the standing rider wave.
+9. Post-deploy spot-check the corrected buffer-pressure alert text live in gatus (row 3796; gen-1020 carries the text by eval-tree construction — a real gatus API probe closes it).
+10. Owner: one passkey login on monitor.home.lan (row 3797) → closes the SSO login-level gap.
+11. Owner: `sudo trash-put /var/lib/monitor365-server/monitor365.duckdb.pre-shrink` (39G reclaim; row `8455ef2bb`).
+12. `tick-todo-row.sh` helper (existing row) — the single highest-leverage process fix per the 04-49 closeout's own time audit.
+13. Compact fixture legs (existing row) — target the NEW count-gate branch shape post-`fae398442`.
+14. Upstream decision: count-gated ATTACH-pair compact vs upstream's OOM-aborting backup (existing `[decision]` row).
+15. Fleet oneshot-wants audit (existing row) — tonight's double-fire was monitor365-unique so far; prove the negative.
+16. Evidence-truncation sweep (existing row).
+17. Pool-copy freshness alert post-un-couple (existing row) — verify backup-coordination still fires when the implicit health coupling is gone (first relevant night is tonight).
+18. monitor365 runbook state refresh (pre-shrink numbers → post-compact reality; existing row + §f.5 here).
+19. Re-evaluate `monitor365MemPressurePct` (90% of 8G) at post-shrink steady state (02-39 closeout §f.8, not yet a row — likely YAGNI, decide at next runbook touch).
+20. Post-compact: update the "13G" figures in monitor365.md + the gatus threshold wording (existing runbook row covers; verify row 500's tick still matches reality).
+21. Volume-batch deploy re-fire at PSI-calm (row `3ed68be2c`) — folds into item 8's deploy.
+22. After the compact's first fire: file the size delta into the storage ledger narrative (04-49 §f.50, report-only).
+23. Keep the SigNoz `cloud_sync_corrupt_segments_quarantined_total` rule row moving (pre-existing).
+24. `events` row-count textfile gauge (pre-existing row 3744-adjacent) — would have made this window's compact/retention proofs one-liners.
+25. For the tq queue itself: consider the zero-footer-completion WARN from §e.2 as a small upstream feature ask.
 
 ## g) QUESTIONS FOR THE OWNER
 
-(Skeleton — filling in.)
+1. **Compact-vs-guard sequencing (time-sensitive)**: gen-1020 runs tonight's 03:00 backup with the compact ARMED but the pool-copy guard and count-gate diagnostics UNDEPLOYED (PSI refused the 01:34 deploy). Do you want the compact disarmed before 03:00 (owner-side edit + deploy, ~30 min window), or accept the one-night soft risk (count-gate failure would clobber its own stderr log; backup overrun past 03:25 could cost tonight's pool copy — both self-healing, no data-loss path identified)? If no answer by 03:00, the standing config fires as-is.
+2. *(standing, no new rows)*: deploy-prioritization for the rider wave, the fresh SSO login, and the pre-shrink trash all already have owner-gated rows (minted by prior closeouts) — unchanged by this window.
 
 ## h) BAND DRIFT
 
-(Skeleton — filling in.)
+**None recorded.** The tq facts table (`/mnt/pool/services/tq/tq.db`, read fresh 2026-11-21 02:2x) contains ZERO `task.reprioritized` facts since 2026-11-20 00:00 CET (query: `SELECT … FROM facts WHERE type LIKE '%repriorit%' AND time >= 1763602800000` → 0 rows). No priority movement to account for in this window; ordering moved only implicitly via harvest and tick commits.
+
+## Queue-surface changes from THIS closeout (cap 10)
+
+6 new unchecked rows appended to TODO_LIST.md (3 first-cut at skeleton time + 3 from §f's ⭐ list: the `After=`→systemd.md row, the guard-runbook row, the compact-disarm-vs-accept owner question as a blocked row), all dedup-checked against the existing unchecked pool (buffer-pressure spot-check 3796, fresh-login 3797, evidence-scope sweep, tick-helper, compact/pool-copy verify rows, upstream-compact decision all EXIST — reused, not duplicated). No existing rows reworded or deleted; no `[x]` ticks were evidence-backed for THIS window beyond what the tasks' own commits already ticked (the compact/pool-copy verify rows stay open by design — their proof is tonight's journal, not the tree).
+
+Living-doc reconciliation: **CHANGELOG.md** gained one entry (monitor365 backup/retention hardening wave: double-fire fix, one-shot compact, stderr capture, 90d ratification, pool-copy guard — with gen-1020 liveness + tonight's first-fire note). **FEATURES.md/README/ROADMAP**: no edit — the window added scripts/selftests, not modules or packages (the FEATURES nixosModules/files counts are unaffected; verified the counts' derivation surface), and no long-term ideas surfaced. **AGENTS.md**: no edit needed — the window's lessons route to docs/agents/systemd.md via the minted row (outside this task's editable scope) and the existing daemon-race policy already covers §d.1.
