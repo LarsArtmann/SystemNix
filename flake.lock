@@ -10755,11 +10755,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795224975,
-        "narHash": "sha256-yhsedf5g9ogC5LCXKj5YIMI6D0TGQQj7ISj8uVeIcv0=",
+        "lastModified": 1795286617,
+        "narHash": "sha256-BhQTLLI3J0c+Xbb6QPphOcinmc7+5GL2OHzJC1eyr6Q=",
         "ref": "refs/heads/master",
-        "rev": "8573311bb1fdb000fa5e33527ab150ff6bdccc9d",
-        "revCount": 94,
+        "rev": "3e26deafe42a3666ddcad26c4f0a0de91556c783",
+        "revCount": 95,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/summit-planner"
       },
