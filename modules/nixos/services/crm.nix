@@ -207,6 +207,12 @@
             serviceConfig = lib.mkMerge [
               (harden { MemoryMax = lib.mkForce "1G"; })
               (serviceDefaults { })
+              # Pairs with the binary's GracefulClose(30s) (crm 26b8ffd+,
+              # 2026-11-21): the old unbounded Close overran systemd's 90s
+              # default twice and died by SIGKILL mid-stop (the
+              # stop-sigterm class). An explicit 45s = 30s bounded drain +
+              # 15s margin keeps the kill deliberate, not accidental.
+              { TimeoutStopSec = "45s"; }
             ];
           };
 
@@ -328,7 +334,15 @@
                   dst_path = os.path.join(backup_dir, f"{name}-{stamp}.db")
                   src = sqlite3.connect(src_path)
                   dst = sqlite3.connect(dst_path)
-                  src.backup(dst)
+                  # Stepped copy (pages per internal step, sleep between
+                  # steps): the source read lock is held only ~pages at a
+                  # time instead of for the whole O(journal bytes) copy.
+                  # The one-shot form held the lock ~5 min on 1.45 GB and
+                  # wedged a concurrent crm-server boot at engine-open for
+                  # 8 min (2026-11-21 08:49, docs/status 13-06 §a6) —
+                  # stepped, a restart during backup binds as soon as the
+                  # current step yields.
+                  src.backup(dst, pages=1024, sleep=0.1)
                   dst.close()
                   src.close()
                   # identity.db carries passkey/session tables (bearer
