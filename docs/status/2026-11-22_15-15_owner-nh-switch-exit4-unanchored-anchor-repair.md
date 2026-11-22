@@ -103,3 +103,24 @@ typed `sudo systemctl restart` ALSO passed the guard here (session-class depende
 clean-sweep signature for retry-readiness: `journalctl -u system-health-metrics` showing "Deactivated
 successfully" with no "WARN incomplete sweep". Post-repair anchor evidence: profile listing by NUMBER
 (system-1023-link), not mtime.
+
+---
+
+## Closeout addendum (15:45) — commit ride + reconciliation evidence
+
+- **Commit attribution:** the UMask module edit did NOT land under its own commit. The first attempt's
+  pre-commit battery aborted on a transient "store path …-flake-input-pin-audit/sample-flake.nix does not
+  exist" (a lazy source-copy race — a standalone `nix eval` of the same check attr passed seconds later),
+  which left the file STAGED in the shared index; a parallel session's commit `1f1517f8e` ("fix(services):
+  stop ioTier precedence loss and world-readable identity DB", 15:35:10) then absorbed it and described it
+  accurately in its body. No amend (foreign, properly-messaged HEAD — land-as-is). The monitor365
+  `//`→mkMerge WIP named in §e is committed in that same commit, so that item is closed too. New policy
+  clause (5) added to CONTRIBUTING's daemon-race paragraph.
+- **Reconciliation row CLOSED** (docs/todo/services.md + its TODO_LIST pair): `nix store diff-closures`
+  gen-1022→gen-1023 = one change (kith-crm 6a43482f→9a5b155b + its `source` path), zero removals; 910/910
+  unit files identical (`comm` on captured listings — a first `diff <(…)` attempt was discarded as an
+  UNVALIDATED pipeline that happened to agree); gen-1021→gen-1023 adds only the atlas package swap that
+  deploy #2 itself introduced. Live summit-planner exe `5abv8snw…` == gen-1023 unit ExecStart; 53
+  seed-skip fingerprint lines today.
+- **Anchor re-verified 15:40:** `/run/current-system` == `system-1023-link` == `4b1h1ymh…`; no deploy since
+  (newest deploy log still 08:11); identity files still 0600.
