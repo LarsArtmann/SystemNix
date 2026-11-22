@@ -166,3 +166,39 @@ successfully" with no "WARN incomplete sweep". Post-repair anchor evidence: prof
   failure, retries on its timer), two transient `llama-vlm-cap@…` caption instances, and the user unit
   `nextd-refresh.service`. deploy.sh clears failed units before switching (scripts/deploy.sh:394,757), so
   the canonical path is protected; a direct `nh os switch` is not.
+
+---
+
+## Correction addendum (2026-11-22 18:55) — the "path-watch missed fires / 13 h stale" story was WRONG
+
+Applies to §a ("mirror stale" as a missed fire), §c.2 ("missed BOTH … 13h stale mirror", "re-opened as
+best-effort"), §d (the missed-fire bullets) and §f (the backstop row). Validated in the 16-28 report §a9/§d1 and
+the 18-15 report §a2–a4; re-validated whole-boot at 18:55 before this addendum was written.
+
+- **What was wrong:** `boot-mirror-sync.path` never "missed" anything — it could not fire. A path unit re-arms
+  (and re-installs its inotify watch) only when its triggered unit goes INACTIVE; `boot-mirror-sync.service` is
+  `Type=oneshot` + `RemainAfterExit=yes`, so after the first successful sync (`active (exited)`) the path unit sat
+  SubState `running` for the whole boot (since 2026-11-19 00:09:50) with no PID-1 watch on the entries inode. It
+  was deaf for every gen-install of this boot. Mechanism confirmed in systemd `src/core/path.c`
+  (`path_enter_waiting` / `path_spec_check_good`).
+- **Whole-boot evidence (capture 18:55):** `journalctl -u boot-mirror-sync --since "2026-11-19 00:00"` = **10 sync
+  starts**: 1 boot-time (11-19 00:09:50) + 9 sudo-journal-logged explicit `systemctl restart` commands (11-19
+  15:45:14, 21:54:37 · 11-20 00:50:43, 21:59:35, 23:11:41 · 11-21 20:31:16 · 11-22 01:03:54, 15:02:16, 18:55:01),
+  each matching a start to the second. **0 path-triggered.**
+- **"13 h stale" corrected:** entry mtimes are the gen-install ground truth. Deploy #2's entry (01:03:06) was
+  mirrored 01:03:54 by deploy.sh's provisioner restart; the 14:59:26 `stc boot` entry went unsynced **2 min 50 s**
+  (healed 15:02:16), not 13 h. The 15:01 §11 FAIL was real; its attribution was not.
+- **Third live instance, healed 18:55:** a foreign session ran raw `nixos-rebuild switch --flake .#evo-x2` (sudo
+  journal 18:14:35, 18:21:23, 18:33:34; gen-1024 profile set 18:38:18) — outside deploy.sh, so no provisioner
+  restart followed. The gen-1024 entry `nixos-23982436…+3.conf` sat unmirrored 17 min
+  (`diff -rq /boot /boot-mirror`: "Only in /boot/loader/entries") until `sudo systemctl restart boot-mirror-sync`
+  at 18:55:01 → "OK — 50 entries"; mirror equal again (only `loader/random-seed` differs — per-ESP by design,
+  excluded by the sync and by §11).
+- **Surfaces corrected:** this report (inline markers + this addendum); `AGENTS.md` + `docs/agents/systemd.md`
+  (`e49279f`; count fixed here); `docs/todo/storage.md` (daemon `cd145269`; count + the "17:4x" timestamp fixed
+  here — that edit was 17:33); `TODO_LIST.md` queue row (re-worded here). Fix = nixos-modules
+  `RemainAfterExit = false` + audit class 11 + VM second-write leg (untested upstream at this addendum; pushed to
+  the owner tip by another actor at ~18:38, CI red on the readme-drift gate).
+- **Interim rule until the fix deploys:** after ANY gen-install outside deploy.sh, run
+  `sudo systemctl restart boot-mirror-sync`. `ActiveState=active` on a path unit proves nothing — assert SubState
+  `waiting`.
