@@ -88,7 +88,15 @@ _: {
               ;;
           esac
 
-          stamp="$(date +%Y%m%d-%H%M%S)"
+          # Millisecond stamp: two syncs inside the same second (sops
+          # restartUnits racing the hourly timer, rapid manual runs) collide
+          # on the same generation dir — mv then either fails confusingly
+          # or, worse, NESTS the incoming tree inside the existing
+          # generation (coreutils mv-into-dir semantics), silently keeping
+          # the old content served (caught by the VM test 2026-11-22). %3N
+          # sorts lexicographically after second-precision names, so prune
+          # ordering stays chronological.
+          stamp="$(date +%Y%m%d-%H%M%S%3N)"
           incoming="$STATE/.incoming-$stamp"
           # Sync targets are rebuildable cache-class data, never user files —
           # plain rm is the honest verb here (buildcache-gc doctrine).
