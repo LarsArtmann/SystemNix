@@ -11,7 +11,8 @@
 #   - SQLite database on the mirrored HDD pool (/mnt/pool/services/bank-sync,
 #     btrbk-pool snapshotted) instead of the QLC NVMe — same placement
 #     decision as atticd (2026-08-18)
-#   - Wise API key + AES-256 event encryption key from the sops template
+#   - Wise API key + Mercury API key (empty = provider not configured yet)
+#     + AES-256 event encryption key from the sops template
 #     "bank-sync-env" (see sops.nix)
 #   - Optional Wise SCA one-time-token drop-in (EnvironmentFile "-"-prefixed,
 #     absent by default — see docs/services/bank-sync-sca.md for the 90-day
@@ -155,9 +156,14 @@
             # SQLite on the mirrored HDD pool, snapshotted nightly by btrbk-pool.
             dataDir = lib.mkDefault "/mnt/pool/services/bank-sync";
 
-            # sops template renders BANK_SYNC_WISE_API_KEY=... and
-            # BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE env file).
+            # sops template renders BANK_SYNC_WISE_API_KEY=...,
+            # BANK_SYNC_MERCURY_API_KEY=... (empty until the owner pastes a
+            # read-only token — an empty env var means "not configured";
+            # resolveAllProviders + the weekly canary skip the provider
+            # cleanly) and BANK_SYNC_SECURITY_ENCRYPTION_KEY=... (KEY=VALUE
+            # env file).
             wiseApiKeyFile = config.sops.templates."bank-sync-env".path;
+            mercuryApiKeyFile = config.sops.templates."bank-sync-env".path;
             encryptionKeyFile = config.sops.templates."bank-sync-env".path;
 
             # Explicit package pin: SystemNix's nixpkgs carries no bank-sync

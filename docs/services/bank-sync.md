@@ -128,3 +128,40 @@ the marker gate with checksum convergence.
 Qonto **Business API** credentials are still not wired:
 `bank-sync paperless --provider qonto --receipts` remains optional for future
 live attachment syncs, but the historical archive no longer depends on them.
+
+## Mercury provider (wired 2026-11-22, inert until the owner token lands)
+
+Upstream has shipped a full Mercury adapter since 2026-10-29 (REST client
+`mercury-go/`, `internal/bank/mercury/`, config section `mercury.api_key`,
+doctor check, error templates, dashboard provider option, e2e tests) — it is
+an API-key provider like Wise: NO interactive auth command, a read-only
+Bearer token from https://app.mercury.com/settings/tokens
+(`secret-token:…`; Mercury auto-deletes tokens unused for 45 days, so the
+weekly canary keeps it alive).
+
+SystemNix wiring (deployed-tree state):
+
+- `platforms/nixos/secrets/bank-sync.yaml` carries `mercury_api_key`
+  (EMPTY string until the owner pastes the real token — an empty env var is
+  "not configured" to bank-sync, so nothing errors while it waits).
+- sops template `bank-sync-env` renders it as `BANK_SYNC_MERCURY_API_KEY`
+  and the module passes the same file via `services.bank-sync.mercuryApiKeyFile`
+  (upstream option → unit EnvironmentFile).
+- Once the token renders non-empty, the next activation picks Mercury up
+  with zero further config: `sync --provider all` + the weekly canary
+  include it automatically, `doctor` runs the mercury check, the dashboard
+  gains a Mercury provider option, and the provider-agnostic sentinels
+  (`bank_sync_sync_consecutive_failures{provider=mercury}`,
+  `bank_sync_sync_sustained_failure`) cover it.
+
+Owner go-live (the only manual step): create the read-only token in Mercury,
+then paste it WITHOUT a command line (fish_history rule):
+
+```console
+SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/bank-sync.yaml
+# set  mercury_api_key: secret-token:…   (sops opens your editor)
+nix run .#deploy        # re-renders the template + restarts bank-sync
+```
+
+Verify: `bank-sync doctor` (mercury check passes), the dashboard Sync State
+gains Mercury balances, `bank_sync_sync_total` climbs on the first cycle.

@@ -291,14 +291,22 @@ in
             )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
-              # real Wise token and is decryptable only with the host key
+              # real Wise token plus the Mercury API key (EMPTY until the
+              # owner pastes a token — bank-sync treats an empty env var as
+              # "not configured" and skips the provider cleanly), and is
+              # decryptable only with the host key
               # (root), so the encryption key was sops-encrypted to the
               # host age PUBLIC key in a separate file instead.
-              mkSecrets "bank-sync.yaml" {
-                owner = "bank-sync";
-                group = "bank-sync";
-                restartUnits = [ "bank-sync.service" ];
-              } [ "wise_api_key" ]
+              mkSecrets "bank-sync.yaml"
+                {
+                  owner = "bank-sync";
+                  group = "bank-sync";
+                  restartUnits = [ "bank-sync.service" ];
+                }
+                [
+                  "wise_api_key"
+                  "mercury_api_key"
+                ]
               // mkSecrets "bank-sync-encryption.yaml" {
                 owner = "bank-sync";
                 group = "bank-sync";
@@ -778,6 +786,10 @@ in
               restartUnits = [ "bank-sync.service" ];
               content = lib.generators.toKeyValue { } {
                 BANK_SYNC_WISE_API_KEY = config.sops.placeholder.wise_api_key;
+                # Mercury stays unconfigured (empty env var → provider
+                # skipped by `sync/canary --provider all`) until the owner
+                # pastes a read-only token from app.mercury.com/settings/tokens.
+                BANK_SYNC_MERCURY_API_KEY = config.sops.placeholder.mercury_api_key;
                 BANK_SYNC_SECURITY_ENCRYPTION_KEY = config.sops.placeholder.encryption_key;
               };
             };
