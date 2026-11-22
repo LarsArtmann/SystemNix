@@ -213,7 +213,7 @@ in
     assert "v2" in idx2, f"swap did not converge to new content: {idx2!r}"
 
     # 4. keep-N pruning (maxGenerations = 2) -------------------------------
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub.git/index.html && cd /srv/forgejo/lars/eventcatalog-hub.git && git -c user.email=vm@test -c user.name=vm commit -qam v3")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub.git/index.html && cd /srv/forgejo/lars/eventcatalog-hub.git && git -c user.email=vm@test -c user.name=vm add -A && git -c user.email=vm@test -c user.name=vm commit -qm v3")
     machine.succeed("systemctl start architecture-catalog-sync.service")
     gens3 = machine.succeed("ls ${stateDir}/generations").strip().splitlines()
     assert len(gens3) == 2, f"keep-N pruning failed: {gens3!r}"
@@ -228,7 +228,7 @@ in
     assert "refusing to swap" in journal, f"missing-index must refuse loudly: {journal!r}"
     current4 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current4 == current3, f"last-good generation clobbered: {current4!r}"
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub.git/index.html && cd /srv/forgejo/lars/eventcatalog-hub.git && git -c user.email=vm@test -c user.name=vm commit -qam v3")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub.git/index.html && cd /srv/forgejo/lars/eventcatalog-hub.git && git -c user.email=vm@test -c user.name=vm add -A && git -c user.email=vm@test -c user.name=vm commit -qm v3")
 
     # 6. Collector matrix ---------------------------------------------------
     def run_collector():
