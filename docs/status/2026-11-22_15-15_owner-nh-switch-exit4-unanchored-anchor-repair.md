@@ -124,3 +124,24 @@ successfully" with no "WARN incomplete sweep". Post-repair anchor evidence: prof
   seed-skip fingerprint lines today.
 - **Anchor re-verified 15:40:** `/run/current-system` == `system-1023-link` == `4b1h1ymh…`; no deploy since
   (newest deploy log still 08:11); identity files still 0600.
+
+---
+
+## Correction addendum (15:55) — §b "self-healed" was premature; reboot gate closed; thermal note
+
+- **Correction to §b:** the ingest chain did NOT stay healed. 15:00→15:49 the collector logged **13 incomplete
+  vs 11 clean sweeps**, and "PapDashboard Ingest" TRIGGERED a third time at 15:30:52 (after 14:12 and 14:30).
+  The "Failed to send" lines since 15:00 are client TIMEOUTS on `POST localhost:8088/api/ingest` (15:05:38,
+  15:08:02, 15:10:16), not refusals. Mechanism (gatus-config.nix:1651-1656): the check conditions on the
+  collector's OWN `system_papdashboard_ingest_scrape_errors 0` line — every incomplete sweep flips it to 1
+  and the endpoint goes red until the next clean sweep. The ingest path itself is healthy: 200s in 10-97 ms
+  at 15:48-15:49, `ok_1h 34 / errors_1h 3`. Verdict: the MONITOR flaps on the storm; the dashboard does not
+  fail. §b's "0 failed sends since 15:00" was true at 15:02 and false by 15:10.
+- **Gate closed by the actual gate (re-run 15:50):** `nix run .#pre-reboot-check` → rc=0, "17 passed, 5
+  warnings, 0 failed — SAFE TO REBOOT with notes above" (it said REBOOT BLOCKED on §11 at 15:01).
+- **Stability note for the owner:** CPU Tctl read a sustained 98 °C at 15:52 (3 samples); the afternoon's
+  alerts include `monitoring_cpu-thermal-alert`, `filesystem_i-o-stall-rate` and Memory Pressure. Load is
+  the parallel sessions' builds/tests (foreign `nix flake check --all-systems`, Go builds, VM tests,
+  buildflow) on top of a constantly busy bge-m3 embedding server (~60% CPU since 01:03) — the documented
+  freeze class. Nothing was killed (foreign workloads). With gen-1023 anchored and the mirror synced, an
+  unplanned watchdog reboot now boots the RUNNING generation instead of silently reverting.
