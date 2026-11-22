@@ -9667,11 +9667,11 @@
         "project-discovery-sdk": "project-discovery-sdk_11"
       },
       "locked": {
-        "lastModified": 1795378814,
-        "narHash": "sha256-wD6X01+UKYbp01L2T08Kp4e/y+T/Kk2+OAhMoc3Dtjo=",
+        "lastModified": 1795380456,
+        "narHash": "sha256-ouXFlKyXZseVnpXElo7sbcsZdsXno7UT0ZD9hnTJyhI=",
         "ref": "refs/heads/master",
-        "rev": "108bd3a32ecd34ef47f71984d25ce61545ec5ec8",
-        "revCount": 213,
+        "rev": "a899b1da6b3ffedde7d9dc8c69ee41110d5bac58",
+        "revCount": 215,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
