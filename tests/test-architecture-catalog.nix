@@ -7,7 +7,7 @@
 # wiring. The transport (git clone over HTTPS to forgejo.home.lan) is
 # stubbed — a `git` stub on the unit's ambient PATH (writeShellApplication
 # appends its runtimeInputs AFTER $PATH, so a unit-level `path = [stub]`
-# shadows git) materializes /srv/fake-dist as the cloned tree, which the
+# shadows git) rewrites the clone onto /srv/forgejo/lars/eventcatalog-hub, which the
 # test rewrites between runs to simulate successive CI publishes:
 #   1. PLACEHOLDER token skip path (pre-go-live is exit-0, not a scrape
 #      error; the discordsync-Turso doctrine)
@@ -50,8 +50,8 @@ let
   # to a LOCAL fixture repo (branch dist, committed content — clone reads
   # committed trees, so re-publishes must commit).
   gitconfig = pkgs.writeText "vm-gitconfig" ''
-    [url "file:///srv/fake-dist"]
-        insteadOf = https://x-access-token:vmtesttoken@127.0.0.1/
+    [url "file:///srv/forgejo"]
+        insteadOf = https://x-access-token:vmtesttoken@127.0.0.1
   '';
 in
 {
@@ -125,9 +125,9 @@ in
         };
         path = [ pkgs.coreutils pkgs.git ];
         script = ''
-          rm -rf /srv/fake-dist
-          mkdir -p /srv/fake-dist
-          cd /srv/fake-dist
+          rm -rf /srv/forgejo/lars/eventcatalog-hub
+          mkdir -p /srv/forgejo/lars/eventcatalog-hub
+          cd /srv/forgejo/lars/eventcatalog-hub
           git init -q -b dist
           printf '<html><title>EventCatalog v1</title></html>\n' > index.html
           printf '{"builtAt":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build-stamp.json
@@ -205,7 +205,7 @@ in
     assert len(gens1) == 1, f"expected 1 generation, got: {gens1!r}"
 
     # 3. Atomic swap under changed content --------------------------------
-    machine.succeed("printf '<html><title>EventCatalog v2</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v2")
+    machine.succeed("printf '<html><title>EventCatalog v2</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub/index.html && cd /srv/forgejo/lars/eventcatalog-hub && git -c user.email=vm@test -c user.name=vm commit -qam v2")
     machine.succeed("systemctl start architecture-catalog-sync.service")
     current2 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current2 != current, f"current did not move on re-publish: {current2!r}"
@@ -213,7 +213,7 @@ in
     assert "v2" in idx2, f"swap did not converge to new content: {idx2!r}"
 
     # 4. keep-N pruning (maxGenerations = 2) -------------------------------
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v3")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub/index.html && cd /srv/forgejo/lars/eventcatalog-hub && git -c user.email=vm@test -c user.name=vm commit -qam v3")
     machine.succeed("systemctl start architecture-catalog-sync.service")
     gens3 = machine.succeed("ls ${stateDir}/generations").strip().splitlines()
     assert len(gens3) == 2, f"keep-N pruning failed: {gens3!r}"
@@ -222,13 +222,13 @@ in
     assert gens3[0] not in (current, current2), f"oldest generation not pruned: {gens3!r}"
 
     # 5. Missing index.html → refuse-to-swap fail-closed -------------------
-    machine.succeed("rm /srv/fake-dist/index.html")
+    machine.succeed("rm /srv/forgejo/lars/eventcatalog-hub/index.html")
     machine.fail("systemctl start architecture-catalog-sync.service")
     journal = machine.succeed("journalctl -u architecture-catalog-sync --no-pager")
     assert "refusing to swap" in journal, f"missing-index must refuse loudly: {journal!r}"
     current4 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current4 == current3, f"last-good generation clobbered: {current4!r}"
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v3")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/forgejo/lars/eventcatalog-hub/index.html && cd /srv/forgejo/lars/eventcatalog-hub && git -c user.email=vm@test -c user.name=vm commit -qam v3")
 
     # 6. Collector matrix ---------------------------------------------------
     def run_collector():
