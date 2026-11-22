@@ -179,8 +179,12 @@ mirror repository ... could not read Password ... terminal prompts disabled", ~2
 2026-09-24): the mirror's FETCH/UPDATE itself succeeds and stays fresh (stale remote-tracking refs
 accumulate — no data loss). Its e-invoicing twin healed when the reconcile deleted the
 renamed-upstream stale mirror 2026-10-11 (`e-invoicing` → `ksef-sandbox` on GitHub; the canonical
-mirror now syncs clean). NOTE: the mirror-health collector greps UPDATE notices only — the prune
-class is invisible to `forgejo_mirror_dead_candidates` (queued in docs/todo/services.md). Admin
+mirror now syncs clean). The prune class IS now visible: forgejo-mirror-health publishes
+`forgejo_mirror_health_prune_candidates` (Type=1 "Failed to prune mirror repository
+(<owner>/<name>) references: ..." rows parsed from the parenthesized path, known-stale-subtracted
+like dead candidates — the 2026-10-16 update-notice-only blindness is fixed, 2026-11-22 landed).
+The Gatus "Forgejo Dead Mirror Candidates" check anchors the line's PRESENCE — its VALUE is
+advisory (the remote-prune-failure class leaves the fetch fresh, no data loss). Admin
 UI → Site Administration → Monitor → Notices has a purge; with 102 rows it is cosmetic — the 22
 August empty-reason rows + the 08-21 migrate-credential one-off are the purge-safe set.
 
