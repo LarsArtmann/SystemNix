@@ -145,6 +145,17 @@ _: {
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {
+          # Legacy-file sweep (2026-10-21 phantom-red, health review §5): the
+          # retired monitor365-backup-health unit wrote its own
+          # monitor365-backup.prom; that unit is gone (replaced by this
+          # module's backups.prom + per-backup freshness rows) but
+          # node_exporter reads EVERY *.prom in the dir, so the frozen
+          # Aug-2026 file kept exporting monitor365_backup_healthy 0 /
+          # age 999 — a permanently red feed with no writer and zero journal
+          # entries. Idempotent `r` rule: removes the stale file on
+          # activation, silent no-op once gone.
+          systemd.tmpfiles.rules = [ "r ${textfileDir}/monitor365-backup.prom" ];
+
           systemd.services.backup-health-metrics = {
             description = "Cross-service backup health metrics for Prometheus textfile";
             inherit onFailure;
