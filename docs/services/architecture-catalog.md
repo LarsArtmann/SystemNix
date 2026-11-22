@@ -176,6 +176,18 @@ remains owner-push-gated at report time).
   host eval in the timer is FATAL by design
   (`CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1`) — the committed union
   never silently shrinks; the unit's `onFailure` fires instead.
+- **Inventory-sync tool requirements (these keep the eval alive):** the
+  eval re-fetches the PRIVATE `git+ssh` flake inputs whenever the fetcher
+  cache is cold, and `XDG_CACHE_HOME` points into the unit's
+  StateDirectory, so the unit carries `git` + `openssh` on PATH — nix's
+  git fetcher shells out to `git`, and `git` shells out to `ssh`
+  (2026-11-22: both were absent, `error: executing git: No such file or
+  directory` aborted every run and failed the deploy activating around
+  it). `GIT_SSH_COMMAND` pins `ssh -o ControlMaster=no -o BatchMode=yes`
+  because `ProtectHome=read-only` leaves `~/.ssh/sockets` unbindable and
+  the user config's `ControlMaster auto` then exits 255 — multiplexing
+  must stay off for this unit. Both are load-bearing; dropping either
+  re-breaks the timer.
 - **Rollback:** `sudo ln -s generations/<older-stamp> /var/lib/architecture-catalog/.current.tmp && sudo mv -T /var/lib/architecture-catalog/.current.tmp /var/lib/architecture-catalog/current`
   — same atomic-rename shape the sync uses; `current` must stay a RELATIVE
   symlink (it is swapped via `mv -T`, never edited in place).

@@ -11,11 +11,12 @@
 #
 # Monitoring: WatchdogSec covers liveness (the daemon sends WATCHDOG=1 via
 # sd_notify at half-interval — a verified sender, not a Type=notify-only
-# assumption). The daemon itself stays unix-socket-only (gatus cannot dial
-# unix sockets, and proxying discovery data through Caddy would expose it);
-# the admin WebUI bridge (project-discovery-admin.service, loopback
-# :8765) is the sanctioned HTTP window — the registry entry's gatus checks
-# probe the dashboard AND daemon health through it (reachable:true).
+# assumption). The daemon itself stays unix-socket-only — gatus cannot dial
+# unix sockets, and the web surface is the admin bridge, not the discovery
+# socket: the bridge (project-discovery-admin.service, loopback :8765) is
+# published as discover.<domain> behind Caddy forward-auth, and the registry
+# entry's gatus checks probe the dashboard AND daemon health through it
+# (reachable:true).
 #
 # DELEGATED 2026-11-08 (own-project upstreaming wave): the deployment
 # contract (options, unit, socket-start contract, portable hardening) lives
@@ -182,16 +183,31 @@
           ];
         };
 
-        # Registry entry: loopback-only (no subdomain → no vHost, no tile
-        # requirement), but the checks give the daemon its first functional
-        # gatus coverage — /api/health answers 200 with reachable:true only
-        # when the daemon actually responded on the socket.
+        # Registry entry: the bridge is published as discover.<domain> at the
+        # PROTECTED layer (2026-11-22, owner request). The bridge serves its
+        # dashboard + /api/{health,metrics,events} with NO authentication of
+        # its own, so an exposed vHost must be gated: forward-auth for
+        # external clients with the fleet-wide LAN bypass, exactly like the
+        # other unauthenticated dashboards (dash/overview/papdashboard).
+        # Plain would hand project paths + metrics to anyone who can reach
+        # the vHost. The backend keeps binding loopback only; gatus still
+        # probes http://localhost:<port> directly, so monitoring never
+        # traverses oauth2-proxy. SSE (/api/events) passes the proxy chain
+        # unchanged — no buffering knobs needed.
         services.integration = lib.optionalAttrs (options ? services.integration) {
           project-discovery-admin = {
             enable = cfg.admin.enable;
+            subdomain = "discover";
             port = ports.project-discovery-admin;
-            vHost.layer = "none";
+            vHost.layer = "protected";
             monitored = true;
+            # Tile icon: a dashboard-icons pack file name (build-gated), NOT
+            # a URL — the bridge ships no favicon of its own.
+            homepage = {
+              name = "Project Discovery";
+              description = "Repo discovery daemon: metrics, cache, consumers, live watch feed";
+              icon = "folder.png";
+            };
             checks = [
               {
                 name = "project-discovery dashboard";

@@ -44,6 +44,7 @@
     "invoices"
     "cvagent"
     "audiblesync"
+    "discover"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is
