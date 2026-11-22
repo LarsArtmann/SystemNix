@@ -99,6 +99,18 @@ _: {
           # invisible because the unit is oneshot and OnFailure only notifies).
           # Declare the toolset explicitly instead of trusting the ambient PATH.
           #
+          # `git` + `openssh` (2026-11-22): nix's git fetcher SHELLS OUT to
+          # `git`, and a `ssh://` input makes git shell out to `ssh` in turn.
+          # XDG_CACHE_HOME points into StateDirectory, so the fetcher's
+          # gitv3 clone cache starts EMPTY and every private flake input
+          # (audiblesync, crm, … use git+ssh) is re-fetched on the first
+          # run after a state-dir wipe — `error: executing git: No such
+          # file or directory` aborted the evo-x2 eval and REQUIRE_ALL_HOSTS=1
+          # turned that into a failed unit (live 2026-11-22 20:55, which also
+          # failed the deploy activating around it). git alone is not enough:
+          # without ssh the fetch dies "cannot run ssh: No such file or
+          # directory" (both proven by reproduction with the unit's PATH).
+          #
           # NOTE: `path` is a NixOS unit option (sibling of serviceConfig). Put
           # inside serviceConfig it becomes a meaningless systemd `Path=`
           # directive and changes nothing — caught by eval, 2026-10-23.
@@ -106,6 +118,8 @@ _: {
             pkgs.bash
             pkgs.jq
             pkgs.nix
+            pkgs.git
+            pkgs.openssh
             pkgs.coreutils
             pkgs.gnugrep
             pkgs.python3
