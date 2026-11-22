@@ -9,7 +9,8 @@
 # profile = running system) -> closure sanity (incl. the generation the reboot
 # will actually boot) -> initrd-required devices present -> btrfs health -> no
 # zombie mounts -> quiet-window advisories (incl. the exit-4 predictor: failed
-# units whose unit FILES changed) -> GC anchoring of boot entries (§10).
+# units whose unit FILES changed) -> GC anchoring of boot entries (§10) ->
+# boot mirror (§11: tree parity AND an armed path trigger).
 #
 # Run: nix run .#pre-reboot-check   (self-elevates to root; /boot is root-only)
 # Exit: 0 = safe to reboot (warnings allowed), 1 = REBOOT BLOCKED (fix first).
@@ -18,6 +19,62 @@ set -euo pipefail
 # Test hook: point BOOT_DIR at a fixture to negative-test the audit logic
 # (must survive the sudo re-exec, hence re-materialized here).
 BOOT_DIR="${BOOT_DIR:-/boot}"
+
+# --- boot-mirror path-trigger verdict (pure) -----------------------------
+# A path unit watches only while its target is INACTIVE: systemd parks it in
+# SubState=running with the inotify watch REMOVED for as long as the
+# triggered unit stays active, and re-arms it when that unit deactivates. A
+# sync service parked `active (exited)` (RemainAfterExit=yes) therefore leaves
+# the trigger deaf for the rest of the boot — live 2026-10-17 → 2026-11-22:
+# 0 path-triggered syncs in 90 h while every check stayed green. §11 reads
+# this verdict; `selftest` drives it through every state pair without root.
+mirror_trigger_verdict() {
+  local path_active="$1" path_sub="$2" svc_active="$3" svc_sub="$4"
+  if [ "$path_active" != "active" ]; then
+    echo dead
+  elif [ "$path_sub" = "waiting" ]; then
+    echo ok
+  elif [ "$path_sub" != "running" ]; then
+    echo dead
+  elif [ "$svc_active" = "active" ] && [ "$svc_sub" = "exited" ]; then
+    echo deaf
+  elif [ "$svc_active" = "inactive" ] || [ "$svc_active" = "failed" ]; then
+    echo transitional
+  else
+    echo busy
+  fi
+}
+
+if [ "${1:-}" = "selftest" ]; then
+  # Pure leg: no root, no hardware — runs in the nix flake check sandbox.
+  selftest_fails=0
+  selftest_expect() {
+    local expected="$1" got
+    got="$(mirror_trigger_verdict "$2" "$3" "$4" "$5")"
+    if [ "$got" != "$expected" ]; then
+      echo "FAIL: verdict($2 $3 $4 $5) = $got, expected $expected"
+      selftest_fails=$((selftest_fails + 1))
+    fi
+  }
+  selftest_expect ok active waiting inactive dead
+  selftest_expect ok active waiting failed failed
+  selftest_expect deaf active running active exited
+  selftest_expect busy active running activating start
+  selftest_expect busy active running active running
+  selftest_expect busy active running deactivating stop
+  selftest_expect transitional active running inactive dead
+  selftest_expect transitional active running failed failed
+  selftest_expect dead inactive dead inactive dead
+  selftest_expect dead active dead inactive dead
+  selftest_expect dead failed failed active exited
+  selftest_expect dead "" "" "" ""
+  if [ "$selftest_fails" -ne 0 ]; then
+    echo "pre-reboot-check trigger-verdict selftest: $selftest_fails FAIL"
+    exit 1
+  fi
+  echo "pre-reboot-check trigger-verdict selftest OK (12 state pairs)"
+  exit 0
+fi
 
 # /boot and /nix/var/nix/profiles are root-only on this box; re-exec once.
 # NOTE: a nix-store sudo can never be setuid (read-only store) — the real one
@@ -464,6 +521,43 @@ else
       mirror_issue "systemd-boot NOT installed on $MIRROR_DIR (systemctl restart boot-mirror-sync)"
     fi
   fi
+  # The tree-diff proves parity NOW; the path unit is what restores parity
+  # after a gen-install outside deploy.sh. An in-flight sync is waited out
+  # first so the diff never reads a half-written mirror.
+  MIRROR_PATH_UNIT="${MIRROR_PATH_UNIT:-boot-mirror-sync.path}"
+  MIRROR_SVC_UNIT="${MIRROR_SVC_UNIT:-boot-mirror-sync.service}"
+  mirror_trigger_probe() {
+    local path_pair svc_pair
+    path_pair="$(systemctl show "$MIRROR_PATH_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
+    svc_pair="$(systemctl show "$MIRROR_SVC_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
+    read -r MIRROR_PATH_STATE MIRROR_PATH_SUB <<<"$path_pair"
+    read -r MIRROR_SVC_STATE MIRROR_SVC_SUB <<<"$svc_pair"
+    MIRROR_VERDICT="$(mirror_trigger_verdict "$MIRROR_PATH_STATE" "$MIRROR_PATH_SUB" "$MIRROR_SVC_STATE" "$MIRROR_SVC_SUB")"
+  }
+  mirror_trigger_probe
+  MIRROR_TRIGGER_WAITED=0
+  while
+    { [ "$MIRROR_VERDICT" = "busy" ] || [ "$MIRROR_VERDICT" = "transitional" ]; } &&
+      [ "$MIRROR_TRIGGER_WAITED" -lt 30 ]
+  do
+    sleep 2
+    MIRROR_TRIGGER_WAITED=$((MIRROR_TRIGGER_WAITED + 2))
+    mirror_trigger_probe
+  done
+  case "$MIRROR_VERDICT" in
+    ok)
+      pass "mirror path trigger armed ($MIRROR_PATH_UNIT active/waiting — a gen-install outside deploy.sh re-syncs)"
+      ;;
+    deaf)
+      mirror_issue "mirror path trigger is DEAF: $MIRROR_PATH_UNIT sits active/running because $MIRROR_SVC_UNIT is parked active (exited) — systemd removes a path unit's watch while its target is active, so this trigger cannot fire until reboot and every gen-install outside deploy.sh leaves the mirror stale. Deploy the nixos-modules fix (sync service without RemainAfterExit); until then run: systemctl restart $MIRROR_SVC_UNIT after ANY gen-install"
+      ;;
+    busy | transitional)
+      warn "mirror sync still in flight after ${MIRROR_TRIGGER_WAITED}s ($MIRROR_SVC_UNIT $MIRROR_SVC_STATE/$MIRROR_SVC_SUB) — trigger state unsettled and the tree-diff below may read a half-written mirror; re-run once it finishes"
+      ;;
+    *)
+      mirror_issue "mirror path trigger is NOT armed: $MIRROR_PATH_UNIT is ${MIRROR_PATH_STATE:-not loaded}/${MIRROR_PATH_SUB} (expected active/waiting) — a gen-install outside deploy.sh will not re-sync the mirror (systemctl status '$MIRROR_PATH_UNIT')"
+      ;;
+  esac
   if diff -r -x random-seed -x "System Volume Information" "$BOOT_DIR" "$MIRROR_DIR" >/dev/null 2>&1; then
     pass "mirror tree identical to $BOOT_DIR (per-ESP random-seed excluded)"
   else

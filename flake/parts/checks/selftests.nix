@@ -1633,6 +1633,35 @@
             ''
           );
 
+        # Boot-mirror path-trigger RUNTIME verdict selftest (2026-11-22). The
+        # eval contract above pins the unit SHAPE; it says nothing about the
+        # trigger's runtime state, and the trigger was deaf for the whole boot
+        # for five weeks (0 path-triggered syncs in 90 h) while every check
+        # stayed green. pre-reboot-check §11 now fails on that state through
+        # a pure verdict function; this selftest drives it through every
+        # state pair without root or hardware, and trips if the gate stops
+        # feeding live unit state to the verdict (a deleted call would go
+        # phantom-green).
+        pre-reboot-trigger-selftest =
+          pkgs.runCommand "pre-reboot-trigger-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/pre-reboot-check.sh "$scratch/pre-reboot-check.sh"
+              ${pkgs.bash}/bin/bash "$scratch/pre-reboot-check.sh" selftest
+              if ! grep -q 'mirror_trigger_verdict "$MIRROR_PATH_STATE"' ${root}/scripts/pre-reboot-check.sh; then
+                echo "FAIL: pre-reboot-check §11 no longer feeds live unit state to the trigger verdict"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Crash-loop backoff contract (2026-11-15, review finding on the
         # 2026-11-14 RestartSteps commit): llama-rag's embeddings/reranker
         # units and nsfw-classifier gained RestartSteps=5 +

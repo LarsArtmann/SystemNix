@@ -194,7 +194,7 @@
             };
           pre-reboot-check =
             mkApp "pre-reboot-check"
-              "Pre-reboot boot-chain audit: loader default -> ESP assets -> init on live store -> three-way profile anchor -> closure sanity -> initrd devices -> GC anchoring (built after the 2026-09-07 stuck boot; hardened 2026-09-09)"
+              "Pre-reboot boot-chain audit: loader default -> ESP assets -> init on live store -> three-way profile anchor -> closure sanity -> initrd devices -> GC anchoring -> boot-mirror parity + armed path trigger (built after the 2026-09-07 stuck boot; hardened 2026-09-09)"
               [
                 pkgs.btrfs-progs # filesystem show (MISSING device audit)
                 pkgs.coreutils # stat, timeout, dirname, awk-free parsing helpers
