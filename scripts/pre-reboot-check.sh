@@ -45,6 +45,23 @@ mirror_trigger_verdict() {
   fi
 }
 
+# Reads both units' state pair (two `--value` lines per unit) into
+# MIRROR_*_STATE/_SUB and sets MIRROR_VERDICT. Each `read` takes ONE line.
+mirror_trigger_probe() {
+  local path_pair svc_pair
+  path_pair="$(systemctl show "$MIRROR_PATH_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
+  svc_pair="$(systemctl show "$MIRROR_SVC_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
+  {
+    read -r MIRROR_PATH_STATE || true
+    read -r MIRROR_PATH_SUB || true
+  } <<<"$path_pair"
+  {
+    read -r MIRROR_SVC_STATE || true
+    read -r MIRROR_SVC_SUB || true
+  } <<<"$svc_pair"
+  MIRROR_VERDICT="$(mirror_trigger_verdict "$MIRROR_PATH_STATE" "$MIRROR_PATH_SUB" "$MIRROR_SVC_STATE" "$MIRROR_SVC_SUB")"
+}
+
 if [ "${1:-}" = "selftest" ]; then
   # Pure leg: no root, no hardware — runs in the nix flake check sandbox.
   selftest_fails=0
@@ -68,6 +85,37 @@ if [ "${1:-}" = "selftest" ]; then
   selftest_expect dead active dead inactive dead
   selftest_expect dead failed failed active exited
   selftest_expect dead "" "" "" ""
+  # Parser leg: the probe must split the two-line `--value` pair per unit —
+  # a one-line read reports SubState empty and mis-files DEAF as NOT armed
+  # (caught by the live gate 2026-11-22, never by the pure table above).
+  MIRROR_PATH_UNIT=selftest.path
+  MIRROR_SVC_UNIT=selftest.service
+  systemctl() {
+    if [ "$2" = "$MIRROR_PATH_UNIT" ]; then
+      printf 'active\nrunning\n'
+    else
+      printf 'active\nexited\n'
+    fi
+  }
+  mirror_trigger_probe
+  if [ "$MIRROR_PATH_SUB" = "running" ] && [ "$MIRROR_SVC_SUB" = "exited" ] && [ "$MIRROR_VERDICT" = "deaf" ]; then
+    echo "parser leg OK (deaf pair)"
+  else
+    echo "FAIL: probe parsed path=$MIRROR_PATH_STATE/$MIRROR_PATH_SUB svc=$MIRROR_SVC_STATE/$MIRROR_SVC_SUB verdict=$MIRROR_VERDICT (expected deaf)"
+    selftest_fails=$((selftest_fails + 1))
+  fi
+  systemctl() { printf 'inactive\ndead\n'; }
+  mirror_trigger_probe
+  if [ "$MIRROR_VERDICT" != "dead" ]; then
+    echo "FAIL: not-loaded pair gave verdict $MIRROR_VERDICT (expected dead)"
+    selftest_fails=$((selftest_fails + 1))
+  fi
+  systemctl() { return 127; }
+  mirror_trigger_probe
+  if [ "$MIRROR_VERDICT" != "dead" ]; then
+    echo "FAIL: unavailable systemctl gave verdict $MIRROR_VERDICT (expected dead, never a crash)"
+    selftest_fails=$((selftest_fails + 1))
+  fi
   if [ "$selftest_fails" -ne 0 ]; then
     echo "pre-reboot-check trigger-verdict selftest: $selftest_fails FAIL"
     exit 1
@@ -526,14 +574,6 @@ else
   # first so the diff never reads a half-written mirror.
   MIRROR_PATH_UNIT="${MIRROR_PATH_UNIT:-boot-mirror-sync.path}"
   MIRROR_SVC_UNIT="${MIRROR_SVC_UNIT:-boot-mirror-sync.service}"
-  mirror_trigger_probe() {
-    local path_pair svc_pair
-    path_pair="$(systemctl show "$MIRROR_PATH_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
-    svc_pair="$(systemctl show "$MIRROR_SVC_UNIT" -p ActiveState --value -p SubState --value 2>/dev/null || true)"
-    read -r MIRROR_PATH_STATE MIRROR_PATH_SUB <<<"$path_pair"
-    read -r MIRROR_SVC_STATE MIRROR_SVC_SUB <<<"$svc_pair"
-    MIRROR_VERDICT="$(mirror_trigger_verdict "$MIRROR_PATH_STATE" "$MIRROR_PATH_SUB" "$MIRROR_SVC_STATE" "$MIRROR_SVC_SUB")"
-  }
   mirror_trigger_probe
   MIRROR_TRIGGER_WAITED=0
   while
