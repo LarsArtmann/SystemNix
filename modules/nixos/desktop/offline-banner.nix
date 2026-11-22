@@ -43,7 +43,11 @@
       # `getent ahostsv4 one.one.one.one` -> 192.168.1.200). lars.software
       # is ours (Firebase 199.36.158.100), absent from dns_local_records
       # and every blocklist. Cache caveat: TTL 3600, so dnsblockd can hold
-      # the leg green up to ~1 h into an outage.
+      # the leg green up to ~1 h into an outage — since the 2026-11-22
+      # upstream ladder fix this only delays the DEGRADED classification
+      # while icmp stays up; icmp+tcp both down fires OFFLINE regardless
+      # of the cache (the pre-fix QML sat a real 15-min outage invisible:
+      # phase=degraded forever, dwell bug on top).
       config.services.offline-banner.dnsProbeName = "lars.software";
 
       # Consumer-side pin (queue row 1453, executed 2026-11-10): the

@@ -9382,11 +9382,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795042062,
-        "narHash": "sha256-g5VjDEtfz55mQI16Y0YvJ0iY4VoOpkGmVJq476wZJZI=",
+        "lastModified": 1795387406,
+        "narHash": "sha256-sgmAlEFd0Fcm/EimjkYlcD570tnBQ/OOUp52QdrmCbo=",
         "owner": "LarsArtmann",
         "repo": "offline-banner",
-        "rev": "7eefb2a907942d6668cf37ef6caac8f4c6e2b4bc",
+        "rev": "412e55388b81ee530db488227175180b996ff3a9",
         "type": "github"
       },
       "original": {
@@ -9667,11 +9667,11 @@
         "project-discovery-sdk": "project-discovery-sdk_11"
       },
       "locked": {
-        "lastModified": 1795382409,
-        "narHash": "sha256-Qa0Bhklp8S7B9hP1R+UWdP1ULaksll/tOfZeWQ+04PE=",
+        "lastModified": 1795389210,
+        "narHash": "sha256-42t33SR7TTocHcPmGNuD7zdhx6qz4c/+e6HZlDYIOFw=",
         "ref": "refs/heads/master",
-        "rev": "f6bb8a80cf6e2cdd24bb17b82a1b934ec32cb4b6",
-        "revCount": 216,
+        "rev": "29bc9d90d4a10c674b0568e17bc819bd97909b28",
+        "revCount": 229,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
@@ -9752,17 +9752,17 @@
     "project-discovery-sdk_11": {
       "flake": false,
       "locked": {
-        "lastModified": 1793742660,
-        "narHash": "sha256-Vafx2n9zkbfJu6pkcbIoP1FHHEZLQ1cnh4AQPoatWFU=",
+        "lastModified": 1795267064,
+        "narHash": "sha256-cSozH+tmbenmmKiccTObVs6DpwBww3/+jl686JZnveo=",
         "ref": "master",
-        "rev": "e7fc061547faa8a6a58de0ad3b811bfd4ea66870",
-        "revCount": 1405,
+        "rev": "16f6ab5c82244b5547fc8a2add06fd4c23e202ec",
+        "revCount": 1439,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
       "original": {
         "ref": "master",
-        "rev": "e7fc061547faa8a6a58de0ad3b811bfd4ea66870",
+        "rev": "16f6ab5c82244b5547fc8a2add06fd4c23e202ec",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
