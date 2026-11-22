@@ -606,28 +606,33 @@
           #      Upstream push-gated leg (drain must not await pool-blocked
           #      tasks): docs/todo/services.md.
           systemd.services.monitor365-server = {
-            serviceConfig = {
-              ExecStartPre = lib.mkBefore (
-                [
-                  (lib.getExe duckdbHealScript)
-                  "${lib.getExe schemaHealScript} ${serverCfg.stateDir}/monitor365.duckdb"
-                ]
-                # After the heals: the identity check opens the DB only once
-                # the WAL/restore state is resolved AND the users-table
-                # projection binds again — its create-admin pre-check goes
-                # through the same `COALESCE(users.version, 0)` SELECT the
-                # schema heal repairs. Order matters.
-                ++ lib.optionals (serverCfg.sso.enable or false) [
-                  "${lib.getExe ssoIdentityScript} ${ssoAdminEmail}"
-                ]
-              );
-              TimeoutStartSec = "3min";
-              # Restart=always + RestartSec=5 are ALREADY set upstream — the
-              # storm wedge was NOT a missing restart policy; it was the
-              # start-limit trap below parking the unit failed after 5 rapid
-              # re-kills. No Restart override here (same-priority collision).
-            }
-            // ioTier.heavyDB;
+            # mkMerge composition (docs/agents/systemd.md): a // left operand
+            # would silently clobber mkDefault/mkForce priorities inside any
+            # future ioTier fragment.
+            serviceConfig = lib.mkMerge [
+              {
+                ExecStartPre = lib.mkBefore (
+                  [
+                    (lib.getExe duckdbHealScript)
+                    "${lib.getExe schemaHealScript} ${serverCfg.stateDir}/monitor365.duckdb"
+                  ]
+                  # After the heals: the identity check opens the DB only once
+                  # the WAL/restore state is resolved AND the users-table
+                  # projection binds again — its create-admin pre-check goes
+                  # through the same `COALESCE(users.version, 0)` SELECT the
+                  # schema heal repairs. Order matters.
+                  ++ lib.optionals (serverCfg.sso.enable or false) [
+                    "${lib.getExe ssoIdentityScript} ${ssoAdminEmail}"
+                  ]
+                );
+                TimeoutStartSec = "3min";
+                # Restart=always + RestartSec=5 are ALREADY set upstream — the
+                # storm wedge was NOT a missing restart policy; it was the
+                # start-limit trap below parking the unit failed after 5 rapid
+                # re-kills. No Restart override here (same-priority collision).
+              }
+              ioTier.heavyDB
+            ];
             unitConfig = {
               # mkForce: the NixOS default burst (5, same-priority collision)
               # is exactly the park-dead trap — a storm re-kills 5 times in

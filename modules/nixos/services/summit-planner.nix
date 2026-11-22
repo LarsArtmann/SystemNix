@@ -132,6 +132,11 @@
             {
               User = user;
               Group = group;
+              # identity.db (+ its -wal/-shm sidecars) carry passkey/session
+              # bearer material; sqlite mints them 0644 via default umask
+              # (observed live 2026-11-22, chmodded once by hand) — force the
+              # private mode at every (re)creation instead.
+              UMask = "0077";
               ExecStart = "${pkg}/bin/summit-planner -addr 127.0.0.1:${toString cfg.port} -db ${stateDir}/summit-planner.db -identity-db ${stateDir}/identity.db";
             }
           ];
