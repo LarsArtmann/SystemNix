@@ -44,24 +44,15 @@ let
 
   stateDir = "/var/lib/architecture-catalog";
 
-  # `git` stub: the ONLY invocation the sync script makes is
-  # `git clone --depth 1 --branch <b> <url> <dir>`; materialize the
-  # current /srv/fake-dist content as the "cloned" tree.
-  stubGit = pkgs.writeShellApplication {
-    name = "git";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = ''
-      if [ "''${1:-}" = "clone" ]; then
-        dir=""
-        for a in "$@"; do dir="$a"; done
-        rm -rf "$dir"
-        cp -r /srv/fake-dist "$dir"
-        exit 0
-      fi
-      echo "vm-stub-git: unsupported invocation: $*" >&2
-      exit 1
-    '';
-  };
+  # Transport rewrite (NOT a PATH/overlay stub — writeShellApplication
+  # runtimeInputs shadow both, the forgejo-fixture lesson): real git
+  # end-to-end, with GIT_CONFIG_SYSTEM insteadOf rewriting the clone URL
+  # to a LOCAL fixture repo (branch dist, committed content — clone reads
+  # committed trees, so re-publishes must commit).
+  gitconfig = pkgs.writeText "vm-gitconfig" ''
+    [url "file:///srv/fake-dist"]
+        insteadOf = https://x-access-token:vmtesttoken@127.0.0.1/
+  '';
 in
 {
   name = "architecture-catalog";
@@ -97,7 +88,7 @@ in
 
       # :443 listener so the sync unit's ExecStartPre /dev/tcp probe
       # succeeds immediately (fork mode survives multiple probes).
-      environment.systemPackages = [ pkgs.socat ];
+      environment.systemPackages = [ pkgs.socat pkgs.git ];
       systemd.services.vm-https-stub = {
         description = "VM test: stub :443 listener for the sync endpoint probe";
         wantedBy = [ "multi-user.target" ];
@@ -132,16 +123,20 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
         };
-        path = [ pkgs.coreutils ];
+        path = [ pkgs.coreutils pkgs.git ];
         script = ''
+          rm -rf /srv/fake-dist
           mkdir -p /srv/fake-dist
-          printf '<html><title>EventCatalog v1</title></html>\n' > /srv/fake-dist/index.html
-          printf '{"builtAt":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /srv/fake-dist/build-stamp.json
+          cd /srv/fake-dist
+          git init -q -b dist
+          printf '<html><title>EventCatalog v1</title></html>\n' > index.html
+          printf '{"builtAt":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > build-stamp.json
+          git -c user.email=vm@test -c user.name=vm add -A
+          git -c user.email=vm@test -c user.name=vm commit -qm v1
         '';
       };
 
-      # Stub git shadows the script's real git via ambient PATH.
-      systemd.services.architecture-catalog-sync.path = [ stubGit ];
+      systemd.services.architecture-catalog-sync.environment.GIT_CONFIG_SYSTEM = gitconfig;
     };
 
   testScript = ''
@@ -181,16 +176,19 @@ in
     for pre in unit_exec_lines("architecture-catalog-sync")[1:]:
         pre = pre.strip()
         assert pre.startswith("+"), f"ExecStartPre must stay +-prefixed: {pre!r}"
-        machine.succeed(f"bash -n {pre[1:]}")
-    # The inline /dev/tcp probe: extract its inner command from the unit
-    # text and bash -n it (eval only checks the STRING).
-    unit_text = machine.succeed("systemctl cat architecture-catalog-sync")
-    probe = ""
-    for line in unit_text.splitlines():
-        if "bash -c" in line and "/dev/tcp" in line:
-            probe = line.split("bash -c '", 1)[1].rsplit("'", 1)[0]
-    assert probe != "", f"/dev/tcp probe missing from rendered unit: {unit_text!r}"
-    machine.succeed(f"printf '%s' {shlex.quote(probe)} | bash -n")
+        pre = pre[1:]
+        if "bash -c" in pre:
+            # The inline /dev/tcp probe: extract its inner command and
+            # bash -n it (eval only checks the STRING — the 09-23
+            # doubled-`then` class).
+            # systemd's rendered unit carries nix-escaped $$; systemd
+            # collapses it to $ at run time — unescape before the syntax
+            # check so the checked text is what bash will actually run.
+            probe = pre.split("bash -c '", 1)[1].rsplit("'", 1)[0].replace("$$", "$")
+            assert "/dev/tcp" in probe, f"probe inner command wrong: {probe!r}"
+            machine.succeed(f"printf '%s' {shlex.quote(probe)} | bash -n")
+        else:
+            machine.succeed(f"bash -n {pre}")
 
     # 2. Real-token sync converge (stub clone) ----------------------------
     machine.succeed("systemctl start architecture-catalog-sync.service")
@@ -207,7 +205,7 @@ in
     assert len(gens1) == 1, f"expected 1 generation, got: {gens1!r}"
 
     # 3. Atomic swap under changed content --------------------------------
-    machine.succeed("printf '<html><title>EventCatalog v2</title></html>\\n' > /srv/fake-dist/index.html")
+    machine.succeed("printf '<html><title>EventCatalog v2</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v2")
     machine.succeed("systemctl start architecture-catalog-sync.service")
     current2 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current2 != current, f"current did not move on re-publish: {current2!r}"
@@ -215,7 +213,7 @@ in
     assert "v2" in idx2, f"swap did not converge to new content: {idx2!r}"
 
     # 4. keep-N pruning (maxGenerations = 2) -------------------------------
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v3")
     machine.succeed("systemctl start architecture-catalog-sync.service")
     gens3 = machine.succeed("ls ${stateDir}/generations").strip().splitlines()
     assert len(gens3) == 2, f"keep-N pruning failed: {gens3!r}"
@@ -230,7 +228,7 @@ in
     assert "refusing to swap" in journal, f"missing-index must refuse loudly: {journal!r}"
     current4 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current4 == current3, f"last-good generation clobbered: {current4!r}"
-    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html")
+    machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html && cd /srv/fake-dist && git -c user.email=vm@test -c user.name=vm commit -qam v3")
 
     # 6. Collector matrix ---------------------------------------------------
     def run_collector():
