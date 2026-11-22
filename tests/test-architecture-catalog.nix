@@ -39,7 +39,7 @@
 }:
 let
   catalogModule =
-    (import ../modules/nixos/services/architecture-catalog.nix) { }
+    ((import ../modules/nixos/services/architecture-catalog.nix) { })
       .flake.nixosModules.architecture-catalog;
 
   stateDir = "/var/lib/architecture-catalog";
@@ -52,7 +52,8 @@ let
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       if [ "''${1:-}" = "clone" ]; then
-        dir="''${@: -1}"
+        dir=""
+        for a in "$@"; do dir="$a"; done
         rm -rf "$dir"
         cp -r /srv/fake-dist "$dir"
         exit 0
@@ -70,6 +71,11 @@ in
     {
       imports = [
         catalogModule
+        # co-import (the miniflux lesson): the module declares a
+        # services.integration entry whose options?-guard does NOT survive
+        # cfg.enable — an mkIf-wrapped definition at an undeclared path is
+        # still collected, so integration.nix must declare the namespace.
+        ((import ../modules/nixos/services/integration.nix) { }).flake.nixosModules.integration
         ./mock-sops.nix
         ./test-helpers.nix
       ];
@@ -142,9 +148,9 @@ in
     machine.succeed("systemctl start architecture-catalog-sync.service")
     journal = machine.succeed("journalctl -u architecture-catalog-sync --no-pager")
     assert "sync token is PLACEHOLDER" in journal, f"skip not journal-warned: {journal!r}"
-    gens = machine.succeed(f"ls {stateDir}/generations").strip()
+    gens = machine.succeed("ls ${stateDir}/generations").strip()
     assert gens == "", f"PLACEHOLDER run must not create generations, got: {gens!r}"
-    machine.succeed("test ! -e " + stateDir + "/current")
+    machine.succeed("test ! -e " + "$${stateDir}" + "/current")
 
     # Real token from here on (EnvironmentFile re-read on each start).
     machine.succeed(
@@ -175,30 +181,30 @@ in
     machine.succeed("systemctl start architecture-catalog-sync.service")
     journal = machine.succeed("journalctl -u architecture-catalog-sync --no-pager")
     assert "serving generation" in journal, f"sync did not converge: {journal!r}"
-    current = machine.succeed(f"readlink {stateDir}/current").strip()
+    current = machine.succeed("readlink ${stateDir}/current").strip()
     assert current.startswith("generations/"), f"current must be a RELATIVE symlink: {current!r}"
-    idx = machine.succeed(f"cat {stateDir}/current/index.html")
+    idx = machine.succeed("cat ${stateDir}/current/index.html")
     assert "v1" in idx, f"stub dist did not land: {idx!r}"
     # world-readable files, traversable dirs (Caddy reads the tree)
-    machine.succeed(f"test -r {stateDir}/current/index.html")
-    machine.succeed(f"test -x {stateDir}/current")
-    gens1 = machine.succeed(f"ls {stateDir}/generations").strip().splitlines()
+    machine.succeed("test -r ${stateDir}/current/index.html")
+    machine.succeed("test -x ${stateDir}/current")
+    gens1 = machine.succeed("ls ${stateDir}/generations").strip().splitlines()
     assert len(gens1) == 1, f"expected 1 generation, got: {gens1!r}"
 
     # 3. Atomic swap under changed content --------------------------------
     machine.succeed("printf '<html><title>EventCatalog v2</title></html>\\n' > /srv/fake-dist/index.html")
     machine.succeed("systemctl start architecture-catalog-sync.service")
-    current2 = machine.succeed(f"readlink {stateDir}/current").strip()
+    current2 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current2 != current, f"current did not move on re-publish: {current2!r}"
-    idx2 = machine.succeed(f"cat {stateDir}/current/index.html")
+    idx2 = machine.succeed("cat ${stateDir}/current/index.html")
     assert "v2" in idx2, f"swap did not converge to new content: {idx2!r}"
 
     # 4. keep-N pruning (maxGenerations = 2) -------------------------------
     machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html")
     machine.succeed("systemctl start architecture-catalog-sync.service")
-    gens3 = machine.succeed(f"ls {stateDir}/generations").strip().splitlines()
+    gens3 = machine.succeed("ls ${stateDir}/generations").strip().splitlines()
     assert len(gens3) == 2, f"keep-N pruning failed: {gens3!r}"
-    current3 = machine.succeed(f"readlink {stateDir}/current").strip()
+    current3 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current3 == f"generations/{gens3[1]}", f"current must survive pruning: {current3!r} vs {gens3!r}"
     assert gens3[0] not in (current, current2), f"oldest generation not pruned: {gens3!r}"
 
@@ -207,16 +213,14 @@ in
     machine.fail("systemctl start architecture-catalog-sync.service")
     journal = machine.succeed("journalctl -u architecture-catalog-sync --no-pager")
     assert "refusing to swap" in journal, f"missing-index must refuse loudly: {journal!r}"
-    current4 = machine.succeed(f"readlink {stateDir}/current").strip()
+    current4 = machine.succeed("readlink ${stateDir}/current").strip()
     assert current4 == current3, f"last-good generation clobbered: {current4!r}"
     machine.succeed("printf '<html><title>EventCatalog v3</title></html>\\n' > /srv/fake-dist/index.html")
 
     # 6. Collector matrix ---------------------------------------------------
-    prom = stateDir + "/../prometheus-node-exporter/textfile_collectors/architecture-catalog.prom"
-
     def run_collector():
         machine.succeed("systemctl start architecture-catalog-metrics.service")
-        return machine.succeed(f"cat /var/lib/prometheus-node-exporter/textfile_collectors/architecture-catalog.prom")
+        return machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/architecture-catalog.prom")
 
     # 6a. fresh dist
     p = run_collector()
@@ -225,13 +229,13 @@ in
     # 6b. stale builtAt
     machine.succeed(
         "printf '{\"builtAt\":\"%s\"}\\n' \"$(date -u -d '3 days ago' +%Y-%m-%dT%H:%M:%SZ)\""
-        " > " + stateDir + "/current/build-stamp.json"
+        " > " + "$${stateDir}" + "/current/build-stamp.json"
     )
     p = run_collector()
     assert "architecture_catalog_fresh 0" in p, f"stale dist must read fresh 0: {p!r}"
     assert "architecture_catalog_scrape_errors 0" in p, f"stale dist is honest absence, not an error: {p!r}"
     # 6c. unreadable stamp → ONLY scrape_errors 1 (fail-closed)
-    machine.succeed("echo '{}' > " + stateDir + "/current/build-stamp.json")
+    machine.succeed("echo '{}' > " + "$${stateDir}" + "/current/build-stamp.json")
     p = run_collector()
     assert "architecture_catalog_scrape_errors 1" in p, f"unreadable stamp must fail closed: {p!r}"
     assert "architecture_catalog_dist_present" not in p, f"value metrics must be omitted on scrape error: {p!r}"
@@ -239,9 +243,9 @@ in
     # 6d. absent index → honest 0 / 0 / -1, NOT a scrape error
     machine.succeed(
         "printf '{\"builtAt\":\"%s\"}\\n' \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""
-        " > " + stateDir + "/current/build-stamp.json"
+        " > " + "$${stateDir}" + "/current/build-stamp.json"
     )
-    machine.succeed("rm " + stateDir + "/current/index.html")
+    machine.succeed("rm " + "$${stateDir}" + "/current/index.html")
     p = run_collector()
     for needle in ["architecture_catalog_dist_present 0", "architecture_catalog_fresh 0", "architecture_catalog_stamp_age_seconds -1", "architecture_catalog_scrape_errors 0"]:
         assert needle in p, f"absent-index prom missing {needle!r}: {p!r}"
