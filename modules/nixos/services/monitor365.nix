@@ -591,6 +591,20 @@
         # last uncheckpointed session (acceptable for a monitoring dashboard).
         # If the main DB is also gone, restore from the nightly backup.
         (lib.mkIf serverCfg.enable {
+          # Storm-wedge isolation (2026-10-21 health review §4.4): a QLC IO
+          # storm starved the server into SQLite pool-acquire timeouts, the
+          # background tasks blocked the SIGTERM drain, systemd SIGKILLed the
+          # stop, and the unit landed `failed` WITHOUT restarting (89 gatus
+          # flaps/24h). Two SystemNix-side legs:
+          #   1. ioTier.heavyDB (BE/5) keeps the server's own IO above the
+          #      build-storm tier (BE/7) so a storm cannot wedge it again.
+          #   2. Widened start-limit window: the wedge DID restart (upstream
+          #      Restart=always) but the NixOS default burst (5) exhausted
+          #      during repeated storm re-kills and parked the unit `failed`
+          #      — the "not restarted" leg of the incident. 10 failures in
+          #      10min now rides out a storm window before parking.
+          #      Upstream push-gated leg (drain must not await pool-blocked
+          #      tasks): docs/todo/services.md.
           systemd.services.monitor365-server = {
             serviceConfig = {
               ExecStartPre = lib.mkBefore (
@@ -608,6 +622,18 @@
                 ]
               );
               TimeoutStartSec = "3min";
+              # Restart=always + RestartSec=5 are ALREADY set upstream — the
+              # storm wedge was NOT a missing restart policy; it was the
+              # start-limit trap below parking the unit failed after 5 rapid
+              # re-kills. No Restart override here (same-priority collision).
+            }
+            // ioTier.heavyDB;
+            unitConfig = {
+              # mkForce: the NixOS default burst (5, same-priority collision)
+              # is exactly the park-dead trap — a storm re-kills 5 times in
+              # 10min and the unit stays failed until manual start.
+              StartLimitIntervalSec = lib.mkForce "10min";
+              StartLimitBurst = lib.mkForce 10;
             };
           };
         })
