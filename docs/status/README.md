@@ -1,3 +1,14 @@
+## Live pool addendum (2026-11-22 16:0x)
+
+New live report: `2026-11-22_16-05_window-reverify-monitor365-five-task-window.md`
+— verification-only 2nd-fire pass of the SAME 2026-11-22 five-task window the
+15:46 report closed (dispatch-time dedup HIT → mandated re-verify, no
+re-derivation). All §a landings re-grepped GREEN at HEAD `4b2786cd3`
+(ioTier fragment + start-limit, prom purge, dnsblockd section, bootmetrics
+fixture, e2e test, row ticks); band drift re-read fresh (0 reprioritized
+facts); the re-fire itself recorded as a second instance of the TODO_LIST:1518
+guard class. No new queue rows.
+
 ## Live pool addendum (2026-11-22 15:4x)
 
 New live report: `2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`
