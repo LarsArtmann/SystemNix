@@ -446,6 +446,21 @@
               run "$HEALTH"; need_rc health-dead 0; need_has health-dead "dead candidate: SystemNix"
               grep -q '^forgejo_mirror_dead_candidates 1$' "$TF/forgejo_mirror_health.prom" \
                 || { echo "FAIL health-dead: expected exactly 1 candidate (DarkBlocks stale-subtracted, wiki+foreign ignored)"; cat "$TF/forgejo_mirror_health.prom"; exit 1; }
+              grep -q '^forgejo_mirror_health_prune_candidates 0$' "$TF/forgejo_mirror_health.prom" \
+                || { echo "FAIL health-dead: prune_candidates must be present (0, no prune notices)"; cat "$TF/forgejo_mirror_health.prom"; exit 1; }
+
+              # prune-notice class: parse + known-stale subtraction (the
+              # update-notice grep is blind to "Failed to prune ...")
+              cat > "$FIX/notices" <<NOTICESEOF
+              Failed to prune mirror repository (lars/auto-deduplicate) references: error: could not read Password for 'https://token@github.com': terminal prompts disabled
+              Failed to prune mirror repository (lars/DarkBlocks) references: error: could not read Password for 'https://token@github.com': terminal prompts disabled
+              Failed to update mirror repository '/var/lib/forgejo/data/gitea-repositories/lars/SystemNix.git': fatal: repository not found
+              NOTICESEOF
+              run "$HEALTH"; need_rc health-prune 0; need_has health-prune "prune candidate: auto-deduplicate"
+              grep -q '^forgejo_mirror_health_prune_candidates 1$' "$TF/forgejo_mirror_health.prom" \
+                || { echo "FAIL health-prune: expected exactly 1 prune candidate (DarkBlocks stale-subtracted, update-notice ignored)"; cat "$TF/forgejo_mirror_health.prom"; exit 1; }
+              grep -q '^forgejo_mirror_dead_candidates 1$' "$TF/forgejo_mirror_health.prom" \
+                || { echo "FAIL health-prune: dead_candidates must stay independent (SystemNix)"; cat "$TF/forgejo_mirror_health.prom"; exit 1; }
 
               export FORGEJO_KNOWN_STALE="$FIX/does-not-exist.txt"
               run "$HEALTH"; need_rc health-nostale 0

@@ -1523,6 +1523,7 @@ in
       pkgs.sqlite
       pkgs.coreutils
       pkgs.gnugrep
+      pkgs.gnused
     ];
     text = ''
       DB="''${FORGEJO_DB:-${stateDir}/data/forgejo.db}"
@@ -1577,10 +1578,28 @@ in
         | while IFS= read -r p; do basename "$p" .git; done \
         | sort -u)
 
+      # Prune-notice class (2026-10-16 full notices review): `remote prune`
+      # failures write Type=1 rows "Failed to prune mirror repository
+      # (<owner>/<name>) references: ..." — the update-notice grep above is
+      # blind to them (the FETCH itself succeeds and stays fresh; only stale
+      # remote-tracking refs accumulate). Same fail-closed subtraction of
+      # known-stale flat names.
+      prune=0
+      while IFS= read -r n; do
+        [[ -n "$n" ]] || continue
+        grep -ixqF "$n" "$STALE_FILE" && continue
+        prune=$((prune + 1))
+        echo "  prune candidate: $n (remote prune failing, not known-stale)"
+      done < <(printf '%s\n' "$rows" \
+        | sed -n 's/^Failed to prune mirror repository (\([^)]*\)) references:.*/\1/p' \
+        | cut -d/ -f2 \
+        | sort -u)
+
       {
         echo "# forgejo mirror health metrics"
         echo "forgejo_mirror_health_scrape_errors 0"
         echo "forgejo_mirror_dead_candidates $dead"
+        echo "forgejo_mirror_health_prune_candidates $prune"
       } | publish
     '';
   };

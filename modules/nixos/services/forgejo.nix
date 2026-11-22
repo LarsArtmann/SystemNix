@@ -1801,8 +1801,9 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*\nforgejo_mirror_health_scrape_errors 0*)"
                   "[BODY] == pat(*\nforgejo_mirror_dead_candidates 0*)"
+                  "[BODY] == pat(*\nforgejo_mirror_health_prune_candidates*)"
                 ];
-                alert = "Forgejo pull mirrors failing every sync for 24h+ (redirect-frozen / credential-dead class). Triage: journalctl -u forgejo-mirror-health (names printed), forgejo admin notices. Known-stale (renamed/deleted upstream) are subtracted via reconcile state.";
+                alert = "Forgejo pull mirrors failing every sync for 24h+ (redirect-frozen / credential-dead class). Triage: journalctl -u forgejo-mirror-health (names printed), forgejo admin notices. Known-stale (renamed/deleted upstream) are subtracted via reconcile state. The prune_candidates line must be PRESENT (its VALUE is advisory — the remote-prune-failure class leaves the fetch fresh, no data loss; docs/services/forgejo.md); an absent line = scrape error = RED.";
               }
             ]
             ++ lib.optionals dedicated [
