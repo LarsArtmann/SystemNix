@@ -1,0 +1,105 @@
+# 2026-11-22 15:15 — owner `nh os switch` exit-4: unanchored runtime repaired (gen-1023), boot-mirror path-watch miss found
+
+**Session type:** ad-hoc fix (owner pasted a failed `nh os switch . -v --keep-going` transcript).
+**Pre-read done:** `ls -t docs/status/` (14:54 mic-monitor closeout was newest — no armed executor on this
+incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/PSI/git pinned before acting.
+
+---
+
+## a) What the owner hit
+
+- 14:06 `nh os switch` (run DIRECTLY, not `nix run .#deploy` — bypassed deploy.sh's pressure gate on an
+  io-storm day where both morning deploy attempts had been refused code=12 at entry).
+- Diff: kith-crm `6a43482f → 9a5b155b` (flake.lock float, committed in `9e917e317`) + the boot-metrics-emit
+  wiring + the (still-uncommitted) monitor365 `//`→`mkMerge` refactor riding the working tree.
+- Build fine (52s), activation ran: units stopped/started/restarted, `/run/current-system` flipped to
+  `4b1h1ymh…` — then **`switch-to-configuration` exited 4**: `system-health-metrics.service` (2-min TIMER
+  oneshot, NOT in the transaction) failed mid-window, and stc counts every failed unit at settle.
+  "the new generation will not be added to the bootloader" + no profile bump.
+- Net state at session start: **runtime fully on the new toplevel, UNANCHORED** — profile stopped at
+  system-1022 (`yxpz58jx…`), boot entries without gen-1023, mirror stale. A reboot/crash would have silently
+  reverted (and the box ran memory-PSI ~48% + load 82 all afternoon — freeze risk was live).
+
+## b) Root cause (verified, not inferred)
+
+- `system-health-metrics` journal scans (pocket-id busy / papdashboard ingest / memcg oom) run under
+  `timeout` (50s budget) and ALL timed out (`status 124`) in the 14:11 storm window — the collector reads
+  multi-GB journals; concurrent load was a foreign `nix flake check --all-systems` (8.2 GB RSS, 145% CPU),
+  nixbld Go builds, a drive-paperless VM test, cqrs tests, two llama servers, clickhouse (io PSI some
+  avg10 23-43%, load 82).
+- The collector exits 1 on any incomplete sweep ("partial file published, exiting non-zero") — deliberate
+  fail-visible design, but it makes an unrelated timer unit able to VETO an activation.
+- Same partial sweeps flipped gatus "PapDashboard Ingest" RED at 14:12/14:30 (ingest freshness metric stale
+  + brief connection-refused) — self-healed once clean sweeps resumed 14:55; 8088 listener answering, gatus
+  "Failed to send" count 0 since 15:00, papdashboard serving 200s throughout the tail.
+
+## c) Repair (executed + verified)
+
+1. **Anchor** (the sanctioned UNANCHORED procedure, avoiding a re-activation race):
+   `sudo nix build --no-link --profile /nix/var/nix/profiles/system /nix/store/4b1h1ymh…` → PROFILE-SET OK
+   (system-1023-link → `4b1h1ymh…`), then `sudo …/bin/switch-to-configuration boot` (entries installed,
+   loader binaries same-version-skipped).
+2. **pre-reboot-check**: 16 pass / 5 warn / **1 FAIL — "mirror tree DIFFERS from /boot" (REBOOT BLOCKED)**.
+   Root finding: `boot-mirror-sync.path` was ActiveState=active but its last fire was 01:03:59 — it missed
+   BOTH deploy #2's 01:46 entry install AND my 15:00 `stc boot` (13h stale mirror). The 2026-10-17
+   "raw-stc class CLOSED" doctrine is re-opened as best-effort. Healed via
+   `sudo systemctl restart boot-mirror-sync` → "OK — 50 entries, 403M mirrored" (gen-1023 entry
+   `2abfc8b1…+3.conf` in the counters list).
+3. **Half-applied units verified healthy**: crm-server on the new `9a5b155b` build serving 200s,
+   monitor365-server 200s, boot-metrics-emit finished clean 14:12:18, summit-planner /healthz 200/60s,
+   paperless-gpt 200s (DisallowedHost stays 0).
+4. **Post-repair state**: `readlink /run/current-system` == `system-1023-link` == `4b1h1ymh…`; anchor clean.
+   pre-reboot-check residual warnings are pre-existing advisories (failed forgejo-github-sync +
+   inboxclean-sync with changed unit files — next deploy exit-4 class, deploy.sh reset-failed recovers;
+   19-entry smoke baseline).
+
+## d) Findings & fixes shipped this session
+
+- **Live identity.db was 0644, not the designed 0600** (handoff follow-up answered: exists YES — owner
+  registered ~00:46, WAL 370K, backup artifact proves it — mode NO). Fixed twice: live files chmodded
+  0600 by hand (identity.db/-shm/-wal), and `UMask = "0077"` added to the summit-planner unit
+  (modules/nixos/services/summit-planner.nix; eval-verified `"0077"`) so every (re)creation is private.
+  Deploy-gated; the backup leg already wrote 0600 artifacts by design.
+- **First backup artifacts CONFIRMED** (pipeline row 1172's backup half): `/mnt/pool/backups/summit-planner/
+  summit-planner-2026-11-22.db` 323K/0644 + `identity-2026-11-22.db` 200K/0600, from the 04:01 run of the
+  03:55 timer. Gatus "Backup Freshness: summit-planner" failure-silent since (journal-cadence-class
+  evidence; API token-gated).
+- **systemd.md**: new activation-section bullet (timer-unit veto class + the no-reactivation repair recipe)
+  and a boot-mirror-section bullet (path-watch missed fires). **AGENTS.md**: fd-3 redirection trap added to
+  the shell-traps bullet; missed-fire caveat added to the boot-mirror doctrine paragraph.
+
+## e) Left open (deliberately)
+
+- **Calm-box battery re-run** (pipeline.md row 1172, battery half): box was NOT calm (load 82, io PSI
+  43% avg10 at 15:05) — running post-deploy-check.sh now would poison a second baseline. Row updated with
+  the verified backup half; battery half stays queued for a sub-30% window.
+- **monitor365.nix WIP (`//`→mkMerge refactor) is UNCOMMITTED and IS inside gen-1023** (built from the
+  working tree) — the owning session must commit it; gen-1023 is otherwise tree-reproducible.
+- **No deploy fired by this session**: runtime == anchored gen-1023 == consistent; the UMask fix + monitor365
+  WIP ride the next calm deploy naturally.
+- **§g questions from the 02:50 report remain unanswered** (re-surfaced below).
+
+## f) Self-harvest (all landed at authoring time)
+
+- TODO_LIST.md + docs/todo/storage.md: boot-mirror-sync.path missed-fire backstop row.
+- TODO_LIST.md + docs/todo/monitoring.md: system-health-metrics cannot-veto-activation row.
+- docs/agents/systemd.md (2 bullets), AGENTS.md (2 gotcha writes) — done in-session, not queued.
+- pipeline.md row 1172 updated (backup half verified) — full-line edit, queue/library in sync.
+
+## g) Re-surfaced owner questions (from docs/status/2026-11-22_02-50_…md §g)
+
+1. **Adopt-in-place confirm** — you registered (identity data live + backed up); confirm the dev DB
+   (open-source-summit-japan-2026 event et al.) stays as prod data.
+2. **Baseline restore vs natural re-baseline** — restore `~/.cache/lockfloat/baseline-pre-resume2-20261121.txt`
+   over the storm-poisoned smoke-fail baseline, or let the queued calm-box re-run re-baseline naturally?
+3. **Push arrangement** — master is now further ahead of origin across sessions; push window once the CI
+   bundle key lands, or local-only by policy?
+
+---
+
+**Working notes:** sudo live in this session's shells (probe `sudo -n true` rc=0 — the NNP-exception class);
+typed `sudo systemctl restart` ALSO passed the guard here (session-class dependent — do not assume).
+`ls /boot/loader/entries` unprivileged = Permission denied (ESP root-only) — use sudo. The collector's
+clean-sweep signature for retry-readiness: `journalctl -u system-health-metrics` showing "Deactivated
+successfully" with no "WARN incomplete sweep". Post-repair anchor evidence: profile listing by NUMBER
+(system-1023-link), not mtime.
