@@ -104,7 +104,7 @@ The wrapper (`monitor365-server-backup.service`, quiesced slot) now does: stop w
 
 Sandbox lesson (first fire 17:13): `runuser -u monitor365-server` from the hardened root unit fails `cannot set user id: Operation not permitted` — CAP_SETUID present, @setuid inside the @system-service filter, still EPERM. The CHECKPOINT therefore runs as ROOT with a `chown -R monitor365-server:monitor365-server "$STATE_DIR"` net right after (root-owned WAL/tmp residue is the hazard; a clean checkpoint deletes the WAL anyway — root-run duckdb is the pattern the index rebuild already proved live-safe).
 
-Forced-fire evidence tool: `scripts/monitor365-backup-fire.sh` (self-elevates; pre/post state, journal excerpts). Prune warning: partial corpses (`*.backup_2026102[45]*`, ~7-8 GB) sit NEWER than several good rungs — count-based retention (KEEP=7) will NOT select them out; remove deliberately.
+Forced-fire evidence tool: `scripts/monitor365-backup-fire.sh` (self-elevates; pre/post state, journal excerpts). Prune warning: partial corpses (`*.backup_2026102[45]*`, ~7-8 GB) sit NEWER than several good rungs — count-based retention (keep=2 since the 2026-10-27 override; upstream default is 7) will NOT select them out; remove deliberately.
 
 ## IO storm: root cause, quiesce, ship-path (2026-10-26 evening)
 

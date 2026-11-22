@@ -1012,5 +1012,19 @@ run_case backoff nsfw-pair-dropped crash-loop-backoff-contract fail 'crash-loop-
   'sed:modules/nixos/services/nsfw-classifier.nix:s|^                RestartSteps = 5;$||' \
   'sed:modules/nixos/services/nsfw-classifier.nix:s|^                RestartMaxDelaySec = "15min";$||'
 
+# ── bootmetrics: transaction_open OPEN-path fixture nets (2026-10-17 TODO
+# row + the 2026-10-18 status=127 regression the fixture is built around) ──
+# checks.bootmetrics-openpath-selftest runs the REAL rendered boot-metrics-emit
+# script against stubs (open + closed + 127-control legs). These legs mutate
+# the unit so the fixture's own nets must TRIP — proving the fixture is not
+# phantom-green: deleting the open_age_secs helper hits the control leg;
+# forcing tx_open=0 under a refusing stub hits the open leg.
+run_case bootmetrics open-age-fn-deleted bootmetrics-openpath-selftest fail \
+  'open variant wrote no boot-metrics.prom' \
+  'sed:modules/nixos/services/boot-metrics.nix:/^            open_age_secs() [{]$/,/^            [}]$/d'
+run_case bootmetrics open-path-forced-closed bootmetrics-openpath-selftest fail \
+  'open variant: transaction_open 1 missing' \
+  'sed:modules/nixos/services/boot-metrics.nix:s|tx_open=1|tx_open=0|'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]

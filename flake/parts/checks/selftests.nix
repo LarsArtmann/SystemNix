@@ -110,6 +110,38 @@
           touch $out
         '';
 
+        # transaction_open OPEN-path fixture (2026-10-17 TODO row: the
+        # gauge's entire purpose is the mid-refusal emission, but only the
+        # closed path was ever live-verified). Renders the REAL evo-x2
+        # boot-metrics-emit script through eval and runs
+        # scripts/test-boot-metrics-fixture.sh against stubbed
+        # systemd-analyze/systemctl: refusing stub → transaction_open 1 +
+        # uptime-vs-monotonic age (open leg), answering stub → 0/0 + phase
+        # and total parses (closed leg), and the 2026-10-18 open_age_secs
+        # function-stripped control (no textfile on exactly the boots the
+        # gauge is for). Negative-proven by scripts/negative-test-lints.sh
+        # CASES=bootmetrics (mutation legs trip the fixture's own nets).
+        bootmetrics-openpath-selftest =
+          let
+            emitScript =
+              inputs.self.nixosConfigurations.evo-x2.config.systemd.services.boot-metrics-emit.script;
+          in
+          pkgs.runCommand "bootmetrics-openpath-selftest"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.gnugrep
+                pkgs.gnused
+                pkgs.gawk
+              ];
+              scriptFile = pkgs.writeText "boot-metrics-emit.sh" emitScript;
+            }
+            ''
+              SCRIPT_PATH=$scriptFile ${pkgs.bash}/bin/bash ${root}/scripts/test-boot-metrics-fixture.sh
+              touch $out
+            '';
+
         # mail-relay-verdicts collector fixture selftest (2026-11-12, R5 of
         # the send-hardening residue plan): counters, rolling-window
         # pruning, rejection-class mapping, held-queue counting, resume
