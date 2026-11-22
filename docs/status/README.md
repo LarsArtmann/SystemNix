@@ -1,3 +1,17 @@
+## Live pool addendum (2026-11-22 15:4x)
+
+New live report: `2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`
+— full-pass closeout of the 2026-11-22 five-task window (dispatch-time dedup
+clean; the newest window report covers 2026-11-21). Headlines: monitor365
+storm-wedge fix landed tree-side (ioTier.heavyDB + start-limit 10/10min,
+phantom-prom purge; ON-HOST verification blocked:deploy), runbook refresh
+closed with the DuckDB memory_limit item already-shipped, btrbk BE/6 legs
+hold but compsize has never fired green (chronic-storm starvation, fix
+queued), drive-paperless e2e VM test green and caught two live module bugs
+(user.read scope gap + token-mint EACCES), reviewer finding closed with the
+bootmetrics wiring attribution correction. 3 queue rows appended; 2 owner
+questions (deploy window, guard appetite).
+
 ## Live pool addendum (2026-11-21 20:0x)
 
 New live report: `2026-11-21_19-57_window-reverify-monitor365-batch-plus-reviewfix-wave.md`
