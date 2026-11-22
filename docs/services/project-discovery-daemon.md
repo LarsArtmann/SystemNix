@@ -52,13 +52,17 @@ metrics without authentication.
   (not requires) the daemon: while the daemon is down it serves explicit
   `{"reachable":false}` envelopes — a degraded dashboard beats a stopped
   one.
-- Light 2s poller over the unix socket: `MemoryMax=512M`, no ioTier.
+- Light 2s poller over the unix socket: `MemoryMax=512M`, ioTier **BE/6
+  background** (uniform with the daemon — the io-tier-coverage audit
+  requires every boot-gated unit to carry a tier).
 
 ## Monitoring
 
 Gatus could never dial the unix socket directly; the bridge is the
 sanctioned HTTP window (registry entry `project-discovery-admin`,
-`vHost.layer="none"`, loopback):
+`vHost.layer="protected"` — published as `discover.<domain>` behind
+forward-auth since 2026-11-22; backend stays loopback — gatus probes
+`127.0.0.1:8765` directly and never traverses oauth2-proxy):
 
 1. `project-discovery dashboard` — `GET /` 200 + <500ms (bridge liveness).
 2. `project-discovery daemon` — `GET /api/health` 200 AND body
@@ -68,6 +72,34 @@ sanctioned HTTP window (registry entry `project-discovery-admin`,
    `reachable:true` with a worse `status` field — liveness vs health is
    the daemon's own truth-chain contract (`/v1/health` answers 200 when
    degraded).
+
+### SigNoz / OTEL posture (live-probed 2026-11-22)
+
+- **Logs: flowing.** The fleet journald OTel receiver ingests
+  `project-discovery-daemon.service` — 56 entries fresh to the minute in
+  `signoz_logs.logs_v2`. This is the ONLY SigNoz plane the daemon touches.
+- **Traces: none.** The daemon has NO OpenTelemetry SDK (zero
+  `go.opentelemetry.io` deps in `go.mod`), neither unit sets
+  `OTEL_EXPORTER_OTLP_ENDPOINT` (verified in rendered units), and
+  `signoz_traces.distributed_signoz_index_v3` has zero spans for any
+  discovery serviceName. It is NOT registered in
+  `services.signoz-coverage.expected` (consistent — no OTLP env, so the
+  eval gate does not fire; no spans → never on the Services page, which
+  is trace-driven).
+- **Metrics: exposed but unscraped.** The daemon serves a real Prometheus
+  registry (`promhttp`, `project_discovery_*` + hot-cache families) on
+  its unix-socket `/metrics`; the bridge re-serves it as **JSON**
+  (`/api/metrics`, `application/json`) — not a Prometheus exposition
+  format, so the signoz collector cannot scrape it, no collector job
+  exists, and `signoz_metrics.time_series_v4` has zero daemon series.
+  Gatus consumes only `/api/health` + the dashboard.
+- **Full OTEL verdict: NO.** Wiring paths if ever wanted: (a) traces —
+  OTel SDK + `OTEL_EXPORTER_OTLP_ENDPOINT` env on the unit + a
+  `services.signoz-coverage.expected` row (`wiring = "env"`); (b)
+  metrics — needs a Prometheus-TEXT surface first (e.g. bridge proxying
+  the exposition format), then a `project-discovery` scrape job in
+  `signoz.nix`. The daemon's `TraceHandler`/flightrecorder is a runtime
+  debug capture, not distributed tracing.
 
 ## vendorHash shim — THREE surfaces
 
