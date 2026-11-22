@@ -40,7 +40,7 @@
 let
   catalogModule =
     ((import ../modules/nixos/services/architecture-catalog.nix) { })
-      .flake.nixosModules.architecture-catalog;
+    .flake.nixosModules.architecture-catalog;
 
   stateDir = "/var/lib/architecture-catalog";
 
@@ -88,7 +88,10 @@ in
 
       # :443 listener so the sync unit's ExecStartPre /dev/tcp probe
       # succeeds immediately (fork mode survives multiple probes).
-      environment.systemPackages = [ pkgs.socat pkgs.git ];
+      environment.systemPackages = [
+        pkgs.socat
+        pkgs.git
+      ];
       systemd.services.vm-https-stub = {
         description = "VM test: stub :443 listener for the sync endpoint probe";
         wantedBy = [ "multi-user.target" ];
@@ -123,7 +126,10 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
         };
-        path = [ pkgs.coreutils pkgs.git ];
+        path = [
+          pkgs.coreutils
+          pkgs.git
+        ];
         script = ''
           rm -rf /srv/forgejo/lars/eventcatalog-hub.git
           mkdir -p /srv/forgejo/lars/eventcatalog-hub.git
