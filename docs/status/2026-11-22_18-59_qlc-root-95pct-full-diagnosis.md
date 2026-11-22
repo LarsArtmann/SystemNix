@@ -72,7 +72,7 @@ would feed the freeze class. The unlock needs a genuinely calm window.
 | 2 | `trash-empty` (lars) + root trash empty + monitor365 `.pre-shrink` trash (runbook-sanctioned since Nov 12) | ~130G + 41.7G | after #1 rotates the Nov-16 parent (~3d) |
 | 3 | Migrate legacy monitor365 `archives/` 16G → pool BindPaths target, delete local | 16G | anytime (pinned till rotation) |
 | 4 | Delete orphaned `~/pdg-cache` | 43G | anytime (pinned till rotation) |
-| 5 | Phase F: frozen projects shadow | 132G | owner-gated (existing plan) |
+| 5 | Phase F: frozen projects shadow | 132G | owner-gated (existing plan; re-probed 2026-11-22: shadow frozen since Oct 29 14:38, soak gate now 3/5 — see runbook STATUS + storage [decision] row) |
 | 6 | cv-go/glac-fleet/m365fix triage (111G live dev caches) + `.Trash-1000` 8G instant | up to 119G | owner-triage |
 | 7 | Metadata balance to return chunks (unalloc 1MiB→) | n/a (health) | after frees land |
 
