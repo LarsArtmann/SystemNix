@@ -9667,11 +9667,11 @@
         "project-discovery-sdk": "project-discovery-sdk_11"
       },
       "locked": {
-        "lastModified": 1795389210,
-        "narHash": "sha256-42t33SR7TTocHcPmGNuD7zdhx6qz4c/+e6HZlDYIOFw=",
+        "lastModified": 1795390710,
+        "narHash": "sha256-13WztpoZmpGwHk1CGIBOI21DMMZLy+ZBWeH7reSnGeE=",
         "ref": "refs/heads/master",
-        "rev": "29bc9d90d4a10c674b0568e17bc819bd97909b28",
-        "revCount": 229,
+        "rev": "1b6c0d588647bc989c9cc955e551cec134a36b29",
+        "revCount": 233,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
@@ -9752,17 +9752,17 @@
     "project-discovery-sdk_11": {
       "flake": false,
       "locked": {
-        "lastModified": 1795267064,
-        "narHash": "sha256-cSozH+tmbenmmKiccTObVs6DpwBww3/+jl686JZnveo=",
+        "lastModified": 1795387702,
+        "narHash": "sha256-RZ4lp+AOS43sRF6169Z+1MwoIN9Xt1VcHvvFFgHVIX4=",
         "ref": "master",
-        "rev": "16f6ab5c82244b5547fc8a2add06fd4c23e202ec",
-        "revCount": 1439,
+        "rev": "385ec15e548d0df19d1fe2080bc44554cdc34dce",
+        "revCount": 1441,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
       "original": {
         "ref": "master",
-        "rev": "16f6ab5c82244b5547fc8a2add06fd4c23e202ec",
+        "rev": "385ec15e548d0df19d1fe2080bc44554cdc34dce",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       }
