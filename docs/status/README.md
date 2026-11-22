@@ -1,3 +1,14 @@
+## Live pool addendum (2026-11-22 16:1x)
+
+New live report: `2026-11-22_16-16_window-reverify3-monitor365-five-task-window.md`
+— verification-only THIRD fire of the same 2026-11-22 five-task window (15:46
+full closeout, 16:05 re-verify, now this). Dispatch-time dedup HIT again →
+no re-derivation. All §a landings re-grepped GREEN at HEAD `f0f45a573` (sole
+delta since the 16-05 pass is a foreign forgejo auto-commit, none of this
+window's surfaces); band drift re-read fresh (0 reprioritized facts, 3rd
+consecutive). The triple re-fire is recorded as the third instance of the
+TODO_LIST:1518 guard class. No new queue rows.
+
 ## Live pool addendum (2026-11-22 16:0x)
 
 New live report: `2026-11-22_16-05_window-reverify-monitor365-five-task-window.md`
