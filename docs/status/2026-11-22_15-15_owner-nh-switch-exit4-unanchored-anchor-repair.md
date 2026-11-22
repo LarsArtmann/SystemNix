@@ -145,3 +145,19 @@ successfully" with no "WARN incomplete sweep". Post-repair anchor evidence: prof
   buildflow) on top of a constantly busy bge-m3 embedding server (~60% CPU since 01:03) — the documented
   freeze class. Nothing was killed (foreign workloads). With gen-1023 anchored and the mirror synced, an
   unplanned watchdog reboot now boots the RUNNING generation instead of silently reverting.
+
+---
+
+## Addendum (16:05) — collateral findings from the failed-unit sweep
+
+- **forgejo-github-sync has not succeeded since at least 2026-11-18** (journal census: 24/26/24/24/17 failed
+  runs per day 11-18→11-22, zero "Finished" lines). Every run dies on ONE repo: `PATCH lars/nixpkgs failed
+  (HTTP 500)` → `checked=486 patched=0 already-at-target=485 failed=1` → exit 1. The unit therefore sits
+  permanently `failed`, which makes `service-health-check.service` exit 1 on every cycle (it lists the failed
+  set) and would trip any activation outside deploy.sh. Evidence appended to the EXISTING row
+  docs/todo/services.md "Re-interval N-strike de-escalation" (open since 2026-10-12) and its queue pair —
+  not re-queued.
+- The other members of the failed set at 15:49 were `inboxclean-sync` (exit 75 = deliberate temporary
+  failure, retries on its timer), two transient `llama-vlm-cap@…` caption instances, and the user unit
+  `nextd-refresh.service`. deploy.sh clears failed units before switching (scripts/deploy.sh:394,757), so
+  the canonical path is protected; a direct `nh os switch` is not.
