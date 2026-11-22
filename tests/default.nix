@@ -116,6 +116,7 @@ in
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
   wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit inputs; });
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
+  architecture-catalog = makeTest (import ./test-architecture-catalog.nix { inherit pkgs; });
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
   # journal-hot + caddy-logs-hot VM tests RETIRED (2026-11-12, W3b): the
