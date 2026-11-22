@@ -125,6 +125,22 @@ _: {
             pkgs.python3
           ];
 
+          # `environment` (the NixOS option, NOT serviceConfig.Environment) is
+          # what quotes the rendered value: this one carries spaces, and an
+          # unquoted `Environment=K=V -o X` line is an INVALID environment
+          # block — systemd refuses to load the unit at all (probed
+          # 2026-11-22 with systemd-run).
+          #
+          # Why the value is needed: ProtectHome=read-only vs ~/.ssh/config's
+          # `ControlMaster auto` — ssh cannot bind ~/.ssh/sockets/<host>-22 in
+          # a read-only home and EXITS 255 on that bind failure (probed), so
+          # every git+ssh input fetch would die here even with git+ssh on
+          # PATH. A mux master buys a batch fetch nothing; turn it off for
+          # this unit. Command-line -o beats the user config (which sets
+          # ControlMaster auto + ControlPersist 600), and BatchMode fails
+          # instead of prompting without a tty.
+          environment.GIT_SSH_COMMAND = "${pkgs.openssh}/bin/ssh -o ControlMaster=no -o BatchMode=yes";
+
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "4G";
@@ -146,15 +162,6 @@ _: {
                 "SYSTEMNIX_DIR=${cfg.systemnixDir}"
                 "CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1"
                 "XDG_CACHE_HOME=/var/lib/catalog-inventory-sync/cache"
-                # ProtectHome=read-only vs ~/.ssh/config's ControlMaster auto:
-                # ssh cannot bind ~/.ssh/sockets/<host>-22 in a read-only home
-                # and EXITS 255 on that bind failure (probed 2026-11-22), so
-                # every git+ssh input fetch would die here even with git+ssh
-                # on PATH. A mux master buys a batch fetch nothing; turn it
-                # off for this unit. Command-line -o beats the user config
-                # (the config sets ControlMaster auto + ControlPersist 600),
-                # and BatchMode fails instead of prompting without a tty.
-                "GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh -o ControlMaster=no -o BatchMode=yes"
               ];
               # Freeze-history doctrine: background eval batteries are this
               # box's documented killer class — stay niced and idle-IO so
