@@ -17,7 +17,7 @@ incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/P
   oneshot, NOT in the transaction) failed mid-window, and stc counts every failed unit at settle.
   "the new generation will not be added to the bootloader" + no profile bump.
 - Net state at session start: **runtime fully on the new toplevel, UNANCHORED** — profile stopped at
-  system-1022 (`yxpz58jx…`), boot entries without gen-1023, mirror stale. A reboot/crash would have silently
+  system-1022 (`yxpz58jx…`), boot entries without gen-1023, mirror stale. **⚠ WRONG "missed fire" premise — the path unit is DEAF, see the 18:55 correction addendum.** A reboot/crash would have silently
   reverted (and the box ran memory-PSI ~48% + load 82 all afternoon — freeze risk was live).
 
 ## b) Root cause (verified, not inferred)
@@ -45,6 +45,9 @@ incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/P
    "raw-stc class CLOSED" doctrine is re-opened as best-effort. Healed via
    `sudo systemctl restart boot-mirror-sync` → "OK — 50 entries, 403M mirrored" (gen-1023 entry
    `2abfc8b1…+3.conf` in the counters list).
+   **⚠ CORRECTED — see the 18:55 correction addendum: the path unit did not "miss" fires; it is DEAF
+   (`RemainAfterExit=yes` target) and had produced 0 syncs this boot. The 13 h figure and the "best-effort"
+   verdict are both wrong.**
 3. **Half-applied units verified healthy**: crm-server on the new `9a5b155b` build serving 200s,
    monitor365-server 200s, boot-metrics-emit finished clean 14:12:18, summit-planner /healthz 200/60s,
    paperless-gpt 200s (DisallowedHost stays 0).
@@ -66,7 +69,8 @@ incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/P
   evidence; API token-gated).
 - **systemd.md**: new activation-section bullet (timer-unit veto class + the no-reactivation repair recipe)
   and a boot-mirror-section bullet (path-watch missed fires). **AGENTS.md**: fd-3 redirection trap added to
-  the shell-traps bullet; missed-fire caveat added to the boot-mirror doctrine paragraph.
+  the shell-traps bullet; missed-fire caveat added to the boot-mirror doctrine paragraph. **⚠ the two
+  missed-fire writes were WRONG — re-worded in `e49279f`, see the 18:55 correction addendum.**
 
 ## e) Left open (deliberately)
 
@@ -81,7 +85,8 @@ incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/P
 
 ## f) Self-harvest (all landed at authoring time)
 
-- TODO_LIST.md + docs/todo/storage.md: boot-mirror-sync.path missed-fire backstop row.
+- TODO_LIST.md + docs/todo/storage.md: boot-mirror-sync.path missed-fire backstop row. **⚠ re-worded 2026-11-22
+  18:55 into the DEAF-trigger fix row (queue + library in sync again) — see the correction addendum.**
 - TODO_LIST.md + docs/todo/monitoring.md: system-health-metrics cannot-veto-activation row.
 - docs/agents/systemd.md (2 bullets), AGENTS.md (2 gotcha writes) — done in-session, not queued.
 - pipeline.md row 1172 updated (backup half verified) — full-line edit, queue/library in sync.
