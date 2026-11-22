@@ -56,3 +56,14 @@ Session: resume of `docs/status/2026-11-21_17-08_mic-monitor-collectors-pool-aud
 None new. The 17:08 §g trio resolves as: (1) deploy authority — exercised by parallel sessions all evening under your standing directive; (2) audio scope — periodic sampling is live; the continuous-capture question stays open in mic-monitor C20 (upstream product decision); (3) retention — 100d grace deployed and documented; revert to 90d only if you prefer accepting the archive-skip edge.
 
 — Session close: mic wave fully verified live, row ticked, cache cleaned, shared chain green, summit leg explicitly handed to the armed watcher with its verification steps written down.
+
+## ADDENDUM (2026-11-22 01:0x): the last leg landed — EVERYTHING GREEN
+
+The summit deploy completed the arc: the armed watcher died on an rc=12 pressure refusal at 23:53 (the known productization gap — pressure refusal exits 1 "needs human review" instead of looping back; improvement ask already tracked in pipeline.md 1170's surface). My patient PSI-gated fire loop (50 min, refused to double-fire while PSI ≥ 18) stood down correctly when a sibling grabbed the 00:30 calm window — **gen-1022 deployed + anchored** (live == profile yxpz58jxfvv0, ANCHOR-OK). Verdict:
+
+- **summit-planner ACTIVE, 0 restarts, `/healthz` 200 `ok`** — and the seeder fix works verbatim: journal shows `seed skipped already-recorded event` per slug (shrm-hr-x-live-2027, homelabfest-2027, kubecon-*-2028, …). The crash-loop is dead.
+- **End-to-end mic proof added**: a real 3s `parecord` recording as the owner user produced exactly +2 `mic_monitor` events (RecordingStarted + RecordingStopped) — the change-detection engine fires on live recording transitions, not just poll state.
+- **Battery drift vs the pre-deploy snapshot is exactly the predicted set**: DROPPED — Paperless, paperless-gpt, Kith CRM, llama.home.lan auth, forgejo-runner. ADDED (all triaged) — CV + Health Hub + InboxClean + journal-noise (CV's 20:28 death and its knock-ons; CV has been healthy since 22:11, InboxClean re-probed PASS, journal noise was restart churn).
+- gen-1022's own smoke residuals are transient classes only (crm-alarm-byphone probe, inboxclean-sync TEMPFAIL) — no new regression.
+
+**Final state: every service in the two deploy waves is up and verified. The mic-monitor owner ask — installed, live, audio stored on the HDD pool — is fully delivered.**
