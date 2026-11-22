@@ -705,3 +705,47 @@ unit fired on EVERY deploy must be a no-op when healthy".
 across the switch (`pgrep -f act_runner` before/after) and
 `journalctl -u buildcache-usb-recovery --since -10min` must show
 `buildcache healthy (/mnt/buildcache) - no teardown` instead of a mount stop.
+
+## Token-API & Actions semantics (setup-forgejo classes, 2026-10-11/12)
+
+Facts pinned from the 03:46/05:05/05-37 sessions (source + journal verified), so
+the next script or workflow edit does not re-derive them against the service:
+
+- **v15 token-API auth semantics:** `routers/api/v1/permissions/req_basic_or_rev_proxy_auth.go`
+  requires `ctx.Authentication().IsPasswordAuthentication()` on the token routes
+  (`POST`/`DELETE` `/users/{u}/tokens`). A PAT authenticates as TOKEN auth whether
+  sent as `Authorization: token …` header OR as the basic-auth password → both 401
+  "auth method not allowed". GET with token header is fine (id resolution worked
+  live). **No token can ever revoke a token in v15.**
+- **Revoke-via-sqlite is the only leak-free revoke primitive:** `forgejo admin user`
+  has no token-delete subcommand and `generate-access-token` rejects duplicate
+  names (`cmd/admin_user_generate_access_token.go`). Pattern: python3-stdlib
+  sqlite delete scoped by `uid`+`name` (parameterized, rowcount reported,
+  loud-fail), plus the API cross-check `WHILE THE SETUP TOKEN STILL LIVES` —
+  never authenticate the cleanup's cross-check with the token it just deleted
+  (the 05:17 run 401'd exactly that way; sqlite rowcount + revoke-time cross-check
+  now carry the guarantee).
+- **`forgejo.db` vs `gitea.db` fossil:** the live DB is
+  `/var/lib/forgejo/data/forgejo.db` (rendered app.ini `_forgejo-scripts.nix`,
+  `system-health.nix` all agree). A stale `gitea.db` fossil sat in the same dir
+  with real tables — a sqlite DELETE against it reports rowcount 0 as success.
+  Never hardcode the DB path: parse it from the rendered app.ini.
+- **Runner label name-vs-schema semantics:** forgejo-runner label syntax is
+  `name:schema` (`native:host`); the daemon declares **NAMES ONLY** (`Declare(ls.Names())`),
+  and v15 task assignment matches `runs-on` via `ItRunsOn` — an **exact-string set
+  comparison**. `runs-on: native:host` matches no declared name → silent queue
+  forever. Workflows must use `runs-on: native` (declared NAME).
+- **`on: push` fires on mirror sync:** a Forgejo pull-mirror sync generates a push
+  event (run #3 ran concurrent with the sync, 13 min apart). Expect auto-dispatch
+  of any push-triggered workflow after every mirror update.
+- **Branch payload shape:** Forgejo's `GET /repos/{o}/{r}/branches/{b}` returns
+  `commit.id` — NOT GitHub's `commit.sha` (a `.sha`-only jq extracts nothing from
+  a 200 OK → the class-7 "mirror behind" false negative; the script now
+  loud-fails on an empty sha after a 200).
+- **Workflow cron schedules are UTC (server time):** `23 3 * * *` fires 05:23
+  CEST here. Scheduled runs log `head commit is missing in event payload` when
+  creating commit statuses — characteristic, not a fault.
+- **`nixpkgs` in the workflow rides the SYSTEM flake registry** (`nix shell
+  nixpkgs#…` resolves via the host's registry to a local store path — host-state
+  dependency, NOT pinned by the workflow). Runner unit PATH carries
+  git/nix/jq/python3/node/curl/wget; trusted-users covers the DynamicUser runner.

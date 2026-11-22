@@ -103,6 +103,13 @@ catalog.home.lan; no hub-side hand edits. Verified end-to-end locally
    Re-done 2026-10-12 evening (agent paste, owner-authorized): the setup
    script's 3 runs that day had rotated the token out from under the
    deployed secret (serving frozen at the 03:26 build; converged 23:20).**
+   **EVERY future `setup-forgejo.sh` run re-rotates the sync token** — after
+   any re-run, re-paste the new value into the sops yaml + deploy, or serving
+   401s again (the 2026-10-12 orphan class; root-cause follow-up hub-side:
+   rotate-only-when-missing). Script-level semantics it relies on (v15
+   token routes reject token-authed POST/DELETE — revoke is sqlite-only;
+   branch payloads use `commit.id`; cron is UTC): see
+   `docs/services/forgejo.md` → "Token-API & Actions semantics".
 5. `nix run .#deploy` (the module + DNS + smoke §15 are already in-tree),
    then `nix run .#post-deploy-check` — §15 stops warning once
    `/var/lib/architecture-catalog/current/index.html` exists. **DONE
