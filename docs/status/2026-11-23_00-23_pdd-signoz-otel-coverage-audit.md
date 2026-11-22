@@ -2,7 +2,7 @@
 
 **Instance:** crush / glm-5.3-flash, SystemNix session (single-thread, no subagents)
 **Written:** 2026-11-23 00:23 CET (probes ran 2026-11-22 ~20:56–21:0x CET)
-**HEAD at authoring:** `13246663e7` (tree clean at probe time; runbook edits landed after)
+**HEAD at authoring:** `ae9bc0f1c` — attribution: probes ran against pre-`09555456b` state; the runbook drift batch (posture section + layer/ioTier fixes) rode daemon commit `09555456b`, the loopback-line fix landed as daemon commit `ae9bc0f1c` (00:25:20); the harvest rows (TODO_LIST + 2 domain files) were still uncommitted at write time.
 **Task:** "Is ~/projects/project-discovery-daemon properly linked to SigNoz and does it have full OTEL?"
 **Scope discipline:** report covers ONLY this session's run; nothing researched beyond the question's surfaces.
 
