@@ -42,8 +42,10 @@ Loopback dashboard for the daemon (added 2026-11-18): the bridge binary
 via the public `DaemonClient` and serves an embedded single-file dashboard
 on **`127.0.0.1:8765`** (`ports.project-discovery-admin`) — metrics, cache,
 refresh, consumers, providers, and a live watch feed over one multiplexed
-SSE stream. Loopback ONLY: the page exposes project paths and daemon
-metrics without authentication.
+SSE stream. Backend stays loopback-only; externally the page is published
+as `discover.<domain>` behind forward-auth (protected layer, 2026-11-22) —
+it exposes project paths and daemon metrics, so plain exposure was
+rejected; LAN clients pass via the fleet-wide bypass.
 
 - Endpoints: `GET /` (dashboard), `GET /api/health` (one-shot health
   envelope), `GET /api/metrics`, `GET /api/events` (SSE).
