@@ -294,3 +294,26 @@ step at a time… keep going until everything works") — that resolves §g by a
 Residual risk while unanchored: a reboot before the profile flip reverts the switch.
 The calm gate + guard machinery is the parallel session's deploy tail and self-resolves
 when the storm drains; watcher job polls stc completion + their audiblesync push.
+
+## Final status (2026-11-22, close-out)
+
+The mission completed through the parallel session's deploys — gen-1024 live and
+anchored, every §Resolution item shipped:
+
+- **Inventory + env wiring**: live since the Nov 15 battery (0.1.1, LIBRARY_DIR env,
+  /files renders the archive rows).
+- **Reconcile importer (Q1b)**: the parallel session built and pushed it upstream
+  (startup reconcile from the weekly export, sync verification through the real
+  pipeline's skip-if-present path, never downloads). Live journal 2026-11-19 14:45:
+  `read model reconciled imported=86 existing=0 sync_checks=68`; healthz now answers
+  `books:86`; /library renders the tracked rows with synced statuses; re-runs are
+  idempotent (imported=0 existing=86 at every restart).
+- **The zero-books question is fully closed**: counters were honest-0 by design; the
+  read model is now seeded by the reconcile pass and stays coherent across restarts.
+- **This session's residual**: a SystemNix lock float to audiblesync 9c519fd
+  (post-wave executor hardening + docs, non-critical vs deployed 784ea835) is
+  committed but deliberately NOT deployed — 57% io PSI storm, the delta is not worth
+  a forced switch; it rides the next deploy. Discarded a duplicate web-route reconcile
+  implementation developed in this session's sandbox (~/.cache/audiblesync-reconcile/)
+  once the parallel session's upstream version landed first — theirs is richer
+  (removed/skipped counters, startup wiring) and already proven live.
