@@ -30,7 +30,9 @@ let
     ((import ../modules/nixos/services/bank-sync.nix) { inherit inputs; }).flake.nixosModules.bank-sync;
 
   # Stub for the UPSTREAM bank-sync module's options (the wrapper only reads
-  # enable/package/dataDir and sets addr/wiseApiKeyFile/encryptionKeyFile).
+  # enable/package/dataDir and sets addr/wiseApiKeyFile/mercuryApiKeyFile/
+  # encryptionKeyFile — mercury rides the same shared env file, empty until
+  # the owner token lands).
   upstreamStub = _: {
     options.services.bank-sync = {
       enable = lib.mkOption {
@@ -51,6 +53,10 @@ let
         default = "/var/lib/bank-sync";
       };
       wiseApiKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+      };
+      mercuryApiKeyFile = lib.mkOption {
         type = lib.types.nullOr lib.types.path;
         default = null;
       };
