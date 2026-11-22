@@ -90,6 +90,26 @@ sudo bash scripts/migrate-projects-subvol.sh finalize
 #   btrbk-projects`, the 23:10 timer, or the enrolled catch-up slot) so the
 #   pool brackets a ≤24h state; (2) owner runs shadow-cleanup. Shadow: 132G at
 #   /mnt/btrfs-root/@/home/lars/projects, frozen at pre-cutover state.
+#   STATUS 2026-11-22 (95%-full diagnosis follow-up): the "one green run"
+#   sequence above is NO LONGER SUFFICIENT — the Nov-16 green run pruned the
+#   burn-in inventory pool-side (target_preserve_min 7d) down to 3 receives
+#   (20261028T1803, 20261101T2310, 20261116T2310, live-counted), and every
+#   send since is admission-starved (memory-guard IO trips ~every 10 min →
+#   the 60-min trip-free window never opens; stability row, 2026-11-22
+#   diagnosis §c), so the script's ≥5 soak gate REFUSES at 3/5 despite the
+#   historically-satisfied burn-in — gate letter vs intent drifted apart.
+#   Shadow re-verified frozen since 2026-10-29 14:38 (463-file post-cutover/
+#   pre-reboot delta — nsfw-classifier nix, media-atlas/crm git fetch objects
+#   — all superseded Samsung-side or re-packed; sampled, and the tar.zst
+#   archive below is the net for anything unsampled). The script's own
+#   IO-PSI≥80 gate also refuses during storms (live receipt 2026-11-22:
+#   avg10=94.22%). Reclaim paths: (A) accumulate 2 more green sends (two calm
+#   windows OR two calm nights — pool min-7d holds them) then shadow-cleanup;
+#   (B) owner amends the soak gate to a burn-in-aware form (count ≥3 ∧ newest
+#   ≤24h, or a state-record check under ~/.cache/projects-migration/). Either
+#   way the run must share the calm window with the btrbk-root unlock — the
+#   132G is pinned by the frozen Nov-16 @ parent and frees only after the
+#   root chain rotates (@ 3d + rescue ~1-2d + commit=300 lag on top).
 sudo bash scripts/migrate-projects-subvol.sh shadow-cleanup
 #   refuses unless mount live + Samsung-served + ≥5 pool receives;
 #   archives the QLC shadow to
