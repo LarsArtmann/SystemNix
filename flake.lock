@@ -141,11 +141,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794949800,
-        "narHash": "sha256-jm9o7xfV+wFGfh6pMON2vRIVQH1E2fJowhGYjmuO2Vw=",
+        "lastModified": 1795289605,
+        "narHash": "sha256-acqEcsa0uupsoSwHs5UYxp+V6uR/moTlsxNm0KiXDGY=",
         "ref": "refs/heads/master",
-        "rev": "784ea835ea0a241c57435221b919158721c38841",
-        "revCount": 209,
+        "rev": "9c519fd0bb4142e20c84cd1373ee8aa71d84429f",
+        "revCount": 216,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/audiblesync"
       },
