@@ -298,7 +298,7 @@ _: {
             fi
             key_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "x-api-key: $IMMICH_API_KEY" "$IMMICH_URL/api/users/me" || echo 000)"
             if [ "$key_code" != "200" ]; then
-              echo "drive-paperless: Immich rejected the API key (HTTP $key_code) — wrong secret or missing asset.read/asset.upload scope; rotate via: rm /var/lib/immich-api-keys/drive-paperless.env && systemctl restart immich-api-key-provision" >&2
+              echo "drive-paperless: Immich rejected the API key (HTTP $key_code) — wrong secret or missing asset.read/asset.upload/user.read scope; rotate via: rm /var/lib/immich-api-keys/drive-paperless.env && systemctl restart immich-api-key-provision" >&2
               exit 1
             fi
           fi
@@ -383,7 +383,8 @@ _: {
             machine-minted key from the shared Immich converger
             (services.immich.apiKeys.drive-paperless, rendered to
             /var/lib/immich-api-keys/drive-paperless.env by
-            immich-api-key-provision — scope asset.read + asset.upload). The
+            immich-api-key-provision — scope asset.read + asset.upload +
+            user.read). The
             run fails loudly if the env file has not converged yet.
           '';
         };
@@ -423,7 +424,8 @@ _: {
         # Declare the Immich image-ingest key onto the shared Immich converger
         # (2026-11-16 — replaces the drive_paperless_immich_api_key sops
         # paste path entirely, placeholder scaffold deleted with it). Same
-        # scope recipe (asset.read + asset.upload); the rendered env file
+        # scope recipe (asset.read + asset.upload + user.read — user.read
+        # is required by the /api/users/me preflight); the rendered env file
         # carries IMMICH_URL + IMMICH_API_KEY and is wired as the ingest
         # unit's second EnvironmentFile. The options?-guard mirrors the
         # immichPresent convention: isolated evals that co-import nixpkgs'
