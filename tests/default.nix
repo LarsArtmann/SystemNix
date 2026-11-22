@@ -61,6 +61,7 @@ in
   paperless = makeTest (import ./test-paperless.nix { inherit inputs; });
   paperless-gpt = makeTest (import ./test-paperless-gpt.nix { inherit inputs; });
   paperless-triage = makeTest (import ./test-paperless-triage.nix { inherit pkgs; });
+  drive-paperless-e2e = makeTest (import ./test-drive-paperless-e2e.nix { inherit inputs; });
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
   cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
   memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });

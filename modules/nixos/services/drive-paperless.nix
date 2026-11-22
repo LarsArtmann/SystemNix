@@ -138,6 +138,16 @@ _: {
         chmod 0400 ${runEnv}
       '';
 
+      # The FIRST mint hands runEnv to ${cfg.user} 0400 (ExecStartPost
+      # below) — and the ingest unit re-Requires this oneshot on every run,
+      # so each re-mint would die EACCES writing over the foreign-owned
+      # file (caught by the e2e VM test 2026-11-22: the mint only ever
+      # succeeded once per boot). Root removes the stale file first; the
+      # mint then creates a fresh one it owns.
+      mintPreClean = pkgs.writeShellScript "drive-paperless-token-clean" ''
+        rm -f ${runEnv}
+      '';
+
       # Resolve-or-create correspondent + tags ONCE per source, before any
       # scanning (fail loud here if paperless is unreachable).
       ensureBlock = src: ''
@@ -425,9 +435,15 @@ _: {
             permissions = [
               "asset.read"
               "asset.upload"
+              # The ingest preflight validates the key against GET
+              # /api/users/me, which Immich gates on user.read (verified in
+              # the deployed immich 3.3.1 source, user.controller.js:112 —
+              # the first e2e VM run caught the 403: asset-only keys can
+              # never pass a users/me probe). Read-only, one user row.
+              "user.read"
             ];
             owner = cfg.user;
-            group = cfg.group;
+            inherit (cfg) group;
             url = "http://127.0.0.1:${toString ports.immich}";
             restartUnits = [ "drive-paperless.service" ];
           }
@@ -520,6 +536,7 @@ _: {
               # EnvironmentFile. tmpfs semantics are untouched.
               RuntimeDirectoryPreserve = true;
               TimeoutStartSec = "3min";
+              ExecStartPre = "+${mintPreClean}";
               ExecStartPost = "+${mintChownScript}";
             }
             (harden { ProtectSystem = "strict"; })
