@@ -93,16 +93,14 @@ in
 
       # sops mock: the token env file ships as PLACEHOLDER (pre-go-live),
       # rewritten in-flight by the test once the real-token phases begin.
-      sops.secrets.architecture_catalog_sync_token.path = "/etc/vm-sync-token";
-      environment.etc."vm-sync-token".text =
-        "ARCHITECTURE_CATALOG_SYNC_TOKEN=PLACEHOLDER\n";
+      sops.secrets.architecture_catalog_sync_token.path = "/run/vm-sync-token";
 
       # :443 listener so the sync unit's ExecStartPre /dev/tcp probe
       # succeeds immediately (fork mode survives multiple probes).
       environment.systemPackages = [ pkgs.socat ];
       systemd.services.vm-https-stub = {
         description = "VM test: stub :443 listener for the sync endpoint probe";
-        wantedBy = [ "architecture-catalog-sync.service" ];
+        wantedBy = [ "multi-user.target" ];
         before = [ "architecture-catalog-sync.service" ];
         serviceConfig = {
           Type = "simple";
@@ -112,9 +110,23 @@ in
       };
 
       # The stub clone source; re-seeded between phases from the test.
+      systemd.services.vm-token-seed = {
+        description = "VM test: seed the sops-mock token env file (writable /run)";
+        wantedBy = [ "multi-user.target" ];
+        before = [ "architecture-catalog-sync.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = [ pkgs.coreutils ];
+        script = ''
+          printf 'ARCHITECTURE_CATALOG_SYNC_TOKEN=PLACEHOLDER\n' > /run/vm-sync-token
+        '';
+      };
+
       systemd.services.vm-fake-dist = {
         description = "VM test: seed the stub clone source";
-        wantedBy = [ "architecture-catalog-sync.service" ];
+        wantedBy = [ "multi-user.target" ];
         before = [ "architecture-catalog-sync.service" ];
         serviceConfig = {
           Type = "oneshot";
@@ -136,13 +148,16 @@ in
     import shlex
 
     machine.start()
+    machine.wait_for_unit("vm-token-seed.service")
     machine.wait_for_unit("vm-fake-dist.service")
     machine.wait_for_unit("vm-https-stub.service")
 
-    def store_script(unit, prop):
-        out = machine.succeed(f"systemctl show -p {prop} --value {unit}").strip()
-        lines = [l for l in out.splitlines() if l.strip()]
-        return lines
+    def unit_exec_lines(unit):
+        # parse ExecStart=/ExecStartPre= lines straight from the rendered
+        # unit (systemctl show prints a structured dict, not the raw path)
+        text = machine.succeed(f"systemctl cat {unit}")
+        return [l.split("=", 1)[1] for l in text.splitlines()
+                if l.startswith("ExecStart=") or l.startswith("ExecStartPre=")]
 
     # 1. PLACEHOLDER skip path --------------------------------------------
     machine.succeed("systemctl start architecture-catalog-sync.service")
@@ -150,20 +165,20 @@ in
     assert "sync token is PLACEHOLDER" in journal, f"skip not journal-warned: {journal!r}"
     gens = machine.succeed("ls ${stateDir}/generations").strip()
     assert gens == "", f"PLACEHOLDER run must not create generations, got: {gens!r}"
-    machine.succeed("test ! -e " + "$${stateDir}" + "/current")
+    machine.succeed("test ! -e " + "${stateDir}" + "/current")
 
     # Real token from here on (EnvironmentFile re-read on each start).
     machine.succeed(
-        "printf 'ARCHITECTURE_CATALOG_SYNC_TOKEN=vmtesttoken\\n' > /etc/vm-sync-token"
+        "printf 'ARCHITECTURE_CATALOG_SYNC_TOKEN=vmtesttoken\\n' > /run/vm-sync-token"
     )
 
     # 7a. bash -n legs on the rendered scripts (before the runs so a
     # syntax defect fails the test at the gate, not mid-scenario).
-    sync_exec = store_script("architecture-catalog-sync", "ExecStart")[0].split(";")[0].strip()
+    sync_exec = unit_exec_lines("architecture-catalog-sync")[0].strip()
     machine.succeed(f"bash -n {sync_exec}")
-    col_exec = store_script("architecture-catalog-metrics", "ExecStart")[0].split(";")[0].strip()
+    col_exec = unit_exec_lines("architecture-catalog-metrics")[0].strip()
     machine.succeed(f"bash -n {col_exec}")
-    for pre in store_script("architecture-catalog-sync", "ExecStartPre"):
+    for pre in unit_exec_lines("architecture-catalog-sync")[1:]:
         pre = pre.strip()
         assert pre.startswith("+"), f"ExecStartPre must stay +-prefixed: {pre!r}"
         machine.succeed(f"bash -n {pre[1:]}")
@@ -229,13 +244,13 @@ in
     # 6b. stale builtAt
     machine.succeed(
         "printf '{\"builtAt\":\"%s\"}\\n' \"$(date -u -d '3 days ago' +%Y-%m-%dT%H:%M:%SZ)\""
-        " > " + "$${stateDir}" + "/current/build-stamp.json"
+        " > " + "${stateDir}" + "/current/build-stamp.json"
     )
     p = run_collector()
     assert "architecture_catalog_fresh 0" in p, f"stale dist must read fresh 0: {p!r}"
     assert "architecture_catalog_scrape_errors 0" in p, f"stale dist is honest absence, not an error: {p!r}"
     # 6c. unreadable stamp → ONLY scrape_errors 1 (fail-closed)
-    machine.succeed("echo '{}' > " + "$${stateDir}" + "/current/build-stamp.json")
+    machine.succeed("echo '{}' > " + "${stateDir}" + "/current/build-stamp.json")
     p = run_collector()
     assert "architecture_catalog_scrape_errors 1" in p, f"unreadable stamp must fail closed: {p!r}"
     assert "architecture_catalog_dist_present" not in p, f"value metrics must be omitted on scrape error: {p!r}"
@@ -243,9 +258,9 @@ in
     # 6d. absent index → honest 0 / 0 / -1, NOT a scrape error
     machine.succeed(
         "printf '{\"builtAt\":\"%s\"}\\n' \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\""
-        " > " + "$${stateDir}" + "/current/build-stamp.json"
+        " > " + "${stateDir}" + "/current/build-stamp.json"
     )
-    machine.succeed("rm " + "$${stateDir}" + "/current/index.html")
+    machine.succeed("rm " + "${stateDir}" + "/current/index.html")
     p = run_collector()
     for needle in ["architecture_catalog_dist_present 0", "architecture_catalog_fresh 0", "architecture_catalog_stamp_age_seconds -1", "architecture_catalog_scrape_errors 0"]:
         assert needle in p, f"absent-index prom missing {needle!r}: {p!r}"
