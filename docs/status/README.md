@@ -1,3 +1,12 @@
+## Live pool addendum (2026-11-22 17:0x)
+
+New live report: `2026-11-22_17-04_window-reverify4-monitor365-five-task-window.md`
+— verification-only FOURTH fire of the same 2026-11-22 five-task window
+(15:46 full closeout, then 16:05 / 16:16 / 17:04 re-verifies). Dedup HIT
+again → no re-derivation; landings re-grepped GREEN at HEAD `d59c7a984`;
+band drift fresh (0 reprioritized facts, 4th consecutive). Fourth instance
+of the TODO_LIST:1518 re-fire-guard class. No new queue rows.
+
 ## Live pool addendum (2026-11-22 16:1x)
 
 New live report: `2026-11-22_16-16_window-reverify3-monitor365-five-task-window.md`
