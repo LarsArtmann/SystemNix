@@ -640,6 +640,16 @@ in
         # call, 8h + sync_on_commit) and verified flowing; phase 5 stays
         # idempotent.
         "summit-planner"
+        # Native-since-inception (2026-11-23): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # No .github at all (config/docs-only RouterOS repo), so the
+        # repo-scoped sync PAT suffices (pingen-spike precedent). Push
+        # mirror NOT hand-attached (no shell/admin access to evo-x2 in
+        # that session); phase 5 attaches it (8h + sync_on_commit) on the
+        # next deploy — until then the twins are kept in sync by dual-push
+        # (touchbase precedent).
+        "networking"
       ];
       immich = {
         enable = true;
