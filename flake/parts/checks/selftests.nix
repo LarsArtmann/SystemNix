@@ -1353,6 +1353,21 @@
           touch $out
         '';
 
+        # The chronic-red SQL (system-health's GATUS_CHRONIC_RED query) was
+        # fixture-verified 2026-11-09 only in an ephemeral ~/.cache run with
+        # bare "YYYY-MM-DD HH:MM:SS" timestamps — never the format gatus
+        # actually writes (source-verified 2026-11-23: modernc.org/sqlite
+        # default = time.Time.String() over result.Timestamp.UTC(), no
+        # _time_format DSN). Builds a REAL sqlite db from the gatus v5.38.0
+        # schema, re-runs the 3 states + both window mutations + both
+        # datetime boundaries in the REAL wire format, and trips on a gatus
+        # bump that changes the driver/write format (binary layout pin).
+        # Depends on pkgs.gatus, so any gatus bump re-runs it. 2026-11-23.
+        gatus-chronic-red-sql-selftest = pkgs.runCommand "gatus-chronic-red-sql-selftest" { } ''
+          PATH=${pkgs.sqlite}/bin:$PATH ${pkgs.bash}/bin/bash ${root}/scripts/test-gatus-chronic-red-sql.sh ${root}/modules/nixos/services/system-health.nix ${pkgs.gatus}
+          touch $out
+        '';
+
         # The §18 service-sanity sweep must never go silent (the
         # DiscordSync class: 121% CPU + ~640 journal lines/min for hours,
         # every liveness gate green). Fixture-driven through the SAME
