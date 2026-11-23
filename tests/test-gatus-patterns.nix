@@ -577,6 +577,10 @@ in
             http_status = last.get("status", 0)
             errors = last.get("errors") or []
             conditions_ok = last.get("success", len(errors) == 0)
+            condition_detail = [
+                (c.get("condition"), c.get("success"))
+                for c in (last.get("conditionResults") or [])
+            ]
             if name.startswith("[TEST-RED]"):
                 if conditions_ok:
                     failures.append(f"{name}: expected condition FAILURE but none (pattern vacuous or conditions not enforced)")
@@ -584,10 +588,16 @@ in
                 if http_status != 200:
                     failures.append(f"{name}: http status={http_status}")
                 if not conditions_ok:
-                    failures.append(f"{name}: condition errors: {errors}")
+                    failures.append(f"{name}: conditions failed: {condition_detail}")
 
     if failures:
-        machine.fail(f"Gatus pattern test FAILURES: {'; '.join(failures)}")
+        # raise, never machine.fail: machine.fail treats its argument as a
+        # SHELL COMMAND, so a failure message containing parens dies as a
+        # bash syntax error — a nonzero exit that machine.fail "expects" —
+        # and the script then CONTINUES, ending green (live 2026-11-23: a
+        # real condition failure passed the whole suite exactly this way).
+        machine.log(json.dumps(statuses, indent=1))
+        raise Exception(f"Gatus pattern test FAILURES: {'; '.join(failures)}")
     else:
         machine.log(f"All {len(statuses)} Gatus endpoints are GREEN")
   '';
