@@ -288,10 +288,12 @@
         # daemon (services.project-discovery-daemon.admin): serves the
         # embedded dashboard + /api/{health,metrics,events} and gives gatus
         # its first HTTP window into the daemon (unix-socket-only until
-        # now). Loopback ONLY: the dashboard exposes project paths and
-        # daemon metrics without authentication. 8765 is the bridge's own
-        # compiled-in default; registering it makes the eval-enforced port
-        # registry the single owner of record.
+        # now). The bridge has NO auth of its own and binds loopback only;
+        # the public name discover.<domain> is a protected-layer vHost
+        # (forward-auth for external clients, LAN bypass) in the service
+        # module's integration entry. 8765 is the bridge's own compiled-in
+        # default; registering it makes the eval-enforced port registry the
+        # single owner of record.
         project-discovery-admin = 8765;
 
         # OpenCloud — self-hosted file sync & share platform. Moved 9100 → 9500

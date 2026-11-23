@@ -49,6 +49,11 @@ rejected; LAN clients pass via the fleet-wide bypass.
 
 - Endpoints: `GET /` (dashboard), `GET /api/health` (one-shot health
   envelope), `GET /api/metrics`, `GET /api/events` (SSE).
+- Registry fan-out: `subdomain = "discover"` (also listed in
+  `platforms/common/dns-local.nix`), `vHost.layer = "protected"`, and the
+  PapDashboard tile **Project Discovery** (`folder.png` from the pinned
+  dashboard-icons pack — build-gated, no URL icon because the bridge ships
+  no favicon).
 - `Type=exec`, NO `WatchdogSec` (the bridge has no sd_notify sender —
   WatchdogSec without one is a guaranteed watchdog kill). It **wants**
   (not requires) the daemon: while the daemon is down it serves explicit

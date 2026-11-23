@@ -256,7 +256,7 @@ drift red. Regenerate after any registry change:
 | pocket-id | auth | — | none | pocket-id | 2 | /mnt/pool/backups/pocket-id |
 | pool-recovery | — | — | none | pool-recovery | 1 | — |
 | pool-smart-metrics | — | — | none | pool-smart-metrics | 3 | — |
-| project-discovery-admin | — | 8765 | none | project-discovery-admin | 2 | — |
+| project-discovery-admin | discover | 8765 | protected | project-discovery-admin | 2 | — |
 | projects-management-automation | — | — | none | projects-management-automation | 2 | — |
 | projects-subvol | — | — | none | projects-subvol | 1 | — |
 | restic-app-dumps | — | — | none | restic-app-dumps | — | /mnt/pool/backups/restic-app-dumps |

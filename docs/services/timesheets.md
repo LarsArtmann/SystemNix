@@ -23,6 +23,10 @@
 - **vendorHash drift class**: NON-FOLLOWER — root nixpkgs bumps cannot re-hash its FOD. Re-stales only when timesheets' own lock moves: probe at rev first (`nix build github:LarsArtmann/timesheets/<rev>#default`), then `nix flake lock --update-input timesheets`.
 - **Dev** (outside Nix): see the repo's own AGENTS.md.
 
+## Deploy
+
+- **Prefetch locked private inputs BEFORE `sudo nixos-rebuild`** (verified 2026-11-22, v0.3.0, 3m59s end-to-end): root cannot ssh-fetch the ~56 private flake inputs (no user ssh-agent/keys for root), so the rebuild fails on fetch unless every locked rev is prewarmed in the ROOT daemon's store first. As `lars`: iterate SystemNix `flake.lock` nodes picking `original.url` values containing `ssh` with their `locked.rev`, then `nix flake prefetch 'git+ssh://git@github.com/LarsArtmann/<repo>?rev=<rev>'` per input — the SCHEME MUST be `git+ssh://`, NOT the lock's raw `ssh://` (raw scheme failed 96/96 prefetches). Only then `sudo nixos-rebuild switch --flake .#evo-x2 -L`. Capture background-command exits with `PIPESTATUS[0]` — `cmd | tail; echo EXIT=$?` reported false `EXIT=0` twice during this deploy. Post-switch: verify `/readyz` 200 + `/version` matches the deployed timesheets commit, then `sudo -n systemctl start timesheets-backup.service` to close the deploy-day backup window.
+
 ## Related
 
 - [invoices-dashboard.md](./invoices-dashboard.md) — the sibling billing window (same posture, same deploy)
