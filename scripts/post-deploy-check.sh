@@ -2158,23 +2158,31 @@ fi
 # once at startup and never retries, so a deploy that touches the race
 # (niri-flake-polkit removal, dms restart) must leave a LIVE owner behind.
 # Session-aware: no graphical session → no agent is legitimate (SSH-only
-# periods); only an ACTIVE session with an unowned slot fails.
-if systemctl --user is-active --quiet graphical-session.target; then
-  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
-  _polkit_owner=$(gdbus call --session --dest org.freedesktop.DBus \
-    --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetNameOwner \
-    org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null | grep -oE 'uint32 [0-9]+' | awk '{print $2}')
-  if [ -n "$_polkit_owner" ]; then
-    _polkit_opid=$(gdbus call --session --dest org.freedesktop.DBus \
-      --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetConnectionUnixProcessID \
+# periods); only an ACTIVE session with an unowned slot fails. The bus
+# socket is probed directly — `systemctl --user` cannot tell "no session"
+# from "no bus reachable" (both exit nonzero).
+_polkit_uid=$(id -u)
+if [ ! -S "/run/user/${_polkit_uid}/bus" ]; then
+  report_skip "Desktop - polkit agent slot probe (no user session bus — no desktop session)"
+else
+  _polkit_bus="unix:path=/run/user/${_polkit_uid}/bus"
+  export DBUS_SESSION_BUS_ADDRESS="${_polkit_bus}"
+  if systemctl --user is-active --quiet graphical-session.target; then
+    _polkit_owner=$(gdbus call --session --dest org.freedesktop.DBus \
+      --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetNameOwner \
       org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null | grep -oE 'uint32 [0-9]+' | awk '{print $2}')
-    report_pass "Desktop - polkit agent OWNS the slot (owner pid ${_polkit_opid:-unknown}; DMS agent registered)"
+    if [ -n "$_polkit_owner" ]; then
+      _polkit_opid=$(gdbus call --session --dest org.freedesktop.DBus \
+        --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetConnectionUnixProcessID \
+        org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null | grep -oE 'uint32 [0-9]+' | awk '{print $2}')
+      report_pass "Desktop - polkit agent OWNS the slot (owner pid ${_polkit_opid:-unknown}; DMS agent registered)"
+    else
+      report_fail "Desktop - graphical session ACTIVE but polkit agent slot UNOWNED — GUI auth dead (the dead-agent-no-owner state; restart dms: systemctl --user restart dms, or re-login — registration does not retry)"
+    fi
   else
-    report_fail "Desktop - graphical session ACTIVE but polkit agent slot UNOWNED — GUI auth dead (the dead-agent-no-owner state; restart dms: systemctl --user restart dms, or re-login — registration does not retry)"
+    report_skip "Desktop - polkit agent slot probe (no graphical session — agent legitimately absent)"
   fi
   unset DBUS_SESSION_BUS_ADDRESS
-else
-  report_skip "Desktop - polkit agent slot probe (no graphical session — agent legitimately absent)"
 fi
 
 # System pressure (PSI I/O + memory + zram combined zone) - shared,
