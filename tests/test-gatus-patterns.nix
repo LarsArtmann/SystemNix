@@ -148,6 +148,18 @@ let
     # HELP system_gatus_chronic_red_checks 0 if no Gatus endpoint has been red for 24h unacted; count of chronic-red endpoints otherwise (trap: system_gatus_chronic_red_checks 0)
     # TYPE system_gatus_chronic_red_checks gauge
     system_gatus_chronic_red_checks 0
+    # Production tail sentinel (system-health.nix's final emission): the
+    # gatus [BODY] comparison sees the response with the trailing whitespace
+    # TRIMMED, so a pattern anchored on "<metric> <value>\n" can NEVER match
+    # a line that ends the body — the checked line must always be followed
+    # by more content (live-verified 2026-11-23: the [TEST] Chronic Red
+    # green leg failed while the chronic line was the mock's last line, and
+    # passed once this sentinel followed it). If a future collector edit
+    # ever makes the chronic line the LAST emission in system_health.prom,
+    # the production check goes permanently red — this mock goes red first.
+    # HELP system_health_collector_errors Failed collector sections this sweep; 0 = complete sweep
+    # TYPE system_health_collector_errors gauge
+    system_health_collector_errors 0
   '';
 
   # MUTATION bodies: the fired states the healthy mock can never carry
@@ -160,18 +172,32 @@ let
     # HELP storage_collector_fs_used_percent Filesystem usage percent (trap: storage_collector_fs_used_percent{mount_point="/nix"} 90 must never satisfy an anchored value glob)
     # TYPE storage_collector_fs_used_percent gauge
     storage_collector_fs_used_percent{device="/dev/nvme1n1p2",fstype="btrfs",mount_point="/nix"} 90
+    # Production tail sentinel — see mockMetrics (a checked line must never
+    # END the body: gatus trims the trailing whitespace, so a trailing-\n
+    # anchor cannot match the last line).
+    # HELP system_health_collector_errors Failed collector sections this sweep; 0 = complete sweep
+    # TYPE system_health_collector_errors gauge
+    system_health_collector_errors 0
   '';
 
   mockFs100 = pkgs.writeText "mock-metrics-fs-100.prom" ''
     # HELP storage_collector_fs_used_percent Filesystem usage percent (trap: storage_collector_fs_used_percent{mount_point="/nix"} 90 must never satisfy an anchored value glob)
     # TYPE storage_collector_fs_used_percent gauge
     storage_collector_fs_used_percent{device="/dev/nvme1n1p2",fstype="btrfs",mount_point="/nix"} 100
+    # Production tail sentinel — see mockMetrics.
+    # HELP system_health_collector_errors Failed collector sections this sweep; 0 = complete sweep
+    # TYPE system_health_collector_errors gauge
+    system_health_collector_errors 0
   '';
 
   mockChronic10 = pkgs.writeText "mock-metrics-chronic-10.prom" ''
     # HELP system_gatus_chronic_red_checks 0 if no Gatus endpoint has been red for 24h unacted; count of chronic-red endpoints otherwise (trap: system_gatus_chronic_red_checks 0)
     # TYPE system_gatus_chronic_red_checks gauge
     system_gatus_chronic_red_checks 10
+    # Production tail sentinel — see mockMetrics.
+    # HELP system_health_collector_errors Failed collector sections this sweep; 0 = complete sweep
+    # TYPE system_health_collector_errors gauge
+    system_health_collector_errors 0
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
