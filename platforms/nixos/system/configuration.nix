@@ -645,8 +645,8 @@ in
         # push-to-create, GitHub twin created PRIVATE and pushed by hand.
         # No .github at all (config/docs-only RouterOS repo), so the
         # repo-scoped sync PAT suffices (pingen-spike precedent). Push
-        # mirror NOT hand-attached (no shell/admin access to evo-x2 in
-        # that session); phase 5 attaches it (8h + sync_on_commit) on the
+        # mirror NOT hand-attached (owner chose deploy-now over a hand
+        # attach); phase 5 attaches it (8h + sync_on_commit) on the
         # next deploy — until then the twins are kept in sync by dual-push
         # (touchbase precedent).
         "networking"
