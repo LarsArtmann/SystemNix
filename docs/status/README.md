@@ -1,3 +1,18 @@
+## Live pool addendum (2026-11-23 20-1x)
+
+New live report: `2026-11-23_17-32_window-closeout-five-task-window-20261122-23.md`
+— full-pass closeout of the 2026-11-22→23 five-task window (one review-fix
++ four 5-item batches = 25 dispatched items; dispatch-time dedup ran CLEAN —
+no prior report names these task IDs or their commits). All five tasks
+verified landed at HEAD and LIVE on evo-x2 (the deploy waves that were
+pending at batch time fired 2026-11-23 evening: Overview vHost check and
+prune-signal anchor confirmed in the RUNNING gatus config, prune metric in
+the textfile, %3N generation dirs advancing hourly, runner debug journal
+live); rows 538/539 ticked with live evidence (538 verified-superseded —
+the orphan-token premise never materialized); 5 rows appended (quotaboard
+smoke class, reviewfix footer rule, 3 owner-BLOCKED); band drift fresh
+(0 reprioritized facts, 6th consecutive read).
+
 ## Live pool addendum (2026-11-22 17:4x)
 
 New live report: `2026-11-22_17-45_window-reverify5-monitor365-five-task-window.md`
