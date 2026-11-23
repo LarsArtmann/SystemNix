@@ -111,7 +111,7 @@ add_endpoint "$DB" 3 k3 success23-check
 res "$DB" 1 0 '-31 minutes' # 31 min since the last report → outside the 30-min window
 res "$DB" 2 0 '-29 minutes' # 29 min → inside
 res "$DB" 3 0 '-5 minutes'
-res "$DB" 3 1 '-23 hours'   # success 23h ago → INSIDE the 24h window → clears
+res "$DB" 3 1 '-23 hours' # success 23h ago → INSIDE the 24h window → clears
 expect_count "boundaries: 31-min-silent excluded, 29-min counted, 23h-success clears (only fresh29)" "$DB" 1
 
 echo "gatus-chronic-red-sql: $PASS_CNT passed, $FAIL_CNT failed"
