@@ -909,6 +909,78 @@
               echo "PASS: migrate-forgejo-subvol guard branches" > "$out"
             '';
 
+        # Label-semantics drift pin (services.md row, carried since the
+        # 2026-10-11 05-37 postmortem; the 03:46 false-premise class).
+        # Eval-time (asserts fire under `nix flake check --no-build`, the
+        # pre-commit path): parses runnerLabels out of forgejo.nix instead
+        # of trusting it — exact-string workflow matching on the declared
+        # NAME is load-bearing for every CI job (`runs-on: native`), and
+        # the contract comment is the only in-repo documentation of why
+        # the workflow side must NOT carry the schema. Deliberate drift =
+        # update this check in the same commit. Regex note: Nix's
+        # std::regex extended grammar rejects backslash-escaped brackets
+        # (`\]` is invalid) — the closing bracket uses the POSIX []]
+        # class form and paren-bearing markers avoid escapes entirely.
+        forgejo-label-semantics-selftest =
+          let
+            moduleText = builtins.readFile (root + "/modules/nixos/services/forgejo.nix");
+            scriptsText = builtins.readFile (root + "/modules/nixos/services/_forgejo-scripts.nix");
+            labelBlock =
+              let
+                m = builtins.match ".*runnerLabels = \\[([^;]*)[]];.*" moduleText;
+              in
+              assert
+                m != null
+                || throw "forgejo-label-semantics-selftest: runnerLabels block missing or garbled in modules/nixos/services/forgejo.nix";
+              builtins.head m;
+            # Exactly ONE quoted label (multi-label drift must be a loud
+            # check edit, never a silent config edit).
+            label =
+              let
+                m = builtins.match "[[:space:]]*\"([A-Za-z0-9._:/-]+)\"[[:space:]]*" labelBlock;
+              in
+              assert
+                m != null
+                || throw "forgejo-label-semantics-selftest: runnerLabels is not exactly one quoted label (multi-label or literal drift) — the v13 daemon declares label NAMES only and workflows match exact-string; edit this check in the same commit";
+              builtins.head m;
+            nameSchema =
+              let
+                m = builtins.match "([A-Za-z0-9._-]+):([A-Za-z0-9._/-]+)" label;
+              in
+              assert m != null || throw "forgejo-label-semantics-selftest: label '${label}' is not name:schema";
+              m;
+            contractPresent =
+              marker: comment:
+              assert
+                builtins.match ".*${marker}.*" moduleText != null
+                || throw "forgejo-label-semantics-selftest: contract marker '${comment}' vanished from forgejo.nix — restore the name:schema comment (declared NAMES, workflows match exact-string, never 'native:host' in runs-on)";
+              true;
+          in
+          assert
+            label == "native:host"
+            || throw "forgejo-label-semantics-selftest: runnerLabels drifted from \"native:host\" to \"${label}\" — workflows say runs-on: native; update this check in the same commit";
+          assert
+            builtins.head nameSchema == "native"
+            || throw "forgejo-label-semantics-selftest: declared label NAME changed to '${builtins.head nameSchema}' — every workflow's runs-on must be updated in lockstep";
+          assert
+            builtins.elemAt nameSchema 1 == "host"
+            || throw "forgejo-label-semantics-selftest: label schema changed to '${builtins.elemAt nameSchema 1}' — only host-mode is wired (Docker labels removed 2026-10-08)";
+          assert contractPresent "name:schema" "name:schema contract comment";
+          assert contractPresent "runs-on: native" "runs-on: native workflow guidance";
+          assert contractPresent "daemon.go Declare" "v13 Declare source-verify marker";
+          assert
+            builtins.match ".*runner.labels = runnerLabels;.*" moduleText != null
+            || throw "forgejo-label-semantics-selftest: config runner.labels no longer sourced from runnerLabels — DefaultLabels (connections without labels) would declare nothing";
+          assert
+            builtins.match ".*--labels .*runnerLabels.*" scriptsText != null
+            || throw "forgejo-label-semantics-selftest: legacy register no longer passes runnerLabels (v13-deprecated but still the provisioning path)";
+          assert
+            builtins.match ".*\"native:host\".*" scriptsText == null
+            || throw "forgejo-label-semantics-selftest: hardcoded label literal appeared in _forgejo-scripts.nix — labels must flow from the single runnerLabels binding";
+          pkgs.runCommand "forgejo-label-semantics-selftest" { } ''
+            echo "PASS: forgejo label semantics pinned (native:host, name:schema contract, single-source wiring)" > "$out"
+          '';
+
       };
     };
 }
