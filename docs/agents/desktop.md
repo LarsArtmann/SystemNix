@@ -13,7 +13,7 @@
 
 ## Quickshell (DankMaterialShell)
 
-Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome, **and rofi** (launcher, clipboard, keybinds, emoji, calc). Since 2026-10-04 DMS is also the SOLE polkit authentication agent — the niri-flake-shipped polkit-kde-agent-1 is disabled (see the Qt bullet below). Configured via DankMaterialShell's upstream HM module.
+Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome, **and rofi** (launcher, clipboard, keybinds, emoji, calc). Since 2026-10-04 DMS is also the SOLE polkit authentication agent — the niri-flake-shipped polkit-kde-agent-1 is disabled (see the Qt bullet below). Configured via DankMaterialShell's upstream HM module. **Service runbook: [docs/services/dms.md](../services/dms.md)** (2026-11-23) — per-service state lives there: polkit slot ownership + the live gdbus probe recipe, unit hardening envs, settings split-brain, registration-no-retry.
 
 - **Input:** `dankMaterialShell` (github:AvengeMedia/DankMaterialShell/stable) — brings `quickshell` transitively, no separate quickshell input
 - **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`, enables `systemd.enable = true` (defaults to false!)
