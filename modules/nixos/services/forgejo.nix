@@ -97,7 +97,19 @@ _: {
         "native:host"
       ];
       runnerSettings = {
-        log.level = "info";
+        # debug, not info: at info the runner journal is SILENT between task
+        # receipt and the terminal UpdateTask — the 2026-10-11 dead-vs-alive
+        # triage needed 3 probes (cgroup.procs, children, UpdateTask stream).
+        # debug restores in-journal job progress (step Run/Success/Failure
+        # markers + raw job output). Source-verified v13.2.1 noise analysis:
+        # the poll loop logs NOTHING on an empty fetch (poller.go
+        # `if len(tasks) == 0 { continue }`; fetch-round lines are Trace,
+        # below debug) and reporter status rounds are Trace — the only added
+        # volume is job-proportional (a handful of jobs/day here). The job
+        # loggers only reach the journal because run.go installs NullLogger
+        # unless the GLOBAL level is debug, so `log.job_level` alone cannot
+        # do this.
+        log.level = "debug";
         runner.capacity = 2;
         # Label syntax is name:schema and the v13 daemon declares label NAMES
         # only (source-verified v13.2.0: daemon.go Declare(ls.Names()),
