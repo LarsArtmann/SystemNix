@@ -127,6 +127,51 @@ let
     # HELP papdashboard_services_json_icons_ok 0 when any tile lost its icon coverage; 1 when every tile carries an icon
     # TYPE papdashboard_services_json_icons_ok gauge
     papdashboard_services_json_icons_ok 1
+    # "Nix Store Usage" (gatus-config.nix Filesystem group): label pairs in
+    # the node_exporter-served WIRE order (alphabetical device,fstype,
+    # mount_point — the 2026-10-27 S7 lesson) with the live-ish /nix value
+    # 83 (2026-11-09) plus two sibling mounts, one NEAR-FIRE (89) — the
+    # mount_point="/nix" pinning must keep the check green while another
+    # filesystem approaches its own threshold. HELP trap carries the bare
+    # `{mount_point="/nix"} 90` text (no leading comma — exactly the shape
+    # an unanchored or comma-losing degeneration would match) so a value
+    # glob that lost its anchoring goes green here and the green leg fails.
+    # HELP storage_collector_fs_used_percent Filesystem usage percent (trap: storage_collector_fs_used_percent{mount_point="/nix"} 90 must never satisfy an anchored value glob)
+    # TYPE storage_collector_fs_used_percent gauge
+    storage_collector_fs_used_percent{device="/dev/nvme1n1p6",fstype="btrfs",mount_point="/"} 89
+    storage_collector_fs_used_percent{device="/dev/nvme1n1p2",fstype="btrfs",mount_point="/nix"} 83
+    storage_collector_fs_used_percent{device="/dev/nvme1n1p3",fstype="btrfs",mount_point="/data"} 41
+    # "Gatus Chronic Red" (system-health.nix Monitoring group): healthy
+    # count 0, HELP trap deliberately carries the bare
+    # "system_gatus_chronic_red_checks 0" text so an unanchored value glob
+    # phantom-greens on the comment — only the line-anchored form survives.
+    # HELP system_gatus_chronic_red_checks 0 if no Gatus endpoint has been red for 24h unacted; count of chronic-red endpoints otherwise (trap: system_gatus_chronic_red_checks 0)
+    # TYPE system_gatus_chronic_red_checks gauge
+    system_gatus_chronic_red_checks 0
+  '';
+
+  # MUTATION bodies: the fired states the healthy mock can never carry
+  # (each endpoint hits exactly one body, so a fired value and its green
+  # counterpart can coexist in one test run). The fired bodies keep the
+  # same HELP traps as the healthy one — a pattern that degenerated into
+  # comment-matching goes green on a FIRED body too, which is exactly what
+  # the [TEST-RED] legs turn into a test failure.
+  mockFs90 = pkgs.writeText "mock-metrics-fs-90.prom" ''
+    # HELP storage_collector_fs_used_percent Filesystem usage percent (trap: storage_collector_fs_used_percent{mount_point="/nix"} 90 must never satisfy an anchored value glob)
+    # TYPE storage_collector_fs_used_percent gauge
+    storage_collector_fs_used_percent{device="/dev/nvme1n1p2",fstype="btrfs",mount_point="/nix"} 90
+  '';
+
+  mockFs100 = pkgs.writeText "mock-metrics-fs-100.prom" ''
+    # HELP storage_collector_fs_used_percent Filesystem usage percent (trap: storage_collector_fs_used_percent{mount_point="/nix"} 90 must never satisfy an anchored value glob)
+    # TYPE storage_collector_fs_used_percent gauge
+    storage_collector_fs_used_percent{device="/dev/nvme1n1p2",fstype="btrfs",mount_point="/nix"} 100
+  '';
+
+  mockChronic10 = pkgs.writeText "mock-metrics-chronic-10.prom" ''
+    # HELP system_gatus_chronic_red_checks 0 if no Gatus endpoint has been red for 24h unacted; count of chronic-red endpoints otherwise (trap: system_gatus_chronic_red_checks 0)
+    # TYPE system_gatus_chronic_red_checks gauge
+    system_gatus_chronic_red_checks 10
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
@@ -135,14 +180,19 @@ let
     text = ''
       python3 -c '
       import http.server
-      metrics = open("${mockMetrics}").read()
+      bodies = {
+          "/metrics": open("${mockMetrics}").read(),
+          "/metrics-fs-90": open("${mockFs90}").read(),
+          "/metrics-fs-100": open("${mockFs100}").read(),
+          "/metrics-chronic-10": open("${mockChronic10}").read(),
+      }
       class H(http.server.BaseHTTPRequestHandler):
           def do_GET(self):
-              if self.path == "/metrics":
+              if self.path in bodies:
                   self.send_response(200)
                   self.send_header("Content-Type", "text/plain")
                   self.end_headers()
-                  self.wfile.write(metrics.encode())
+                  self.wfile.write(bodies[self.path].encode())
               else:
                   self.send_response(200)
                   self.send_header("Content-Type", "text/html")
@@ -404,6 +454,88 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*\npapdashboard_services_json_icons_ok 0\n*)"
+            ];
+          }
+          {
+            # "Nix Store Usage" (gatus-config.nix Filesystem group)
+            # production conditions verbatim against the HEALTHY mock:
+            # /nix 83 must pass all three legs while the sibling / mount
+            # sits at 89 (one point under the /nix threshold — the
+            # mount_point pinning must exclude it). Labels are in the
+            # node_exporter wire order (alphabetical) and the HELP trap
+            # carries the `{mount_point="/nix"} 90` text, so a value glob
+            # that lost its anchoring would match the comment and fail this
+            # green leg. (2026-11-23 mutation-test legs — the pattern
+            # shipped eye-validated + gatus validate only.)
+            name = "[TEST] Nix Store Usage (83 green, /-trap excluded)";
+            url = "http://127.0.0.1:9400/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} *)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 9[0-9]*)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 100*)"
+            ];
+          }
+          {
+            # MUTATION (expected RED, see testScript): the REAL fired
+            # emission (a /nix line reading 90) must trip the production
+            # condition set — the 9[0-9] reject-half has to be non-vacuous
+            # against a genuine fired body, not merely absent from the
+            # healthy one. If this endpoint ever goes GREEN the threshold
+            # leg is phantom (exactly the class eye-validation shipped).
+            name = "[TEST-RED] Nix Store Usage fires at /nix 90";
+            url = "http://127.0.0.1:9400/metrics-fs-90";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} *)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 9[0-9]*)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 100*)"
+            ];
+          }
+          {
+            # MUTATION (expected RED): the cliff value 100 fires via its
+            # own reject-half (" 100" must never satisfy the 9[0-9] glob —
+            # if it did, this endpoint would fail for the wrong leg and the
+            # green leg above would still hide it — so this body keeps 90
+            # out and pins the 100 leg alone).
+            name = "[TEST-RED] Nix Store Usage fires at /nix 100";
+            url = "http://127.0.0.1:9400/metrics-fs-100";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} *)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 9[0-9]*)"
+              "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 100*)"
+            ];
+          }
+          {
+            # "Gatus Chronic Red" (system-health.nix Monitoring group)
+            # production condition verbatim against the HEALTHY mock
+            # (count 0 + the HELP trap carrying the bare "checks 0" text):
+            # only the line-anchored form can satisfy the value leg.
+            name = "[TEST] Gatus Chronic Red (count 0 green)";
+            url = "http://127.0.0.1:9400/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*system_gatus_chronic_red_checks 0\n*)"
+            ];
+          }
+          {
+            # MUTATION + disambiguation (expected RED): a red count of 10
+            # must NOT satisfy `checks 0\n` — "checks 10" carries no
+            # "checks 0" suffix, and the fired body's HELP trap means a
+            # degenerate UNANCHORED value glob would match the comment and
+            # go green here — so this leg pins the anchoring AND the
+            # 0-vs-10 discrimination in one shot (the asked mutation pair).
+            name = "[TEST-RED] Gatus Chronic Red count 10 must not match";
+            url = "http://127.0.0.1:9400/metrics-chronic-10";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*system_gatus_chronic_red_checks 0\n*)"
             ];
           }
         ];
