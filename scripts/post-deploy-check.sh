@@ -2150,6 +2150,33 @@ else
   report_fail "Desktop - polkit render:${_polkit_problems} auth dialogs may fail to open (check qt.platformTheme/style in home.nix vs deployed Qt plugins)"
 fi
 
+# Desktop: polkit agent SLOT OWNERSHIP (2026-10-04 race aftermath — §f.2 of
+# the polkit report). The render-sanity leg above passes in the
+# dead-agent-no-owner state (live Oct 3→04): zero aborts once the 24h window
+# ages, yet NO process owns org.freedesktop.PolicyKit1.AuthenticationAgent,
+# so every GUI auth request silently goes nowhere. DMS registers the agent
+# once at startup and never retries, so a deploy that touches the race
+# (niri-flake-polkit removal, dms restart) must leave a LIVE owner behind.
+# Session-aware: no graphical session → no agent is legitimate (SSH-only
+# periods); only an ACTIVE session with an unowned slot fails.
+if systemctl --user is-active --quiet graphical-session.target; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  _polkit_owner=$(gdbus call --session --dest org.freedesktop.DBus \
+    --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetNameOwner \
+    org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null | grep -oE 'uint32 [0-9]+' | awk '{print $2}')
+  if [ -n "$_polkit_owner" ]; then
+    _polkit_opid=$(gdbus call --session --dest org.freedesktop.DBus \
+      --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.GetConnectionUnixProcessID \
+      org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null | grep -oE 'uint32 [0-9]+' | awk '{print $2}')
+    report_pass "Desktop - polkit agent OWNS the slot (owner pid ${_polkit_opid:-unknown}; DMS agent registered)"
+  else
+    report_fail "Desktop - graphical session ACTIVE but polkit agent slot UNOWNED — GUI auth dead (the dead-agent-no-owner state; restart dms: systemctl --user restart dms, or re-login — registration does not retry)"
+  fi
+  unset DBUS_SESSION_BUS_ADDRESS
+else
+  report_skip "Desktop - polkit agent slot probe (no graphical session — agent legitimately absent)"
+fi
+
 # System pressure (PSI I/O + memory + zram combined zone) - shared,
 # fixture-tested logic (scripts/lib/pressure-report.sh +
 # scripts/test-post-deploy-pressure.sh). 2026-09-02 T07: the old inline
