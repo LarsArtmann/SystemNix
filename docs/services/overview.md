@@ -17,7 +17,7 @@ Web dashboard over the project fleet (repos, stats, activity), fed by the **proj
 - **`overview-discovery-watchdog`** — periodic guard: Overview 503 + daemon `/v1/health` HEALTHY ⇒ restart overview (stale 503 discovery failure class). Both-unhealthy = wait (restart wouldn't help).
 - **Readiness gates must probe AS THE SERVICE USER** — the `+`-privileged gate once passed green as root while the overview process got EACCES dialing the 0600 socket (the 2026-09-09 start-limit incident; now 0666 + daemon honors `PROJECT_DISCOVERY_SOCKET_MODE`).
 - **OTel** — `OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4318` (mkDefault; upstream initializes the tracer from it — historically with zero span sites, so it sits in signoz-coverage as a known upstream gap).
-- **Monitoring** — Gatus via the registry check + Homepage tile; partOf-chain restarts are expected churn, not incidents.
+- **Monitoring** — two Gatus checks via the registry entry: `Overview` (backend `http://localhost:8083`, liveness+HTML) and `Overview vHost` (`https://overview.<domain>/`, full chain — dnsblockd TLS + Caddy + LAN-bypass forward-auth + backend, title-anchored body; added 2026-11-23 after the 2026-10-07 outage showed the auth-gateway 502 class had no standing probe). The :8083 backend check itself PREDATES the outage (alert attached since the 2026-09-15 registry migration) — the outage's non-page is a DELIVERY question, not a coverage gap; evidence vacuumed, unadjudicable. Plus Homepage tile; partOf-chain restarts are expected churn, not incidents.
 
 ## Related
 

@@ -34,6 +34,7 @@
     let
       cfg = config.services.overview;
       inherit (import ../../../lib/default.nix lib) ports;
+      domain = config.networking.domain;
       daemonSock = "/run/project-discovery/daemon.sock";
       daemonMode = cfg.daemonSocket != "";
       waitDaemonReady = pkgs.writeShellApplication {
@@ -148,8 +149,8 @@
         };
 
         # Service-integration registry entry: the Overview homepage tile, the
-        # overview vHost (Layer 2 — no native auth), and the Gatus
-        # health check.
+        # overview vHost (Layer 2 — no native auth), and the Gatus checks
+        # (backend :8083 liveness + full-chain vHost probe).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           overview = {
             inherit (cfg) enable;
@@ -168,6 +169,21 @@
                   "[BODY] == pat(*<html*)"
                 ];
                 alert = "Overview dashboard down — project stats unavailable";
+              }
+              {
+                # Full serving-chain probe (dnsblockd TLS + Caddy + LAN-bypass
+                # forward-auth + backend) — catches the auth-gateway 502 class
+                # while :8083 is green. Title-anchored body so a Caddy or
+                # oauth2-proxy error page cannot phantom-green on status alone.
+                name = "Overview vHost";
+                group = "Productivity";
+                url = "https://overview.${domain}/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                  "[BODY] == pat(*<title>Overview*)"
+                ];
               }
             ];
             homepage = {
