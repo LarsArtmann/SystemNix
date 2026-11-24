@@ -985,10 +985,12 @@
       # under the 2786a2a nixpkgs root the extraBuildAttrs asset preBuild
       # leaked store paths into the vendor FOD ("fixed-output derivations
       # must not reference store paths"); guarded locally pending owner
-      # push. Flip back to
-      # git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master
-      # after the push lands and re-float.
-      url = "git+file:///home/lars/projects/overview";
+      # push. FLIPPED BACK 2026-11-24 20:1x (the push landed: eb9ed8dc
+      # "invert the goModules guard (set in MAIN build, absent in FOD)"
+      # carries the FOD guard + the pdd sdk float + the re-pinned
+      # vendorHash.nix; first-hand keep-going probes in
+      # ~/.cache/keepgoing{3,4}.log during the ai-meter viewer deploy wave).
+      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync

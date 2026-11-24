@@ -9888,17 +9888,18 @@
         "templ-components": "templ-components_8"
       },
       "locked": {
-        "lastModified": 1795029086,
-        "narHash": "sha256-OU8MyypZ7pZRf/oG8b/qJtA7hTPYaMCeeDlf3tEICwQ=",
+        "lastModified": 1795547331,
+        "narHash": "sha256-+2aZ1AzDH0gWcDqPhxN2cVA3zvkOeqmWGDhECsgaFIE=",
         "ref": "refs/heads/master",
-        "rev": "6e05fdb1f8a434db0e90e24c0760d18c9a639834",
+        "rev": "eb9ed8dc372b511cdc297ef4da90d8de7c3904e5",
         "revCount": 1781,
         "type": "git",
-        "url": "file:///home/lars/projects/overview"
+        "url": "ssh://git@github.com/LarsArtmann/overview"
       },
       "original": {
+        "ref": "refs/heads/master",
         "type": "git",
-        "url": "file:///home/lars/projects/overview"
+        "url": "ssh://git@github.com/LarsArtmann/overview"
       }
     },
     "oxlint-auto-configure": {
