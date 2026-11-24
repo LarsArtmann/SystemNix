@@ -71,7 +71,10 @@ _: {
       };
 
       primaryUser = config.users.primaryUser;
-      domain = config.networking.domain;
+      # VM tests (test-ai-meter) enable the module on a host without
+      # networking.domain — fall back so the viewer URLs and absolute check
+      # URLs stay eval-able in isolation (prod hosts set the domain).
+      domain = if config.networking.domain != null then config.networking.domain else "home.lan";
 
       # The ai-meter dashboard's SigNoz UUID (provisioned dashboard slug
       # "systemnix-ai-meter"; live lookup: GET
