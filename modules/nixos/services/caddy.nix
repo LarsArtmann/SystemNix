@@ -1327,8 +1327,13 @@ _: {
             # ({env.TQ_API_TOKEN} in the header_up directive — injected
             # server-side, the browser never sees it). Same root-owned
             # template tq-api and the alert relay read; rotation restarts
-            # all three.
-            { EnvironmentFile = [ config.sops.templates."tq-api-env".path ]; }
+            # all three. Gated with the vHost above: the template is
+            # declared under the tq-agent-pool guard in sops.nix, so a
+            # minimal host without the pool (caddy-mint VM) must not
+            # reference it.
+            (lib.optionalAttrs ((config.services.tq-agent-pool or { }).enable or false) {
+              EnvironmentFile = [ config.sops.templates."tq-api-env".path ];
+            })
             (harden {
               # CAP_NET_BIND_SERVICE is the only capability caddy needs
               # (:80/:443 TCP + :443/UDP QUIC). The old CAP_NET_ADMIN came
