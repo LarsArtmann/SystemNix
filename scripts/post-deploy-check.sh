@@ -169,6 +169,24 @@ report_warn() {
   WARN=$((WARN + 1))
 }
 
+# ── §22 pool-detached root-cause collapse (attic exit-4 class, sweep 2026-11-24) ──
+# When /mnt/pool is unmounted, every pool-bound probe below fails for the
+# SAME root cause; the battery used to print that as N unrelated FAILs.
+# Report the root cause ONCE and let pool-bound probes degrade to SKIP so
+# the report reads as one outage, not a cascade. The pool mounts nofail:
+# this fires only while the pool is genuinely absent (the Gatus pool alert
+# + pool-recovery own the outage itself).
+POOL_DOWN_REASON=""
+if ! findmnt -n /mnt/pool >/dev/null 2>&1; then
+  POOL_DOWN_REASON="/mnt/pool unmounted (DAS detached?)"
+  report_fail "ROOT CAUSE: ${POOL_DOWN_REASON} - pool-bound checks below collapse to SKIP (services down BY DESIGN; Gatus + pool-recovery own the outage)"
+fi
+pool_bound_skip() {
+  if [ -n "$POOL_DOWN_REASON" ]; then
+    report_skip "$1 - collapsed: ${POOL_DOWN_REASON}"
+  fi
+}
+
 # ── §21 ordering-cycle deletion gate (2026-10-26 gitea-runner class) ──
 # Any "deleted to break ordering cycle" journal line since the switch means
 # systemd silently DROPPED a start job from the transaction — that unit is
@@ -844,6 +862,9 @@ paperless_enabled=false
 test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
 unit_enabled paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
+  if [ -n "$POOL_DOWN_REASON" ]; then
+    pool_bound_skip "Paperless stack (login/tika/gotenberg)"
+  else
   # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
   # provider form + the JS auto-submit (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a
   # CLIENT-SIDE redirect - paperless's template auto-submits the first
@@ -879,6 +900,7 @@ if $paperless_enabled; then
   else
     report_fail "Paperless - :3199/health unreachable (Office conversion dead)"
   fi
+  fi
 else
   report_skip "Paperless - service disabled (units absent from systemd)"
 fi
@@ -894,6 +916,8 @@ fi
 # while the service was dark 20+ min.
 if [ ! -e /etc/systemd/system/paperless-gpt.service ]; then
   report_skip "paperless-gpt - not deployed (unit absent from systemd)"
+elif [ -n "$POOL_DOWN_REASON" ]; then
+  pool_bound_skip "paperless-gpt"
 elif ! systemctl is-active paperless-gpt.service >/dev/null 2>&1; then
   report_fail "paperless-gpt - unit deployed but NOT active (systemctl status paperless-gpt; remount-orphan class = check pool-recovery restartUnits)"
 else

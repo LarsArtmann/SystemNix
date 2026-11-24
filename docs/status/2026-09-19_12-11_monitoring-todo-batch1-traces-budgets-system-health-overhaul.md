@@ -31,6 +31,8 @@
 
 `modules/nixos/services/system-health.nix`:
 
+<!-- check-rows:ledger -->
+
 | Change                                        | Detail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Parallel journal walks** (worst-case TODO)  | New `walk_journal()` helper; forgejo, PMA ×2, pocket-id, oomd walks now run as background jobs writing `<status> <count>` to a `mktemp -d` WALK_DIR; consumed after a single `wait` in the oomd block (last launcher). Worst case = longest single budget (60s) instead of the ≈270s serial sum.                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -59,32 +61,32 @@
 
 ## b) PARTIALLY DONE
 
-1. **TODO #40 (onboarding checklist + 0-gaps tripwire)** — the checklist comment IS in the coverage module; the "at 0 gaps keep the budget check alive at 0" half already holds (the check exists and stays armed). But the item's premise "after the 4 remaining trace-gap flips" is not fully reached: **4 upstream gaps remain** (overview, projects-management-automation, papdashboard, hermes) — those need upstream instrumentation first (blocked upstream, correctly left in the registry as `wiring = "upstream"`).
-2. **system-health worst-case fix (TODO)** — the parallel-walks + single-read + 5min-ceiling work is done and smoke-tested, but the item asked for worst-case < the 120s cadence by DESIGN; current worst case under a pathological full fork-storm is still ~2-3min (loops are sequential; user-manager sweeps timeout-bounded at 10s/user; docker 15s; walks 60s parallel). The structural "parallelize everything / slash budgets" redesign is NOT done — 5min ceiling + corpse reaping is the shipped interim. Deploy + a real-storm observation window should confirm the fix before calling it closed.
-3. **Textfile `.tmp` audit (TODO)** — observe half done (section a.5); the "apply mktemp+chmod+trap+CAP_FOWNER where found" half found NO collector still using the broken pattern (all converted 2026-09-06 — the AGENTS claim is TRUE for the mktemp pattern), but the NEW corpse-reap pattern exists only in system-health; buildcache (and possibly other collectors) lack it. One-time root cleanup not run (sudo-blocked).
+1. **TODO #40 (onboarding checklist + 0-gaps tripwire)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (post-flip Services-page onboarding row) — the checklist comment IS in the coverage module; the "at 0 gaps keep the budget check alive at 0" half already holds (the check exists and stays armed). But the item's premise "after the 4 remaining trace-gap flips" is not fully reached: **4 upstream gaps remain** (overview, projects-management-automation, papdashboard, hermes) — those need upstream instrumentation first (blocked upstream, correctly left in the registry as `wiring = "upstream"`).
+2. **system-health worst-case fix (TODO)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (worst-case budget re-verify watch row) — the parallel-walks + single-read + 5min-ceiling work is done and smoke-tested, but the item asked for worst-case < the 120s cadence by DESIGN; current worst case under a pathological full fork-storm is still ~2-3min (loops are sequential; user-manager sweeps timeout-bounded at 10s/user; docker 15s; walks 60s parallel). The structural "parallelize everything / slash budgets" redesign is NOT done — 5min ceiling + corpse reaping is the shipped interim. Deploy + a real-storm observation window should confirm the fix before calling it closed.
+3. **Textfile `.tmp` audit (TODO)** → TODO_LIST.md (stale `.prom.XXXXXX` mktemp leftover sweep row); observe half done (section a.5); the "apply mktemp+chmod+trap+CAP_FOWNER where found" half found NO collector still using the broken pattern (all converted 2026-09-06 — the AGENTS claim is TRUE for the mktemp pattern), but the NEW corpse-reap pattern exists only in system-health; buildcache (and possibly other collectors) lack it. One-time root cleanup not run (sudo-blocked).
 4. **Enabled-but-inactive "one-off full sweep for OTHER services stranded inactive since any boot"** — the continuous detector IS the sweep now (it ran live and found only allowlisted benign units), but a historical multi-boot journal dig (the "since ANY boot" half) was not done.
-5. **`backup_ever_succeeded` + btrbk receive-freshness gauges + `backup-catchup-report.sh`** — design is fully worked out in-session (per-set `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with name-parsed `YYYYMMDDTHHMM` dates — the ±23h mtime trap and the day-only-parse false-stale trap both identified and designed around; per-set `enforced` flag so the deliberately-failing `/data` leg stays OUT of the aggregate check; live name formats confirmed on the pool: root `@.20260918T2300`, hermes `@home-hermes.*`, pool-services use BASENAME `activitywatch.*` NOT `services_*`, `/mnt/pool/backups/data` empty per the EIO stance). ZERO code written.
-6. **`crush_hot_db_*` metrics, churn-rearm Gatus wiring, buildcache-gc metrics, pool-usage thresholds** — surveyed (module sizes, existing patterns identified), not implemented.
+5. **`backup_ever_succeeded` + btrbk receive-freshness gauges → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness monitoring row); design + `backup-catchup-report.sh`** — design is fully worked out in-session (per-set `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with name-parsed `YYYYMMDDTHHMM` dates — the ±23h mtime trap and the day-only-parse false-stale trap both identified and designed around; per-set `enforced` flag so the deliberately-failing `/data` leg stays OUT of the aggregate check; live name formats confirmed on the pool: root `@.20260918T2300`, hermes `@home-hermes.*`, pool-services use BASENAME `activitywatch.*` NOT `services_*`, `/mnt/pool/backups/data` empty per the EIO stance). ZERO code written.
+6. **`crush_hot_db_*` metrics, churn-rearm Gatus wiring, buildcache-gc metrics, pool-usage thresholds** — surveyed (module sizes, existing patterns identified), not implemented. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (crush_hot_db row, churn wiring row, buildcache-gc observability row; pool-usage thresholds remain unrowed)
 
 ---
 
 ## c) NOT STARTED (planned in this session's queue, untouched)
 
-- `GOTRACEBACK=all` on discordsync + browser-history (verified: currently NO Nix file in the repo sets GOTRACEBACK anywhere).
-- `file_storage` cursor persistence for the SigNoz journald receiver (TODO; needs collector.yaml change + collector-user storage-dir wiring).
-- Caddy access.log ingestion (filelog receiver) + log-ingestion-volume anomaly alert.
-- Zero-series sweep automation (ClickHouse metric-name diff script).
+- `GOTRACEBACK=all` on discordsync + browser-history (verified: currently NO Nix file in the repo sets GOTRACEBACK anywhere). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (GOTRACEBACK sweep row)
+- `file_storage` cursor persistence for the SigNoz journald receiver (TODO; needs collector.yaml change + collector-user storage-dir wiring). → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- Caddy access.log ingestion (filelog receiver) + log-ingestion-volume anomaly alert. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+~~- Zero-series sweep automation (ClickHouse metric-name diff script).~~ done — `scripts/metric-sweep.sh` landed 2026-10-19 (docs/todo/monitoring.md zero-series row, item 1 DONE)
 - SigNoz migrator-gap guard (applied-migration IDs ⊆ known list per DB).
-- Persisted regression tests for the pool-smart collector script.
-- Deferred-scrub observability VM test (note: `btrfs_scrub_deferred_by_guard` + the split "Scrub Errors"/"Scrub Incomplete" checks ALREADY EXIST per AGENTS — only the VM test half remains).
-- Dashboard generator commit + eval-time dashboard JSON lint extension (lint partially exists as `signoz-query-lint`; the generator `/tmp/gen_dashboards.py` remains unrecreated).
+~~- Persisted regression tests for the pool-smart collector script.~~ done — fixtures landed (docs/todo/monitoring.md pool-smart regression-test row, struck done)
+- Deferred-scrub observability VM test (note: `btrfs_scrub_deferred_by_guard` + the split "Scrub Errors"/"Scrub Incomplete" checks ALREADY EXIST per AGENTS — only the VM test half remains). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (deferred-scrub + VM-test row)
+- Dashboard generator commit + eval-time dashboard JSON lint extension (lint partially exists as `signoz-query-lint`; the generator `/tmp/gen_dashboards.py` remains unrecreated). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
 - Test-fire "Telemetry Export Failures" → Discord (needs a maintenance window).
 - Gatus lint residuals: authenticated POST-to-ingest probe, `test -e` enable-gate sweep, papdashboard ingest success-count metric.
 - Gatus `alerting` dedup analysis (N endpoints, one root cause, one message).
-- `criticalSystemServices` declarative health-check — assessed as LOW-VALUE during survey (the service-health-check script already catches any failed system service dynamically; the 4-name list is a desktop-notify fallback layered under system-health + Gatus coverage). Deliberately skipped, not forgotten.
-- buildcache SIGKILL-corpse reap + the remaining collectors (if the pattern is wanted fleet-wide).
-- **TODO/CHANGELOG housekeeping** — NOT done: no `[x]` prunes, no CHANGELOG entries, no queue re-sync for completed items, and the pre-existing queue hygiene debt (17 malformed `- [ ] **Source:** →` rows across storage/stability/monitoring/ai-stack/services/upstream in `TODO_LIST.md`) observed but not fixed.
-- Final verification pass — **`nix flake check --no-build` has NOT been run on this session's changes**, nor `nix fmt` check, nor a post-allowlist re-run of the functional smoke test (the last build extracted the NEW drv `9wl0y8x4…` but never built or tested it).
+~~- `criticalSystemServices` declarative health-check — assessed as LOW-VALUE during survey (the service-health-check script already catches any failed system service dynamically; the 4-name list is a desktop-notify fallback layered under system-health + Gatus coverage). Deliberately skipped, not forgotten.~~ **NOT-DO — dup of §f.38 (deliberate low-value skip).**
+~~- buildcache SIGKILL-corpse reap + the remaining collectors (if the pattern is wanted fleet-wide).~~ **NOT-DO — dup of §b.3.**
+~~- **TODO/CHANGELOG housekeeping** — NOT done: no `[x]` prunes, no CHANGELOG entries, no queue re-sync for completed items, and the pre-existing queue hygiene debt (17 malformed `- [ ] **Source:** →` rows across storage/stability/monitoring/ai-stack/services/upstream in `TODO_LIST.md`) observed but not fixed.~~ **NOT-DO — dup of §f.8 (standing harvest/prune ritual).**
+~~- Final verification pass — **`nix flake check --no-build` has NOT been run on this session's changes**, nor `nix fmt` check, nor a post-allowlist re-run of the functional smoke test (the last build extracted the NEW drv `9wl0y8x4…` but never built or tested it).~~ done — batch deployed as system-787 with live collector output read post-deploy (docs/status/2026-09-20_16-31 §1.1/§1.2)
 
 ---
 
@@ -120,63 +122,63 @@
 ~~1. Re-run functional smoke test on the CURRENT drv (`9wl0y8x4…`) — assert `system_units_enabled_inactive 0` with the allowlist active.~~ done — overhauled collector deployed live at 787 (docs/status/2026-09-20_16-31 §1.2 reads its live output)
 ~~2. Run `nix flake check --no-build` (full eval surface incl. assertions; the sops-nix gotcha requires ALSO an evo-x2 eval — both were green mid-session, re-run at quiescence).~~ done — all checks passed (docs/status/2026-09-19_13-45 a14)
 ~~3. `nix fmt --no-update-lock-file -- --ci` check on the four touched files (respecting the parallel-session fmt rule).~~ done — tree-wide green (docs/status/2026-09-19_12-02 A7)
-4. Verify the daemon's "+1 other file" halves of `9624ca20`/`d4416e52` (what ELSE got committed alongside my files).
-5. Root cleanup one-liner for the user (sudo-blocked for me): `sudo find /var/lib/prometheus-node-exporter/textfile_collectors -maxdepth 1 -name 'system_health.prom.??????' -mmin +120 -delete` + `sudo rm` … the `buildcache.prom.bKDc8n` corpse (or `trash` it as root).
-6. `trash /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom.tmp` (user-owned, deletable now).
+~~4. Verify the daemon's "+1 other file" halves of `9624ca20`/`d4416e52` (what ELSE got committed alongside my files).~~ **NOT-DO — one-shot forensic overtaken by events (months of subsequent history).**
+~~5. Root cleanup one-liner for the user (sudo-blocked for me): `sudo find /var/lib/prometheus-node-exporter/textfile_collectors -maxdepth 1 -name 'system_health.prom.??????' -mmin +120 -delete` + `sudo rm` … the `buildcache.prom.bKDc8n` corpse (or `trash` it as root).~~ done — collector self-reaps SIGKILL corpses since the 787 deploy (modules/nixos/services/system-health.nix reap block); residual sweep owned by the TODO_LIST mktemp-leftover row
+~~6. `trash /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom.tmp` (user-owned, deletable now).~~ **NOT-DO — inert 220 B leftover of the fixed EACCES class (§a.5 verified fresh collector); one-shot host cleanup not repo-verifiable.**
 ~~7. Decide + execute `nix run .#deploy` (owner call — see questions) and run the post-deploy checklist from e.8.~~ done — deployed system-787 (docs/status/2026-09-20_16-31 §1.1)
-8. TODO/CHANGELOG housekeeping for completed items: prune #36, #37, #38, #39, #41, I/O-Stall review, .tmp-audit observe-half into `CHANGELOG.md`; re-sync `TODO_LIST.md` monitoring queue; fix the 17 malformed queue rows.
-9. File `searxng-secret-key Type=oneshot` under `docs/todo/services.md` (domain owns the fix).
+~~8. TODO/CHANGELOG housekeeping for completed items: prune #36, #37, #38, #39, #41, I/O-Stall review, .tmp-audit observe-half into `CHANGELOG.md`; re-sync `TODO_LIST.md` monitoring queue; fix the 17 malformed queue rows.~~ **NOT-DO — subsumed by the standing harvest/prune ritual (AGENTS.md todo-system rules; scripts/prune-done-todos.sh).**
+~~9. File `searxng-secret-key Type=oneshot` under `docs/todo/services.md` (domain owns the fix).~~ done — fixed at the module instead: `serviceOneshotDefaults` on the unit (modules/nixos/services/searxng.nix searxng-secret-key)
 
 **Batch 2 (backup observability — designs already done):**
 10. Implement `services.backup-coordination.snapshotSets` (directory/prefix/maxAgeHours/enforced) in `backup-coordination.nix`.
 ~~11. Emit `backup_ever_succeeded{backup}` in the existing per-backup loop (MTIME≠0 gate).~~ done — live: backup-coordination.nix:77 emits backup_ever_succeeded (MTIME≠0 gate)
-12. Emit per-set `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with FULL `YYYYMMDDTHHMM` name-parse (mtime fallback) — never day-only (the 26h false-stale trap).
-13. Aggregate `btrbk_snapshots_all_fresh` over `enforced=true` sets only (data-received stays gauge-visible, check-invisible).
-14. Populate the sets from `snapshots.nix` (root `@`, hermes `@home-hermes` conditional on `services.hermes.enable`, data `data` enforced=false, pool-services prefix `*` — basename naming live-confirmed) + forgejo-subvol deliberately skipped (owned by `forgejo_subvol_backup_fresh`, 12h — duplicate alerting avoided).
-15. Gatus check "BTRBK Receive Freshness" in the backup-coordination registry entry (anchored pats).
-16. Write `scripts/backup-catchup-report.sh` (stamps table from `backups.prom` + `systemctl list-timers btrbk-*` status + optional `btrbk -c … dryrun`) + flake app entry.
-17. `tests/test-backup-coordination.nix` or fixture runCommand for the name-parse helper (both the T-suffix and dateless forms).
+12. Emit per-set `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with FULL `YYYYMMDDTHHMM` name-parse (mtime fallback) — never day-only (the 26h false-stale trap). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness row)
+13. Aggregate `btrbk_snapshots_all_fresh` over `enforced=true` sets only (data-received stays gauge-visible, check-invisible). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness row)
+14. Populate the sets from `snapshots.nix` (root `@`, hermes `@home-hermes` conditional on `services.hermes.enable`, data `data` enforced=false, pool-services prefix `*` — basename naming live-confirmed) + forgejo-subvol deliberately skipped (owned by `forgejo_subvol_backup_fresh`, 12h — duplicate alerting avoided). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness row)
+15. Gatus check "BTRBK Receive Freshness" in the backup-coordination registry entry (anchored pats). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness row)
+~~16. Write `scripts/backup-catchup-report.sh` (stamps table from `backups.prom` + `systemctl list-timers btrbk-*` status + optional `btrbk -c … dryrun`) + flake app entry.~~ done — script shipped (scripts/backup-catchup-report.sh)
+17. `tests/test-backup-coordination.nix` or fixture runCommand for the name-parse helper (both the T-suffix and dateless forms). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (btrbk receive-freshness row)
 
 **Batch 3 (remaining monitoring metrics):**
-18. `crush_hot_db_*` textfile metrics (migrated/skipped/failed counters + last-success ts, fail-closed) + Gatus freshness check in `crush-hot-db.nix`.
-19. Wire `memory_emergency_guard_churn_rearms_total` (+ `churn_units_stopped{unit}`) into the SigNoz guard dashboard (add panel(s) to the existing dashboard JSON; `signoz-query-lint` overlap rules apply) — dashboard was the sanctioned alternative per the TODO.
-20. buildcache-gc observability: `buildcache_gc_last_success_timestamp` + `_prune_ok` in/next to the gc unit + Gatus check; fold the `--no-block` semantics decision question to the owner.
+18. `crush_hot_db_*` textfile metrics (migrated/skipped/failed counters + last-success ts, fail-closed) + Gatus freshness check in `crush-hot-db.nix`. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (crush_hot_db row)
+19. Wire `memory_emergency_guard_churn_rearms_total` (+ `churn_units_stopped{unit}`) into the SigNoz guard dashboard (add panel(s) to the existing dashboard JSON; `signoz-query-lint` overlap rules apply) — dashboard was the sanctioned alternative per the TODO. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (churn wiring row)
+20. buildcache-gc observability: `buildcache_gc_last_success_timestamp` + `_prune_ok` in/next to the gc unit + Gatus check; fold the `--no-block` semantics decision question to the owner. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (buildcache-gc observability row)
 21. Pool-usage Gatus thresholds (>50% WARN / >70% CRIT on the HDD pool) in `btrfs-health.nix` metrics + checks.
-22. Fleet-wide SIGKILL-corpse reap (shared helper; buildcache first — live corpse observed).
-23. `GOTRACEBACK=all` on discordsync + browser-history units (wrapper-module env), verify which other Go daemons upstream-set it already.
-24. `file_storage` cursor persistence for the journald receiver (collector.yaml + writable storage dir for the collector user + restartTriggers already present).
-25. Zero-series sweep script (`scripts/signoz-zero-series-sweep.sh`): rules/dashboards metric names vs `signoz_metrics.distributed_time_series_v4` diff; wire as flake check or CI job.
+~~22. Fleet-wide SIGKILL-corpse reap (shared helper; buildcache first — live corpse observed).~~ **NOT-DO — dup of §b.3.**
+23. `GOTRACEBACK=all` on discordsync + browser-history units (wrapper-module env), verify which other Go daemons upstream-set it already. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (GOTRACEBACK sweep row)
+24. `file_storage` cursor persistence for the journald receiver (collector.yaml + writable storage dir for the collector user + restartTriggers already present). → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+~~25. Zero-series sweep script (`scripts/signoz-zero-series-sweep.sh`): rules/dashboards metric names vs `signoz_metrics.distributed_time_series_v4` diff; wire as flake check or CI job.~~ done — landed as `scripts/metric-sweep.sh` 2026-10-19 with harness legs + allowlist (docs/todo/monitoring.md zero-series row, item 1 DONE)
 26. SigNoz migrator-gap guard (assert applied-migration IDs ⊆ known list per DB; the 1010 squash-gap class).
 27. Persisted pool-smart collector fixtures (promote the healthy/mutated/unprivileged/absent-drive cases from /tmp into `tests/`).
-28. Scrub-guard VM test (fake btrbk in `activating` → defer) — the only remaining half of that TODO.
-29. Enabled-inactive historical sweep (journal dig across recent boots for stranded-inactive windows) — one-off.
-30. Post-deploy §10 / pre-deploy gate: add `system_units_enabled_inactive*` + `btrbk_snapshot_*` + `crush_hot_db_*` to the known-metrics surface notes (auto-loan should cover; verify no hard-FAIL from the new metrics on first deploy).
+28. Scrub-guard VM test (fake btrbk in `activating` → defer) — the only remaining half of that TODO. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (deferred-scrub + VM-test row)
+~~29. Enabled-inactive historical sweep (journal dig across recent boots for stranded-inactive windows) — one-off.~~ **NOT-DO — overtaken: the continuous enabled-but-inactive detector has covered every boot since its deploy.**
+~~30. Post-deploy §10 / pre-deploy gate: add `system_units_enabled_inactive*` + `btrbk_snapshot_*` + `crush_hot_db_*` to the known-metrics surface notes (auto-loan should cover; verify no hard-FAIL from the new metrics on first deploy).~~ **NOT-DO — overtaken: the batch deployed 2026-09-20 and the gate/loan surface evolved through months of subsequent deploys.**
 
 **Batch 4 (larger / owner-gated):**
-31. Caddy access.log filelog ingestion + log-volume anomaly alert (>10min silence).
-32. Dashboard generator committed to `scripts/` + extend `signoz-query-lint` to enforce anchored value-checks.
+31. Caddy access.log filelog ingestion + log-volume anomaly alert (>10min silence). → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+32. Dashboard generator committed to `scripts/` + extend `signoz-query-lint` to enforce anchored value-checks. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
 33. Test-fire "Telemetry Export Failures" → Discord (maintenance window).
 34. Gatus authenticated POST-to-ingest probe + `test -e` enable-gate sweep + papdashboard ingest success-count metric.
 35. Gatus `alerting` dedup design (group N endpoints behind one root-cause message).
-36. user-unit monitoring blind-spot grab-bag: flm smoke PSI-skip, alert-after-N-retries convention, dnsblockd blocklist-load profiling, hermes state-check decoupling, discordsync API-gap deploy wait-or-skip (several belong to `services.md` — re-file accordingly).
-37. SigNoz Services-page onboarding: revisit when upstream instrumentation lands for overview/PMA/papdashboard/hermes; keep the gap-budget check alive at 0.
-38. `criticalSystemServices` declarative decision (recommend: leave as-is; system-health + Gatus own the real coverage).
-39. [blocked:user] browser-test the 5 `systemnix-*` dashboards (never rendered in a browser).
-40. Post-deploy pool-smart `[watch]` validation + clear the `KNOWN_NEW_METRICS` loan once verified live.
+36. user-unit monitoring blind-spot grab-bag: flm smoke PSI-skip, alert-after-N-retries convention, dnsblockd blocklist-load profiling, hermes state-check decoupling, discordsync API-gap deploy wait-or-skip (several belong to `services.md` — re-file accordingly). → [docs/todo/services.md](docs/todo/services.md)
+~~37. SigNoz Services-page onboarding: revisit when upstream instrumentation lands for overview/PMA/papdashboard/hermes; keep the gap-budget check alive at 0.~~ **NOT-DO — dup of §b.1.**
+~~38. `criticalSystemServices` declarative decision (recommend: leave as-is; system-health + Gatus own the real coverage).~~ **NOT-DO — deliberately skipped as low-value per the session's own survey (system-health + Gatus own coverage).**
+39. [blocked:user] browser-test the 5 `systemnix-*` dashboards (never rendered in a browser). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (browser-test the SigNoz UI row)
+40. Post-deploy pool-smart `[watch]` validation + clear the `KNOWN_NEW_METRICS` loan once verified live. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (post-deploy pool-smart validation watch row)
 
 **Hygiene:**
-41. Queue hygiene sweep (17 malformed rows) + monitoring queue re-sync.
-42. Re-check `docs/todo/monitoring.md` "Backlog" items #36/#37/#38/#39/#41/#43 (I/O stall) / #45 (pool-usage) against this session's completions and prune.
+~~41. Queue hygiene sweep (17 malformed rows) + monitoring queue re-sync.~~ **NOT-DO — dup of §f.8.**
+~~42. Re-check `docs/todo/monitoring.md` "Backlog" items #36/#37/#38/#39/#41/#43 (I/O stall) / #45 (pool-usage) against this session's completions and prune.~~ **NOT-DO — overtaken: the library has been re-numbered and maintained continuously by the standing harvest passes since.**
 43. AGENTS.md: record the SIGKILL-corpse class + reap pattern and the enabled-but-inactive detector contract (one paragraph each, Systemd + system-health sections).
 44. Consider `docs/services/system-health.md` runbook addition for the new detector (interpretation + allowlist policy).
-45. Check whether `writeShellApplication` shellcheck passes for the backup-catchup script before adding (the nullglob/SC-traps list is long).
+~~45. Check whether `writeShellApplication` shellcheck passes for the backup-catchup script before adding (the nullglob/SC-traps list is long).~~ **NOT-DO — overtaken: the script shipped; tree-wide shellcheck runs in pre-commit.**
 
 **Stretch (only after 1-17 land):**
-46. Slash remaining worst-case: parallelize user-manager sweeps + per-service emission across two background halves (design only after real-storm data).
-47. Evaluate `systemd-run`-based per-section isolation if fork-storm contributions remain measurable.
-48. Extend gatus-pattern-lint to enforce anchored value-checks (the TODO's lint half).
-49. "Telemetry Coverage" dashboard panel + `tests/test-signoz-coverage.nix` VM test (the coverage test+panel batch).
-50. metrics-freshness layer for collectors without one (papdashboard `/metrics` scrape entry of the same TODO batch).
+~~46. Slash remaining worst-case: parallelize user-manager sweeps + per-service emission across two background halves (design only after real-storm data).~~ **NOT-DO — dup of §b.2.**
+~~47. Evaluate `systemd-run`-based per-section isolation if fork-storm contributions remain measurable.~~ **NOT-DO — dup of §b.2.**
+48. Extend gatus-pattern-lint to enforce anchored value-checks (the TODO's lint half). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
+49. "Telemetry Coverage" dashboard panel + `tests/test-signoz-coverage.nix` VM test (the coverage test+panel batch). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
+50. metrics-freshness layer for collectors without one (papdashboard `/metrics` scrape entry of the same TODO batch). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
 
 ---
 
