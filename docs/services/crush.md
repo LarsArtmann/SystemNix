@@ -27,12 +27,30 @@ models, LSPs, and the verification workflow for changing any of it.
 | Provider      | Key source              | Notes                                                                                                                                                                                                       |
 | ------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `synthetic`   | sops `crush-daily.yaml` | injected since 2026-08-18                                                                                                                                                                                   |
-| `zai`         | sops `crush.yaml`       | `glm-5.3-flash` declared via `model add` (not in catalog)                                                                                                                                                   |
+| `zai`         | sops `crush.yaml`       | `glm-5.4` (flagship, thinking always, declared via `model add`) + `glm-5.3-flash` — neither is in the upstream catalog                                                                                      |
 | `gemini`      | sops `crush.yaml`       |                                                                                                                                                                                                             |
 | `minimax`     | sops `crush.yaml`       | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag                                           |
 | `kimi-coding` | sops `crush.yaml`       | **REMOVED** 2026-10-27 (owner: do not use anymore): sops key + ai-meter upstream + extraRc repoint dropped; crush-config provider declaration removal pending push + lock bump (renders keyless until then) |
 | `llamacpp`    | none (local)            | `:8899`, ad-hoc llama-server; models auto-discovered                                                                                                                                                        |
 | `hyper`       | auth store (OAuth)      | stays store-owned: tokens self-rotate hourly                                                                                                                                                                |
+
+## Default Models
+
+Two slots resolve in this order: rc statement > picker-persisted store state >
+catalog default. The rc statements are therefore the only durable pins.
+
+| Slot    | Scope             | Model                                                | Why                                                                                                                                                                         |
+| ------- | ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `small` | host (all repos)  | `zai/glm-4.7-flash`                                  | Summarization/compaction only; cheap, non-thinking, inside the ai-meter. Pinned in `platforms/nixos/users/home.nix` (`extraRc`, meter-guarded)                                |
+| `large` | per repo          | SystemNix: `zai/glm-5.4` @ `xhigh`                   | The repo every incident-minted fix task targets — flagship tier. Pinned by the `.crushrc` tq-bootstrap managed block (`modules/nixos/services/tq-agent-pool.nix`), not by hand |
+| `large` | per repo          | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh`     | Backlog harvesting — cheap tier; same managed-block mechanism                                                                                                               |
+
+**Thinking is a MODEL declaration, not a slot flag.** `model add zai/glm-5.4 …
+--thinking always` (crush-config repo) makes every request to that model carry
+thinking, and it survives slot routing — so the `.crushrc` slot line only
+carries `--reasoning-effort xhigh` (max on this machine). Do not add `--think`
+to the managed block expecting durability: `tq bootstrap` re-renders that block
+from its own template on every deploy and would drop the flag.
 
 ## Adding a Provider Key
 
@@ -77,6 +95,12 @@ makes old plaintext residue in session DBs inert.
 4. `crush models` asserts model IDENTITY in any smoke run — never trust a
    reply without knowing which provider/model served it (silent fallback to a
    pricier default is a real, observed failure mode)
+5. For a project `.crushrc` (e.g. SystemNix's tq managed block):
+   `EXTRA='model large zai/glm-5.4 --reasoning-effort xhigh' bash scripts/crush-rc-test.sh --expect-model zai/glm-5.4`
+   — proves the model is declared AND the slot line parses; the managed block
+   itself is re-rendered by `tq bootstrap`, so edit
+   `modules/nixos/services/tq-agent-pool.nix` (and its test) instead of the
+   file when the pin must change
 
 ## Gotchas
 
@@ -190,7 +214,7 @@ interactively with `crush --continue` when the pass ends — review, ask follow-
   `--yolo` (auto-accept everything), `-` (pipe extra evidence via stdin, e.g.
   `journalctl -u x -n 500 | crush-debug -`).
 - The seeded prompt forbids deploying: fixes land in the flake, you run `nix run .#deploy` after review.
-- Sessions inherit SystemNix's `.crushrc` (glm-5.3-flash xhigh, bash/edit allowlisted) — the auto pass
+- Sessions inherit SystemNix's `.crushrc` (glm-5.4 xhigh, thinking from the model declaration, bash/edit allowlisted) — the auto pass
   needs no yolo.
 - Evidence dirs may contain log secrets (flm echoes request bodies to journald); user-only perms,
   newest 20 kept.

@@ -111,6 +111,14 @@ _: {
         # do this.
         log.level = "debug";
         runner.capacity = 2;
+        # Drain, don't force-cancel, in-flight tasks on a restart (was 0s —
+        # every switch stop SIGTERM'd running jobs dead, 2026-10-26 switch
+        # note "each restart also force-cancelled in-flight CI tasks"). 60s
+        # lets short jobs finish; TimeoutStopSec=120s on the unit outlives the
+        # wait so the drain is never cut to SIGKILL mid-wait. Long host-mode
+        # nix builds still die at a switch stop — that needs CI-level retry,
+        # not a bigger drain.
+        runner.shutdown_timeout = "60s";
         # Label syntax is name:schema and the v13 daemon declares label NAMES
         # only (source-verified v13.2.0: daemon.go Declare(ls.Names()),
         # labels.Parse) — "native:host" declares name "native", so jobs must
@@ -1480,6 +1488,17 @@ _: {
           # an argv (fish_history/ps class).
           serviceConfig = lib.mkMerge [
             {
+              # mkForce: the v13 module sets on-failure/10 PLAIN (forgejo-runner.nix:511).
+              # "always" additionally covers clean-exit deaths (poller fatal-but-exit-0);
+              # systemd never auto-restarts manual/stop-propagated stops, so the
+              # ensure timer stays the recovery path for those. 5s spacing keeps
+              # a crash loop under StartLimitIntervalSec=300/burst=5 so the unit
+              # never locks itself out of its own recovery.
+              Restart = lib.mkForce "always";
+              RestartSec = lib.mkForce "5s";
+              # Outlives runner.shutdown_timeout=60s (above) so the graceful
+              # drain is never cut to SIGKILL.
+              TimeoutStopSec = "120s";
               Environment = [
                 "GOMODCACHE=/mnt/buildcache/ci-runner-cache/gomodcache"
                 "GOCACHE=/mnt/buildcache/ci-runner-cache/gocache"
@@ -1633,12 +1652,18 @@ _: {
         };
 
         systemd.timers."forgejo-runner-${utils.escapeSystemdPath hostName}-ensure" = {
-          description = "Re-attempt forgejo-runner convergence every 5 minutes";
+          description = "Re-attempt forgejo-runner convergence every minute";
           wantedBy = [ "timers.target" ];
+          # 1-min cadence (was 5min, 2026-11-24 "make it more reliable"): this
+          # timer is the ONLY recovery for manual/stop-propagated stops
+          # (Restart=always never fires for those), so worst-case CI dark time
+          # drops from ~6 min to ~75s. The converge body is a cheap is-active
+          # probe and a start against unmet gates condition-skips, so the
+          # tighter cadence adds no churn.
           timerConfig = {
-            OnBootSec = "5min";
-            OnUnitActiveSec = "5min";
-            AccuracySec = "1min";
+            OnBootSec = "2min";
+            OnUnitActiveSec = "1min";
+            AccuracySec = "15s";
           };
         };
 
