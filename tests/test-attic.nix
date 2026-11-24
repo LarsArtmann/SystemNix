@@ -111,5 +111,18 @@ in
     assert cond == "no", f"expected ConditionResult=no, got {cond!r}"
     machine.succeed("journalctl -u atticd-bootstrap.service -b | grep -q 'unmet condition'")
     machine.fail("systemctl is-failed --quiet atticd-bootstrap.service")
+
+    # 10. Regression (2026-11-24 attic-class sweep): pool-MOUNTED but atticd
+    #     WEDGED must stay LOUD — the detached-DAS condition-skip must not
+    #     mask a real outage. Storage dir restored (condition passes), atticd
+    #     stopped (the readiness probe can never answer): the bootstrap must
+    #     FAIL with its explicit error line, not skip and not hang. This is
+    #     the flip side of leg 9: skip only when the pool is away, fail loud
+    #     when the daemon is down under a live pool.
+    machine.succeed("mkdir -p /var/lib/atticd/storage")
+    machine.systemctl("stop atticd.service")
+    machine.fail("systemctl restart atticd-bootstrap.service")
+    machine.succeed("systemctl is-failed --quiet atticd-bootstrap.service")
+    machine.succeed("journalctl -u atticd-bootstrap.service -b | grep -q 'did not become ready'")
   '';
 }
