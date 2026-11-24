@@ -102,7 +102,7 @@ _: {
         deepCapPercent = lib.mkOption {
           type = lib.types.int;
           default = 60;
-          description = "Second rung: scaling_max_freq cap as a percent of each policy's snapshot maximum; restored when heat breaks below the high threshold (middle/cool band), on exit, or on external-override adoption";
+          description = "Second rung: scaling_max_freq cap as a percent of each policy's snapshot maximum; restored when the exitTicks cool dwell exits guided (never on a single sub-threshold tick) or on external-override adoption";
         };
 
         verboseIntervalSeconds = lib.mkOption {
