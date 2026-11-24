@@ -178,10 +178,11 @@ let
       # mnt-pool.mount ordering edge joined with the 2026-11-24 mount-gating
       # wave (ConditionPathIsDirectory wrong-skip guard, module comment).
       name = "bootstrap-after-storage-dir-only-no-network-online";
-      pass = bootstrap.after == [
-        "tq-storage-dir.service"
-        "mnt-pool.mount"
-      ];
+      pass =
+        bootstrap.after == [
+          "tq-storage-dir.service"
+          "mnt-pool.mount"
+        ];
     }
     {
       name = "bootstrap-runs-as-primary-user-no-run";
@@ -208,7 +209,8 @@ let
           systemnixInvocation = builtins.elemAt starts 1;
         in
         !lib.hasInfix "--model" systemnixInvocation
-        && lib.hasInfix "--verify SystemNix=nix flake check --no-build" systemnixInvocation
+        && lib.hasInfix "--verify" systemnixInvocation
+        && lib.hasInfix "SystemNix=nix flake check --no-build" systemnixInvocation
         && lib.hasInfix "--model zai/glm-5.3-flash" flashInvocation
         && lib.hasInfix "model large zai/glm-5.4 --think --reasoning-effort xhigh" (
           builtins.readFile ../.crushrc

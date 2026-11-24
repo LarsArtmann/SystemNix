@@ -199,7 +199,7 @@ in
   # Crush configuration — the crushrc itself is owned by the crush-config
   # repo (github:LarsArtmann/crush-config, private) via programs.crush-config.
   # The repo owns the renderer and the machine-independent set (provider key
-  # wiring, glm-5.3-flash model declaration, gopls/oxlint LSPs, context
+  # wiring, glm-5.3-flash + glm-5.4 model declarations, gopls/oxlint
   # paths); ONLY host-coupled values live here: the host-managed golangci
   # wrapper command (exists only on this machine). The qmd MCP is NOT wired
   # here anymore (2026-10-09): it is project-scoped to ~/projects/CV via
@@ -240,9 +240,11 @@ in
         # state (crush load.go resolveSelectedModels — rc slot > store >
         # catalog default), which had drifted to hyper/deepseek-v4.1-flash
         # (charm-cloud OAuth, un-metered). Pinning zai's flash tier keeps
-        # summarization cheap, non-thinking (--thinking always rides only
-        # the glm-5.3-flash model declaration), and inside the ai-meter.
-        # Large stays per-project (.crushrc tq lines; picker store elsewhere).
+        # summarization cheap, non-thinking (the slot carries no --think, and
+        # a model declaration's --thinking always does NOT reach the request
+        # in v0.102.0 — see docs/services/crush.md §Default Models), and
+        # inside the ai-meter.
+        # Large stays per-project (.crushrc slot lines; picker store elsewhere).
         model small zai/glm-4.7-flash
       fi
     '';
