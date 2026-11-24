@@ -50,6 +50,43 @@ flap-collapse (muted ones must not poison the counter).
   state (no re-fire storm at deploy). The relay's own restart grace covers
   the deploy window anyway.
 
+## Incident sink (tq, 1.1 — 2026-11-24)
+
+Every trigger that survives the gates is ALSO reported to the go-taskqueue
+incident pipeline (ADR-0021): `POST <tq-url>` with a Bearer token, which the
+pool's unconditional `incident-policy` sweeper turns into a prio-120 (first
+occurrence) / 150 (regression) agent fix task within one pool tick (~5 min).
+Flags `-tq-url` / `-tq-token` (env `TQ_API_URL` / `TQ_API_TOKEN` from the
+shared `tq-api-env` sops template, restartUnits-coupled to this unit); an
+empty URL disables the sink (startup banner names the state:
+`relay incident sink on <url> (project <p>)` or `… disabled`).
+
+Rules:
+
+- **Same gate, second sink** — the report fires only after a forward
+  decision and only for parsed TRIGGERS. Resolves are never incidents (a
+  recovery is not an error); unparseable payloads stay fail-open Discord
+  forwards. Replayed queued triggers are reported too: a mute that DELAYED
+  an alert must not lose the fix task.
+- **All four gates apply to the sink** — including SEV1-mute (muted
+  storm-attributable endpoints mint no agent tasks while the bridge pages;
+  intended: known-storm checks should not burn agent budget) and
+  flap-collapse (lossy for both sinks by design).
+- **Fingerprint stability** — the report Message is always
+  `Gatus health check failing: <Group/Name>`; the variable failure detail
+  rides Breadcrumbs (clipped 20 × 256 chars) so one flapping endpoint stays
+  ONE incident stream instead of fragmenting per-detail fingerprints.
+- **Delivery** — 2 attempts, then counted failure; any 4xx is a permanent
+  failure (no retry storm against a rejecting API). Counters
+  `tq_reports` / `tq_failures` are in `/healthz` (the relay check sees
+  liveness only — a sink gone dark quietly needs the counter alert, queued
+  in monitoring.md).
+
+Deep context on the receiving side: `docs/services/tq.md` → "Incident
+pipeline". Tests: `pkgs/gatus-alert-relay/tq_test.go` (POST shape/auth,
+message stability, skip-resolve/garbage/disabled, 4xx counting, breadcrumb
+clipping) run in-build via `doCheck`.
+
 ## Verification surfaces
 
 - `pkgs/gatus-alert-relay/policy_test.go` — every rule, replay transition,
@@ -78,7 +115,8 @@ flap-collapse (muted ones must not poison the counter).
 ## Files
 
 - `pkgs/gatus-alert-relay/` — Go source (stdlib only, vendorHash null,
-  ai-meter doctrine), wrapper `pkgs/gatus-alert-relay.nix`
+  ai-meter doctrine; `tq.go` = incident sink), wrapper
+  `pkgs/gatus-alert-relay.nix`
 - `modules/nixos/services/gatus-alert-relay.nix` — options + unit
 - `modules/nixos/services/gatus-config.nix` — webhook flip + relay check
 - Port: `lib/ports.nix` `gatusAlertRelay = 9411`

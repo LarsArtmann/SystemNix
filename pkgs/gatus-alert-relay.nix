@@ -6,7 +6,7 @@
 
 buildGo126Module {
   pname = "gatus-alert-relay";
-  version = "1.0.0";
+  version = "1.1.0";
 
   inherit src;
 
@@ -19,7 +19,7 @@ buildGo126Module {
   doCheck = true;
 
   meta = {
-    description = "Local gate on gatus' Discord webhook: boot grace, SEV1 parent-incident mute, flap collapse, re-arm guard — mutes delay, never lose";
+    description = "Local gate on gatus' Discord webhook: boot grace, SEV1 parent-incident mute, flap collapse, re-arm guard — mutes delay, never lose; forward-gated triggers additionally reported to the tq incident pipeline (1.1)";
     platforms = lib.platforms.linux;
     mainProgram = "gatus-alert-relay";
   };

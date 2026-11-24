@@ -2,7 +2,7 @@
 
 **Modules:** `modules/nixos/services/tq-agent-pool.nix` (house layer) over
 `inputs.go-taskqueue.nixosModules.default` (upstream `deploy/nixos/tq-agent-pool.nix`).
-**Units:** `tq-agent-pool.service`, `tq-serve.service`, `tq-storage-dir.service` (oneshot), `tq-bootstrap.service` (oneshot).
+**Units:** `tq-agent-pool.service`, `tq-serve.service`, `tq-api.service` (incident write API, :8112 loopback), `tq-storage-dir.service` (oneshot), `tq-bootstrap.service` (oneshot).
 **Dashboard:** `https://tq.home.lan` (protectedVHost: LAN bypass + external oauth2 forward-auth) → `127.0.0.1:8100` (`ports.tq`).
 **Journal:** `/mnt/pool/services/tq/tq.db` (HDD pool subvolume, btrbk-pool snapshotted nightly; created by `tq-storage-dir`, `RequiresMountsFor`-gated).
 **CLI:** `tq` on system PATH; `TQ_DB=/mnt/pool/services/tq/tq.db` is a session var for lars — `tq stats`, `tq dlq`, `tq tail -f` just work.
@@ -16,8 +16,11 @@ the DISPATCH QUEUE only** (agent-actionable `[ready]` one-liners; the full
 entries + blocked/watch/decision items live in `docs/todo/*.md` libraries —
 see AGENTS.md → "TODO System"). Blocked items are deliberately outside the
 harvest so agents stop being dispatched at sudo/push/browser-gated work. The model is pinned per-repo by the `.crushrc` managed block the
-`tq-bootstrap` oneshot ensures at every deploy (`zai/glm-5.3-flash`,
-reasoning xhigh) and commits locally (never pushes). SystemNix carries an
+`tq-bootstrap` oneshot ensures at every deploy and commits locally (never
+pushes): **SystemNix → `zai/glm-5.3` (full) @ xhigh** (2026-11-24 split —
+incident-minted fix tasks target SystemNix and get the big model;
+spend stays capped by `daily-budget = 30`), **CV + go-taskqueue →
+`zai/glm-5.3-flash` @ xhigh**. SystemNix carries an
 explicit verify gate (`--verify SystemNix=nix flake check --no-build`);
 go-taskqueue keeps its own `.tq-verify`.
 
@@ -35,6 +38,58 @@ INTERIM (upstream master is ahead of origin, owner-blocked push). Flip to
 `github:LarsArtmann/go-taskqueue?ref=master` after the push lands; CI cannot
 fetch git+file inputs until then. `go-nix-helpers` is deliberately not
 followed (bank-sync vendorHash FOD trap).
+
+## Incident pipeline — auto-debug (2026-11-24)
+
+Failing gatus checks and web client errors become agent fix tasks
+AUTOMATICALLY (owner request: "problems get high priority + a high-quality
+model, AI agents debug them ASAP"):
+
+```
+gatus trigger ──▶ gatus-alert-relay (noise gates) ──▶ POST /api/v1/errors (tq-api :8112)
+web client    ──▶ problems.home.lan/beacon.js ──▶ /report (Caddy injects Bearer) ──┘
+                                      │
+                                      ▼
+            incident:<sha256 fingerprint> stream (error.observed facts)
+                                      │  pool tick ≤ 5 min, unconditional sweeper
+                                      ▼
+            prio-120 agent task (first occurrence) / prio-150 (regression)
+```
+
+- **tq-api unit**: `tq api --addr 127.0.0.1:8112 --db <journal> --read-model=false`
+  (upstream ADR-0008 write API; `--read-model=false` because tq-serve owns
+  reads on :8100). Runs as the primary user (same journal/WAL as pool +
+  serve — SQLite WAL + busy_timeout by design; watch for `database is
+  locked` on first shared-write windows). Token-gated: every request needs
+  `Authorization: Bearer <TQ_API_TOKEN>`; tokenless `/api/v1/healthz` → 401
+  (the gatus check "tq Write API" asserts exactly that). Registry entry
+  `tq-api`, subdomain `problems`, layer "none" (no direct vHost proxying —
+  Caddy hand-writes the route), `noDashboardTile` by design.
+- **Fingerprint** = sha256(project | kind | normalized message | top stack
+  frame). The relay sends a STABLE message per endpoint
+  (`Gatus health check failing: <Group/Name>`, detail in breadcrumbs) so one
+  flapper stays one incident. Client-side minified-build stack churn WILL
+  fragment fingerprints — accepted per ADR-0021.
+- **Latency budget**: gatus failure-threshold (3 × interval) + relay gates
+  (boot-grace ≤15 min, rearm 10 min; flap-collapse lossy) + pool tick ≤5 min
+  ⇒ a persistent failure dispatches an agent ~10–20 min after onset.
+- **Web beacon**: `https://problems.home.lan/beacon.js` (classic script,
+  `data-project="<repo>"`, optional `data-endpoint` override — default
+derives from the flake domain). Captures `onerror` +
+  `unhandledrejection`, dedup, ≤5 events/page, `fetch keepalive`. LAN
+  reporting is open (CORS on `/report`); EXTERNAL reporting dies at the
+  oauth2 forward-auth gate by design — the token never reaches the browser
+  (Caddy injects the Bearer server-side from the same `tq-api-env` template).
+  Junk is bounded by incident dedup + `daily-budget`.
+- **Token rotation** (owner, sops workflow): edit
+  `platforms/nixos/secrets/tq.yaml` key `tq_api_token` via the sops editor
+  (NEVER a `--set` command line), deploy — the `tq-api-env` template's
+  restartUnits (tq-api, gatus-alert-relay, caddy) roll all three consumers
+  in one switch. Value shape: 48-hex.
+- **Synthetic-probe hygiene**: a controlled E2E mint is POST → verify →
+  `tq cancel <id> --force`; cancelled tasks HOLD their dedup key, so mark
+  synthetic messages `SYNTHETIC-PROBE` (never reuse a real endpoint's
+  message text or you permanently pre-dedup its first real incident).
 
 ## Boot placement & PSI entry gate
 
