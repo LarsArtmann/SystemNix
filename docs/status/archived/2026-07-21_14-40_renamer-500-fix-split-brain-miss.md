@@ -209,7 +209,7 @@ Diagnosed and fixed the renamer HTTP 500 (nil-pointer panic from read-only-home 
 
 **Awaiting user instructions on the 3 questions above before proceeding.**
 
-> **Update 2026-07-21 15:14 (commit `b0c76b58`):** ~~Awaiting instructions.~~ **RESOLVED.** Watcher wired to `dataDir` paths, state migrated (25 entries), dashboard verified at `total_operations: 25`. See `docs/status/2026-07-21_15-14_renamer-split-brain-resolution.md`.
+> **Update 2026-07-21 15:14 (commit `b0c76b58`):** ~~Awaiting instructions.~~ **RESOLVED.** Watcher wired to `dataDir` paths, state migrated (25 entries), dashboard verified at `total_operations: 25`. See `docs/status/archived/2026-07-21_15-14_renamer-split-brain-resolution.md`.
 
 ---
 

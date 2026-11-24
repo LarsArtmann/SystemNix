@@ -126,7 +126,7 @@
     ~~16. **Add Caddy access log rotation for `history.home.lan`** — Currently logs to `/var/log/caddy/access-history.home.lan.log` but no rotation is configured.~~ done — global Caddy log rotation (roll_size 100MB)
     ~~17. **Consider Pocket ID OIDC integration** — Browser-history has its own WebAuthn. If Pocket ID SSO is desired, upstream needs OIDC code. Currently NOT feasible (like Homepage/SigNoz — no native OIDC).~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
     ~~18. **Review Caddy vHost pattern for WebAuthn services** — The direct TLS proxy (no forward-auth) pattern should be documented for future WebAuthn services.~~ done — documented in AGENTS.md
-15. **Add browser-history to SystemNix VM tests** — Create a `tests/browser-history.nix` test that verifies the service starts and `/health` returns 200.
+15. **Add browser-history to SystemNix VM tests** — Create a `tests/test-browser-history.nix` test that verifies the service starts and `/health` returns 200.
     ~~20. **Monitor memory usage** — `MemoryMax=512M` may be too low for a CQRS/ES app with SQLite. Watch for OOM kills.~~ done — no OOM issues, peaked at 54.1M
 
 ### Long-term / nice-to-have

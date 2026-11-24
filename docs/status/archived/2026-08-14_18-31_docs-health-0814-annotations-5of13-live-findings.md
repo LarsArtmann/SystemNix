@@ -133,7 +133,7 @@ The `systemctl is-active` batch died on sandbox policy. journalctl, docker inspe
 
 ### TODO_LIST routing (new this session)
 
-~~11. immich backup stale 999h~~ done — fixed across the collector-capability fix (08-15) + pool migration; first full overnight pool cycle GREEN 2026-08-17 (immich-db-backup success, `backup_healthy=1`; `docs/status/2026-08-17_10-28` §a.1).
+~~11. immich backup stale 999h~~ done — fixed across the collector-capability fix (08-15) + pool migration; first full overnight pool cycle GREEN 2026-08-17 (immich-db-backup success, `backup_healthy=1`; `docs/status/archived/2026-08-17_10-28_data-corruption-triage-status.md` §a.1).
 12. Recreate dozzle container ← open — TODO_LIST P1.
 ~~13. BTRFS scrubs interrupted ×2~~ superseded by events — weekly scrubs complete since (the 2026-08-17 /data scrub ran 6h37m and finished, FINDING the 1.3MB corruption); root-fs scrub remains TODO_LIST P0.
 ~~14. Update the disk item: 97% → 87%~~ done — item since re-based to the 95%-era reality in TODO_LIST P0 (pool migration era).
