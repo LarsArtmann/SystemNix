@@ -2131,7 +2131,7 @@ fi
 # crash class without needing a GUI: every Qt style env var the deployed HM
 # sets must RESOLVE, and the QQC2 "module ... is not installed" abort
 # signature (the 49-restart polkit crash-loop) must be absent from the
-# journal.
+# DEPLOYED polkit host units' journal (dms.service, niri-flake-polkit.service).
 _desktop_user=$(id -un)
 _hm_vars="/etc/profiles/per-user/${_desktop_user}/etc/profile.d/hm-session-vars.sh"
 _qt_plugins="/etc/profiles/per-user/${_desktop_user}/lib/qt-6/plugins"
@@ -2162,16 +2162,30 @@ if [ -f "$_hm_vars" ]; then
 else
   _polkit_problems=" hm-session-vars.sh not found;"
 fi
-_qqc_lines=$(journalctl --user --since "-24 hours" --grep 'is not installed' --no-pager --output short-iso 2>/dev/null | grep 'module' || true)
-_qqc_count=$(printf '%s' "$_qqc_lines" | grep -c . || true)
-if [ "${_qqc_count:-0}" -gt 0 ]; then
-  _qqc_last=$(printf '%s' "$_qqc_lines" | tail -1)
-  _polkit_problems="${_polkit_problems} ${_qqc_count} 'module ... is not installed' journal line(s) in the last 24h; newest: ${_qqc_last};"
+# Deployed polkit host units ONLY: an abort there is the 2026-08-18/2026-10-03
+# crash-loop class. 'module ... is not installed' lines from OTHER processes
+# (manual/repro QML runs, e.g. the 2026-11-24 ~/.cache/polkit-fusion-repro
+# harness that false-FAILed the gen-1028 smoke) are reported as a separate
+# non-blocking WARN below - they are not deploy health.
+_qqc_all_lines=$(journalctl --user --since "-24 hours" --grep 'is not installed' --no-pager --output short-iso 2>/dev/null | grep 'module' || true)
+_qqc_unit_lines=$(journalctl --user -u dms.service -u niri-flake-polkit.service --since "-24 hours" --grep 'is not installed' --no-pager --output short-iso 2>/dev/null | grep 'module' || true)
+_qqc_unit_count=$(printf '%s' "$_qqc_unit_lines" | grep -c . || true)
+if [ "${_qqc_unit_count:-0}" -gt 0 ]; then
+  _qqc_last=$(printf '%s' "$_qqc_unit_lines" | tail -1)
+  _polkit_problems="${_polkit_problems} ${_qqc_unit_count} 'module ... is not installed' abort(s) in deployed polkit host units (dms.service, niri-flake-polkit.service) in the last 24h; newest: ${_qqc_last};"
 fi
 if [ -z "$_polkit_problems" ]; then
-  report_pass "Desktop - polkit dialog render sanity (Qt style env resolvable, no QQC2 aborts)"
+  report_pass "Desktop - polkit dialog render sanity (Qt style env resolvable, no QQC2 aborts in deployed polkit host units)"
 else
   report_fail "Desktop - polkit render:${_polkit_problems}"
+fi
+_qqc_other_count=$(( $(printf '%s' "$_qqc_all_lines" | grep -c . || true) - ${_qqc_unit_count:-0} ))
+if [ "${_qqc_other_count:-0}" -gt 0 ]; then
+  _qqc_note=""
+  if [ "${_qqc_unit_count:-0}" -eq 0 ]; then
+    _qqc_note="; newest: $(printf '%s' "$_qqc_all_lines" | tail -1)"
+  fi
+  report_warn "Desktop - polkit render: ${_qqc_other_count} 'module ... is not installed' journal line(s) OUTSIDE deployed polkit host units in the last 24h (manual/repro QML runs - not deploy health)${_qqc_note}"
 fi
 
 # Desktop: polkit agent SLOT OWNERSHIP (2026-10-04 race aftermath — §f.2 of
