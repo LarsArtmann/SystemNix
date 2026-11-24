@@ -64,6 +64,25 @@ use_go_env() {
   fi
 }
 
+# ─── Rust Build Gate ──────────────────────────────────────────────────────────
+# ~/.config/direnv/bin/cargo (deployed from ./cargo-gate.sh) shadows `cargo`
+# in every direnv shell: compile-type subcommands are refused while the target
+# filesystem is near-full, the box is IO-storming, or Tctl is at the ceiling —
+# the freeze #60-63 class (2026-11-22..24: cargo batteries writing into a
+# 100%-full /mnt/rust-cache on a box with terminal thermal constraints).
+# RUST_BUILD_GATE=0 escapes; metadata/fmt/version pass through untouched.
+#
+# Prepended here at lib load (BEFORE .envrc) so plain-.envrc repos are covered.
+# `use flake` prepends the devShell profile AFTER lib load — repos whose
+# .envrc uses `use flake` must re-prepend ~/.config/direnv/bin below it
+# (monitor365 and printer-monitor .envrc files do).
+if [ -x "${HOME}/.config/direnv/bin/cargo" ]; then
+	case ":${PATH}:" in
+		*":${HOME}/.config/direnv/bin:"*) ;;
+		*) export PATH="${HOME}/.config/direnv/bin:${PATH}" ;;
+	esac
+fi
+
 # ─── Dead Automount Guard (/mnt/buildcache) ──────────────────────────────────
 # The session env (home.nix) points GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE/
 # npm_config_cache at the /mnt/buildcache USB automount. When the device is

@@ -23,4 +23,17 @@
   home.file.".config/direnv/lib/zz-smart-nix.sh" = {
     source = ./direnv-smart-lib.sh;
   };
+
+  # Rust build gate — shadows `cargo` in every direnv shell (see
+  # direnv-smart-lib.sh "Rust Build Gate" section). Compile-type subcommands
+  # are refused while the target filesystem is near-full, the box is
+  # IO-storming, or Tctl is at the ceiling — the freeze #60-63 class
+  # (2026-11-22..24: cargo batteries into a 100%-full /mnt/rust-cache).
+  # RUST_BUILD_GATE=0 escapes. Repos whose .envrc uses `use flake` re-prepend
+  # ~/.config/direnv/bin AFTER it (the devShell profile would otherwise land
+  # in front of this lib-level PATH edit).
+  home.file.".config/direnv/bin/cargo" = {
+    source = ./cargo-gate.sh;
+    executable = true;
+  };
 }
