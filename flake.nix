@@ -224,12 +224,15 @@
     };
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
-    # ROLLBACK LIFTED 2026-11-24: the 2026-11-18 rollback (tip b77dc243 failed
-    # the templ-freshness gate) re-floated per its own LIFT condition — upstream
-    # regenerated: tip 29bd8068 (css artifacts regen 9054067c at tailwind 4.3.5,
-    # 2026-11-24 02:01) builds BOTH packages green first-hand (#dnsblockd and
-    # #dnsblockd-base, the templ+css freshness gates included) after 316
-    # unpushed commits landed upstream (pushed 2026-11-24, deploy-blocked wave).
+    # 2026-11-24 css-gate incident, resolved upstream: the 2026-11-18-era note
+    # about a lock-node rollback was stale (no dnsblockd node ever persisted in
+    # flake.lock — the input lazy-fetches the branch tip). GitHub master sat at
+    # 9fe62ce7 (2026-11-10, css regenerated at tailwind 4.3.4) while the locked
+    # nixpkgs moved to tailwindcss 4.3.5, so the build-time freshness gate
+    # failed on every deploy since. Upstream fix: 316 unpushed commits landed
+    # (pushed 2026-11-24), tip 29bd8068 carries css regenerated at 4.3.5
+    # (9054067c, 02:01) — BOTH packages (#dnsblockd, #dnsblockd-base, templ+css
+    # gates included) build green first-hand.
     dnsblockd = {
       url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=refs/heads/master";
     };
