@@ -273,8 +273,11 @@
             # host (no dataDir ever) skips too, which is correct — the
             # pre-pool layout this migration fixed no longer exists to
             # migrate. after mnt-pool.mount (ordering-only) avoids the
-            # slow-DAS wrong-skip.
+            # slow-DAS wrong-skip. The ConditionPathIsMountPoint leg is the
+            # mount-gating-audit-accepted form — dir-existence alone would pass
+            # on a root-fs shadow dir (the audit's silent-write-absorption class).
             after = [ "mnt-pool.mount" ];
+            unitConfig.ConditionPathIsMountPoint = [ "/mnt/pool" ];
             unitConfig.ConditionPathIsDirectory = [ cfg.dataDir ];
             serviceConfig = lib.mkMerge [
               {

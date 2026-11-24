@@ -327,7 +327,12 @@
             # Condition on the archive dir itself (pool absent → dir absent
             # → skip; the in-script guard stays as belt). after
             # mnt-pool.mount (ordering-only) avoids the slow-DAS wrong-skip.
+            # The ConditionPathIsMountPoint leg is the
+            # mount-gating-audit-accepted form — dir-existence alone would
+            # pass on a root-fs shadow dir (the audit's
+            # silent-write-absorption class).
             after = [ "mnt-pool.mount" ];
+            unitConfig.ConditionPathIsMountPoint = [ "/mnt/pool" ];
             unitConfig.ConditionPathIsDirectory = [ archivePath ];
             wantedBy = [ "multi-user.target" ];
             # Converge BEFORE the crawler can scan.

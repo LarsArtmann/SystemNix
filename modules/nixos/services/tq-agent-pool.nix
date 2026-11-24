@@ -558,6 +558,11 @@ _: {
           documentation = [ "https://github.com/larsartmann/go-taskqueue" ];
           after = [ "tq-storage-dir.service" ];
           wants = [ "tq-storage-dir.service" ];
+          # tq-storage-dir has the implicit pool-recovery gating; this unit
+          # (vHost.layer = "none") does not — the mount-gating audit requires
+          # explicit gating here or the detached-DAS boot 226-loops on the
+          # missing journal dir (tq-storage-dir's harden pattern).
+          unitConfig.RequiresMountsFor = [ "/mnt/pool/services/tq" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;
