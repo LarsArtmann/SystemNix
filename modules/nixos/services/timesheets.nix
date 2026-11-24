@@ -263,9 +263,13 @@
                   name = "Timesheets";
                   group = "Finance";
                   description = "Timesheet recording API — event-sourced store, approval workflow";
-                  # Closest pack glyph for time tracking (dashboard-icons
-                  # solidtime); no timesheet-specific icon exists.
-                  icon = "solidtime.png";
+                  # The project's own mark (assets/logo in the upstream repo,
+                  # served via the package's brandAssets passthru below) —
+                  # replaced the borrowed dashboard-icons solidtime glyph
+                  # 2026-11-24, monitor365 precedent: the upstream pack has no
+                  # timesheet mark and a URL icon would depend on the linked
+                  # service being up.
+                  icon = "timesheets.svg";
                 };
                 backup = {
                   directory = backupDir;
@@ -275,6 +279,18 @@
                 monitored = true;
               };
             };
+          })
+
+          # Tile icon bytes for the Services tab: the upstream pack has no
+          # timesheet mark, so the icon-pack derivation (papdashboard.nix
+          # dashboardIcons) copies the SVG from the SAME flake rev as the
+          # deployed binary — tile logo and binary identity cannot drift
+          # (brandAssets passthru, timesheets flake.nix). The attribute name
+          # IS the served file name and must match the homepage icon above.
+          # Requires the timesheets package to carry brandAssets; a package
+          # override that drops the passthru fails eval loudly here.
+          (lib.optionalAttrs (options ? services.papdashboard) {
+            services.papdashboard.extraIcons."timesheets.svg" = cfg.package.brandAssets + "/timesheets.svg";
           })
         ]
       );

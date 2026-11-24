@@ -64,6 +64,84 @@ _: {
       # Catppuccin Mocha (theme.nix base/text/subtext0/surface0/lavender/
       # mauve), hardcoded so the server config does not depend on the
       # desktop theme file.
+      # problems.<domain> beacon asset root: a single classic script any
+      # LAN web app embeds to route uncaught browser errors into the tq
+      # incident pipeline (ADR-0021 kind=client → agent fix task). Classic
+      # script on purpose: <script src> cross-origin needs no CORS to LOAD
+      # (only the /report fetch needs CORS, handled on that route), and it
+      # keeps the embed one line with data-* config. No template literals
+      # or dollar-brace sequences: the file is a Nix string.
+      beaconRoot = pkgs.writeTextDir "beacon.js" ''
+        /* SystemNix problems beacon — auto-debug pipeline (2026-11-24).
+         * Embed: <script src="https://problems.DOMAIN/beacon.js" data-project="YourRepo"></script>
+         * Uncaught errors + unhandled rejections POST to /report; the tq
+         * agent pool mints a fix task per distinct error (fingerprinted by
+         * message + top stack frame; max 5 per page load, identical errors
+         * deduped). No cookies, no PII beyond route + session id. */
+        (function () {
+          "use strict";
+          var script = document.currentScript;
+          var endpoint = (script && script.getAttribute("data-endpoint"))
+            || "https://problems.${domain}/report";
+          var project = (script && script.getAttribute("data-project")) || "";
+          if (!project || !window.fetch) { return; }
+          var seen = {};
+          var sent = 0;
+          var MAX_PER_PAGE = 5;
+          function sessionId() {
+            try {
+              var key = "__tq_beacon_sid";
+              var v = sessionStorage.getItem(key);
+              if (!v) {
+                v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                sessionStorage.setItem(key, v);
+              }
+              return v;
+            } catch (e) { return ""; }
+          }
+          function report(message, stack) {
+            if (sent >= MAX_PER_PAGE) { return; }
+            message = String(message || "unknown client error");
+            stack = String(stack || "");
+            var key = message + "|" + stack.split("\n")[0];
+            if (seen[key]) { return; }
+            seen[key] = 1;
+            sent++;
+            var meta = document.querySelector('meta[name="release"]');
+            var body = JSON.stringify({
+              project: project,
+              kind: "client",
+              message: message.slice(0, 1000),
+              stack: stack.slice(0, 4000),
+              route: location.pathname,
+              release: meta ? (meta.getAttribute("content") || "") : "",
+              sessionId: sessionId()
+            });
+            try {
+              fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: body,
+                keepalive: true,
+                mode: "cors"
+              }).catch(function () { /* beacon is best-effort */ });
+            } catch (e) { /* best-effort */ }
+          }
+          window.addEventListener("error", function (ev) {
+            if (ev.error && ev.error.message) {
+              report(ev.error.message, ev.error.stack || "");
+            } else {
+              report(ev.message || "window error", "");
+            }
+          });
+          window.addEventListener("unhandledrejection", function (ev) {
+            var r = ev.reason;
+            var msg = r && r.message ? r.message : String(r);
+            report("Unhandled rejection: " + msg, (r && r.stack) || "");
+          });
+        })();
+      '';
+
       notFoundRoot = pkgs.linkFarm "caddy-notfound-root" [
         {
           name = "index.html";
@@ -746,6 +824,57 @@ _: {
                   '';
                 };
 
+                # problems.<domain> — the browser-error half of the
+                # auto-debug pipeline: web clients POST uncaught errors to
+                # /report (tq incident API, ADR-0021 kind=client) and load
+                # /beacon.js (the embeddable reporter). The tq bearer token
+                # is injected HERE server-side — the browser never sees it.
+                # Route order is load-bearing (same-source-order precedence
+                # as the auth vHost): preflight first (OPTIONS never carries
+                # credentials; gating it kills CORS), then the gate for
+                # external clients, then the LAN-direct routes. External
+                # /report dies at the OAuth gate by design: sendBeacon
+                # cannot complete a redirect dance, and an internet-open
+                # error sink would mint junk fix tasks (the relay's gated
+                # path stays the ingress of record for infra failures).
+                "problems.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    # proxy-port:${toString ports.tqApi}
+                    @beacon_preflight method OPTIONS
+                    handle @beacon_preflight {
+                      header {
+                        Access-Control-Allow-Origin "*"
+                        Access-Control-Allow-Methods "POST, OPTIONS"
+                        Access-Control-Allow-Headers "Content-Type"
+                        Access-Control-Max-Age "86400"
+                      }
+                      respond 204
+                    }
+                    @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                    handle @external {
+                      ${forwardAuth}
+                      respond "problems — tq incident sink: POST /report, embed /beacon.js (LAN beacons only; external POST is gated)" 200
+                    }
+                    handle /report {
+                      header Access-Control-Allow-Origin "*"
+                      reverse_proxy 127.0.0.1:${toString ports.tqApi} {
+                        header_up Authorization "Bearer {env.TQ_API_TOKEN}"
+                      }
+                    }
+                    handle /beacon.js {
+                      header Cache-Control "public, max-age=300"
+                      root * ${beaconRoot}
+                      file_server
+                    }
+                    handle {
+                      respond "problems — tq incident sink: POST /report, embed /beacon.js" 200
+                    }
+                    ${serverErrorRoute}
+                  '';
+                };
+
                 "auth.${domain}" = {
                   extraConfig = ''
                     ${tlsConfig}
@@ -1021,7 +1150,16 @@ _: {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          serviceConfig = lib.mkMerge [
+          # tq bearer token for the problems.<domain> /report route
+          # (header_up injection — the browser never sees it). Same
+          # root-owned template tq-api and the alert relay read; rotation
+          # restarts all three.
+          serviceConfig = lib.mkMerge (
+            [
+              { EnvironmentFile = [ config.sops.templates."tq-api-env".path ]; }
+            ]
+            ++ (let other = (builtins.head [ "see-below" ]); in [ ])
+          );
             (serviceOneshotDefaults { })
             {
               Type = "oneshot";
