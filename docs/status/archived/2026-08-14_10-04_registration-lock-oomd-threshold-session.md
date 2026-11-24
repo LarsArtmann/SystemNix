@@ -117,7 +117,7 @@ Two TODO items were executed: the browser-history registration lock and the oomd
 **Release & verify this session's work (1–12)**
 
 1. ~~Fix `es_materialize_adapter_test.go` drift vs go-cqrs-lite (`DeleteTypes`/`DeleteInclude`) — blocks cqrs-htmx CI/tagging~~ done — realigned (`b1ad3350`, `cd165417`); `v4.8.0` train tagged past it
-2. ~~Commit cqrs-htmx changes (5 files) with attribution before the auto-git daemon does~~ done at `e5cdc925` (+ `b1ad3350` OAuth2 extension)
+2. ~~Commit cqrs-htmx changes (5 files) with attribution before the auto-git daemon does~~ done (commit `e5cdc925` in cqrs-htmx) (+ `b1ad3350` OAuth2 extension)
 3. ~~Commit browser-history changes (config.go, server.go, go.work, go.work.sum)~~ done (commit `b750ec5` in browser-history) (tree clean)
 4. ~~Tag cqrs-htmx identity-model + usermgmt (decide patch vs minor bump)~~ done — full `v4.8.0` train (`identity-model/v4.8.0`, `usermgmt/v4.8.0`, + adminui/setup/auditlog/dashboardui); both gate commits verified inside the tags via `git tag --contains`
 5. Bump browser-history `go.mod` to require the new cqrs-htmx tags (remove reliance on replaces for version resolution) — still open: go.sum contains zero `v4.8.0` references

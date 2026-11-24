@@ -3903,3 +3903,4 @@
 - [ ] [ready] **scripts/proc-mem-triage.sh: PID → VmRSS/VmHWM/VmSwap/threads + cgroup + unit one-liner** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-16_15-21_paperless-celery-31g-btop-pid-reuse-final.md §f.6)
 - [ ] [ready] **Document GOTOOLCHAIN predicate multi-line-assignment limitation (hook comment + CONTRIBUTING inventory)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-09-22_06-48_task-000001a0c6bd90a690334c899ba5510344aa.md row 8)
 - [ ] [ready] **tests/test-signoz.nix VM test (packages + config validation + migrator)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-18_08-38_signoz-bump-nix-email-master-flip-full-status-and-self-review.md §f.15)
+- [ ] [ready] **docs-health archive waves: strike/route/archive the 344 open 2026-08/09 status reports (13.2k open items)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs-health audit 2026-11-24)

@@ -16,7 +16,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **AI/ML**                | FastFlowLM (Qwen MoE on AMD NPU), llama-rag (embeddings + reranking on GPU), llama.cpp, AMD XDNA NPU driver                                                                                                                                                                                                     |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                                                                                                                                       |
 | **Monitoring**           | SigNoz (61 alert rules, 10 dashboards), Gatus (298 health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                                                                                                                 |
-| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 3.9M+ blocked domains                                                                                                                                                                                      |
+| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, ~4M+ blocked domains                                                                                                                                                                                      |
 | **Storage**              | BTRFS with btrbk snapshots (daily, sent to a 2×16TB RAID1 HDD pool), ZRAM swap (~62 GiB at 50% of visible RAM), weekly scrub, daily fstrim                                                                                                                                                                      |
 
 ## Quick Start
@@ -115,7 +115,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **PMA**             | —                | —                    | Projects Management Automation (AI commit messages, repo discovery)                                                                                                         |
 | **Dual-WAN**        | —                | —                    | MPTCP dual-WAN with route health monitoring (module in-tree, currently disabled)                                                                                            |
 | **Gatus**           | 9110             | `status.home.lan`    | Health check monitoring with Discord alerts                                                                                                                                 |
-| **DNS Blocker**     | 53, 8050         | `dnsblock.home.lan`  | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked                                                                         |
+| **DNS Blocker**     | 53, 8050         | `dnsblock.home.lan`  | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, ~4M+ domains blocked                                                                         |
 | **Mullvad VPN**     | —                | —                    | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                                                                                                       |
 | **DiscordSync**     | —                | —                    | Continuous Discord channel backup bot                                                                                                                                       |
 | **SearXNG**         | 8889             | `search.home.lan`    | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                                                                                           |
@@ -128,7 +128,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 ### DNS Blocking
 
 - dnsblockd with embedded sdns recursive resolver (DNSSEC, DoT, DoH, caching, local zones, LAN ACLs)
-- 3.9M+ blocked domains across 23 blocklists (ads, trackers, malware, telemetry, gambling, native device trackers)
+- ~4M+ blocked domains across 23 blocklists (ads, trackers, malware, telemetry, gambling, native device trackers)
 - Blocklist hot-reload with automatic cache flush
 - Local `.home.lan` DNS zone — explicit per-service records (dnsblockd has NO wildcard local resolution; new subdomains must be listed)
 - IPv6 disabled at DNS level (no global IPv6 on evo-x2)

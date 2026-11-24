@@ -793,7 +793,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-710 | P3 | pixel6 | Immich ingestion of DCIM + WhatsApp media | S-1383 (pixel6:27) | 96 |
 | T-711 | P3 | pixel6 | Pool README day-2 update (signal key, pending XML... | S-1384 (pixel6:30) | 96 |
 | T-712 | P3 | security | Crush key-hygiene leftovers | S-1385 (security:24) | 96 |
-| T-713 | P3 | security | ~~Identify + tame the Go pprof listener on *:6060... | S-1386 (security:33) | 96 |
+| ~~T-713~~ | ~~P3~~ | ~~security~~ | ~~Identify + tame the Go pprof listener on *:6060... | ~~S-1386 (security:33)~~ | ~~96~~ |
 | T-714 | P3 | services | bank-sync sentinel go-live | S-1387 (services:33) | 96 |
 | T-715 | P3 | services | paperless postgres collation refresh | S-1388 (services:36) | 96 |
 | T-716 | P3 | services | indexer-web ioTier assignment | S-1389 (services:44) | 96 |
@@ -980,7 +980,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-897 | P3 | stability | Extend memory-guard trip lines to top-5 child-uni... | S-1570 (stability:264) | 96 |
 | T-898 | P3 | stability | Document the three-line PSI doctrine | S-1571 (stability:269) | 96 |
 | T-899 | P3 | stability | Fixture selftest for btrfs-gc-guard itself (space... | S-1572 (stability:278) | 96 |
-| T-900 | P3 | stability | Identify the /mnt/buildcache (sdb) no-waiter ~~100... | S-1573 (stability:293) | 96 |
+| ~~T-900~~ | ~~P3~~ | ~~stability~~ | Identify the /mnt/buildcache (sdb) no-waiter ~~100... | ~~S-1573 (stability:293)~~ | ~~96~~ |
 | T-901 | P3 | stability | Identify the chromium-inside-tq-agent-pool-memcg ... | S-1574 (stability:298) | 96 |
 | T-902 | P3 | stability | Journald truncated-file warnings (system@…journal... | S-1575 (stability:301) | 96 |
 | T-903 | P3 | stability | llama-chat streaming pre-warm: ExecStartPre cat-s... | S-1576 (stability:302) | 96 |
@@ -1022,7 +1022,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-939 | P3 | storage | Sweep stale "frozen spare / SSD 2 / spare SSDs" r... | S-1612 (storage:226) | 96 |
 | T-940 | P3 | storage | Check btrbk/snapshot configs for a stale @cache-h... | S-1613 (storage:231) | 96 |
 | T-941 | P3 | storage | Reconcile the go-lint numbers between the trashed... | S-1614 (storage:232) | 96 |
-| T-942 | P3 | storage | Measure whether the 55G Trash (~~/.local/share/Tra... | S-1615 (storage:233) | 96 |
+| ~~T-942~~ | ~~P3~~ | ~~storage~~ | Measure whether the 55G Trash (~~/.local/share/Tra... | ~~S-1615 (storage:233)~~ | ~~96~~ |
 | T-943 | P3 | storage | Post-gc drain proof for the ~/tmp/go-lint reclama... | S-1616 (storage:237) | 96 |
 | T-944 | P3 | storage | crush-hot-db-migrate: 10min wall for 0 relocations | S-1617 (storage:248) | 96 |
 | T-945 | P3 | storage | bench-disk.sh's hardcoded fio store path is GC-able | S-1618 (storage:258) | 96 |
@@ -2514,7 +2514,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | S-1383 | pixel6:27      | Immich ingestion of DCIM + WhatsApp media                                | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
 | S-1384 | pixel6:30      | Pool README day-2 update (signal key, pending XMLs, Navidrome/FLAC pl... | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
 | S-1385 | security:24    | Crush key-hygiene leftovers                                              | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
-| S-1386 | security:33    | ~~Identify + tame the Go pprof listener on *:6060~~ IDENTIFIED 2026-1... | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
+| ~~S-1386~~ | ~~security:33~~ | ~~Identify + tame the Go pprof listener on *:6060~~ IDENTIFIED 2026-1... | ~~H2~~ | ~~1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit~~ | ~~8~~ | ~~P3~~ |
 | S-1387 | services:33    | bank-sync sentinel go-live                                               | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
 | S-1388 | services:36    | paperless postgres collation refresh                                     | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |
 | S-1389 | services:44    | indexer-web ioTier assignment                                            | H2     | 1 premise + design, 2-6 implement + selftest legs, 7 eval/flake-check, 8 docs/rows/commit | 8     | P3                                                    |

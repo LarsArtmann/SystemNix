@@ -106,7 +106,7 @@
 
 ## c) NOT STARTED
 
-1. ~~**Update BuildFlow to samber-do-auditlog v0.9.2** — BuildFlow still pins v0.9.1 (which has the templ fix but not the retract directive). Low priority: v0.9.1 works perfectly. v0.9.2 only adds the `go.mod` retract for v0.9.0.~~ done at `4e4b5538` (BuildFlow repo now pins `refs/tags/v0.9.2`)
+1. ~~**Update BuildFlow to samber-do-auditlog v0.9.2** — BuildFlow still pins v0.9.1 (which has the templ fix but not the retract directive). Low priority: v0.9.1 works perfectly. v0.9.2 only adds the `go.mod` retract for v0.9.0.~~ done (commit `4e4b5538` in BuildFlow) (BuildFlow repo now pins `refs/tags/v0.9.2`)
 2. ~~**Update other LarsArtmann repos** — `library-policy` and `projects-management-automation` pin samber-do-auditlog to master `e1053d1` (post-v0.9.0, pre-fix). They don't import `live` so they compile fine. But they should be bumped to v0.9.2 for consistency.~~ done (moot) — both still pin `master`, which contains the fix; neither imports `live`
 3. ~~**Post-deploy check fix for Browser History** — Should test `/health` not `/`.~~ done (moot) — `/` probe non-fatal since `adb1301a`; Gatus "Browser History" check probes `/health`
 4. ~~**Monitor365 server** — Intentionally `enable = false` in configuration.nix. Not a bug to fix — it's disabled due to local-only BTRFS data loss risk.~~ done (superseded) — re-enabled later (backup at 03:00, watchdog, Gatus checks), then deliberately disabled again ~08-12 for an upstream wireguard-collector build break; Gatus checks are conditional on enable
@@ -183,7 +183,7 @@ The logs clearly show `session reaper failed: no such column: expires_at (1)` ev
 2. ~~**Fix post-deploy check for Browser History** — Test `/health` not `/`. False positive FAIL.~~ done (moot) — `/` probe non-fatal since `adb1301a`; Gatus owns `/health`
 3. ~~**Fix Overview 503** — Investigate missing project-discovery daemon socket.~~ done at `3ef0f26a`
 4. ~~**Fix `signoz.home.lan` 404** — Caddy vHost routing for SigNoz web UI.~~ done (moot) — did not recur; monitored by 4 Gatus SigNoz checks
-5. ~~**Bump BuildFlow to samber-do-auditlog v0.9.2** — Pick up retract directive.~~ done at `4e4b5538` (BuildFlow repo)
+5. ~~**Bump BuildFlow to samber-do-auditlog v0.9.2** — Pick up retract directive.~~ done (commit `4e4b5538` in BuildFlow) (BuildFlow repo)
 
 ### High (prevents recurrence)
 

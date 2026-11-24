@@ -22,7 +22,7 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **dnsblockd**       | Custom Go DNS resolver replacing Unbound. Embeds sdns: DNSSEC, DoT, DoH, caching, local zones, blocklists                                 |
 | **sdns**            | Stubby-derived DNS stub resolver library. dnsblockd wraps it with Go bindings                                                             |
-| **Blocklist**       | A curated list of domains to block (ads, trackers, malware). 2.5M+ entries across 23 lists                                                |
+| **Blocklist**       | A curated list of domains to block (ads, trackers, malware). ~4M+ entries across 23 lists (realized mapping 4,296,867 domains, verified 2026-10-01)                                                |
 | **Local zone**      | DNS entries for `*.home.lan` — resolved locally by dnsblockd, not forwarded upstream                                                      |
 | **Local subdomain** | An explicitly listed hostname in `dnsLocal.localSubdomains`. Required because dnsblockd's sdns resolver does NOT support wildcard records |
 

@@ -1104,7 +1104,7 @@ Members reference Level-2 IDs (`S-nnnn`); packed sprints list all members, H4/D 
 | T-0996 | P3 | pixel6 | Human-friendly renamed mirror tree** (hardlink mirror, no ex | S-0973 | 12 |
 | T-0997 | P3 | pixel6 | Pool README day-2 update** (signal key, pending XMLs, Navidr | S-0974 | 96 |
 | T-0998 | P3 | security | Crush key-hygiene leftovers** — rotate zai/gemini/minimax ke | S-0975 | 96 |
-| T-0999 | P3 | security | ~~**Identify + tame the Go pprof listener on `*:6060`**~~ ** | S-0976 | 96 |
+| ~~T-0999~~ | ~~P3~~ | ~~security~~ | ~~**Identify + tame the Go pprof listener on `*:6060`**~~ ** | ~~S-0976~~ | ~~96~~ |
 | T-1000 | P3 | services | Verify the Forgejo issues/comments API contract against the  | S-0977 | 12 |
 | T-1001 | P3 | services | bank-sync sentinel go-live — residual verification** (deploy | S-0978 | 96 |
 | T-1002 | P3 | services | indexer-web ioTier assignment** — the daily full-tree scan o | S-0979 | 96 |
@@ -1688,7 +1688,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-1524 | monitoring:22 | SEV1: signoz-collector DEAD since 2026-10-27 20:21:53 — ALL telemetry (metrics+l… | GATED | 0 | P2 |
 | S-0680 | monitoring:23 | `check_user_service` in scheduled-tasks.nix is defined-but-never-called** (dead … | H2 | 8 | P3 |
 | S-0358 | monitoring:25 | Textfile-collector exit-0/empty-value class audit** — every textfile emitter usi… | H2 | 8 | P2 |
-| S-0359 | monitoring:28 | fan-telemetry gap (sustained-Tctl ALERT half LANDED 2026-10-12)** — ~~freezes #8… | H2 | 8 | P2 |
+| ~~S-0359~~ | ~~monitoring:28~~ | fan-telemetry gap (sustained-Tctl ALERT half LANDED 2026-10-12)** — ~~freezes #8… | ~~H2~~ | ~~8~~ | ~~P2~~ |
 | S-0360 | monitoring:29 | Zone-6 guard trip-RATE alert** — level-based PSI rules keep missing the trend: f… | H2 | 8 | P2 |
 | S-0681 | monitoring:31 | `scripts/backup-catchup-report.sh` (backup-catchup report)** — makes the next ou… | H2 | 8 | P3 |
 | S-0361 | monitoring:32 | btrbk receive-freshness + pool-snapshot-freshness monitoring** — `/mnt/pool/.sna… | H2 | 8 | P2 |
@@ -1738,7 +1738,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-0692 | monitoring:86 | Gatus→Discord delivery E2E audit + chronic-red escalation** — the "mr-sync Dashb… | H2 | 8 | P3 |
 | S-0384 | monitoring:87 | Gatus canary: system_health** series presence in node_exporter /metrics_* — whol… | H2 | 8 | P2 |
 | S-0385 | monitoring:88 | Bound the system_health blind window + confirm the 93%-root-alert metric source*… | H2 | 8 | P2 |
-| S-0386 | monitoring:90 | Thermal alerting coverage: GPU edge (CPU/k10temp half LANDED 2026-10-12)** — ~~t… | H2 | 8 | P2 |
+| ~~S-0386~~ | ~~monitoring:90~~ | Thermal alerting coverage: GPU edge (CPU/k10temp half LANDED 2026-10-12)** — ~~t… | ~~H2~~ | ~~8~~ | ~~P2~~ |
 | S-0387 | monitoring:91 | SigNoz time_series_v2 is EMPTY — metadata retention investigation** — the label … | H2 | 8 | P2 |
 | S-0693 | monitoring:92 | Hot-tier mount-degradation probe** — the doctrine-C mounts (`/var/log/caddy` cad… | H1 | 3 | P3 |
 | S-0388 | monitoring:93 | Durable hwmon fingerprint→chip mapping table in docs/agents/monitoring.md** — wi… | H2 | 8 | P2 |
@@ -2453,7 +2453,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-1550 | security:25 | Resend key identity + mail monitoring depth — byte-compare `pocket_id_smtp_passw… | GATED | 0 | P2 |
 | S-1780 | security:26 | nftables migration for the firewall** — modernizes the ruleset behind the vHost/… | GATED | 0 | P3 |
 | S-1781 | security:27 | security.lockKernelModules — only after net-vpn lands** — WireGuard module-load … | GATED | 0 | P3 |
-| S-0976 | security:28 | ~~**Identify + tame the Go pprof listener on `*:6060`**~~ **IDENTIFIED 2026-10-1… | H2 | 8 | P3 |
+| ~~S-0976~~ | ~~security:28~~ | ~~**Identify + tame the Go pprof listener on `*:6060`**~~ **IDENTIFIED 2026-10-1… | ~~H2~~ | ~~8~~ | ~~P3~~ |
 | S-1352 | security:29 | Owner decision: scrub leaked games-org repo names from tracked files** — names a… | GATED | 0 | P0 |
 | S-1353 | security:30 | Pre-push new-blob secret scanner hook** — push protection is correct only at the… | GATED | 0 | P0 |
 | S-0007 | security:31 | Add a Slack-token rule + fixture to gitleaks-coverage-selftest** — repo gitleaks… | H2 | 8 | P0 |
@@ -2471,7 +2471,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-1785 | services:27 | `/data/docker` data reclaim (owner sudo execution; FILE-LEVEL since the Docker r… | GATED | 0 | P3 |
 | S-0978 | services:29 | bank-sync sentinel go-live — residual verification** (deploy-gate CLEARED 2026-1… | H2 | 8 | P3 |
 | S-0508 | services:33 | paperless-tasks-collector fixture test** — render the collector script from pape… | H2 | 8 | P2 |
-| S-0219 | services:35 | indexer-web post-deploy smoke + live bring-up verification** — ~~the service has… | H2 | 8 | P1 |
+| ~~S-0219~~ | ~~services:35~~ | indexer-web post-deploy smoke + live bring-up verification** — ~~the service has… | ~~H2~~ | ~~8~~ | ~~P1~~ |
 | S-0979 | services:36 | indexer-web ioTier assignment** — the daily full-tree scan of `~/projects` runs … | H2 | 8 | P3 |
 | S-1354 | services:37 | Delete 4 orphaned all-scope Forgejo setup PATs (silent-cleanup leak class)** — e… | GATED | 0 | P0 |
 | S-1786 | services:38 | Trash the stale `/var/lib/forgejo/data/gitea.db` fossil** — pre-migration relic … | GATED | 0 | P3 |
