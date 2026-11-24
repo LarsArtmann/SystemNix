@@ -1489,10 +1489,22 @@
                 name = "Monitor365";
                 group = "Monitoring";
                 description = "Device Monitoring Agent";
-                icon = "uptime-kuma.png";
+                # The product's own mark (assets/monitor365-logo.svg, mirrored
+                # from the monitor365 repo by scripts/logo.py) — the tile used
+                # to borrow uptime-kuma's icon.
+                icon = "monitor365.svg";
               };
             };
           };
+        })
+        (lib.optionalAttrs (options ? services.papdashboard) {
+          # One app icon per Services tile. The dashboard-icons pack has no
+          # monitor365 mark, and an absolute URL would depend on the monitored
+          # server being up (plus PapDashboard's img-src policy). Copy the mark
+          # into PAP_ICONS_DIR instead — the tile then renders the product's
+          # real logo from the Nix store, with no runtime dependency.
+          services.papdashboard.extraIcons.monitor365 =
+            ../../../assets/monitor365-logo.svg;
         })
       ];
     };

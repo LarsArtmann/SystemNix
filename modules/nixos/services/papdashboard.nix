@@ -171,13 +171,25 @@
         )
       );
 
+      # Extra tile icons (name → file) served beside the pack. Brand marks the
+      # upstream pack does not carry; the names win over pack files of the
+      # same name (the copy below runs after the pack loop).
+      extraIconNames = builtins.attrNames cfg.extraIcons;
+
       # Pack-relative icon names (absolute URLs are external references and
-      # stay unverified). Unique so the derivation is input-order independent.
+      # stay unverified; extraIcons are local files copied verbatim). Unique
+      # so the derivation is input-order independent.
       packIconNames = lib.unique (
-        builtins.filter (icon: icon != null && !(lib.hasPrefix "http" icon)) (
-          map (t: t.icon or null) allTiles
-        )
+        builtins.filter (
+          icon: icon != null && !(lib.hasPrefix "http" icon) && !(builtins.elem icon extraIconNames)
+        ) (map (t: t.icon or null) allTiles)
       );
+
+      # extraIcons names must be images PapDashboard will serve: the route
+      # rejects anything else, and a bad name would 404 the tile silently.
+      invalidExtraIconNames = builtins.filter (
+        name: builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*\\.(png|svg|webp|jpg|jpeg|gif|avif)" name == null
+      ) extraIconNames;
 
       # The icons the dashboard actually references, copied out of the pack.
       # Building this IS the missing-icon gate: a name the pack does not
@@ -198,6 +210,9 @@
             exit 1
           fi
         done
+        ${lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (name: source: ''cp "${source}" "$out/${name}"'') cfg.extraIcons
+        )}
         cp "$pack/LICENSE" "$out/dashboard-icons-LICENSE"
       '';
 
@@ -362,6 +377,23 @@
         # via PAP_SERVICES_CONFIG. Tile status is probed SERVER-SIDE by
         # PapDashboard itself (http probes against href; ≥500 = down);
         # uptime history stays with Gatus.
+        # Tile icons served from /icons/ beside the dashboard-icons pack
+        # (PAP_ICONS_DIR). For brand marks the upstream pack does not carry —
+        # e.g. "monitor365.svg" — so a tile shows a product's real logo from a
+        # Nix-store path: no runtime dependency on the linked service, no
+        # external URL and no CSP exception.
+        extraIcons = lib.mkOption {
+          type = lib.types.attrsOf lib.types.path;
+          default = { };
+          description = ''
+            Additional tile icons as an attrset of file name → file path. The
+            name is what a tile's `icon` references; it is served from
+            /icons/ next to the dashboard-icons pack and matched at build time
+            by building dashboardIcons. Names must end in png, svg, webp, jpg,
+            jpeg, gif or avif; a name that also exists in the pack is
+            overridden by the entry here.
+          '';
+        };
         extraTiles = lib.mkOption {
           type = lib.types.listOf (
             lib.types.submodule {
@@ -835,6 +867,10 @@
             message = "services.papdashboard: tile icon(s) must be a dashboard-icons pack file name (e.g. \"miniflux.png\") or an http(s) URL. Offending tiles: ${
               lib.concatStringsSep "; " (map (t: "${t.name} → ${toString (t.icon or null)}") invalidIconTiles)
             }";
+          }
+          {
+            assertion = invalidExtraIconNames == [ ];
+            message = "services.papdashboard.extraIcons: icon names must be image file names ending in png/svg/webp/jpg/jpeg/gif/avif (PapDashboard's /icons/ route rejects anything else). Offending: ${lib.concatStringsSep ", " invalidExtraIconNames}";
           }
           {
             assertion = duplicateTileNames == [ ];
