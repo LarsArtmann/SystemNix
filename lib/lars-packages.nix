@@ -201,9 +201,12 @@ lib.filterAttrs (_: v: v != null) {
   # today's tip re-float): spec jxGg7XaL, got 144yHjI2, first-hand from the
   # deploy6 keep-going enumeration (drv cqrs-lint-d17d29d8…-go-modules,
   # rev-matched). Two lock moves since the last paste.
+  # RE-STALE 2026-11-24 (go-cqrs-lite float 35856a7 during the deploy-gap
+  # catch-up): spec 144yHjI2, got Wb4haJX3, first-hand from the 15:1x
+  # deploy attempt (drv cqrs-lint-35856a7…-go-modules, hash mismatch).
   cqrs-lint =
     flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
-      "sha256-144yHjI2pE6zybH4rTNhOBTUG1iHKh9/ag9j6dYCvUU=";
+      "sha256-Wb4haJX30rrZ8p+gI8IVO9M9zIjOJenDDiZqaxU6Q2g=";
   # docs-gates — the docs-health battery gates (freshness / annotate /
   # routing / cadence / strike) as one stdlib-only multi-call binary;
   # packages.default = the binary + the five legacy-name wrappers
