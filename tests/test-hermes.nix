@@ -151,7 +151,21 @@ in
 
     # --- bound node: the full projects-access surface -------------------
     bound.start()
+    bound.execute("systemctl status hermes --no-pager || true")
+    bound.execute("journalctl -b --no-pager | grep -iE 'hermes|secrets' | head -40")
     bound.wait_for_unit("hermes.service")
+
+    # 0. build-time import smoke (hermes 08-14 §e.6 + 08-21 §f.13): the
+    #    console script must import the whole CLI package cleanly. The
+    #    extras-drift class (a removed extra named in the module overlay)
+    #    already fails eval loudly, but a BROKEN RUNTIME IMPORT (upstream
+    #    packaging drift that survives eval) only shows on exec — catch it
+    #    at build time, not on a live gateway start.
+    ver = bound.succeed(
+        "runuser -u hermes -- env HOME=/home/hermes HERMES_MANAGED=true "
+        "hermes --version"
+    )
+    assert ver.strip(), f"hermes --version produced no output: {ver!r}"
 
     # 2. env vars present
     env = unit_env(bound)
