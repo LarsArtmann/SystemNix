@@ -141,7 +141,13 @@
                 (mkPoolDirUnit {
                   description = "Create AudibleSync DB backup directory on the HDD pool";
                   directory = "/mnt/pool/backups/audiblesync";
-                  owner = "audible-sync";
+                  # owner stays root (the browser-history pattern): the backup
+                  # unit runs as hardened root with an empty
+                  # CapabilityBoundingSet, so it CANNOT write a 0755 dir owned
+                  # by another user — owner = "audible-sync" made every
+                  # nightly mktemp fail EPERM from 2026-11-14 (the pool
+                  # re-provision) until 2026-11-24; backup_healthy sat 0 with
+                  # age pinned at the 999h sentinel.
                 })
                 # mkPoolDirUnit bakes no IO tier; the boot-transaction audit
                 # requires one on every wantedBy multi-user unit
@@ -159,6 +165,11 @@
               backupDir = "/mnt/pool/backups/audiblesync";
               prefix = "audiblesync-db-";
               retentionDays = 14;
+              # The live DB is 0600 behind the dynamic-user StateDirectory —
+              # caps-stripped root cannot read it without this (the
+              # browser-history precedent, its call site line ~797; without
+              # it: sqlite "unable to open database file", live 2026-11-24).
+              caps = "CAP_DAC_READ_SEARCH";
               startAt = {
                 OnCalendar = "*-*-* 02:35:00";
               };

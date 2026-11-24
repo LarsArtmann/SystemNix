@@ -621,8 +621,28 @@ in
                   done < <(systemctl --user --failed --no-legend --type=service 2>/dev/null | awk '{print $2}')
 
                   # === Report ===
+                  # Desktop-notify dedup (owner directive 2026-11-24: never the
+                  # same "Health Check: services down" notification stacked).
+                  # The timer fires every 15 min; a persistent outage used to
+                  # stack one identical critical notification per tick (4
+                  # copies after one hour away from the desk). Notify ONCE per
+                  # DISTINCT failure set: an unchanged set stays silent, a
+                  # changed set (new service down) notifies once more, and a
+                  # fully green run clears the state so the next outage is a
+                  # fresh episode. The unit still exits 1 every failing tick
+                  # (journal + OnFailure + deploy exit-4 semantics unchanged).
+                  STATE_FILE="$HOME/.cache/service-health-check/last-notified-failed"
                   if [ -n "$FAILED" ]; then
-                      notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
+                      mkdir -p "$(dirname "$STATE_FILE")"
+                      failed_sig="$(echo -e "$FAILED" | sort | sha256sum | cut -d' ' -f1)"
+                      last_sig="$(cat "$STATE_FILE" 2>/dev/null || true)"
+                      if [ "$failed_sig" != "$last_sig" ]; then
+                          notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
+                          printf '%s' "$failed_sig" > "$STATE_FILE"
+                          echo "NOTIFIED: failure set changed since last desktop notification"
+                      else
+                          echo "NOTIFY-SKIPPED: identical failure set already notified (desktop dedup)"
+                      fi
                       echo "FAILED:$(echo -e "$FAILED")"
                       if [ -n "$PENDING" ]; then
                           echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
@@ -632,6 +652,10 @@ in
                       fi
                       exit 1
                   else
+                      if [ -f "$STATE_FILE" ]; then
+                          rm -f "$STATE_FILE"
+                          echo "RECOVERED: failure set cleared (dedup state reset)"
+                      fi
                       echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
                       if [ -n "$PENDING" ]; then
                           echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
