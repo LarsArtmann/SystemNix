@@ -176,8 +176,15 @@ Note: the notices table accumulates one row per failed sync. The 2026-09-18 froz
 (2026-10-16, full-table review) reads **102 rows total** (2026-08-17 → today, all Type=1, zero
 Type=2). The only ACTIVE generator is `lars/auto-deduplicate`'s PRUNE step ("Failed to prune
 mirror repository ... could not read Password ... terminal prompts disabled", ~2.5h cadence since
-2026-09-24): the mirror's FETCH/UPDATE itself succeeds and stays fresh (stale remote-tracking refs
-accumulate — no data loss). Its e-invoicing twin healed when the reconcile deleted the
+2026-09-24). ~~the mirror's FETCH/UPDATE itself succeeds and stays fresh~~ **FALSIFIED + ROOT-CAUSED
+2026-11-24 (task 000001a20e33, deployed v15.0.10 source + live journal): TWO stacked defects, and the
+mirror is SILENTLY STALE, not healthy —**
+1. **Trigger:** every sync's `git fetch` dies `fatal: Unable to create '.../auto-deduplicate.git/./objects/info/commit-graphs/commit-graph-chain.lock': File exists` — a STALE commit-graph lock left by an interrupted/concurrent git process on 2026-09-24. That stderr matches `checkRecoverableSyncError` ("Unable to create" + ".lock"), so the code logs "failed to update mirror repository due to broken references → Attempting Prune" (journal-proven every cycle).
+2. **Prune-leg credential bug (v15.0.10 `services/mirror/mirror_pull.go`):** since the DB-side encrypted credential store, `remote.origin.url` in the repo config is SANITIZED (no creds); the fetch authenticates via `AddAuthCredentialHelperForRemote` — but `pruneBrokenReferences` runs `git remote prune origin` WITHOUT that helper → `GIT_TERMINAL_PROMPT=0` → "could not read Username for 'https://github.com': terminal prompts disabled" → the notice. Same bug present in current forgejo main (unfixed upstream as of 2026-11-24).
+3. **Silent-staleness bug:** when the prune fails, the recoverable branch leaves `err = nil`, so `runSync` falls through and returns SUCCESS (`m.UpdatedUnix = now`, "Successfully updated") — the mirror claims fresh while NO refs were updated. The ~2.5h notices are the only signal; the mirror content is frozen at its 2026-09-24 state.
+
+**FIX (one owner sudo line; agent shells are NNP-sudo-dead and /var/lib/forgejo is forgejo-owned):** `sudo rm /var/lib/forgejo/repositories/lars/auto-deduplicate.git/objects/info/commit-graphs/commit-graph-chain.lock` then the next sync recovers (fetch succeeds, prune never runs — enable_prune=0 unnecessary). Verify: the ~2.5h notice cadence stops within one mirror interval; journal shows a clean `SyncMirrors [repo: <Repository 182:lars/auto-deduplicate>]` cycle without "Attempting Prune". NOTE: `lars/golangci-lint` showed the same commit-graph.lock class 2026-11-24 15:16:59 (its own WriteCommitGraph leg) — if its sync starts failing the same way, same fix (stale lock = leftover of a killed git process, the 2026-10-12 commit-graph storm class). Upstream bug report (prune lacks the credential helper + failed-prune returns success) queued in docs/todo/upstream.md. Original (falsified) reading: "stale remote-tracking refs
+accumulate — no data loss". Its e-invoicing twin healed when the reconcile deleted the
 renamed-upstream stale mirror 2026-10-11 (`e-invoicing` → `ksef-sandbox` on GitHub; the canonical
 mirror now syncs clean). The prune class IS now visible: forgejo-mirror-health publishes
 `forgejo_mirror_health_prune_candidates` (Type=1 "Failed to prune mirror repository
