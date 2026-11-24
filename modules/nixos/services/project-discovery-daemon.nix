@@ -99,7 +99,16 @@
           # condition. Re-add ONLY via nix-hash-fix evidence, never by hand.
           package =
             lib.mkDefault
-              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
+              # RE-STALE 2026-11-24 nixpkgs-root float wave — NEW inline
+              # shim (twin of the admin surface): spec +YuAxieZ, got
+              # kEd17MIY (first-hand keep-going,
+              # ~/.cache/gtd-pipeline/toplevel-build4.log). Drop when
+              # upstream bakes the got hash; re-add ONLY via nix-hash-fix
+              # evidence, never by hand.
+              (
+                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+                  { vendorHash = "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY="; }
+              );
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service
           # users cannot see a 0700 home).

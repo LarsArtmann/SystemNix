@@ -123,10 +123,14 @@
           # bW3OHQ3D, got +JUDdQKw (first-hand keep-going,
           # keepgoing-1119.log; twin of the lars-packages surface — both
           # move together).
+          # RE-STALE 2026-11-24 nixpkgs-root float wave: spec +JUDdQKw, got
+          # IPEw5b8P (first-hand keep-going,
+          # ~/.cache/gtd-pipeline/toplevel-build4.log; twin surface in
+          # lib/lars-packages.nix updated the same wave).
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
+                vendorHash = "sha256-IPEw5b8Pl6Kpinxatp6H3c4N+Up/IepgQL0wIyiTeLw=";
               };
           user = primaryUser;
           group = "users";

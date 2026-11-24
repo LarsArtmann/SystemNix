@@ -582,9 +582,14 @@ lib.filterAttrs (_: v: v != null) {
   # never by hand.
   # RE-STALE 2026-11-18 FOD-storm wave: at 84061403 spec TQB8jwNI, got
   # ZzTU3Ja3 (first-hand keep-going, keepgoing-1118.log).
+  # RE-STALE 2026-11-18 FOD-storm wave: at 84061403 spec TQB8jwNI, got
+  # ZzTU3Ja3 (first-hand keep-going, keepgoing-1118.log).
+  # RE-STALE 2026-11-24 (local go-verdict wiring 52c248e + nixpkgs-root
+  # float): spec ZzTU3Ja3, got ccAVJANX (first-hand keep-going,
+  # ~/.cache/gtd-pipeline/toplevel-build4.log).
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-ZzTU3Ja3hWRtJ6tUGWOWqYaFQ2PnwnhEe7EROg9E7Ns=";
+      "sha256-ccAVJANXi5pQp6vOzNYIKlOT3oOHU+MjpaKW0qUbZug=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at

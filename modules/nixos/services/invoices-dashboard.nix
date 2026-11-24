@@ -77,8 +77,16 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.invoices.packages.${pkgs.stdenv.hostPlatform.system}.default;
-          defaultText = lib.literalExpression "inputs.invoices.packages.\${pkgs.stdenv.hostPlatform.system}.default";
+          # Inline vendorHash shim (twin of the lib/lars-packages.nix
+          # surface — the unit consumes this default, the PATH consumes the
+          # table): RE-STALE 2026-11-24 nixpkgs-root float wave, spec
+          # Y7HkZSMx, got /OE8Z7by (first-hand keep-going,
+          # ~/.cache/gtd-pipeline/toplevel-build4.log). Drop when upstream
+          # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+          default =
+            inputs.invoices.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              { vendorHash = "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8="; };
+          defaultText = lib.mdDoc "inputs.invoices default with the inline vendorHash shim (see the option comment)";
           description = "invoices package to serve the dashboard with.";
         };
 
