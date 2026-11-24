@@ -136,7 +136,9 @@
         "flake-parts": "flake-parts_16",
         "gogenfilter": "gogenfilter_17",
         "nixpkgs": "nixpkgs_10",
-        "treefmt-nix": "treefmt-nix"
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
       },
       "locked": {
         "lastModified": 1795507927,
@@ -10818,7 +10820,7 @@
         "timesheets": "timesheets",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix_2",
+        "treefmt-nix": "treefmt-nix",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
@@ -11734,28 +11736,6 @@
       }
     },
     "treefmt-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "library-policy",
-          "art-dupl",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1795173499,
-        "narHash": "sha256-J8IYl3oEdctyvBgWr+/L01MY5Xm0TU4WXwZDccN5jjk=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "a0a97e31a897a3537eea5c49df4f8adaa83b3b37",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

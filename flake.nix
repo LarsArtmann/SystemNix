@@ -1378,8 +1378,8 @@
     # the node keys root actually resolves to.
     art-dupl.inputs.flake-parts.follows = "flake-parts";
     art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
-    # nsfw-classifier's transitive art-dupl copy evolved to its own node
-    # (art-dupl_5) when nsfw-classifier floated and re-locked art-dupl's
+    # nsfw-classifier's transitive art-dupl copy evolved to its own lock
+    # node when nsfw-classifier floated and re-locked art-dupl's
     # treefmt-nix at 0d6d7390 — pin the nested copy to the root input.
     nsfw-classifier.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
     bank-sync.inputs.flake-parts.follows = "flake-parts";
@@ -1622,6 +1622,7 @@
     # lib/lock-audit.nix; the other deep infra classes stay upstream-queued.
     discordsync.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
     inboxclean.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
+    library-policy.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
     nsfw-classifier.inputs.go-cqrs-lite.inputs.treefmt-nix.follows = "treefmt-nix";
     go-taskqueue.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     index.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";

@@ -15,7 +15,9 @@
 //
 // Costs are best-effort: a per-model USD/1M-token table in the config
 // feeds ai_meter_cost_usd_total; unknown or local models meter tokens
-// exactly and cost $0.
+// exactly and cost $0. The ledger stores tokens only, and the cost counter
+// is replayed from it at every start at the current table, so a price row
+// that lands late restates all earlier usage.
 package main
 
 import (
@@ -61,6 +63,7 @@ func run(configPath string, logger *slog.Logger) error {
 	}()
 
 	registry := NewRegistry()
+	seedCostCounter(cfg, ledger, registry, logger)
 	proxy := NewProxy(cfg, registry, ledger, logger)
 
 	proxyServer := &http.Server{

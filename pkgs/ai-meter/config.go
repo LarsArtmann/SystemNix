@@ -155,3 +155,20 @@ func (c *Config) CostFor(model string) Cost {
 	}
 	return Cost{}
 }
+
+// EstimateCost returns the reference cost, in USD, of one call's token counts
+// at price. The cached subset of the prompt is billed at its own rate and the
+// rest of the prompt at the full input rate; an unpriced model (the zero
+// Cost) costs 0. The request path and the ledger replay both price through
+// Price, so live traffic and replayed history can never disagree.
+func EstimateCost(promptTokens, cachedTokens, completionTokens int, price Cost) float64 {
+	billablePrompt := max(promptTokens-cachedTokens, 0)
+	return (float64(billablePrompt)*price.Input +
+		float64(cachedTokens)*price.CachedInput +
+		float64(completionTokens)*price.Output) / 1e6
+}
+
+// Price sets rec's cost at the current table.
+func (c *Config) Price(rec *Record) {
+	rec.CostUSD = EstimateCost(rec.PromptTokens, rec.CachedTokens, rec.CompletionTokens, c.CostFor(rec.Model))
+}
