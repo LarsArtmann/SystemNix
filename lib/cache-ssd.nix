@@ -35,6 +35,18 @@ lib: {
   # The mktemp'd tmp file: a fixed .tmp name collides with stale
   # foreign-owned leftovers in the sticky 1777 textfile dir (mail-relay
   # 2026-09-02..06 outage class).
+  #
+  # Optional (rust-cache only, 2026-11-24 freeze #60-63 class):
+  #   - criticalThreshold: emits <prefix>usage_critical so Gatus can run a
+  #     CRITICAL-tier check SEPARATE from the standing over_threshold alert
+  #     (an 85% alert that stays red for days masks the cliff — alert
+  #     fatigue froze this box four times while "alerted").
+  #   - reclaimFlagPath + reclaimThreshold: touch the flag while usage is at
+  #     or above the threshold; a systemd .path unit turns it into an
+  #     on-demand GC trigger (event-driven headroom restoration, not
+  #     calendar-paced). The flag is REMOVED below threshold so the trigger
+  #     is state-driven, and rewritten every scrape so the path unit re-arms
+  #     (the GC's own stamp rate-limits).
   metricsScript =
     {
       prefix,
@@ -43,6 +55,9 @@ lib: {
       wholeDiskDevice,
       threshold,
       textfileDir,
+      criticalThreshold ? null,
+      reclaimFlagPath ? null,
+      reclaimThreshold ? null,
     }:
     ''
       set -eu
@@ -54,6 +69,7 @@ lib: {
       mnt="${mnt}"
       dev="${wholeDiskDevice}"
       threshold=${toString threshold}
+      ${lib.optionalString (criticalThreshold != null) "critical_threshold=${toString criticalThreshold}"}
 
       mounted=0
       if
@@ -72,6 +88,9 @@ lib: {
       over=0
       free_bytes=0
       total_bytes=0
+      ${lib.optionalString (criticalThreshold != null) ''
+        critical=0
+      ''}
       if [ "$mounted" = 1 ]; then
         usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
         free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
@@ -79,6 +98,11 @@ lib: {
         if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
           over=1
         fi
+        ${lib.optionalString (criticalThreshold != null) ''
+          if [ "''${usage:-0}" -ge "$critical_threshold" ] 2>/dev/null; then
+            critical=1
+          fi
+        ''}
       fi
 
       cat > "$TMP" <<METRICS
@@ -94,6 +118,11 @@ lib: {
       # HELP ${prefix}usage_over_threshold 1 if usage >= ${toString threshold}%
       # TYPE ${prefix}usage_over_threshold gauge
       ${prefix}usage_over_threshold ''${over}
+      ${lib.optionalString (criticalThreshold != null) ''
+        # HELP ${prefix}usage_critical 1 if usage >= ${toString criticalThreshold}% (separate CRITICAL tier; the standing over_threshold alert must not mask the cliff)
+        # TYPE ${prefix}usage_critical gauge
+        ${prefix}usage_critical ''${critical}
+      ''}
       # HELP ${prefix}free_bytes Free bytes on the cache filesystem
       # TYPE ${prefix}free_bytes gauge
       ${prefix}free_bytes ''${free_bytes}
@@ -102,5 +131,17 @@ lib: {
       ${prefix}total_bytes ''${total_bytes}
       METRICS
       mv "$TMP" "$OUT"
+
+      ${lib.optionalString (reclaimFlagPath != null && reclaimThreshold != null) ''
+        # Reclaim trigger flag: touched while usage >= reclaim threshold so the
+        # rust-cache-reclaim.path unit fires GC on demand (removed below it —
+        # state-driven, rewritten each scrape so the path unit re-arms; the GC
+        # service's own stamp rate-limits actual runs).
+        if [ "$mounted" = 1 ] && [ "''${usage:-0}" -ge "${toString reclaimThreshold}" ] 2>/dev/null; then
+          touch "${reclaimFlagPath}"
+        else
+          rm -f "${reclaimFlagPath}"
+        fi
+      ''}
     '';
 }

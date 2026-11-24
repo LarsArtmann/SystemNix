@@ -105,6 +105,18 @@
           description = "Usage percentage at which the Gatus alert fires (240 GB drive; caches should be pruned before full).";
         };
 
+        criticalThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 95;
+          description = ''
+            Usage percentage for the SEPARATE CRITICAL Gatus tier. Deliberately
+            distinct from usageThresholdPercent: the 85% alert stood red for
+            days while the disk filled (alert fatigue — freezes #60-63,
+            2026-11-22..24, all rode >=96% usage while "alerted"). This tier
+            must read as page-now, not standing state.
+          '';
+        };
+
         gc = {
           enable = lib.mkEnableOption "weekly Rust cache garbage collection";
 
@@ -347,6 +359,11 @@
             inherit (cfg) wholeDiskDevice;
             threshold = cfg.usageThresholdPercent;
             inherit textfileDir;
+            criticalThreshold = cfg.criticalThresholdPercent;
+            # Event-driven GC trigger (see systemd.paths.rust-cache-reclaim):
+            # flag touched while usage >= gc.actThresholdPercent.
+            reclaimFlagPath = "/run/rust-cache-reclaim.flag";
+            reclaimThreshold = cfg.gc.actThresholdPercent;
           };
         };
 
@@ -392,6 +409,7 @@
           path = [
             pkgs.coreutils
             pkgs.findutils
+            pkgs.procps
           ];
           inherit onFailure;
           serviceConfig = lib.mkMerge [
@@ -418,6 +436,29 @@
             aggressive_age=${toString cfg.gc.aggressiveAgeDays}
             act=${toString cfg.gc.actThresholdPercent}
             projects_root="${homeDir}/projects"
+
+            # Busy-builder guard (the target-gc rule, ported with Leg 1.5):
+            # in-flight artifacts have no fingerprint yet and would be
+            # misclassified as orphans. Skip, do not fail — the path/timer
+            # trigger retries on its next scrape.
+            if pgrep -x cargo >/dev/null 2>&1 || pgrep -x rustc >/dev/null 2>&1; then
+              echo "rust-cache-gc: cargo/rustc running - skipping this run (in-flight artifacts have no fingerprint yet)"
+              exit 0
+            fi
+
+            # Rate limit for usage-triggered runs: the metrics scrape rewrites
+            # the reclaim flag every 5 min while usage is high, re-arming the
+            # path unit each time the GC goes inactive. Without this stamp that
+            # would re-sweep the disk continuously. 6h = one sweep per window.
+            stamp="$mnt/.gc-stamp"
+            if [ -f "$stamp" ]; then
+              age=$(( $(date +%s) - $(stat -c %Y "$stamp") ))
+              if [ "$age" -lt 21600 ]; then
+                echo "rust-cache-gc: last run ''${age}s ago (<21600s) - skipping"
+                exit 0
+              fi
+            fi
+            touch "$stamp"
 
             usage() {
               df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9'
@@ -469,6 +510,70 @@
             # Leg 1: normal aged sweep.
             sweep "$sweep_age"
 
+            # Leg 1.5: fingerprint-orphan sweep (age-INDEPENDENT, ported from
+            # monitor365 scripts/target-gc.sh — cargo-safe rules proven there
+            # 2026-11-17/18). The aged sweeps reclaim ~0 on this disk: the
+            # working set churns in place, refreshing mtimes (measured
+            # 2026-11-18: zero bytes older than 7d at 199G/224G). What DOES
+            # accumulate: artifacts whose fingerprint variant is gone —
+            # feature-set changes mint new .fingerprint stems and abandon the
+            # old ones (libduckdb-sys alone minted 8+ variants at 3.2G EACH
+            # before the 2026-11-17 manual clean). The -mmin +120 floor on
+            # pass 1 keeps a build that started seconds after the busy-guard
+            # pgrep from having its just-written, fingerprint-pending
+            # artifacts reaped mid-compile.
+            orphan_files=0
+            orphan_bytes=0
+            orphan_fps=0
+            orphan_builds=0
+            for t in "$mnt"/rust/*; do
+              [ -d "$t" ] || continue
+              debug="$t/debug"
+              [ -d "$debug" ] || continue
+              # Pass 1: artifact files with no fingerprint dir (older than
+              # 120 min only — see the race note above).
+              for artifact_dir in "$debug/deps" "$debug"; do
+                [ -d "$artifact_dir" ] || continue
+                while IFS= read -r -d ''' f; do
+                  base="''${f##*/}"
+                  case "$base" in
+                    *.rlib|*.rmeta|*.d|*.so|*.dylib|*.o|*.bin) stem="''${base%.*}" ;;
+                    *) stem="$base" ;;
+                  esac
+                  if [ ! -d "$debug/.fingerprint/$stem" ]; then
+                    orphan_bytes=$((orphan_bytes + $(stat -c %s -- "$f" 2>/dev/null || echo 0)))
+                    rm -f -- "$f"
+                    orphan_files=$((orphan_files + 1))
+                  fi
+                done < <(find "$artifact_dir" -maxdepth 1 -type f -mmin +120 -print0)
+              done
+              # Pass 2: fingerprint dirs with no artifact anywhere (reverse
+              # orphans — a live fingerprint with a deleted artifact makes
+              # cargo SKIP the rebuild and fail at link time).
+              if [ -d "$debug/.fingerprint" ]; then
+                while IFS= read -r -d ''' fp; do
+                  stem="''${fp##*/}"
+                  if ! compgen -G "$debug/deps/$stem.*" >/dev/null && ! compgen -G "$debug/$stem.*" >/dev/null; then
+                    rm -rf -- "$fp"
+                    orphan_fps=$((orphan_fps + 1))
+                  fi
+                done < <(find "$debug/.fingerprint" -mindepth 1 -maxdepth 1 -type d -print0)
+              fi
+              # Pass 3: build-script out dirs no fingerprint references
+              # (build dirs are named inside fingerprint JSONs by path).
+              if [ -d "$debug/build" ]; then
+                for d in "$debug/build/"*/; do
+                  [ -d "$d" ] || continue
+                  name="''${d%/}"; name="''${name##*/}"
+                  [ -d "$debug/.fingerprint/$name" ] && continue
+                  grep -rqF -- "$name" "$debug/.fingerprint" 2>/dev/null && continue
+                  rm -rf -- "$d"
+                  orphan_builds=$((orphan_builds + 1))
+                done
+              fi
+            done
+            echo "rust-cache-gc: orphan sweep: ''${orphan_files} artifacts ($((orphan_bytes / 1048576))MB), ''${orphan_fps} fingerprints, ''${orphan_builds} build dirs"
+
             # Leg 2: orphaned cache dirs — project tree gone. The dir's OWN
             # mtime must be older than max_age (a freshly recreated shadow is
             # kept for its grace window).
@@ -497,7 +602,7 @@
 
             echo "rust-cache-gc: done at ''${pct}% usage"
             if [ "$pct" -ge "$act" ]; then
-              echo "rust-cache-gc: WARNING still >= ''${act}% - remaining usage is held by RESIDENT projects; GC never wipes active caches. Reclaim = cargo clean <project> or move the target (placement decision), see docs/agents/storage.md"
+              echo "rust-cache-gc: WARNING still >= ''${act}% - remaining usage is held by RESIDENT projects; GC never wipes active caches. Reclaim = monitor365 scripts/target-gc.sh --apply, cargo clean <project>, or move the target (placement decision), see docs/agents/storage.md"
             fi
           '';
         };
@@ -508,6 +613,27 @@
           timerConfig = {
             OnCalendar = cfg.gc.calendar;
             Persistent = true;
+            Unit = "rust-cache-gc.service";
+          };
+        };
+
+        # Event-driven GC trigger (2026-11-24, freeze #60-63 class): the
+        # metrics scrape (every 5 min) touches /run/rust-cache-reclaim.flag
+        # while usage >= gc.actThresholdPercent — this path unit turns that
+        # into a GC run, so headroom restoration is usage-triggered, not
+        # calendar-paced (the Sunday timer watched a ~28G/day regrowth fill
+        # the disk between fires: owner clean 92%->31% on 11-18, 100% by
+        # 11-24). The flag is rewritten each scrape while high — the path
+        # unit re-arms every time the GC unit goes inactive (plain oneshot,
+        # deliberately NO RemainAfterExit: the boot-mirror class-11
+        # deaf-trigger trap) — and removed below threshold. The GC service's
+        # own .gc-stamp rate-limits to one sweep per 6h.
+        systemd.paths.rust-cache-reclaim = lib.mkIf cfg.gc.enable {
+          description = "Trigger rust-cache-gc when rust-cache usage crosses the reclaim threshold";
+          wantedBy = [ "multi-user.target" ];
+          unitConfig.ConditionPathIsMountPoint = cfg.mountPoint;
+          pathConfig = {
+            PathChanged = [ "/run/rust-cache-reclaim.flag" ];
             Unit = "rust-cache-gc.service";
           };
         };
@@ -544,7 +670,20 @@
                   "[BODY] == pat(*\nrustcache_mounted *)"
                   "[BODY] == pat(*\nrustcache_usage_over_threshold 0*)"
                 ];
-                alert = "Rust cache SSD exceeds 85% - the 240 GB drive is filling. Reclaim: systemctl start rust-cache-gc (escalates to the aggressive sweep at actThresholdPercent), or cargo clean a specific project. GC never wipes resident projects wholesale; moving a big target (e.g. monitor365) off the SSD is a capacity decision - see docs/agents/storage.md.";
+                alert = "Rust cache SSD over 85% — STANDING-STATE advisory, not a page (this alert reads red for days on this box; the 95% CRITICAL tier is the actionable one). Plan headroom: the usage-triggered GC (rust-cache-reclaim.path + fingerprint-orphan sweep) reclaims what it can; residents are a placement decision — see docs/agents/storage.md.";
+              }
+              {
+                name = "Rust Cache Critical";
+                group = "Filesystem";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*rustcache_mounted 0\n*)"
+                  "[BODY] == pat(*\nrustcache_mounted *)"
+                  "[BODY] == pat(*\nrustcache_usage_critical 0*)"
+                ];
+                alert = "Rust cache SSD >=95% — one cargo wave from the freeze class (freezes #60-63, 2026-11-22..24, all rode >=96% usage + build batteries). The cargo-gate wrapper refuses builds on a disk this full; reclaim headroom NOW: monitor365 `bash scripts/target-gc.sh --apply` (cargo-idle) or cargo clean a resident. Structural note: demand ~265G vs 224G supply — shrink/placement is the owner decision pending (docs/agents/storage.md, 2026-11-18 verdict).";
               }
             ];
           };
