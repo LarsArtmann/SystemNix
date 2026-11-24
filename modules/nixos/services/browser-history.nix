@@ -74,10 +74,13 @@
       # RE-STALE 2026-11-19 00:12 fleet float (f2ddc0c → fa68d88): spec
       # BdJyCEvl, got Dr4pv45p (first-hand keep-going,
       # ~/.cache/lockfloat/keepgoing-1119.log). Same drop/re-add protocol.
+      # RE-STALE 2026-11-24 nixpkgs-root float wave: spec Dr4pv45p, got
+      # KSxVMeWU (first-hand keep-going,
+      # ~/.cache/gtd-pipeline/toplevel-build3.log).
       serverPkg =
         inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server.overrideAttrs
           {
-            vendorHash = "sha256-Dr4pv45pyccEYAXnI8hpoavwEGBSpyNrwHGwv0vPqpU=";
+            vendorHash = "sha256-KSxVMeWU6YuLZ2NkjCfcVjmkEZeS+Lu+GdCmEWcyG58=";
           };
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
       primaryUser = config.users.primaryUser or "lars";

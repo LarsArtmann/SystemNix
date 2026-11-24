@@ -60,7 +60,10 @@ let
       # (first-hand, ~/.cache/toplevel-fix-20261118/signoz-pnpm-probe.log).
       # npm tarballs are immutable, so unlike the private-Go FODs this
       # stamp is deterministic — no flap risk.
-      hash = "sha256-KWzSc1U4dOxcqtH1KhqL/iITNnFd9XDwPuqWrismCJI=";
+      # RE-STALE 2026-11-24 nixpkgs-root float wave: spec KWzSc1U4, got
+      # rYGPHPNb (first-hand keep-going,
+      # ~/.cache/gtd-pipeline/toplevel-build3.log).
+      hash = "sha256-rYGPHPNbzLrLaQ0snkwktH2QN4myTiV81qAfbbTOd5k=";
     };
 
     nativeBuildInputs = [
@@ -151,7 +154,9 @@ let
     # 5o/Yfxo3, got 7NLbdQuy; IDENTICAL got at ca7daf8 too — the FOD
     # re-resolves dep content from the module proxy, so it can go stale
     # WITHOUT a rev move (keepgoing-pre.log + audiblesync triage 08-43).
-    vendorHash = "sha256-7NLbdQuyRysrYglotKTTtUMVHlQiNP5f51+m/L8+4HM=";
+    # RE-STALE 2026-11-24 nixpkgs-root float wave: spec 7NLbdQuy, got
+    # wHHylQe3 (first-hand keep-going, toplevel-build3.log).
+    vendorHash = "sha256-wHHylQe3BT7bTPFh+sPZ+1R8uvbjxFyI/3a7Lj6Vbr8=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];

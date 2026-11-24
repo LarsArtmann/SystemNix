@@ -150,10 +150,13 @@
       # followed nixpkgs.
       # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 59c7de1 spec
       # UKBW2VAE, got sALQiidZ (cqrs-shim-toplevel-proof.log).
+      # RE-STALE 2026-11-24 nixpkgs-root float wave: spec sALQiidZ, got
+      # WmPnGmU7 (first-hand keep-going,
+      # ~/.cache/gtd-pipeline/toplevel-build3.log).
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-sALQiidZgJvSOU3TS+K/yXvWLjwSKGuU1Wkt6kWCNw8=";
+            vendorHash = "sha256-WmPnGmU7c2u9PJAcCfBu4ajAw8MzztInMDVOCrCv9eI=";
           };
     in
     {

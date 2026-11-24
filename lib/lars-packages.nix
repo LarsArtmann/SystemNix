@@ -263,9 +263,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-18 FOD-storm wave: at erraudit@38c306a (lock moved
   # to master tip) spec POIy8+72, got Y0go8KKA (first-hand keep-going,
   # ~/.cache/lockfloat/keepgoing-1118.log; 9-FOD re-serve day).
+  # RE-STALE 2026-11-24 nixpkgs-root float wave: spec Y0go8KKA, got
+  # Lz02VQ9A (first-hand keep-going, ~/.cache/gtd-pipeline/toplevel-build3.log).
   erraudit =
     flakePkgShim inputs.erraudit "default"
-      "sha256-Y0go8KKAEFDQglb06UMq1D7RuZ5QJVEdF1Yqm3+wNyI=";
+      "sha256-Lz02VQ9ALl1shV7wdkcqs36l7E4NOFD9aPzQ98P0g0I=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -316,9 +318,11 @@ lib.filterAttrs (_: v: v != null) {
   # keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
   # RE-STALE 2026-11-05 float wave: at go-structure-linter@96c2250 spec
   # eGuBIRDB, got BH1gH3zn (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-24 nixpkgs-root float wave: spec d9FFjVKg, got
+  # GhFzV7WG (first-hand keep-going, toplevel-build3.log).
   go-structure-linter =
     flakePkgShim inputs.go-structure-linter "default"
-      "sha256-d9FFjVKgemLqu2l1yW30fDAhX+NlDbTC5Thz6GphsHY=";
+      "sha256-GhFzV7WG8S7OqfqlLEEq2xprWkRMRMfnIUYMtUnllYw=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
   # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
@@ -354,20 +358,27 @@ lib.filterAttrs (_: v: v != null) {
   # QLQWBZhx (first-hand keep-going, keepgoing-1118.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-QLQWBZhxPw+xzbRJvLkY+vEDcS/dXMRtNAHlXmdM1no=";
+      # RE-STALE 2026-11-24 nixpkgs-root float wave: spec QLQWBZhx, got
+      # 2bvJenLG (toplevel-build3.log).
+      "sha256-2bvJenLGcgC1qR/t5MmWxh06BVhwdbQENr6CQ+nDgpE=";
   # invoices — billing CLI + dashboard backend (`invoices dashboard`,
   # deployed as the invoices-dashboard unit since 2026-11-10: loopback
   # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
   # runbook docs/services/invoices-dashboard.md). NON-FOLLOWER input (own
-  # nixpkgs lock, no follows): upstream-baked vendorHash probed green at the
-  # locked rev 5c8c6b17 — no consumer shim, re-probe on float, never re-pin.
-  invoices = flakePkg inputs.invoices;
+  # nixpkgs lock, no follows): upstream-baked vendorHash staled under the
+  # 2026-11-24 nixpkgs-root float — NEW shim, got /OE8Z7by (first-hand
+  # keep-going, ~/.cache/gtd-pipeline/toplevel-build3.log). Drop when
+  # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+  invoices = flakePkgShim inputs.invoices "default"
+    "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8=";
   # io-surface: the I/O surface manifest gate CLI (init/check/render/lint;
   # fleet I/O-BOM gate, InboxClean pilot consumer). NON-FOLLOWER input (own
-  # nixpkgs lock, no follows): upstream-baked vendorHash probed green at the
-  # locked rev (nix build .#io-surface, 2026-11-11); no consumer shim,
-  # re-probe on float, never re-pin.
-  io-surface = flakePkg inputs.io-surface;
+  # nixpkgs lock, no follows): upstream-baked vendorHash staled under the
+  # 2026-11-24 nixpkgs-root float — NEW shim, got fOoBboJ3 (first-hand
+  # keep-going, toplevel-build3.log). Drop when upstream bakes the got
+  # hash; re-add ONLY via nix-hash-fix evidence.
+  io-surface = flakePkgShim inputs.io-surface "default"
+    "sha256-fOoBboJ31UtDUrC8fGyURsIUfwR0wEoLLMtuL59Dork=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -452,7 +463,11 @@ lib.filterAttrs (_: v: v != null) {
   # xOKxcFQm (got nh/9sRXW, toplevel-proof-20261112-drop.log), and
   # upstream e7a084ce ALREADY BAKES exactly nh/9sRXW (got==bake).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  library-policy = flakePkg inputs.library-policy;
+  # RE-STALE 2026-11-24 nixpkgs-root float wave (fresh AAAA spec — upstream
+  # bake long stale): got gYkUTyDk (first-hand keep-going,
+  # ~/.cache/gtd-pipeline/toplevel-build3.log). Drop when upstream bakes.
+  library-policy = flakePkgShim inputs.library-policy "default"
+    "sha256-gYkUTyDkea3jqQmx6kpzFEmH0W7IiR03TKnMXt15eyI=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -463,9 +478,11 @@ lib.filterAttrs (_: v: v != null) {
   # NEW shim 2026-11-05 float wave: at md-go-validator@13a0e78 spec
   # e+jOFi3m, got 8aml4bav (float-proof-20261106-000533.log). Drop when
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+  # RE-STALE 2026-11-24 nixpkgs-root float wave: spec 8aml4bav, got
+  # vUoNAHNv (first-hand keep-going, toplevel-build3.log).
   md-go-validator =
     flakePkgShim inputs.md-go-validator "default"
-      "sha256-8aml4bavcNSQiFrsBbvg87RZqUuoDUjdhR1lF5W0W1A=";
+      "sha256-vUoNAHNv5g7epoIUbNT/13qFmX+rD85qP+uhLy8uO6o=";
   # depgraph CLI: renders the LarsArtmann Go monorepo dependency graph and
   # answers who-uses/why/update-plan/release-suggestions queries. Rides
   # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
@@ -602,7 +619,11 @@ lib.filterAttrs (_: v: v != null) {
   # (first-hand keep-going, ~/.cache/pdd-toplevel-build2.log) — the
   # documented drop condition. Re-add ONLY via nix-hash-fix evidence,
   # never by hand.
-  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
+  # RE-STALE 2026-11-24 nixpkgs-root float wave — NEW shim: spec
+  # +YuAxieZ, got kEd17MIY (first-hand keep-going, toplevel-build3.log).
+  # Drop when upstream bakes the got hash.
+  project-discovery-daemon = flakePkgShim inputs.project-discovery-daemon "default"
+    "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
@@ -668,9 +689,11 @@ lib.filterAttrs (_: v: v != null) {
   # ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-11-19 00:12 fleet float: f5c69f88 → a1ef3663; spec
   # bW3OHQ3D, got +JUDdQKw (first-hand keep-going, keepgoing-1119.log).
+  # RE-STALE 2026-11-24 nixpkgs-root float wave: spec +JUDdQKw, got
+  # IPEw5b8P (first-hand keep-going, toplevel-build3.log).
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
+      "sha256-IPEw5b8Pl6Kpinxatp6H3c4N+Up/IepgQL0wIyiTeLw=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -689,9 +712,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-12 cache-eviction re-enumeration: at f0990463 spec
   # ddUyLNLv, got GLiro+Z0 (cqrs-shim-toplevel-proof.log). Drop when
   # upstream bakes the got hash.
+  # RE-STALE 2026-11-24 nixpkgs-root float wave: spec GLiro+Z0, got
+  # KonyquSY (first-hand keep-going, toplevel-build3.log).
   samber-linter =
     flakePkgShim inputs.samber-linter "default"
-      "sha256-GLiro+Z0D35Cp0kda9J2mj4bIvV5bfgxFykrbUOg4vE=";
+      "sha256-KonyquSY3Alfj/1xPEp3T0Ws/9rojO/Mn3SC3wwnKnk=";
   # templ: the flake input (github:a-h/templ, floats on main per the owner
   # ALWAYS-LATEST directive) replaces nixpkgs' pkgs.templ, which still ships
   # 0.3.1020 at the rev-pinned nixpkgs — a generator whose output no longer
