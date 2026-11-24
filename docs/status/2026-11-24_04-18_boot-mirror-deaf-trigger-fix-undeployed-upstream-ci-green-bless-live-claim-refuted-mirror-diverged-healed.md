@@ -264,7 +264,7 @@ then wait). Harvest of this report and of the 19-47 report is the first step aft
 3. [P0] nixos-modules: README Contract list (no RemainAfterExit, blessed-converge, start-limit
    headroom), CHANGELOG entry, FEATURES leg recount; then the manual gates: `nix run .#docs-gates`,
    `tests/parity/run.sh`, `nix build .#checks.x86_64-linux.formatting`.
-4. [P0] Confirm CI green on the new upstream tip after the daemon pushes it (first attempt, retry
+4. [P0] Confirm CI green on the new upstream tip after the daemon pushes it (first attempt, retry <!-- fresh:skip: routed into the boot-mirror FIX+DEPLOY chain row (docs/todo/storage.md + TODO_LIST): upstream-tip CI-green confirm is chain step 4 -->
    step skipped).
 5. [P0] SystemNix: `nix flake update nixos-modules`, then verify the lock rev with a python3 json
    read.
@@ -276,7 +276,7 @@ then wait). Harvest of this report and of the 19-47 report is the first step aft
    `flake/parts/checks/selftests.nix`.
 8. [P0] SystemNix: add a bootmirror leg to `scripts/negative-test-lints.sh` that neuters the upstream
    pin through `extendModules` (the safe-verification pattern) and expects the eval gate to fail.
-9. [P0] SystemNix: `nix flake check --no-build --all-systems`, capture once to `~/.cache`, then grep.
+9. [P0] SystemNix: `nix flake check --no-build --all-systems`, capture once to `~/.cache`, then grep. <!-- fresh:skip: routed into the boot-mirror FIX+DEPLOY chain row (docs/todo/storage.md + TODO_LIST): flake-check capture-once is chain step 9 -->
 10. [P0] Deploy: drv-equality probe, then `scripts/deploy-when-quiescent.sh --fire` with a bounded
     wait (or a direct `nix run .#deploy` on your go); anchor check afterwards (newest `system-N-link`
     by number equals `/run/current-system`).
@@ -295,7 +295,7 @@ then wait). Harvest of this report and of the 19-47 report is the first step aft
 14. [P0] Doctrine rewrite after the deploy: AGENTS.md boot-mirror paragraph and the
     `docs/agents/systemd.md` bullet to "FIXED + LIVE (gen N)"; retire the interim restart rule;
     update the `platforms/nixos/system/boot-mirror.nix` comment.
-15. [P0] deploy.sh: keep the explicit `boot-mirror-sync` restart, document the second sync, and
+15. [P0] deploy.sh: keep the explicit `boot-mirror-sync` restart, document the second sync, and <!-- fresh:skip: routed into the boot-mirror FIX+DEPLOY chain row (docs/todo/storage.md + TODO_LIST): deploy.sh restart + second-sync doc + parity wait is chain step 15 -->
     verify that the post-switch parity check waits for that sync.
 16. [P0] Harvest (docs-health HARVEST) §f of the 16-28, 18-15, nixos-modules 19-23, 19-47 and this
     report; queue rows and library twins edited together.
@@ -337,18 +337,18 @@ then wait). Harvest of this report and of the 19-47 report is the first step aft
     `sudo`; if the devices are idle it is the PSI-phantom class (queue rows 1618 and 1620).
 32. [P1] k10temp 95-99 °C: attribute (per-core utilisation, powercap, which sessions) and draft a
     software-containment plan, pending your answer to g3.
-33. [P1] Admission cap on concurrent agent and build sessions at deploy time and in storms.
+33. [P1] Admission cap on concurrent agent and build sessions at deploy time and in storms. <!-- fresh:skip: routed at docs/todo/stability.md + TODO_LIST (admission-cap decision row) -->
 
 **Process**
 
-34. [P1] `docs/CONTRIBUTING.md` "Daemon-race commit policy": untested edits in a worktree outside the
+34. [P1] `docs/CONTRIBUTING.md` "Daemon-race commit policy": untested edits in a worktree outside the <!-- fresh:skip: routed at docs/todo/pipeline.md + TODO_LIST (CONTRIBUTING daemon-race worktree row) -->
     watched tree; cite the 11-22 19:59:20 push of three untested commits.
 35. [P1] Evidence-class rule for code comments in both repos (e2).
 36. [P1] nixos-modules AGENTS.md: add the worktree rule and the evidence-class rule.
 37. [P1] Daemon: stop auto-pushing master, or push only on green CI.
-38. [P2] Daemon: real commit messages (session task title or a message file) instead of "chore:
+38. [P2] Daemon: real commit messages (session task title or a message file) instead of "chore: <!-- fresh:skip: routed at docs/todo/pipeline.md + TODO_LIST (daemon real-commit-messages row) -->
     auto-commit N changed file(s)".
-39. [P2] Handoff rule: cite row content, never line numbers.
+39. [P2] Handoff rule: cite row content, never line numbers. <!-- fresh:skip: routed at docs/todo/pipeline.md + TODO_LIST (row-content handoff rule row) -->
 40. [P2] Write findings into a report at discovery time, not at halt time.
 
 **Carried, unchanged**
