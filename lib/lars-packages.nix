@@ -49,9 +49,11 @@ lib.filterAttrs (_: v: v != null) {
   # the stale fixed-output path is keyed by the SPECIFIED hash (class
   # comment at flakePkgShim). Fresh fakeHash probe got iCINPEzo (first-hand,
   # drv g4i7z32v1rqr60qwsk13ii54c6zk6vjz-art-dupl-0.9.0-go-modules).
+  # RE-STALE 2026-11-24 (deploy-gap catch-up float): spec AFkwR+cz, got
+  # 47Cw5cIU (first-hand, drv art-dupl-0.10.0-go-modules, 15:5x deploy).
   art-dupl =
     flakePkgShim inputs.art-dupl "default"
-      "sha256-AFkwR+czRL1litT7pMz0L1ZeUYfq/H23tACxWzgFn8I=";
+      "sha256-47Cw5cIUE5xkLGQju3AVu/zXCKqY7nyS8VrLnAfGtXA=";
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
   # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2
