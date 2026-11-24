@@ -65,6 +65,12 @@ makes `tq doctor`'s crush-pin check WARN "managed block pins no
 --reasoning-effort" for SystemNix (accepted; upstream `--think`/extra-slot-flags
 row in `docs/todo/upstream.md`).
 
+The repo state is live for any session started in the checkout immediately
+(crush reads `.crushrc` at session start). The HOST side needs the deploy: the
+deployed `tq-bootstrap` unit still carries the old `--model` args and would
+rewrite the managed block (glm-5.3, no thinking) at its next run until the
+generation with the trimmed ExecStart is switched in.
+
 ## Adding a Provider Key
 
 1. Encrypt it (public key only, NO sudo needed). Stage in RAM to avoid
@@ -108,12 +114,19 @@ makes old plaintext residue in session DBs inert.
 4. `crush models` asserts model IDENTITY in any smoke run — never trust a
    reply without knowing which provider/model served it (silent fallback to a
    pricier default is a real, observed failure mode)
-5. For a project `.crushrc` (e.g. SystemNix's tq managed block):
-   `EXTRA='model large zai/glm-5.4 --reasoning-effort xhigh' bash scripts/crush-rc-test.sh --expect-model zai/glm-5.4`
-   — proves the model is declared AND the slot line parses; the managed block
-   itself is re-rendered by `tq bootstrap`, so edit
-   `modules/nixos/services/tq-agent-pool.nix` (and its test) instead of the
-   file when the pin must change
+5. For a project `.crushrc` (e.g. SystemNix's):
+   `EXTRA="$(cat .crushrc)" bash scripts/crush-rc-test.sh --expect-model zai/glm-5.4`
+   — proves the model is declared AND the slot line parses (the candidate rc is
+   appended to the global one, so merges are exercised). The managed block is
+   re-rendered by `tq bootstrap`, so edit
+   `modules/nixos/services/tq-agent-pool.nix` (and its test) for block-level
+   changes; SystemNix's slot line lives outside the block on purpose.
+6. Thinking is only provable from the WIRE, not from config text: run a probe
+   with `--debug` (`XDG_CONFIG_HOME=$(mktemp -d)`, copy the global rc, append
+   `.crushrc`) and read `.crush/logs/crush.log` for the POST body — assert
+   `"thinking": {"type": "enabled"}` next to `"model": "glm-5.4"` against
+   `/v1/zai/chat/completions` (the exact check that caught the 2026-11-24
+   disabled-thinking regression).
 
 ## Gotchas
 
