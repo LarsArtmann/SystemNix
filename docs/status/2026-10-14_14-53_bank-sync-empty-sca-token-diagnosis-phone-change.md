@@ -86,7 +86,7 @@ The session also exposed a **monitoring blind spot**: `bank_sync_sca_approval_pe
 4. **Surface the verdict, not just the bool:** `x-2fa-approval-result` is a non-secret verdict code that would have made this class self-diagnosing from the journal alone. The OTT is secret; the verdict is not. Fix shape (c) of the queued row.
 5. **Runbook lag:** the SCA error template's own Fix line ("Trigger a fresh challenge by viewing a statement on wise.com") has been correct in the binary since 2026-10-08/09 — but the runbook didn't connect it to the phone-change class until today. Runbooks lag failure modes by weeks (Oct-7 gap → closed today). The closing move each time: when a session diagnoses a NEW failure class, the runbook section lands in the SAME commit as the diagnosis (done today — keep doing it).
 6. **Agent privilege boundary documentation:** this session burned calls discovering (again) that service envs are unreadable to agents (`/run/secrets` root-only, rendered templates user-0400, `sudo` banned). The AGENTS "verified live-probe set" section should state it explicitly: "service envs are NOT agent-readable; use /metrics + journal only; secret-bearing probes are owner-run". Self-harvested (c.3 second row).
-7. **My own edit discipline (d.1):** bullet-level edits get whole-bullet `old_string`s; anything else risks exactly this clobber. No new tooling needed — a personal rule.
+7. **My own edit discipline (d.1):** bullet-level edits get whole-bullet `old_string`s; anything else risks exactly this clobber. No new tooling needed — a personal rule. <!-- format:allow -->
 
 ## f) NEXT TASKS (ranked; "up to 50" treated as a cap — 30 real items beat 50 padded ones)
 

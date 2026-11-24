@@ -16,7 +16,7 @@
 
 ### 2. libdisplay-info_0_2 removed from nixpkgs — FIXED
 
-- **Symptom:** `error:`libdisplay-info_0_2`has been removed as it is was unused in Nixpkgs`
+- **Symptom:** `error:`libdisplay-info_0_2` as been removed as it is was unused in Nixpkgs`
 - **Root cause:** niri-flake's `make-niri` function calls `pkgs.callPackage make-niri { libdisplay-info_0_2 ? libdisplay-info, ... }` with `assert libdisplay-info_0_2.version == "0.2.0"`. nixpkgs removed the `libdisplay-info_0_2` alias (throw on access), and the real `libdisplay-info` is now 0.4.0.
 - **Fix:** Added `niriLibdisplayInfoShim` overlay in `overlays/linux.nix:12-28` that:
   1. Sets derivation `version = "0.2.0"` (passes niri-flake's stale assert)

@@ -46,7 +46,7 @@
 
 1. **Deploy** — `nix run .#deploy` was NOT run. Changes exist in the Nix store eval but are not deployed to the running system.
 2. **Dead-letter cleanup** — `echo '[]' > ~/.file-renamer/dead-letter.json` not executed.
-3. **Stale plaintext file cleanup** — `~/.zai_api_key` (stale, invalid) still on disk. No longer referenced by the module, but should be `trash`ed.
+3. **Stale plaintext file cleanup** — `~/.zai_api_key` (stale, invalid) still on disk. No longer referenced by the module, but should be `trash`ed. <!-- format:allow -->
 4. **Post-deploy smoke test** — `nix run .#post-deploy-check` not run (requires deploy first).
 5. **Runtime verification** — No confirmation that the Synthetic provider actually works with the sops-provisioned key after deploy.
 6. **ZAI key rotation** — If ZAI is still desired as a primary provider, the key in `~/.zai_api_key` is stale/invalid and needs replacement or removal.
@@ -80,7 +80,7 @@
 
 ### Operational
 
-8. **Remove stale plaintext files** — `~/.zai_api_key` and any `~/.synthetic_api_key` should be `trash`ed after deploy confirms the sops path works.
+8. **Remove stale plaintext files** — `~/.zai_api_key` and any `~/.synthetic_api_key` should be `trash`ed after deploy confirms the sops path works. <!-- format:allow -->
 9. **Clear dead-letter queue** — 157 entries from Jul 13 are permanently stuck. They need either manual clearing or a `retry` command run.
 10. **Verify Synthetic API key is valid** — The sops secret was originally for crush-daily. It SHOULD be the same key, but this was not verified end-to-end.
 11. **Fix the auto-commit hook** — The hook generates misleading messages. Either disable it, improve its message generation, or manually amend the commits.

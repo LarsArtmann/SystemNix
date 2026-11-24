@@ -88,7 +88,7 @@ T7 (trace alert rules — owner-gated), T8 (log→trace correlation — upstream
 1. **`rg -rln` twice** — `-r` is REPLACE-in-display; mangled output showed phantom `ln_some_avg10` metrics and an `ln_alert` gatus check; I briefly chased a "second dead emitter" that doesn't exist. Caught by reading the actual file. Lesson burned in: file-listing is `rg -ln`, never `-rln`.
 2. **`serviceConfig = [ … ]` list shape** in git-lag-metrics (psi-metrics uses `lib.mkMerge [ … ]`) — my first eval failed on exactly this; fixed by cloning the established form. Should have opened the reference block BEFORE writing.
 3. **A careless edit deleted the `timers.git-lag-metrics = {` opening line** (old_string swallowed it); repaired immediately from the tail view. Cost: one round-trip.
-4. **Tracked-files trap**: first nix build of the new selftest check failed `cp: cannot stat … test-post-deploy-service-sanity.sh` — new files must be `git add`ed before any flake-source build (documented doctrine; still stepped on it). Fixed with stage + rebuild.
+4. **Tracked-files trap**: first nix build of the new selftest check failed `cp: cannot stat … test-post-deploy-service-sanity.sh` — new files must be `git add`ed before any flake-source build (documented doctrine; still stepped on it). Fixed with stage + rebuild. <!-- format:allow -->
 5. `PIPESTATUS` under mvdan/sh didn't yield a code once — worked around with `&& echo GREEN`. Minor.
 
 ## e) WHAT WE SHOULD IMPROVE (session-level reflections)

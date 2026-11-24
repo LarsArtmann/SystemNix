@@ -75,7 +75,7 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 9. Consider a sustained-storm branch: if avg300 > 60%, refuse even with DEPLOY_FORCE_PRESSURE unless a new explicit override (dip-racing vs honest-storm distinction — this session was honest-storm).
 
 **Prevent the next wave (systemic):**
-10. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): for every LarsArtmann input, probe `#default.goModules` at the LOCK rev; print stale ones in one pass; wire into pre-deploy §11 or a flake check.
+~~10. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): for every LarsArtmann input, probe `#default.goModules` at the LOCK rev; print stale ones in one pass; wire into pre-deploy §11 or a flake check.~~ done as `scripts/pre-deploy-check.sh` §11 "vendorHash freshness (deploy FOD preview)" (line 460, real-build preview) — the landed form of this idea
 ~~11. Root-cause the wave: diff the 7 repos' recent commits for a shared actor (PMA dep-sweep daemon? mass agent session?) that lands go.mod/lock bumps without the hash dance.~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: 2026-10-15 diagnosis).**
 12. Pre-deploy §11 prints "unable to determine status" for 6 flakePkg inputs — extend it to cover upstream-flake packages (it currently only understands local buildGoModule shapes).
 13. Encode the vendorHash-wave playbook in AGENTS.md: wave → fleet audit → fix upstream → `--update-input --refresh` → build-from-our-lock.

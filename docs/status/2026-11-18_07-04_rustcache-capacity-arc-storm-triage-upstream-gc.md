@@ -76,7 +76,7 @@ Started as "why is IO 100% on many disks?!" — answered as a build storm (monit
 3. **Nix indented-string `''` trap, twice**: `-d ''` in a `''…''` script terminates the string at parse time. Two eval cycles burned (the `replace_all` fix missed the `fp`-variant line the first time). A pre-eval grep for bare `''` occurrences would have caught both.
 4. **Timer nesting error** — `systemd.timers` written inside `systemd.services`; caught by eval, one more cycle.
 5. **Missed the amend-forward window** — verified daemon commit `d25b8ebfc` contents but didn't amend its heuristic message before the next sweep; three later commits sealed it (rebase out of scope). The wave's core commit keeps a "chore: auto-commit" message.
-6. **Sandbox harness self-cannibalization ×2** — setup.sh and gc.sh placed inside the tree the harness `rm -rf`s; plus an inverted threshold test and a sed anchor miss. ~4 wasted cycles, all test-side, nothing shipped broken.
+6. **Sandbox harness self-cannibalization ×2** — setup.sh and gc.sh placed inside the tree the harness `rm -rf`s; plus an inverted threshold test and a sed anchor miss. ~4 wasted cycles, all test-side, nothing shipped broken. <!-- format:allow -->
 7. **Honesty ledger**: one wrong published claim (item 1), corrected same-session with evidence. No fabricated numbers; every figure in this report traces to a quoted probe.
 
 ## e) WHAT WE SHOULD IMPROVE

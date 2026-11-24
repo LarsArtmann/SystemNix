@@ -66,7 +66,7 @@
 ~~3. Research existing btop issues for "pid reuse stale/wrong memory" (1.4.x); if novel, file upstream with this box's repro (heavy churn + memory sort + days-long instance).~~ **NOT-DO — dup of c1 (OPEN).**
 ~~4. Evaluate btop bump in nixpkgs when a fix lands.~~ **NOT-DO — dup of c2 (w).**
 ~~5. Optional btop config hardening: `proc_sorting = "cpu lazy"` reduces constant re-sorting of a memory-sorted list (cosmetic; may reduce exposure to sort/stats misalignment).~~ **Won't implement — cosmetic config idea.**
-6. Consider `scripts/proc-mem-triage.sh`: given a PID, print VmRSS/VmHWM/VmSwap/threads + cgroup current/peak/max + unit — turns this session's manual chain into one command for the next "why is X using RAM" report.
+6. Consider `scripts/proc-mem-triage.sh`: given a PID, print VmRSS/VmHWM/VmSwap/threads + cgroup current/peak/max + unit — turns this session's manual chain into one command for the next "why is X using RAM" report. → docs/todo/pipeline.md (proc-mem-triage script row)
 ~~7. Keep the SigNoz census query as the fallback oracle for future monitor disputes (documented in the 14-41 report).~~ done — census fallback documented in the 14-41 status report
 ~~8. Nothing to change in paperless — caps, `OMP_NUM_THREADS=1`, `max-tasks-per-child=1`, and system-health memory alerting all verified in place.~~ done — verified in place - caps + alerting confirmed (module + monitoredServices)
 

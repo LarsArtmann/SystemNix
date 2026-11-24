@@ -127,7 +127,7 @@ Result: file had **duplicate** 158→153 blocks at lines 223-333. I only noticed
 
 ### 2. The text duplication artifact on line 280
 
-`4d75e83b`.`. Committed as`7b7b20f3`and`4d75e83b`.` — leftover from an edit overlap. Caught via tail inspection, fixed with targeted edit. Same root cause as #1 (incremental editing without plan).
+`4d75e83b`.`. Committed as` b7b20f3` nd` d75e83b`.` — leftover from an edit overlap. Caught via tail inspection, fixed with targeted edit. Same root cause as #1 (incremental editing without plan).
 
 ### 3. I didn't grep for the existing P3 TTM TODO
 

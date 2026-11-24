@@ -68,7 +68,7 @@ The [decision] resolved itself by events (receiver re-armed + fixed + deployed; 
 
 1. **Cheat-sheet API-probe surfaces are now stale in 3 spots**: (a) "Rule/policy parity" still teaches `/api/v1/rules` (serves HTML since the package move); (b) no pagination note (`limit` param, default 20); (c) the v3 `query_range` payload shape (`promQueries` map + `panelType:"graph"` + `queryType:"promql"`) — which cost me ~6 failed attempts — is documented nowhere.
 2. **DELTA-blindness gotcha scope wording**: monitoring.md row 63 attributes it to "the v1 query API" — my A/B proves it engine-level through v3 `query_range` (the dashboard path). The row's scope needs widening; the builder-Temporality exception deserves a sentence.
-3. **PSI emitter missing-PSI fail-visible**: the emitter `exit 0`s silently when `/proc/pressure/*` is absent — a missing-PSI host reads phantom-calm. Freshness canary / fail-visible class, unqueued until this report.
+3. **PSI emitter missing-PSI fail-visible**: the emitter `exit 0`s silently when `/proc/pressure/*` is absent — a missing-PSI host reads phantom-calm. Freshness canary / fail-visible class, unqueued until this report. <!-- format:allow -->
 4. **Browser-eyeball of the rewritten GCP dashboard** (blocked:user — API-verified only, the standing class).
 5. **Gatus verdict probe for the two-tier PSI checks post-deploy** (io_warning=1 on the chronic band live; the check pins `node_psi_io_alert 0` so it SHOULD be green — but the recorded verdict is root-only, unprobed).
 6. **OTTL `TraceID()` extraction vs the pinned fork's config surface** — upstream capability verified; the fork's rendered-config leg is not.

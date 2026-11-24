@@ -36,7 +36,7 @@ The first deploy attempt (user-pasted output) revealed two NEW failures that req
 ### A3. Helium empty-window crash loop (FIXED, DEPLOYED)
 
 - **Root cause:** `helium.service` with `Restart=always` + bare `ExecStart = env ... helium`. When service restarts while an existing helium instance is alive, the new process prints "Opening in existing browser session", opens an EMPTY window, exits 0 → `Restart=always` treats clean exit as crash → restarts → another empty window every RestartSec → 11 empty windows in 36s → start-limit-hit.
-- **Fix:** `ExecStart` is now `helium-launch` wrapper script (`niri-wrapped.nix`) that `pgrep`s for existing main process and waits in a sleep loop until it dies before launching fresh. 300s timeout safety valve.
+- **Fix:** `ExecStart` is now `helium-launch` wrapper script (`niri-wrapped.nix`) that `pgrep`s for existing main process and waits in a sleep loop until it dies before launching fresh. 300s timeout safety valve. <!-- format:allow -->
 - **Verification:** Deployed cleanly. Not manually tested with kill this session (see B1 below).
 
 ### A4. DNS blocker `dnsblock` subdomain (FIXED, DEPLOYED)

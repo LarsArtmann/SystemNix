@@ -58,7 +58,7 @@
 2. **Provisional-mechanism labeling in first answers**: when a diagnosis is mid-flight, the answer must say which mechanism claims are verified vs inferred — or wait 2 more tool calls (the oomd spiral was 1 grep away).
 3. **Incident-response source checklist**: ring → evidence-pull file → ClickHouse, consulted IN ORDER, each one actually read. Codify in the crash-autopsy entry-point section (stability.md) — currently neither the ring nor the read-back is listed.
 4. **Config-without-consumer audits**: `SwapUsedLimit=90%` was dead policy for months because arming lives in a different layer (`ManagedOOMSwap=` per unit) — a one-time fleet audit of oomd/Memory* knobs vs actual armed properties (this session's `grep -rl` pattern) belongs in the nix-review checklist.
-5. **The storm culture paradox**: two sessions documented why deploys are storm-gated while running full `nix build`s at PSI 41–58% in parallel terminals. The entry gates cover agent fleets, not interactive builds — the discipline is voluntary exactly where the fuel comes from.
+5. **The storm culture paradox**: two sessions documented why deploys are storm-gated while running full `nix build`s at PSI 41–58% in parallel terminals. The entry gates cover agent fleets, not interactive builds — the discipline is voluntary exactly where the fuel comes from. <!-- format:allow -->
 6. **Positive to preserve**: evidence-before-vacuum worked; capture-once-then-grep worked; serialization behind the parallel build worked; self-harvest at authoring time worked; fix-on-sight for the stale doc worked. The session's process spine was solid — the failures were all in the claim layer, not the action layer.
 
 ## f) NEXT (up to 50; derived strictly from this session)

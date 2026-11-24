@@ -2,7 +2,7 @@
 
 > **Session scope:** Rescue the blocked `nix run .#deploy` (2 build failures), fix both upstream, redeploy, verify.
 > **Outcome:** Deploy GREEN. Both failures were upstream bugs, both fixed at the source and pushed. 8 post-deploy smoke FAILs are the pre-existing DAS/pool outage, untouched by this session.
-> **Method note:** Both local upstream checkouts carried another session's dirty WIP — all fixes were made in clean `git worktree`s on origin/master, committed there, pushed fast-forward.
+> **Method note:** Both local upstream checkouts carried another session's dirty WIP — all fixes were made in clean `git worktree`s on origin/master, committed there, pushed fast-forward. <!-- format:allow -->
 
 ---
 

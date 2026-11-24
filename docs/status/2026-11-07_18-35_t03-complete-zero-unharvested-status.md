@@ -22,7 +22,7 @@ Session continuation (post 09:14 report). Owner directive standing. This arc: ha
 
 ## d) Totally fucked up (own-goals, all caught + repaired live)
 
-1. **b07 dispatch hallucination**: I typed 12 of 15 batch filenames from memory instead of `cat`ing the slice file; the triage agent correctly reported them missing. Cost: one wasted subagent run + re-dispatch. Fix adopted: every later batch list was pasted verbatim from a verified file, and prompts gained a MISSING-report clause.
+1. **b07 dispatch hallucination**: I typed 12 of 15 batch filenames from memory instead of `cat`ing the slice file; the triage agent correctly reported them missing. Cost: one wasted subagent run + re-dispatch. Fix adopted: every later batch list was pasted verbatim from a verified file, and prompts gained a MISSING-report clause. <!-- format:allow -->
 2. **`$(…)` title substitution**: wave-8 row "dead-guard-lint to $(…)-capture" got command-substituted by bash inside double quotes; landed mangled. Fixed in both surfaces; later scripts banned literal `$( ` and backticks in titles (told to agents too).
 3. **4 dup-title rows** (§17-fixture, journal-vacuum, hermes-tracing, Darwin-crushrc): minted before checking existing titles. The gate caught all 4; merged with re-queue citations. Root improvement owed: pre-check titles BEFORE appending (see e).
 4. **Two >72-char commit subjects** rejected by the hook (wave 12 sat staged until reworded).

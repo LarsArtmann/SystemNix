@@ -85,7 +85,7 @@ pathspec-scoped). Pre-commit gates passed on `8e6409dd` (gitleaks, whitespace,
 ## d) TOTALLY FUCKED UP (all caught + fixed in-session; none survived)
 
 1. **The `app()` shell-function bug (worst of the session)**: `shift` then `$1`
-   inside the loop referenced the CHUNK NAME, so all 21 runbook append `cat`s wrote
+   inside the loop referenced the CHUNK NAME, so all 21 runbook append `cat`s wrote <!-- format:allow -->
    into extensionless stray files (`docs/services/cv`, …) instead of the `.md`
    targets. Banners landed; content didn't. **21 files silently wrong.**
 2. **The first append verification was inadequate**: I checked `wc -l` of only 3

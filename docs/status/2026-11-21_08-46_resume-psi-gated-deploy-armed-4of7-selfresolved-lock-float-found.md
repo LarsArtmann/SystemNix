@@ -32,7 +32,7 @@
 3. **Fix ancestry verification** — `merge-base --is-ancestor` for both `14ec73b28` (paperless) and `fceb43b8e` (darwin fix): both in HEAD.
 4. **Dead sibling script removed** — the under-gated `~/.cache/lockfloat/patient-deploy-20261121.sh` (PSI+window only, no tree gates — the trap the 03:19 report §d confessed) trashed; its log kept as evidence.
 5. **Rival-sequencer sweep** — `pgrep` for armed watchers shows exactly one actor (mine); `~/.cache/deploy-when-quiescent.log` last active 2026-11-18 (stale, not armed).
-6. **Two-stage patient orchestrator armed + parse-validated** — stage 1 waits for io-PSI drain (some<30 & full<20, two consecutive 60s-apart samples, 4h cap), stage 2 `exec`s the canonical `scripts/deploy-when-quiescent.sh --fire` (clean+cold tree ×4 polls + green-eval gate + rc classification + DISARM-LIST on stop exits). PSI pipeline validated against raw `/proc/pressure/io` readings (poll value within 1-min drift of the raw avg60).
+6. **Two-stage patient orchestrator armed + parse-validated** — stage 1 waits for io-PSI drain (some<30 & full<20, two consecutive 60s-apart samples, 4h cap), stage 2 `exec`s the canonical `scripts/deploy-when-quiescent.sh --fire` (clean+cold tree ×4 polls + green-eval gate + rc classification + DISARM-LIST on stop exits). PSI pipeline validated against raw `/proc/pressure/io` readings (poll value within 1-min drift of the raw avg60). <!-- format:allow -->
 7. **Lock float attributed** — `5f6af89d4` decoded node-by-node (4 owner inputs to tips; python3, not direnv-poisoned jq).
 8. **IO churn attribution** — parallel churn pinned to the go-cqrs-lite session (different repo) via `/proc/*/io` 6s deltas; first attempt had an awk field-offset bug (see §d), second verified against a sample line before quoting.
 

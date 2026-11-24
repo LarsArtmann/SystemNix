@@ -74,7 +74,7 @@ Every deploy since the daemon's watch-rename work failed on one Go error (`clien
 2. **Wrong trial fix shipped as residue.** My first bump (sdk `16f6ab5`) was insufficient (lacked the constants) — I verified and reverted, but the parallel session then re-applied that pin (plus my comment text with its now-wrong claim), which I had to correct a second time (16f6ab5→385ec15). Wasted a cycle and created attribution noise in the daemon history.
 3. **dbus path escaping probe error**: first pdd/pda probes used `_2e`-escaped dots but RAW hyphens — silent wrong-object probes returning empty; corrected to `_2d` (the documented escaped-name rule). Cost one verification round.
 4. **Sampler crash**: the per-process IO sampler parsed comm-with-spaces wrong (`int('asgi')`), crashed mid-analysis; fixed with `|`-delimited right-split on the second pass.
-5. **lock-root resolution fumbling**: three `TypeError`s resolving the flake lock (`root` is a node NAME string here, not a dict) before reading the actual structure. Sloppy, but the final resolution was verified against the real file.
+5. **lock-root resolution fumbling**: three `TypeError`s resolving the flake lock (`root` is a node NAME string here, not a dict) before reading the actual structure. Sloppy, but the final resolution was verified against the real file. <!-- format:allow -->
 6. **Two edit-before-read tool errors** (daemon flake.nix, services.md) — both caught by the tool, re-read, re-applied; no damage, but should not happen.
 
 ## e) WHAT WE SHOULD IMPROVE

@@ -27,7 +27,7 @@ Both `history.home.lan` and `crm.home.lan` rendered completely unstyled: raw uti
 
 ## Fixes
 
-- **browser-history upstream** (`a7ac76d` — parallel session's full-CSS regeneration consumed via lock bump; `21456b5` — this session): `api/build-css.sh` now resolves the four nested modules (`errorpage htmx icons utils`) via `go list -m -f '{{.Dir}}'` and `@source`s their real directories (fail-loud instead of silent no-match). `styles.css` 1,448 → 88,805 → 106,183 bytes.
+- **browser-history upstream** (`a7ac76d` — parallel session's full-CSS regeneration consumed via lock bump; `21456b5` — this session): `api/build-css.sh` now resolves the four nested modules (`errorpage htmx icons utils`) via `go list -m -f '{{.Dir}}'` and `@source`s their real directories (fail-loud instead of silent no-match). `styles.css` 1,448 → 88,805 → 106,183 bytes. <!-- format:allow -->
 - **crm upstream** (`2bb5d8f`, one squashed commit): (a) `LoginCSSPath: "/static/app.min.css?v=" + web.AssetVersion()` in the setup config; (b) `GET /static/` mounted outside the auth wrap in `MountInto`; (c) `gen-library-classes.sh` extended to append the cqrs-htmx loginpage AND templ-components utils module sources into the committed inventory; (d) regenerated `library-classes.txt` + `app.min.css` (90,271 → 90,955 bytes) + 13 templ-codegen artifacts (byte-equity gate green).
 - **SystemNix**: `nix flake update browser-history crm` → bh `4360688→a7ac76d→21456b5`, crm `fe9da49→2bb5d8f`; toplevel builds clean both waves (no vendorHash breakage — Go module graphs unchanged).
 

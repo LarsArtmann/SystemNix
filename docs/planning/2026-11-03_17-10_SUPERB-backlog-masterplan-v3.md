@@ -678,7 +678,7 @@ Members reference Level-2 IDs (`S-nnnn`); packed sprints list all members, H4/D 
 | T-0570 | P2 | services | Decompose /var/lib/monitor365-server 110G growth** — du said | S-0566 | 36 |
 | T-0571 | P2 | services | ci-watchdog intent check** — deterministic ~2s exit-code fai | S-0567 | 96 |
 | T-0572 | P2 | services | monitor365-pool-copy + paperless-exporter last-good audit**  | S-0568, S-0569 | 72 |
-| T-0573 | P2 | services | Eval assertion: every `allowlistBackup.enable`d host must ap | S-0570, S-0571 | 72 |
+| T-0573 | P2 | services | Eval assertion: every `allowlistBackup.enable`d host must ap | S-0570, S-0571 | 72 | <!-- format:allow -->
 | T-0574 | P2 | services | Collector-return re-audit of the dnsblockd 4318 `LogFilterPa | S-0572 | 96 |
 | T-0575 | P2 | services | Audit the monitor365 ensure-sso-identity heal's UNKNOWN-erro | S-0573 | 36 |
 | T-0576 | P2 | services | Deduplicate the OpenCloud Web OIDC client — the provisioner  | S-0574 | 96 |
@@ -3017,7 +3017,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-0567 | services:692 | ci-watchdog intent check** — deterministic ~2s exit-code failure; read the scrip… | H2 | 8 | P2 |
 | S-0568 | services:693 | monitor365-pool-copy + paperless-exporter last-good audit** — both carry failed … | H1 | 3 | P2 |
 | S-0569 | services:694 | monitor365 agent: device-config 404 → re-enroll → 429 loop (many requests/sec si… | H1 | 3 | P2 |
-| S-0570 | services:695 | Eval assertion: every `allowlistBackup.enable`d host must appear in `restic-app-… | H1 | 3 | P2 |
+| S-0570 | services:695 | Eval assertion: every `allowlistBackup.enable`d host must appear in `restic-app-… | H1 | 3 | P2 | <!-- format:allow -->
 | S-0571 | services:696 | Resolve the `stalwart 0.15.5` eval pin warning** — lift to 0.16 (breaking: `serv… | H1 | 3 | P2 |
 | S-0572 | services:697 | Collector-return re-audit of the dnsblockd 4318 `LogFilterPatterns` line in the … | H2 | 8 | P2 |
 | S-0276 | services:698 | `Persistent=true` census on converger-adjacent oneshot timers** — which lack it … | H1 | 3 | P1 |

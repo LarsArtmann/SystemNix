@@ -35,7 +35,7 @@ It was **reactive only** — no proactive maintenance to reclaim underused chunk
    - `TimeoutStartSec = 2h`
 
 3. **Emergency reserve script + service** (`btrfs-emergency-reserve`)
-   - 10 GiB `fallocate`d file at `/btrfs-emergency-reserve`
+   - 10 GiB `fallocate`d file at `/btrfs-emergency-reserve` <!-- format:allow -->
    - Created on boot (`wantedBy = multi-user.target`)
    - Idempotent: skips if file already exists
    - Free-space check: refuses to create if free < reserve + 5 GiB headroom

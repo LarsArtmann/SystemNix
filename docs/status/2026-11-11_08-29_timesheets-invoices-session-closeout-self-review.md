@@ -48,7 +48,7 @@
 
 ## d) TOTALLY FUCKED UP (own mistakes, all self-caught — the honest list)
 
-- d1 **Redirect-truncation destroyed the untracked sops archive**: `sops -e … > archive.yaml` truncated the target before the command failed; the file was NEVER git-tracked (the 13:25 report's "committed" claim was wrong — the daemon never `git add`s new files), so git-restore was impossible. Recovered by re-encrypting a plaintext I still held in cache. Never redirect INTO an unrecoverable target; temp+mv.
+- d1 **Redirect-truncation destroyed the untracked sops archive**: `sops -e … > archive.yaml` truncated the target before the command failed; the file was NEVER git-tracked (the 13:25 report's "committed" claim was wrong — the daemon never `git add`s new files), so git-restore was impossible. Recovered by re-encrypting a plaintext I still held in cache. Never redirect INTO an unrecoverable target; temp+mv. <!-- format:allow -->
 - d2 **sops exec-file semantics: 4 rounds of trial-and-error** (version-dependent arg passing; no path in $0/$1/env here). Should have abandoned for the explicit decrypt→append→re-encrypt route after round 2.
 - d3 **jq `-Rs` direnv trap typed AGAIN** (documented in AGENTS.md with prior strikes).
 - d4 **sops -e "no matching creation rules" from the wrong CWD** (rules match from the cwd chain; input must be relative) — one extra round-trip to learn.

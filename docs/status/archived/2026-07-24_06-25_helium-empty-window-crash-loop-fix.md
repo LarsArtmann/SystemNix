@@ -36,7 +36,7 @@ At ~05:56 today, `helium.service` entered a crash loop that spawned **11 empty b
 ## a) FULLY DONE
 
 1. **Root cause diagnosed** — identified the "opening in existing browser session" + `Restart=always` feedback loop via `journalctl --user` and `ps aux`
-2. **Fix implemented** — `helium-launch` wrapper script (`niri-wrapped.nix:62-77`) that `pgrep`s for an existing main process (`helium --ozone-platform-hint`) and sleeps in a loop until it dies before launching fresh
+2. **Fix implemented** — `helium-launch` wrapper script (`niri-wrapped.nix:62-77`) that `pgrep`s for an existing main process (`helium --ozone-platform-hint`) and sleeps in a loop until it dies before launching fresh <!-- format:allow -->
 3. **pgrep pattern verified live** — confirmed it matches exactly 1 process (the main browser PID 3851712), NOT the renderer subprocesses (which have `--type=renderer` and lack `--ozone-platform-hint`)
 4. **Syntax validated** — `nix flake check --no-build` passes (all checks passed)
 5. **AGENTS.md documented** — added gotcha row "helium.service empty-window crash loop (FIXED 2026-07-24)" with root cause, fix, and the `helium-launch` wrapper reference

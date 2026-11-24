@@ -77,7 +77,7 @@ no-op guard working as designed.
 ## c) NOT STARTED (session-relevant, deliberately out of scope)
 
 - Zero-deploy registry triage (9 entries) — queued [ready], untouched.
-- Hub CI leg running the scripts' behavioral `--self-test`s — noticed as a
+- Hub CI leg running the scripts' behavioral `--self-test`s — noticed as a <!-- format:allow -->
   gap this session, harvested as a hub TODO row, not implemented.
 - `systemd-run` rehearsal of the unit env pre-deploy.
 - Confirming the new timer appears on timers.home.lan (systemd-timer-
@@ -134,7 +134,7 @@ no-op guard working as designed.
 3. **[owner] Push SystemNix master** (already N-ahead before this session;
    more now).
 4. Zero-deploy triage (9 entries; `[ready]`, TODO_LIST).
-5. Hub: wire the behavioral `--self-test`s into CI (new row, TODO_LIST).
+5. Hub: wire the behavioral `--self-test`s into CI (new row, TODO_LIST). <!-- format:allow -->
 6. Post-deploy: confirm the timer surfaces on timers.home.lan
    (systemd-timer-monitor) and its onFailure path is visible.
 7. Pre-deploy rehearsal: `systemd-run` the unit env once (catches

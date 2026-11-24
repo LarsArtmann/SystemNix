@@ -47,7 +47,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. **go-commit v0.4.0 tag points to "Unknown Author" commit.** The fix for "Unknown Author" was committed BY "Unknown Author" and tagged. This is permanent in go-commit's history unless force-pushed. Anyone who `git log`s go-commit at v0.4.0 will see it. I made a conscious decision not to fix this, which may have been the wrong call.
+1. **go-commit v0.4.0 tag points to "Unknown Author" commit.** The fix for "Unknown Author" was committed BY "Unknown Author" and tagged. This is permanent in go-commit's history unless force-pushed. Anyone who `git log`s go-commit at v0.4.0 will see it. I made a conscious decision not to fix this, which may have been the wrong call. <!-- format:allow -->
 
 2. **Left SystemNix in a half-applied state.** The flake.lock points to the new PMA, but the system isn't deployed. If someone runs `nix run .#deploy` for any OTHER reason, they'll get the PMA update without expecting it. If the PMA update has a runtime issue, it could affect the daemon unexpectedly.
 

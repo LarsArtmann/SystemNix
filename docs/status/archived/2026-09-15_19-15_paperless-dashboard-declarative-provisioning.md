@@ -19,7 +19,7 @@ Every prior open research item was closed at source level:
 - **Tag names are NOT unique at DB level** (tree tags, `documents/models.py`) — the script resolves name→id with exact-match-first-hit via jq (deterministic).
 - **`ui_settings` GET shape**: `{"user": ..., "settings": {...}, "permissions": ...}` — the in-provisioner assertion path `.settings.saved_views.dashboard_views_visible_ids` is correct.
 - **`/api/config/` viewset**: `IsAuthenticated + DjangoModelPermissions`, POST 405, PATCH works with a superuser token → `appTitle` uses the admin token specifically.
-- **nixpkgs module options verified** at the pinned rev: `services.paperless.manage` (readOnly package, wrapper `cd`s into dataDir and self-sudo's to `cfg.user` when needed) and `services.paperless.user` (default "paperless").
+- **nixpkgs module options verified** at the pinned rev: `services.paperless.manage` (readOnly package, wrapper `cd`s into dataDir and self-sudo's to `cfg.user` when needed) and `services.paperless.user` (default "paperless"). <!-- format:allow -->
 - **`deploy-restart-audit.nix` requirements** read in full: unit name matching `.*-provision$` MUST appear in deploy.sh (satisfied); `restartTriggers` on oneshot+RemainAfterExit are dead config → deliberately NOT set (improvement over the earlier design).
 
 ### 2. Implementation — `modules/nixos/services/paperless.nix`

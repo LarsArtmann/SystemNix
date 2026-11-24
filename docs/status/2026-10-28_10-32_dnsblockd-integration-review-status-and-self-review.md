@@ -144,7 +144,7 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 
 30. Delete the legacy `temp-allowlist.conf` / `temp-allowlist.json` stubs if nothing reads them. `[NH: needs a source check in the binary's config loader — out of session scope]`
 31. Confirm `allow_sibling_domains`, `dhcp_lease_file`, `pprof_enabled` are intentional omissions (security posture) and write the "why" into the runbook. `[Q]` (folded into the option-validation row)
-32. ~~Record the review's verdict + score in `docs/services/dnsblockd.md`.~~ `[NH: DONE this session — verdict + both defects + why`sdnotify`is unused now sit above the DNS section]`
+32. ~~Record the review's verdict + score in `docs/services/dnsblockd.md`.~~ `[NH: DONE this session — verdict + both defects + why` dnotify` s unused now sit above the DNS section]`
 33. Retire or annotate the 144 unharvested `§f` reports (pre-existing WARN). `[NH: a prune/harvest pass, explicitly its own session]`
 
 ### Process (mine, not the repo's)

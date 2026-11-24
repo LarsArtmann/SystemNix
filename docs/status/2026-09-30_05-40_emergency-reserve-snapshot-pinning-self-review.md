@@ -41,7 +41,7 @@
 1. Owner decision: implement `@reserve` subvol option 1? (yes/no/defer)
 2. If yes: declare subvol creation in disk/mkFilesystem layer or bootstrap-unit pattern (hot-user-caches precedent — but note its 2026-09-29 D-state lesson: provisioning state belongs in disko, nothing runtime between automount and mount).
 3. If yes: add `fileSystems."/btrfs-emergency-reserve"` subvol mount (nofail, noauto-automount unnecessary — wanted by the reserve unit).
-4. If yes: rework `btrfs-emergency-reserve.service` to fallocate INSIDE the subvol, mount-gated (`RequiresMountsFor`), with a one-time transition that `rm`s the old in-`@` file.
+4. If yes: rework `btrfs-emergency-reserve.service` to fallocate INSIDE the subvol, mount-gated (`RequiresMountsFor`), with a one-time transition that `rm`s the old in-`@` file. <!-- format:allow -->
 5. If yes: fix the three "instant" runbook strings (e.2) in the same commit.
 6. If yes: add the eval guard — assertion that the reserve path is a mountpoint when the module is enabled (mirror mount-gating-audit shape).
 7. If yes: extend `btrfs-verify-pool-backups`/btrbk config awareness if snapshot sets change (they should not — `@reserve` gets NO btrbk entry).

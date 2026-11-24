@@ -216,7 +216,7 @@ gate printed "NOT armed: active/" instead of DEAF. The pure selftest was green o
 real-gate run caught it. The broken version is in `0ff20e847`.
 
 **d6. `find / -xdev -name 'identity.db*'` from an agent shell on a box at io PSI 40 %.** A whole-filesystem
-walk to find a file I could have `ls`ed; killed after ~1 min.
+walk to find a file I could have `ls`ed; killed after ~1 min. <!-- format:allow -->
 
 **d7. Three empty-read traps in one side-investigation** — a root-only glob expanded by my unprivileged shell
 (`sudo grep … /boot/loader/entries/*` matched nothing), `grep -v '+'` filtering every `--time-style=full-iso`

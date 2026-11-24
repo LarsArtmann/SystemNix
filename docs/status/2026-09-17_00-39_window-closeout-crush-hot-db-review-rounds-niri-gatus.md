@@ -35,7 +35,7 @@
 
 1. crush state-dir override source-check (XDG_STATE/config) — would obsolete the symlink layer entirely.
 2. Fold `crush-hot-db` into the ratified `services.hot-db` Phase-2 module (single mechanism; interim/INTERIM marker stands).
-3. Guard-interaction decision: add `crush-hot-db-migrate` to memory-emergency-guard's `ioChurnUnits` (a ~42 GiB first run is exactly Zone-6's shape; the unit is interruptible between per-dir `mv`s).
+3. Guard-interaction decision: add `crush-hot-db-migrate` to memory-emergency-guard's `ioChurnUnits` (a ~42 GiB first run is exactly Zone-6's shape; the unit is interruptible between per-dir `mv`s). <!-- format:allow -->
 4. Dangling-symlink resilience decision (Samsung absent post-migration ⇒ `.crush` symlinks dangle; TODO's "crush recreates fresh dirs" claim is likely WRONG post-migration and unverified).
 5. Alerting for `crush-hot-db-migrate` (`onFailure` + system-health registration; script exits 0 even when individual migrations fail).
 6. Per-project pgrep guard (one live session blocks all 276 dirs), `--dry-run` flag, depth-cap tripwire (deeper than maxdepth 3 silently stays on QLC).
@@ -70,7 +70,7 @@
 6. Decide the dangling-symlink failure mode (Samsung absent post-migration): heal-to-fresh vs fail-loudly vs hard-depend — and CORRECT the TODO/AGENTS "crush recreates fresh dirs" claim to verified behavior.
 7. Wire alerting: `onFailure` Discord route + `system-health.monitoredServices` entry for `crush-hot-db-migrate`; make the script exit non-zero on per-dir migration failures.
 8. Extend `deploy-restart-audit.nix`: provisioner-loop membership ⇒ non-empty `wantedBy` or explicit exemption; negative-test via `extendModules` (eval-cache hand-probe convention); sweep remaining loop members for the static-unit trap (check `tq-bootstrap` first).
-9. Extend `mount-gating-audit.nix` (or new audit): reject `ReadWritePaths` entries whose unit's own script `mkdir -p`s a descendant (the 226 class of review round 2).
+9. Extend `mount-gating-audit.nix` (or new audit): reject `ReadWritePaths` entries whose unit's own script `mkdir -p`s a descendant (the 226 class of review round 2). <!-- format:allow -->
 10. Build `tests/test-crush-hot-db.nix` discipline going forward: the test is green, but any future change to the module must rebuild it before deploy (unbuilt-check landmine rule).
 11. Depth-cap tripwire: log/metric when a `.crush` exists deeper than maxdepth 3 (silent-miss class, one level down).
 12. Per-project liveness guard (open-fd on that project's `crush.db`) so one idle session doesn't block 275 migrations.

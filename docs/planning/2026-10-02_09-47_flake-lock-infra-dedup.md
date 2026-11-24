@@ -51,7 +51,7 @@ node names are allocation artifacts; node COUNT is the metric.
    analysis (only deps the consumer actually declares; no blind injection).
    Additive: existing hand-written follows stay (identical semantics).
 2. **Eval-time lock audit** — `lib/lock-audit.nix` reads `flake.lock` at eval
-   time and `throw`s on (a) same-rev duplicate nodes for infra deps (pure bloat
+   time and `throw`s on (a) same-rev duplicate nodes for infra deps (pure bloat <!-- format:allow -->
    regression), (b) infra-dep rev drift beyond the allowlist
    (`nixpkgs`: root + qmd; `nixpkgs` own-node owners: discordsync, qmd).
    Enforced on EVERY eval — a future blanket lock wave that reintroduces dups

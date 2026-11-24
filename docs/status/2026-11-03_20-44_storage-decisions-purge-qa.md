@@ -28,7 +28,7 @@
 | Item | Evidence |
 |---|---|
 | 15-question storage decision Q&A executed in 3 importance-ranked batches (reclaims/backup → design/layout → ops/tooling), every answer captured | owner selections in this report §f + queue rows |
-| Important-data spot-check on `~/.cache` BEFORE any purge (owner-required constraint) | found Kernovia `.db`s (glac-fleet), `legacy.duckdb` (m365fix), `pipeline.sqlite` (cv-go/tmp), run logs (ds-gate/ec-hub) → 4 dirs excluded |
+| Important-data spot-check on `~/.cache` BEFORE any purge (owner-required constraint) | found Kernovia `.db`s (glac-fleet), `legacy.duckdb` (m365fix), `pipeline.sqlite` (cv-go/tmp), run logs (ds-gate/ec-hub) → 4 dirs excluded | <!-- format:allow -->
 | Purge wave 1: 5 pure-GOCACHE dirs deleted (vra-gocache, cmdguard-gocache, go-build-{baseline,gobilanz,bf}) | df 4.24 GB freed at first sample, 84%→83% |
 | btrbk excludes decision queued: /data/ai + SteamLibrary + gcs-staging never to the pool (owner directive: NEVER backup re-downloadable AI models) | storage.md + TODO_LIST `[ready]` rows |
 | ClickHouse relocation rows RETIRED on both surfaces (owner directive: ClickHouse stays on QLC) | storage.md row 156 + TODO_LIST row stamped |

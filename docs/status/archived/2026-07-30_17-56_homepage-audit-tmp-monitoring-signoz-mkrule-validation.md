@@ -37,7 +37,7 @@
 
 **What was done:**
 
-- Added `validateTarget` function in `_signoz-alerts.nix` that `throw`s at Nix eval time on:
+- Added `validateTarget` function in `_signoz-alerts.nix` that `throw`s at Nix eval time on: <!-- format:allow -->
   - `target=0` + `above_or_equal` → always true for non-negative metrics (the bug that caused 3 permanently-firing rules)
   - `target=0` + `below` → never true for non-negative metrics (mathematically vacuous)
 - Wired into `mkRule` via `assert validateTarget name op target;`

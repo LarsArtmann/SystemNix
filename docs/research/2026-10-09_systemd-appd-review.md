@@ -61,7 +61,7 @@ Nothing exists today. When it lands, the chain is:
 
 ### PRO
 
-- **Solves a real, long-standing fragmentation problem.** App identity on the free desktop today is a mess of Flatpak app-ids, portal app-ids, window `app_id`s, and cgroup-name guessing. A cgroup xattr set by PID 1 is the most robust substrate possible (kernel-visible, works for any observer incl. non-systemd-aware code paths).
+- **Solves a real, long-standing fragmentation problem.** App identity on the free desktop today is a mess of Flatpak app-ids, portal app-ids, window `app_id`s, and cgroup-name guessing. A cgroup xattr set by PID 1 is the most robust substrate possible (kernel-visible, works for any observer incl. non-systemd-aware code paths). <!-- format:allow -->
 - **Launcher- and runtime-agnostic — covers native nix apps.** Identity attaches to any app launched in an `app-*` unit, not just Flatpak sandboxes. For NixOS this is the interesting part: declaratively-managed native apps could eventually get the same permission UX as Flatpak apps, closing a gap where NixOS desktop users today choose between "native but unsandboxed" and "sandboxed but Flatpak".
 - **Race-free permission-change protocol.** The synchronized notify/ack design (enforcers confirm before the setter returns) is the correct shape; the camera-grant/PipeWire race it closes is a real bug class in today's portal flow.
 - **Small, hardened, user-scoped surface.** One user unit, AF_UNIX-only, `PartOf=graphical-session.target`, no system daemon, no new packaging format, no kernel requirements beyond cgroup xattrs (btrfs/ext4 fine; note xattrs on some filesystems — e.g. naive NFS/FUSE setups — are a historical pain point, irrelevant to evo-x2's btrfs).

@@ -72,7 +72,7 @@ Nothing destructive went wrong — the target verification held up under challen
 18. Update AGENTS.md hardware table / storage layout section after install (evo-x2 disk inventory changes for the first time since the BTRFS section was written).
 
 **Repo/tooling from this session:**
-19. Write `scripts/wipe-external-disk.sh` runbook (see e.2).
+~~19. Write `scripts/wipe-external-disk.sh` runbook (see e.2).~~ **NOT-DO — one-off prep; the wipe executed 2026-08-30/31 (see samsung-970-bitlocker-rescue + role-assignment archived plans); no reusable runbook was wanted afterwards — docs/agents/storage.md owns disk procedures**
 ~~20. Add the "by-id for destructive ops" rule to AGENTS.md Critical Rules or the wipe script docstring (currently only implied by the udev lesson).~~ done — AGENTS.md carries the never-match/by-id doctrine (udev-block-letter-audit enforces the class)
 ~~21. Commit/settle the AGENTS.md front-port edit (daemon batches it; verify wording survived).~~ done — settled in the daemon batches
 ~~22. The USB NVMe enclosure (RTL9210B) is now a proven 10 Gbps external NVMe dock — worth keeping noted in AGENTS.md hardware inventory for future disk surgery (it already earned its mention via the TRIM caveat).~~ done — AGENTS.md 2026-08-30 front-USB4-C bullet records the RTL9210B proof + TRIM caveat

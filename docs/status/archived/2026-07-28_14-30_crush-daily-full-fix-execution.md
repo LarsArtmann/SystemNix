@@ -131,7 +131,7 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 11. **Add a Gatus metric for crush-daily** that asserts `requests_total > N` over 24h. If zero, alert via Discord.
 12. **Audit ALL SystemNix wrapper modules for the same "runs-as-system-user-but-reads-user-data" pattern.** Any service that shells out to user-installed CLIs (crush, gh, dms, etc.) is at risk.
 13. **Stand up the doctor probe that crush-daily's doctor module already exposes** at `/api/doctor`. Add a post-deploy-check assertion on it.
-14. **Convert the manual find/awk verification of SQLite events I did with `sqlite3 /var/lib/crush-daily/crush-daily.db` ...`into a SystemNix-admin CLI script** at`scripts/crush-daily-inspect.sh`.
+14. **Convert the manual find/awk verification of SQLite events I did with `sqlite3 /var/lib/crush-daily/crush-daily.db` ...`into a SystemNix-admin CLI script** at` cripts/crush-daily-inspect.sh`.
 15. **Run `nix flake update --all`** and verify no other dependencies regressed during my targeted crush-daily update.
 16. **Document the `runAsUser = config.users.primaryUser` decision** in `configuration.nix` with rationale comments so future readers understand the choice.
 17. **Define the `runAsUser` validation predicate** in SystemNix wrapper: at minimum, throw if it's set to a UID not associated with a real user; ideally cross-check it's the `users.primaryUser`.

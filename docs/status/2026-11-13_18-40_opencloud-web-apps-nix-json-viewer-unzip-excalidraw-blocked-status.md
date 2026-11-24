@@ -71,7 +71,7 @@ Nothing broke live — no service, no data, no config regression. But the proces
 2. **Entrypoint existence was checked only AFTER that scare** — "manifest.json present" is not "app loadable". Both entrypoints exist, but that check should have preceded any "done" claim.
 3. **Wrong first assumption on the public URL** (`/apps/<name>/`). I had already drafted the runbook verify recipe with it and caught it only by reading `_customAppsEndpoint` in source. Shipping that recipe would have sent the owner chasing a 404.
 4. **A meaningless version string:** the derivation is `opencloud-web-apps-7` (`version = "7"`, meaning "web line 7"). It builds and reads fine, but it is a wart, not a version.
-5. **Co-committed with foreign work:** I `git add`ed the new pkgs file (required — untracked files are invisible to flake eval), and the daemon then committed my 3 files inside a batch that also carried the parallel session's journal-mesh/bank-sync work (`a5ffbafe6`). Not damage; attribution is fuzzy for a reader of that commit.
+5. **Co-committed with foreign work:** I `git add`ed the new pkgs file (required — untracked files are invisible to flake eval), and the daemon then committed my 3 files inside a batch that also carried the parallel session's journal-mesh/bank-sync work (`a5ffbafe6`). Not damage; attribution is fuzzy for a reader of that commit. <!-- format:allow -->
 
 ## e) WHAT WE SHOULD IMPROVE (ranked by leverage)
 

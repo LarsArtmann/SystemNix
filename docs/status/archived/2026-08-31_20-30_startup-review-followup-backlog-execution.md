@@ -25,7 +25,7 @@ deployed and verified live unless marked otherwise.
   retries, TimeoutStartSec 2min→6min — the old gate budget EQUALLED the unit
   timeout, guaranteed slow-boot failure), **searx** 3min→4min, **forgejo**
   3min→4min. Deployed values verified on the live units.
-- First audit draft was a PHANTOM GREEN: the new module file wasn't `git add`ed,
+- First audit draft was a PHANTOM GREEN: the new module file wasn't `git add`ed, <!-- format:allow -->
   so the flake never saw it and "0 failed assertions" was meaningless (the
   tracked-files trap, live). Negative-testing through nix is the only proof.
 

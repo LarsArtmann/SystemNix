@@ -40,10 +40,10 @@
 
 I annotated 14 of the 16 reports identified in the Aug 6 self-review. The two NOT annotated:
 
-- `2026-08-04_01-20_crash-recovery-deploy-results-and-issues.md` — **ANNOTATED** (I did edit this one! The rg pattern `done at \` didn't match because I used``done (described)`instead of`done at \`hash\`` for AGENTS.md items that don't have a single commit hash. The annotations ARE there — 5 items resolved inline.)
+- `2026-08-04_01-20_crash-recovery-deploy-results-and-issues.md` — **ANNOTATED** (I did edit this one! The rg pattern `done at \` didn't match because I used``done (described)`instead of` one at \`hash\`` for AGENTS.md items that don't have a single commit hash. The annotations ARE there — 5 items resolved inline.)
 - `2026-08-04_02-01_dnsblockd-oom-root-cause-and-discordsync-chattr-fix.md` — **ANNOTATED** (same situation — Monitor365 pool timeout marked `mitigated at \`183925f4\``)
 
-So actually all 14+2 = 16 target reports were annotated. The metric counting was wrong in my session — I was searching for `done at \` but some annotations use``done (described)`or`mitigated at \`hash\`` which don't match that pattern.
+So actually all 14+2 = 16 target reports were annotated. The metric counting was wrong in my session — I was searching for `done at \` but some annotations use``done (described)`or` itigated at \`hash\`` which don't match that pattern.
 
 ### Annotations — only Critical and High priority items resolved
 
@@ -80,7 +80,7 @@ The previous session's gap persists: I did surgical patches, not a full BUILD pa
 
 ### 1. Annotation metrics were wrong — I undercounted my own work
 
-I initially reported "14 reports annotated" based on `rg -c 'done at \` which misses annotations using``done (described)`or`mitigated at \`hash\``. The real count is 16 reports annotated with ~50+ inline markers. This doesn't affect the work quality, but it means my session metrics were dishonest — I was reporting fewer annotations than I actually made.
+I initially reported "14 reports annotated" based on `rg -c 'done at \` which misses annotations using``done (described)`or` itigated at \`hash\``. The real count is 16 reports annotated with ~50+ inline markers. This doesn't affect the work quality, but it means my session metrics were dishonest — I was reporting fewer annotations than I actually made.
 
 ### 2. Did NOT annotate Medium/Lower priority items
 
@@ -108,7 +108,7 @@ The Aug 6 status report listed "Add cache subvolumes `commit=300`" as a TODO ite
 | 2 | **FEATURES.md not fully rebuilt** — known gaps section, improvement opportunities section unaudited | 🟠 Medium | Full BUILD pass post-deploy                              |
 | 3 | **CHANGELOG has operational incidents** mixed with code changes                                     | 🟡 Low    | Move DNS resolv.conf entry to status report context only |
 | 4 | **Aug 6 status report item #29 (cache commit=300)** is now wrong but unmarked                       | 🟡 Low    | Annotate the Aug 6 report's own item                     |
-| 5 | **Annotation format inconsistency** — some use `done at \`hash\``, others`done (description)`       | 🟡 Low    | Standardize on hash-cited format where possible          |
+| 5 | **Annotation format inconsistency** — some use `done at \`hash\``, others` one (description)`       | 🟡 Low    | Standardize on hash-cited format where possible          |
 
 ### In my process
 
@@ -214,7 +214,7 @@ The row has said ⚠️ "PG role mismatch — app down" for 3+ days. Nobody has 
 | Metric                             | Value                                                                              |
 | ---------------------------------- | ---------------------------------------------------------------------------------- |
 | Status reports annotated           | 16 (Aug 3-5)                                                                       |
-| Total inline annotations           | ~50 (39 `done at \`hash\``+ 2`NOT-DO/DUPLICATE`+ ~9`done/mitigated (description)`) |
+| Total inline annotations           | ~50 (39 `done at \`hash\``+ 2` OT-DO/DUPLICATE`+ ~9` one/mitigated (description)`) |
 | Living docs updated                | 3 (FEATURES, TODO_LIST, ROADMAP)                                                   |
 | FEATURES.md rows added             | 7 (4 BTRFS reliability + 3 package rows + mkLarsPackages set)                      |
 | FEATURES.md rows fixed             | 4 (packages count, DiscordSync, Go toolchain gap, count summary)                   |

@@ -186,7 +186,7 @@ These services still use inline systemd patterns instead of `harden {}` / `servi
 
 The last 7 sessions (25-31) were dominated by a cascade of build failures:
 
-1. **`lib/docker.nix` not tracked by Git** — new file not `git add`ed. Nix flakes require all referenced files to be tracked.
+1. **`lib/docker.nix` not tracked by Git** — new file not `git add`ed. Nix flakes require all referenced files to be tracked. <!-- format:allow -->
 2. **`undefined variable 'onFailure'`** — transient error caused by dirty working tree with inconsistent partial changes from parallel sessions.
 3. **`voice-agents.nix` vendorHash mismatch** — upstream Go dependency changes breaking Nix build hashes.
 4. **`todo-list-ai` npmDeps hash** — same pattern, Node.js dependency hash drift.

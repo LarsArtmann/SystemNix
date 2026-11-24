@@ -31,7 +31,7 @@
 2. flake.nix input `pim-sync` (git+ssh, `?ref=refs/heads/master`, cv/crm/monitor365 pattern) + 4 follow lines in the infra-follows group + the deep treefmt-nix edge in the deep-collapse block — all three edits applied in one atomic multiedit against freshly-verified anchors.
 3. Lock landed minimal: one new node, follows collapsed, no other revs moved (diff-verified).
 4. FOD probe green at the locked rev **with follows active** (two script bugs found and fixed first — see §d; the corrected probe resolves lock nodes THROUGH `root.inputs` mapping and declares pim-sync's consumer follows).
-5. `modules/nixos/services/pim-sync.nix` — thin wrapper (nix-email precedent): upstream import, explicit package pin (upstream option has NO default), OnFailure routing, integration entry `unit/subdomain=null/port=null/vHost.layer="none"/checks=[]/monitored=true`, unconditional catalog entry; created + `git add`ed atomically (tracked-files trap).
+5. `modules/nixos/services/pim-sync.nix` — thin wrapper (nix-email precedent): upstream import, explicit package pin (upstream option has NO default), OnFailure routing, integration entry `unit/subdomain=null/port=null/vHost.layer="none"/checks=[]/monitored=true`, unconditional catalog entry; created + `git add`ed atomically (tracked-files trap). <!-- format:allow -->
 6. `configuration.nix` — `pim-sync.enable = false` in the dormant cluster (audible-sync/dmarc-monitor precedent) with the full DELIBERATE rationale + flip-ladder pointer.
 7. `docs/services/pim-sync.md` runbook — state, flip ladder, gotchas (package pin, token rotation, kill switch, vendorHash-follows coupling).
 8. Queue ticks in BOTH surfaces (`TODO_LIST.md:1887` + `docs/todo/services.md:377`) with DONE notes, no drift.

@@ -21,7 +21,7 @@
    - `decisionmodel/budget`: monthly ceiling (`MonthlyMaxUSD`, `SpentThisMonth`, dual-ceiling `Allow`, tests incl. cross-day month-sum + foreign-month exclusion).
    - `career-pipeline/domain`: `ClassifierSourceJev` + alias parity in `eventstore`/`pipeline.go`.
    - `internal/replyloop/jev_classifier.go(+test)`: typed Choice question over the closed 6-class enum, margin gate (0.6, bench §d lesson), static sentinels, hermetic stub-provider tests.
-   - `internal/di/services_replyloop.go`: three-tier chain heuristic → jev → coaching-LLM via nested `RefiningClassifier`s; cache→budget→live provider stack; conservative 1.0 USD/MTok reference price (no invented precision); startup log names the chain (84f225259 precedent).
+   - `internal/di/services_replyloop.go`: three-tier chain heuristic → jev → coaching-LLM via nested `RefiningClassifier`s; cache→budget→live provider stack; conservative 1.0 USD/MTok reference price (no invented precision); startup log names the chain (84f225259 precedent). <!-- format:allow -->
    - Defaults parity: `monthly_max_usd: 5.0` + `path` in the YAML mirror (parity pin green).
    - Design doc: `CV: docs/planning/2026-11-12_reply-classification-jev-decisionmodel-wire-design.md` (status flipped to IMPLEMENTED §5.1–5.5); funnel.md topic contract line added (`d50b4e1c2`).
 6. **HaGeZi mirror pin bumped to current HEAD (7700a113) + rehashed together** — the 11-06 pin was serving drifting snapshots from GitLab edge nodes (verified: same pinned commit, two different contents within an hour). This fixed the HaGeZi FOD class: the last two deploy attempts built 1055+344 derivations clean through every HaGeZi FOD. Committed with the incident comment.

@@ -128,7 +128,7 @@ These files have `| head -1` patterns that could also SIGPIPE under pipefail. I 
 
 ### 5. I didn't consider the `forgejo-oidc-setup` DNS gate hard-fail consequences
 
-The gate `exit 1`s on timeout. Since `forgejo-oidc-setup` has `wantedBy = ["forgejo.service"]`, a failed oneshot creates a `Wants=` dependency — but NOT `Requires=`, so forgejo should still start. However, the `OnFailure=` directive triggers a notification, and `deploy.sh`'s `reset-failed` would clear it. Still, I should verify this doesn't block forgejo startup on next deploy.
+The gate `exit 1`s on timeout. Since `forgejo-oidc-setup` has `wantedBy = ["forgejo.service"]`, a failed oneshot creates a `Wants=` dependency — but NOT `Requires=`, so forgejo should still start. However, the `OnFailure=` directive triggers a notification, and `deploy.sh`'s `reset-failed` would clear it. Still, I should verify this doesn't block forgejo startup on next deploy. <!-- format:allow -->
 
 ### 6. I didn't verify the atticd `atticd-storage-dir.service` is in the NEW generation
 

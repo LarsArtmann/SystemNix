@@ -41,7 +41,7 @@ executed all three answers to their agent-side limit.
 Nothing production-broke. Process warts, all mine:
 
 1. **Annotation-before-event**: the 14-25 report annotation ("§g Q1-Q3 re-asked to the owner this session") was written BEFORE the questions were asked — a claim about the future that only became true by luck of execution order. Same class as the f10 overclaim I was correcting: assert the post-state, not the plan.
-2. **Two failed edit calls on TODO_LIST** — I had only grepped (never `view`ed) the file; the edit tool correctly refused twice. Cheap lesson: view registers the read; grep does not.
+2. **Two failed edit calls on TODO_LIST** — I had only grepped (never `view`ed) the file; the edit tool correctly refused twice. Cheap lesson: view registers the read; grep does not. <!-- format:allow -->
 3. **Declared `/data/docker` inventory "impossible" one probe early** — the btrbk snapshot avenue (`/data/.snapshots` is world-readable at the top) was never probed before concluding; and the better answer (storage-collector already runs with CAP_DAC_READ_SEARCH — extend it to emit subtree sizes) occurred to me only at report time, not at answer time.
 4. **Skipped the 5-second /healthz probe** during the watch-row triage — "owner visual, OIDC-gated" was the handoff's frame, and I inherited it instead of probing the one surface that IS reachable. Recovered at 15:30 (a2), but it should have been the first probe, not a self-review catch.
 5. **Q3 re-tagged without reading the 10-03 report's fix design** — the reprioritization bookkeeping is honest, but the session could have scoped the checkpoint fix (durable checkpoint vs CRM-side upsert-by-external-id) instead of just re-queueing it.

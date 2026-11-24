@@ -129,7 +129,7 @@ skill-default HTML.
    this class (labels covering unasserted facts) and I repeated it 2 hours
    later.
 4. **boot-metrics.nix shipped with a missing `;`** — caught by toplevel
-   eval (that is the eval's job), but I `git add`ed the file before ANY
+   eval (that is the eval's job), but I `git add`ed the file before ANY <!-- format:allow -->
    syntax check because the tracked-files trap forces early staging; the
    extracted-script bash -n came after. Sequence was eval-first by luck.
 5. **TODO_LIST edit failed on a stale read** — row 263 was reformatted by a
@@ -223,7 +223,7 @@ NEW:
     (clickhouse-db-backup exists), stop-window shape.
 17. **Warm-reboot repro ×2-3** (standing from 15-49) — boot-metrics now
     captures every boot's firmware phase automatically; the repro is two
-    `systemctl reboot`s + reading the series.
+    `systemctl reboot`s + reading the series. <!-- format:allow -->
 18. **Reset-reason backfill sweep** across the journal record (standing;
     forward-classification is now automated by boot-metrics).
 19. **crush-hot-db-migrate scan-cost row** (existing) — 10min wall for 0

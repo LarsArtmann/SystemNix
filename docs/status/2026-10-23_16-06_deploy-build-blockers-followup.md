@@ -8,7 +8,7 @@ _2026-10-23 16:06 CEST · follow-up to `2026-10-23_12-38_deploy-blocker-triage-s
 
 The three **eval/gate** blockers from the first pass are gone (eval green, pre-vacuum gate pass, icon pack built) and the deploy now reaches the **build** phase — where it fails for a different set of reasons:
 
-1. **9 stale blocklist FOD hashes + 1 stale signoz pnpm hash + 3 stale pnpm hashes + 3 stale upstream `vendorHash`es** — all realigned from first-hand probes. Committed.
+1. **9 stale blocklist FOD hashes + 1 stale signoz pnpm hash + 3 stale pnpm hashes + 3 stale upstream `vendorHash`es** — all realigned from first-hand probes. Committed. <!-- format:allow -->
 2. **Four independent build defects remain**, none of which the hash work touches:
    - `nodejs-26-npm-12` (node **26.12.1**, the npm-bundled build from our pinned nixpkgs) **segfaults on startup** on this host. Every npm/pnpm package that lands on it dies: `hermes-tui`, `web-0.0.0`, `overview`. Node **26.12.0** from a newer nixpkgs runs fine (`v26.12.0`) — so this is a regression in the pinned revision, not the machine.
    - `linux-7.3-modules` (exit 123): `cat: kernel/drivers/net/ethernet/realtek/r8125.ko.cer: No such file or directory` — the r8125 out-of-tree module does not build against kernel 7.3.

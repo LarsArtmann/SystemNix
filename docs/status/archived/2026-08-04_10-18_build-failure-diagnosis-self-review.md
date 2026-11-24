@@ -36,7 +36,7 @@ all in Go module vendoring / fixed-output derivations. Three distinct root cause
   Locked nixpkgs is **Jan 8, 2026** — ~7 months stale. This is the documented "FIXED 2026-08-03"
   gotcha regressed.
 - **Identified the crush-daily transitive-dependency break.** go-cqrs-lite's `idempotency/` and
-  `retry/` submodule `go.mod`s declare:
+  `retry/` submodule `go.mod`s declare: <!-- format:allow -->
   ```
   require github.com/larsartmann/go-idempotency v0.0.0-00010101000000-000000000000
   replace github.com/larsartmann/go-idempotency => ../../go-idempotency

@@ -24,7 +24,7 @@ Since the 03-36 report's addendum already documents the execution in detail, thi
 
 ## b) PARTIALLY DONE
 
-1. **Runtime verification of the fix's core premise is still pending:** I verified EVAL shapes, but "HM activation no longer starts the theme unit" rests on the inference that HM only `systemctl --user start`s enabled units. I tried to pin the start-list computation from the deployed artifacts (activate script → hm-setup-env → generation) — the start logic lives outside the grep-reachable scripts (likely HM-internal helper); 3 probes, diminishing returns, stopped. Post-deploy journal check (`Starting units:` list must NOT contain activitywatch-theme) is the closure step — already in the CHANGELOG checklist.
+1. **Runtime verification of the fix's core premise is still pending:** I verified EVAL shapes, but "HM activation no longer starts the theme unit" rests on the inference that HM only `systemctl --user start`s enabled units. I tried to pin the start-list computation from the deployed artifacts (activate script → hm-setup-env → generation) — the start logic lives outside the grep-reachable scripts (likely HM-internal helper); 3 probes, diminishing returns, stopped. Post-deploy journal check (`Starting units:` list must NOT contain activitywatch-theme) is the closure step — already in the CHANGELOG checklist. <!-- format:allow -->
 2. **The deploy itself** — fixes live in-tree (`cf8aa52e`) but the RUNNING system still has the old theme unit enabled and the dead hook. Until deploy + HM activation, the 96 s gate and the hook landmine are both still live on every boot/activation.
 3. Old report §g annotations — Q1 (activitywatch deferral) is mooted by the fix and Q3 (delete-vs-fix) is answered by execution, but the 03-36 report's §g text doesn't say so (the addendum covers substance, not the question list).
 
@@ -62,7 +62,7 @@ Since the 03-36 report's addendum already documents the execution in detail, thi
 
 1. **Who/when deploys:** should the next calm-window agent session run `nix run .#deploy` for these two fixes autonomously, or do you want it bundled into your deliberate reboot window (deploy → reboot → re-measure as one quiet block, which also serves stability.md:169 and the boot-mirror PartUUID verify)?
 2. **Reboot authority:** given 5 crashes since midnight, are reboots owner-only for now, or may a post-deploy session reboot to produce the calm-boot measurement?
-3. **Eval floor policy:** my session ran 4 single `nix eval`s + `nix fmt` at PSI 40-60 (checked before each, never stacked, no builds/VM tests). The queued entry-gate rows propose ≥30 PSI admission for heavy jobs — do you want a hard interactive floor for agent evals too (e.g. "no nix eval above PSI 50 avg10"), or is single-eval-with-preflight the accepted line?
+3. **Eval floor policy:** my session ran 4 single `nix eval`s + `nix fmt` at PSI 40-60 (checked before each, never stacked, no builds/VM tests). The queued entry-gate rows propose ≥30 PSI admission for heavy jobs — do you want a hard interactive floor for agent evals too (e.g. "no nix eval above PSI 50 avg10"), or is single-eval-with-preflight the accepted line? <!-- format:allow -->
 
 ---
 

@@ -17,7 +17,7 @@
 5. **`docs/services/thermal-pstate-guard.md`** — runbook: state machine, incident class, behavior rules, verification drill, traps.
 6. **Todo surfaces synced**: stability :110 (decision row — enforcement variant landed in tree), new `[blocked:deploy]` deploy row + nix-driver row note; monitoring :17 (wire gatus against the guard's new metrics); TODO_LIST both rows; `check-todo-system.sh` structure clean.
 7. **Both missed harvests from the 05-42 report healed**: stability :103 (PSI-80 trigger live fact), desktop niri row (0-lines-both-boots note).
-8. **Daemon-race discipline held**: new files `git add`ed BEFORE any evo-x2 eval (tracked-files trap avoided); the daemon's mid-turn heuristic commit (`721a7a29`) was detected via "modified since read", verified with `git log --stat`, and the edit re-applied cleanly.
+8. **Daemon-race discipline held**: new files `git add`ed BEFORE any evo-x2 eval (tracked-files trap avoided); the daemon's mid-turn heuristic commit (`721a7a29`) was detected via "modified since read", verified with `git log --stat`, and the edit re-applied cleanly. <!-- format:allow -->
 
 ## b) PARTIALLY DONE
 

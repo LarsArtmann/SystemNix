@@ -96,7 +96,7 @@ owner-authorized confirmation deploy is in flight.
    The plan's T2.2 branch anticipated exactly this; I initially reported the
    wrong branch. Caught by asserting WHICH hop the evidence covers — the rule
    bites again. Rows carry the corrected verdict.
-2. **Inverted tiebreak shipped-then-caught** in T12 (the loop `continue`d on
+2. **Inverted tiebreak shipped-then-caught** in T12 (the loop `continue`d on <!-- format:allow -->
    the WINNING competitor): caught by the failing race test before any commit —
    the test doing exactly its job, but the first version was wrong.
 3. **A `pkg`/`pkgs` typo** in the shim edit (caught by my own re-read before

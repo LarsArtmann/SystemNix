@@ -62,7 +62,7 @@ boot-mirror root cause + an upstream fix that is now **mid-flight and UNTESTED**
    sits in `waiting`, the one whose target has it sits in `running`.
 10. **Docs/gotchas committed** — `AGENTS.md` fd-3 `/dev/tcp` trap; `docs/agents/systemd.md` activation
     bullet (timer-unit veto class + no-reactivation repair recipe); `docs/CONTRIBUTING.md` daemon-race
-    clause (5) (a hook-aborted pathspec commit leaves its `git add`ed paths staged).
+    clause (5) (a hook-aborted pathspec commit leaves its `git add`ed paths staged). <!-- format:allow -->
 11. **Harvests committed** — 2 new queue rows + library rows (collector-veto → monitoring.md; mirror →
     storage.md — **premise wrong, see d1**); pipeline row 1172 updated (backup half verified); current
     evidence appended to the EXISTING forgejo-github-sync N-strike row + its queue pair.

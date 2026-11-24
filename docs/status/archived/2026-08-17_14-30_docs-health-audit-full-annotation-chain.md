@@ -78,4 +78,4 @@
 
 ---
 
-**Standing state at chain close (~16:1x):** ALL 2026-08-1* status reports annotated (23 prior half + 14 this half = 37 total); living docs rewritten + committed (`05789a89`); quality gate green; TODO_LIST refreshed (4 closes + 1 dedupe); ~16 `git mv`s QUEUED behind a concurrent session's `.git/index.lock` (its pre-commit `nix flake check` + 2 toplevel builds have held the lock since 14:45) — the archive moves complete when the lock releases. Working tree carries a concurrent session's immich/PMA/contributions edits (untouched by me).
+**Standing state at chain close (~16:1x):** ALL 2026-08-1* status reports annotated (23 prior half + 14 this half = 37 total); living docs rewritten + committed (`05789a89`); quality gate green; TODO_LIST refreshed (4 closes + 1 dedupe); ~16 `git mv`s QUEUED behind a concurrent session's `.git/index.lock` (its pre-commit `nix flake check` + 2 toplevel builds have held the lock since 14:45) — the archive moves complete when the lock releases. Working tree carries a concurrent session's immich/PMA/contributions edits (untouched by me). <!-- format:allow -->

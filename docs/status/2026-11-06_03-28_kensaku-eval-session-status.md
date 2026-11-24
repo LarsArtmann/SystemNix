@@ -104,7 +104,7 @@ Ranked by impact. NEW = surfaced by this session; PRE = pre-existing row this se
 | 15 | If kensaku is ever adopted: add its surface to the right agent doc (desktop.md or monitoring.md) | Low | S | Documentation | NEW |
 | 16 | Renamer: probe DLQ/dashboard for stuck dead letters (never probed; habit gap found while reading the runbook) | Low | S | Maintenance | NEW |
 | 17 | qmd: collection inventory + staleness review (`qmd state`, index.yml) — nothing probed this session, all runbook-cited | Low | M | Maintenance | NEW |
-| 18 | qmd: re-verify the CV-only MCP scoping claim still holds (grep `.crushrc`s) | Low | S | Verification | PRE (runbook 2026-10-09) |
+| 18 | qmd: re-verify the CV-only MCP scoping claim still holds (grep `.crushrc`s) | Low | S | Verification | PRE (runbook 2026-10-09) | <!-- format:allow -->
 | 19 | Polish the research-README row alignment to house style | Low | S | Cosmetic | NEW |
 | 20 | Keep the kensaku flake/nixpkgs watch alive at each research-README touch (refresh trigger already recorded) | Low | S | Watch | NEW |
 | 21 | Paperless: queue/confirm the 2027-01-02 quarterly AI re-audit (A24 + decision-triage eval loop) | Medium | S | Maintenance | PRE (paperless.md:307-317) |

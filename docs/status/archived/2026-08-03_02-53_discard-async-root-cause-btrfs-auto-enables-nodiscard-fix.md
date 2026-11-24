@@ -145,7 +145,7 @@ nix flake check --no-build → all checks passed
 
 1. ❌ Did not remount `/` with `nodiscard` (user needs to run `sudo mount -o remount,nodiscard /`)
 2. ❌ Did not run `fstrim` manually to clear the TRIM backlog that accumulated during the 26 days of choke
-3. `igned how the system survived 26 days of`discard=async` without a WDT hard reset (the documented crash mode)
+3. `igned how the system survived 26 days of` iscard=async` without a WDT hard reset (the documented crash mode)
 4. ❌ Did not verify whether SMART data shows elevated media errors from 26 days of TRIM abuse
 5. ❌ Did not write a monitoring check / pre-deploy-check to catch this class of bug
 6. ❌ Did not update AGENTS.md with the `nodiscard` finding (BTRFS auto-enables discard on SSDs)

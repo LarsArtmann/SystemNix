@@ -95,7 +95,7 @@ _(Also observed, not mine, not investigated: `nix-build-cleanup.service` is in f
 ~~15. Remove the `buildcache_*` entries from `KNOWN_NEW_METRICS`~~ done — zero buildcache hits in `scripts/pre-deploy-check.sh` today. Annotation 2026-08-17.
 ~~16. `.initialized`-condition edge~~ resolved — the init-once guard was REMOVED entirely (2026-08-15): init runs idempotently on every boot; documented in AGENTS.md.
 ~~17. "no failed units" check~~ done — `pre-deploy-check.sh:100-105` (pass/warn on `systemctl --failed` count).
-18. `tests/test-buildcache.nix` VM test ← open — still absent from `tests/` (2026-08-17); now tracked in TODO_LIST P3. Annotation 2026-08-17.
+18. `tests/test-buildcache.nix` VM test ← open — still absent from `tests/` (2026-08-17); now tracked in TODO_LIST P3. Annotation 2026-08-17. → docs/todo/pipeline.md (tests/test-buildcache.nix row, open)
 ~~19. Annotate `13-15` with "IMPLEMENTED"~~ done — 2026-08-17 docs-health pass (Decision Record + archived).
 20. `disk-diagnose.sh` buildcache mention ← open, trivial, untracked — no buildcache reference in the script today. Annotation 2026-08-17.
 
@@ -140,7 +140,7 @@ The blocker, verification, and all three questions were resolved by a follow-up 
 **Incidents found and fixed while verifying (not buildcache bugs, but they blocked the deploy/smoke):**
 
 - **PMA discovery-daemon starvation (root cause of the 21h Overview-503 + a blocked switch)** — the daemon goroutine starves in direct reclaim pinned at the 6G `MemoryHigh` ceiling; socket accepts but never answers. Hung 3x in one day (21h, 9 min, 5 min after restarts). Fixes: ceiling retuned `MemoryHigh 6G→12G` / `MemoryMax 8G→16G` (scan working set outgrew the 2026-08-09 ceiling; pre-incident scans ran under a 16G max), `PMA_DISCOVERY_WORKERS=2`, and a new `pma-daemon-watchdog` (5-min liveness probe, restart after 2 fails 30s apart). **Validated:** 16/16 healthy probes over 13 min, memory peaked 6.7G (above old ceiling — diagnosis confirmed), settled ~5.2G, 0 restarts. Upstream root-cause fix + env-quoting fix filed in TODO_LIST.
-- **Overview `StartLimitBurst=` systemd warning** — upstream placed `StartLimit*` in `serviceConfig`, and SystemNix's `lib.mkForce null` neutralization renders as an EMPTY key (nixpkgs `attrsToSection` `toString`s null — it is never filtered; deleting a key via null is impossible). Upstream fixed (`LarsArtmann/overview@a9321f0`, committed locally, push+bump pending), SystemNix null-hack deleted.
+- **Overview `StartLimitBurst=` systemd warning** — upstream placed `StartLimit*` in `serviceConfig`, and SystemNix's `lib.mkForce null` neutralization renders as an EMPTY key (nixpkgs `attrsToSection` `toString`s null — it is never filtered; deleting a key via null is impossible). Upstream fixed (`LarsArtmann/overview@a9321f0`, committed locally, push+bump pending), SystemNix null-hack deleted. <!-- format:allow -->
 - **browser-history-agent start-limit-hit during deploy windows** — the 60s server-wait gate aborted during the server's ~5-min projection drain, and `startLimitBurst=2` bricked the agent until manual reset. Gate extended to 7 min (`TimeoutStartSec=9min`); burst deliberately kept at 2 (WDT crash-loop protection).
 - Pocket-id 3× SQLITE_BUSY errors (19:22-23, transient under the PMA-flap IO churn window; self-resolved).
 

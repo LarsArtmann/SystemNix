@@ -85,7 +85,7 @@ The Hermes agent gateway now sees `/home/lars/projects` **read-only** at `/home/
 
 | #   | Microtask                                                                                                                                                                       | Est |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
-| 1.1 | Read `fixPermissionsScript`; rewrite chown + both chmod `find`s as `find /home/hermes -xdev …` variants (chown: `find -xdev -exec chown` instead of `chown -R`)                 | 12m |
+| 1.1 | Read `fixPermissionsScript`; rewrite chown + both chmod `find`s as `find /home/hermes -xdev …` variants (chown: `find -xdev -exec chown` instead of `chown -R`)                 | 12m | <!-- format:allow -->
 | 1.2 | Add `hermesGitConfig` derivation (`pkgs.writeText` with `[safe] directory = "/home/hermes/workspace/projects"`) + `GIT_CONFIG_GLOBAL=` env in hermes.nix (gated on projectsDir) | 12m |
 | 1.3 | Eval spot-checks: `Environment` contains `GIT_CONFIG_GLOBAL`; built script text contains `-xdev` (grep the store path)                                                          | 8m  |
 | 1.4 | `nix flake check --no-build`                                                                                                                                                    | 5m  |

@@ -445,7 +445,7 @@ is a no-op.
 `Enabled *bool`. The pointer-for-absent-vs-false distinction lives
 _only_ on the raw TOML parser struct
 (`internal/config/config.go:43`: `Enabled *bool \`toml:"enabled"\``).
-By the time`core.Harness` is constructed, the absent→false collapse
+By the time` ore.Harness` is constructed, the absent→false collapse
 has already happened.
 
 **Effect:** if a user intentionally omits `enabled = ...`, they get

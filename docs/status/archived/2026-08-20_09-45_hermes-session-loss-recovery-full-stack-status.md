@@ -139,7 +139,7 @@ Nothing irreversibly broken. Honest near-misses:
 
 ## g) Questions I cannot answer myself
 
-1. **Ingestion sensitivity:** When indexing `/home/lars/projects` into mnemosyne, are there files/dirs that must be excluded (project `.env`s, secrets, client data), or is everything fair game? I can build an exclusion list, but the privacy call is yours.
+1. **Ingestion sensitivity:** When indexing `/home/lars/projects` into mnemosyne, are there files/dirs that must be excluded (project `.env`s, secrets, client data), or is everything fair game? I can build an exclusion list, but the privacy call is yours. <!-- format:allow -->
 2. **Swap ownership:** Should emergency disk swap be a declarative flake `swapDevices` entry (mine to persist), or does fastflowlm own runtime swap management? Both acted this morning; one must win or we get ghost paths forever.
 3. **Memory priorities:** Is the ~73G usage (2 llama-servers ~11–25G, 27G shared) the intended steady state for this box? i.e., should I optimize to _reduce_ RAM pressure, or is adding swap capacity the accepted answer?
 

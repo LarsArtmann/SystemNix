@@ -116,7 +116,7 @@ Also fully done, cross-cutting: doc-counts restamp (README 131→132 nixosModule
 38. signoz-query-lint caddy leg specifically (deadMetrics/underscoreLive lists vs my dotted-form queries).
 39. Consider re-pointing the filelog row's volume-anomaly alert at the journald `service.name=caddy` surface (harvest decision).
 40. Verify no doc-count drift from the docs battery (research README is not policed — consider adding it to doc-counts).
-41. Re-check the two remaining `evaluation warning`s my changes touch: ghost-entries warning in the mint VM is EXPECTED (document in the test header); evo-x2 ghost warning unchanged.
+41. Re-check the two remaining `evaluation warning`s my changes touch: ghost-entries warning in the mint VM is EXPECTED (document in the test header); evo-x2 ghost warning unchanged. <!-- format:allow -->
 42. Check whether `services.caddy.enableReload` semantics changed anything for the journald switch (reload vs restart for output changes — caddy caveat already documented; verify the deploy did a RESTART).
 43. Assert the mint VM stub entries did not leak into evo-x2 (they are VM-scoped; eval both).
 44. Add the seo/paperless/auth/dnsblock/monitor stamps to the vhost-layers consumer docs (post-deploy-check header comment mentions "first proxy target" — now stale).

@@ -119,7 +119,7 @@ run (~05:10–05:20). **Remaining:** one convergence `nh os switch` to activate 
 4. **`--since` hygiene**: derive journal windows from `date` output, never hand-typed clock times.
 5. **Evidence durability**: wave-fix commits should copy their enumeration logs into `docs/` (or
    quote the pairs fully in the report — done here) so citations survive reboots.
-6. **Upstream ExecStartPre reset marker** is a RECURRING trap for any module that `mkBefore`s into
+6. **Upstream ExecStartPre reset marker** is a RECURRING trap for any module that `mkBefore`s into <!-- format:allow -->
    an upstream service — worth a lint (eval-time audit scanning merged units for entries dropped
    after a `" "` reset element) or at minimum a go-ecosystem/stability doctrine row. Tonight's
    proof: the c41a21ad fix was correct in intent and DEAD in effect for 12 hours.

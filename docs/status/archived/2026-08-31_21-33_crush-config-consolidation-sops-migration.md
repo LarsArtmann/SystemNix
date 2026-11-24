@@ -10,8 +10,8 @@
 
 ## a) FULLY DONE
 
-1. **Investigation** — mapped the full crush config surface: machine auth store (`~/.local/share/crush/crush.json`, plaintext `api_key`s), user `~/.config/crush/crush.json` (LSP env pins + provider defs), auto-updated catalog (`~/.local/share/crush/providers.json`, 40 providers, keys as `$ENV` refs), HM crushrc, lint wrapper, session DBs.
-2. **sops `crush.yaml`** (`platforms/nixos/secrets/crush.yaml`) — zai, gemini, minimax, kimi static keys extracted from the auth store via RAM staging (`/dev/shm`), encrypted to the evo-x2 age public key (no sudo needed), `git add -f`ed. Verified structure (5 `type:str` values, correct recipient).
+1. **Investigation** — mapped the full crush config surface: machine auth store (`~/.local/share/crush/crush.json`, plaintext `api_key`s), user `~/.config/crush/crush.json` (LSP env pins + provider defs), auto-updated catalog (`~/.local/share/crush/providers.json`, 40 providers, keys as `$ENV` refs), HM crushrc, lint wrapper, session DBs. <!-- format:allow -->
+2. **sops `crush.yaml`** (`platforms/nixos/secrets/crush.yaml`) — zai, gemini, minimax, kimi static keys extracted from the auth store via RAM staging (`/dev/shm`), encrypted to the evo-x2 age public key (no sudo needed), `git add -f`ed. Verified structure (5 `type:str` values, correct recipient). <!-- format:allow -->
 3. **sops.nix declarations** (`modules/nixos/services/sops.nix` ~line 189) — `mkSecrets "crush.yaml"` owner `primaryUser`, group `users`, mode `0400`. Verified in evaluated config.
 4. **HM crushrc overhaul** (`platforms/nixos/users/home.nix` ~line 595) — `crush_key <provider> <secret>` helper (skips absent secrets + `PLACEHOLDER*` values) injecting synthetic, zai, gemini, minimax, kimi; `option context-path` lines; LSP entries (gopls with `analyses.stdversion=false` + timeout 60, oxlint, golangci_lint_ls) with **no cache env pins**; qmd MCP preserved.
 5. **Auth store stripped** — zero `api_key` fields remain in `~/.local/share/crush/crush.json`; hyper's OAuth entry deliberately preserved (self-rotating runtime state, store is its correct home). Re-verified clean three times across deploy + live run.

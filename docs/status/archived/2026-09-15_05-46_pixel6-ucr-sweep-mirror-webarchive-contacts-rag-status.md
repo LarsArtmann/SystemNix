@@ -128,7 +128,7 @@ Nothing catastrophic — no data touched (all writes were new `derived/` paths +
 31. Row 108: `backups/pixel6` into btrbk-pool snapshots + backup-coordination freshness (now includes `derived/`). **→ btrbk-pool snapshots for pixel6; docs/todo/pixel6.md row**
 
 **Navidrome + web serving (rows 113/471 tail):**
-32. `modules/nixos/services/navidrome.nix` (port registry, harden + ioTier.background, MusicFolder=`derived/flac`, RequiresMountsFor, protectedVHost "music", homepage tile, Gatus login-body check, integration-registry entry — full AGENTS procedure). **→ Navidrome module; docs/todo/pixel6.md ready row (decided over Jellyfin)**
+32. modules/nixos/services/navidrome.nix (to be created) (port registry, harden + ioTier.background, MusicFolder=`derived/flac`, RequiresMountsFor, protectedVHost "music", homepage tile, Gatus login-body check, integration-registry entry — full AGENTS procedure). **→ Navidrome module; docs/todo/pixel6.md ready row (decided over Jellyfin)**
 ~~33. Decision: serve the static web archive via Caddy (Layer 2) or keep it file://-only.~~ **NOT-DO — dup of line 131 (serving decision part of navidrome plan).**
 ~~34. Navidrome tag/folder-shape acceptance test against the real flac leg.~~ **NOT-DO — dup of line 131.**
 ~~35. Clients setup notes (Tempo/Symfonium/Feishin) in the runbook.~~ **NOT-DO — dup of line 131.**
