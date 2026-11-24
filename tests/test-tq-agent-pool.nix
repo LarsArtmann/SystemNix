@@ -193,12 +193,14 @@ let
     {
       # 2026-11-24 model split (auto-debug directive): SystemNix — the repo
       # every incident-minted fix task targets — bootstraps the FULL
-      # glm-5.3 @ xhigh with its nix verify gate, while CV + go-taskqueue
-      # keep the Flash pin (repo-wide pin until the upstream per-incident
-      # model seam: docs/todo/upstream.md).
+      # glm-5.4 flagship @ xhigh with its nix verify gate, while CV +
+      # go-taskqueue keep the Flash pin (repo-wide pin until the upstream
+      # per-incident model seam: docs/todo/upstream.md). Thinking is a MODEL
+      # declaration (--thinking always in the global crushrc), not a slot
+      # flag, so the bootstrap line carries effort only.
       name = "bootstrap-model-split-systemnix-full-others-flash";
       pass =
-        lib.hasInfix "--model zai/glm-5.3 --reasoning xhigh" (execStartText bootstrap)
+        lib.hasInfix "--model zai/glm-5.4 --reasoning xhigh" (execStartText bootstrap)
         && lib.hasInfix "--model zai/glm-5.3-flash" (execStartText bootstrap)
         && lib.hasInfix "--verify" (execStartText bootstrap);
     }

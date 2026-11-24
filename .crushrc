@@ -6,8 +6,14 @@
 # insurance against a powernap-catalog re-introduction — no upstream issue
 # to file (bug already gone at current version).
 lsp add statix --disabled true
+# Repo default model is pinned by the managed block below (tq-bootstrap
+# service, modules/nixos/services/tq-agent-pool.nix — re-rendered on every
+# deploy, so edit it there, not here). Thinking is enabled at the MODEL
+# declaration in the global crushrc (crush-config:
+# `model add zai/glm-5.4 ... --thinking always`), which survives slot
+# routing; the slot line therefore carries only the reasoning effort.
 # >>> tq bootstrap (managed) >>>
 permissions allow view ls grep glob edit multiedit write bash fetch download todos
 option metrics false
-model large zai/glm-5.3 --reasoning-effort xhigh
+model large zai/glm-5.4 --reasoning-effort xhigh
 # <<< tq bootstrap (managed) <<<

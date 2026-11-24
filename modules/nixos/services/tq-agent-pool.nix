@@ -16,7 +16,8 @@
 #     the sole external entry point — the dashboard renders task payloads
 #     and error tails, hence SSO, never Layer 0
 #   - tq-bootstrap oneshot seeds the dogfood rails per repo (.tq-verify +
-#     .crushrc managed block pinning model zai/glm-5.3-flash + autonomy,
+#     .crushrc managed block pinning the repo's model — glm-5.4 @ xhigh for
+#     SystemNix, glm-5.3-flash @ xhigh for CV/go-taskqueue — + autonomy,
 #     committed locally, never pushed) — idempotent, runs at deploy
 #   - Dead letters + budget exhaustion alert via the PapDashboard bridge
 #     (TQ_PAP_API_KEY from the shared papdashboard sops key, dedicated
@@ -400,10 +401,11 @@ _: {
               ];
               ExecStart = [
                 # Two invocations = two model tiers (auto-debug directive
-                # 2026-11-24): SystemNix — the repo every incident-minted
-                # fix task targets — runs the FULL glm-5.3 model so
-                # AI-debugged problems get the high-quality tier, while CV
-                # + go-taskqueue keep the cheap Flash pin for backlog
+                # 2026-11-24, SystemNix tier upgraded to GLM-5.4 the same
+                # day): SystemNix — the repo every incident-minted fix task
+                # targets — runs the FULL glm-5.4 flagship so AI-debugged
+                # problems get the high-quality tier, while CV +
+                # go-taskqueue keep the cheap Flash pin for backlog
                 # harvesting. The daily budget remains the spend cap either
                 # way. Bootstrap converges each listed repo's .crushrc
                 # managed block idempotently; repos not named in an
@@ -419,6 +421,11 @@ _: {
                   "zai/glm-5.3-flash"
                   "--no-run"
                 ])
+                # GLM-5.4 (2026-11-24): z.ai's Loop-Transformer flagship.
+                # Thinking is NOT a slot flag here — it is declared on the
+                # model in the global crushrc (`model add zai/glm-5.4 …
+                # --thinking always`, crush-config repo), which survives
+                # slot routing; the managed block carries only the effort.
                 (lib.escapeShellArgs [
                   (lib.getExe' cfg.package "tq")
                   "bootstrap"
@@ -426,7 +433,7 @@ _: {
                   "--projects-dir"
                   "/home/${primaryUser}/projects"
                   "--model"
-                  "zai/glm-5.3"
+                  "zai/glm-5.4"
                   "--reasoning"
                   "xhigh"
                   "--verify"
