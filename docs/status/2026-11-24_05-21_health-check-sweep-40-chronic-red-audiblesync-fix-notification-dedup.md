@@ -110,4 +110,4 @@ Everything in §f except the two fixes above (thermal/cooling action, disk recla
 - audiblesync: `backup_healthy{backup="audiblesync"} 1`, `backup_age_hours 0` (backups.prom after `backup-health-metrics.service` re-run, 05:2x). Backup file present + quick_check'd. Unit render fix eval-pending deploy.
 - Dedup: script logic reviewed + `nix fmt` clean; runtime proof pending deploy (planned: two forced runs → journal shows `NOTIFIED:` then `NOTIFY-SKIPPED:`).
 - Tree: `modules/nixos/services/audiblesync.nix` M, `platforms/nixos/system/scheduled-tasks.nix` M, `platforms/nixos/scripts/service-health-check` D (staged). Parallel-session files untouched.
-- TODO harvest: §f items 4, 6–9, 12–14, 16–18 queued via TODO_LIST + domain libraries in one edit pass (this commit window).
+- TODO harvest (landed 06:0x, after the initial ledger line prematurely claimed it): §f items 5–9, 12–18 → 11 `[ready]` queue rows + 12 library rows (services ×5, monitoring ×5, stability ×1, storage ×1; item 7 paperless landed library-only as `[blocked:user]` — purge-vs-preserve is §g.2). Item 4 (this deploy) tracked in-session, not queued.

@@ -1150,16 +1150,7 @@ _: {
           after = [ "sops-nix.service" ];
           wants = [ "sops-nix.service" ];
           inherit onFailure;
-          # tq bearer token for the problems.<domain> /report route
-          # (header_up injection — the browser never sees it). Same
-          # root-owned template tq-api and the alert relay read; rotation
-          # restarts all three.
-          serviceConfig = lib.mkMerge (
-            [
-              { EnvironmentFile = [ config.sops.templates."tq-api-env".path ]; }
-            ]
-            ++ (let other = (builtins.head [ "see-below" ]); in [ ])
-          );
+          serviceConfig = lib.mkMerge [
             (serviceOneshotDefaults { })
             {
               Type = "oneshot";
@@ -1266,6 +1257,12 @@ _: {
             StartLimitIntervalSec = lib.mkForce 300;
           };
           serviceConfig = lib.mkMerge [
+            # tq bearer token for the problems.<domain> /report route
+            # ({env.TQ_API_TOKEN} in the header_up directive — injected
+            # server-side, the browser never sees it). Same root-owned
+            # template tq-api and the alert relay read; rotation restarts
+            # all three.
+            { EnvironmentFile = [ config.sops.templates."tq-api-env".path ]; }
             (harden {
               # CAP_NET_BIND_SERVICE is the only capability caddy needs
               # (:80/:443 TCP + :443/UDP QUIC). The old CAP_NET_ADMIN came

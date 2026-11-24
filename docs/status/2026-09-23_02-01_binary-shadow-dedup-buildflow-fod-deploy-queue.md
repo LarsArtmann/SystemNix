@@ -83,7 +83,7 @@
 24. Monitor guard `trips_last_hour` overnight; if sibling load is chronic at night, consider a scheduled deploy window (06:00-ish, post-btrbk, pre-workload).
 25. Check whether any other host (darwin, rpi3-dns) carries a stale user profile or GOBIN shadows (the class is fleet-wide; only evo-x2 was audited).
 26. Consider a `buildflow doctor` run in SystemNix post-deploy (binary-freshness check now that resolution is single-source).
-27. Reconcile `test-home-manager.sh`'s "~~/go/bin in PATH" assertion with the new doctrine (PATH inclusion stays; binary allowlist is the new rule).
+27. Reconcile `test-home-manager.sh`'s "~~/go/bin in PATH" assertion with the new doctrine (PATH inclusion stays; binary allowlist is the new rule). → docs/todo/pipeline.md (test-home-manager binary-allowlist reconcile row)
 28. Audit sessions' habit of installing tools into the shared user env: propose per-session shells/profiles for one-off tooling (systemic fix for the 09-17-class installs).
 29. Gave-up breadcrumbs: wire the deploy-queue log's give-up line into a DMS notification (sev1-bridge pattern, notify tier).
 30. HARVEST this report's f-list into TODO_LIST.md / docs/todo domains (partially done — see below).

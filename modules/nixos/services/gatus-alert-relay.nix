@@ -136,20 +136,22 @@ _: {
 
         systemd.services.gatus-alert-relay = {
           description = "Gate on gatus' Discord webhook (boot grace, SEV1 mute, flap collapse)";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
+          after =
+            [ "network-online.target" ]
+            # The tq sink posts to the write API after the gates pass — order
+            # after the api unit so a boot-time failing check's FIRST report
+            # lands (ordering only; the api being down costs a logged retry,
+            # never an alert loss — same contract as the Discord upstream).
+            ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
+          wants =
+            [ "network-online.target" ]
+            ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
           # Ordering vs gatus: if the relay is not up when gatus fires its
           # first webhook POST, that alert is lost (gatus does not retry
           # provider sends). Start before gatus; both are wanted by
           # multi-user.target, ordering makes the race practically impossible
           # (the relay binds in milliseconds).
           before = [ "gatus.service" ];
-          # The tq sink posts to the write API after the gates pass — order
-          # after the api unit so a boot-time failing check's FIRST report
-          # lands (ordering only; the api being down costs a logged retry,
-          # never an alert loss — same contract as the Discord upstream).
-          after = lib.optionals tqSinkEnabled [ "tq-api.service" ];
-          wants = lib.optionals tqSinkEnabled [ "tq-api.service" ];
           wantedBy = [ "multi-user.target" ];
           onFailure = onFailureP0;
           serviceConfig = lib.mkMerge [

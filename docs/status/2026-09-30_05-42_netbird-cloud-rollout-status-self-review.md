@@ -198,30 +198,30 @@ self-signed placeholder as of 04:20 UTC; retry command is in the pbx runbook.
 
 **§d/§f P0 items 1–9: ALL FIXED this session** (pbx-artmann + SystemNix):
 
-- ~~1. Mint unit: `path = [ pkgs.openssl ]`…~~ → absolute store paths for
+- ~~1. Mint unit: `path = [ pkgs.openssl ]`…~~ done — absolute store paths for
   every binary, PLUS a second latent bug the fix surfaced: `RuntimeDirectory`
   was missing — `ReadWritePaths` on a dir nothing creates dies at systemd
   NAMESPACE setup (226/NAMESPACE) BEFORE the script runs; fail-closed would
   have taken the whole web stack down at EVERY boot. FIXED + pinned.
-- ~~2. VM test that RUNS the mint unit~~ → `checks.caddy-mint` (VM): real
+- ~~2. VM test that RUNS the mint unit~~ done — `checks.caddy-mint` (VM): real
   module, mock-sops, build-time CA fixture; asserts mint→caddy chain, output
   modes, dual-zone SANs, CA-chain, key pairing, real TLS handshakes on BOTH
   zones. It FAILED twice before the fixes (co-import surface, then the
   NAMESPACE kill) — the test paid for itself immediately. GREEN.
-- ~~3. Dex userID → real UUID~~ → `d9022bfd-be64-439d-8ff7-504c803dcb8f`.
-- ~~4. Drop `/auth/*` glob redirect~~ → dropped (dex matches exactly).
-- ~~5. Relay vhost 1d timeouts~~ → 1d read/send + client_body_timeout +
+- ~~3. Dex userID → real UUID~~ done — `d9022bfd-be64-439d-8ff7-504c803dcb8f`.
+- ~~4. Drop `/auth/*` glob redirect~~ done — dropped (dex matches exactly).
+- ~~5. Relay vhost 1d timeouts~~ done — 1d read/send + client_body_timeout +
   socket keepalive.
-- ~~6. Verify `Relay` key shape~~ → verified against netbird v0.79.0 source
+- ~~6. Verify `Relay` key shape~~ done — verified against netbird v0.79.0 source
   (`management/internals/server/config/config.go` — no json tags, Go field
   names ARE the keys): `Relay.{Addresses,Secret}` + `Stuns[].{Proto,URI}`
   were CORRECT. Non-defect, now pinned so it cannot drift.
-- ~~7. onFailure on signal/relay/dex~~ → wired; dex also got the
+- ~~7. onFailure on signal/relay/dex~~ done — wired; dex also got the
   StateDirectory fix for the live crash.
-- ~~8. pbx FULL buildflow~~ → executed (fast mode's gap closed): all doc
+- ~~8. pbx FULL buildflow~~ done — executed (fast mode's gap closed): all doc
   gates + netbird-contract + toplevel green. NEW `netbird-contract` check
   (9 eval invariants) added; FEATURES/README counts 14→15.
-- ~~9. Commit + push~~ → committed (daemon); push is owner-run.
+- ~~9. Commit + push~~ done — committed (daemon); push is owner-run.
 
 Bonus fixes: oauth2-proxy cloudDomain guard symmetry (§e5), push-secrets.sh
 stale-IP host, exact sops snippet in the runbook (§b8/§f37), runbook redeploy
