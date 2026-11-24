@@ -8,6 +8,8 @@
 
 ## What happened (timeline)
 
+<!-- check-rows:ledger -->
+
 | Time (CEST) | Event                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~14:01      | Parallel session's work daemon-committed as `7af9fbf9`: it flipped `pkgs/systemd-graph/webui.nix` line 19 (source fetch hash) FROM the proven `yb3w6/...` TO `MkUfxSvF...`.                                                                                                                                                                                                                                                                                     |
@@ -56,8 +58,8 @@
 
 ~~1. **Toplevel build enumeration:** done once with full logging; root failure identified (nodejs-slim-26.9.0, exit code 2) but the ACTUAL compiler/build error is still unknown (cached failure hides the body; needs `-L` re-run).~~ done — actual error identified: EPERM suid test in nodejs-slim (docs/status/2026-09-20_12-26 a3)
 ~~2. **Deploy:** not re-attempted — still blocked by the nodejs cascade (~18 derivations downstream: nodejs/npm, hermes-agent-0.21.3 chain, llama-cpp-0.4.1 + llama-vlm units, man-paths/system-path, polkit/dbus-broker units, system-units/user-units/etc/activate).~~ done — system-786/787 deployed+anchored (docs/status/2026-09-20_15-30 M1)
-3. **Multi-agent coordination:** parallel session flagged (it authored both the mispaste and a concurrent `.#telephony-browser` build) but not contacted/fenced.
-4. Post-deploy verification: designed but not executable (deploy hasn't happened).
+~~3. **Multi-agent coordination:** parallel session flagged (it authored both the mispaste and a concurrent `.#telephony-browser` build) but not contacted/fenced.~~ **NOT-DO — overtaken: months of subsequent sessions; the mispaste itself was root-caused and fixed.**
+~~4. Post-deploy verification: designed but not executable (deploy hasn't happened).~~ done — executed at 786/787 (docs/status/2026-09-20_15-30 M1; docs/status/2026-09-20_16-31 §1.1)
 
 ## c) NOT STARTED
 
@@ -65,9 +67,9 @@
 ~~2. Fixing it / working around it (OOM? nixpkgs 26.9.0 genuine breakage? disk?).~~ done — fixed via nixpkgs 20b1ddd carrying upstream fix (docs/status/2026-09-20_12-26 a4)
 ~~3. The actual deploy + pressure-gated retry semantics (exit 12 pressure / exit 13 lock handling).~~ done — deploy landed (docs/status/2026-09-20_15-30 M1)
 ~~4. Post-deploy verification suite: anchoring check (`/run/current-system` vs numbered profile), failed units, `nix run .#post-deploy-check`.~~ done — anchoring + smoke verified at 786/787 (docs/status/2026-09-20_15-30 M1; 16-31 §1.1)
-5. Verifying the §10 auto-loan metrics materialize post-deploy (`forgejo_mirror_dead_candidates`, `forgejo_mirror_health_scrape_errors`, `papdashboard_services_json_ok`, `system_units_enabled_inactive{,_scrape_errors}`).
+~~5. Verifying the §10 auto-loan metrics materialize post-deploy (`forgejo_mirror_dead_candidates`, `forgejo_mirror_health_scrape_errors`, `papdashboard_services_json_ok`, `system_units_enabled_inactive{,_scrape_errors}`).~~ done — all shipped in-tree (modules/nixos/services/forgejo.nix, papdashboard.nix, system-health.nix) and the new-metric surface read live post-deploy (docs/status/2026-09-20_16-31 §1.2)
 ~~6. Hermes 0.21.0 → 0.21.3 post-deploy health check (rode this batch).~~ done — verified live: Started 11:46:55, journal+pgrep (docs/status/2026-09-20_12-26 a8)
-7. llama-vlm (cap/e4b) SOAK-TEST under the real units — the module's own deploy warning demands it (freeze-5 lesson: direct-run green ≠ unit green).
+7. llama-vlm (cap/e4b) SOAK-TEST under the real units — the module's own deploy warning demands it (freeze-5 lesson: direct-run green ≠ unit green). → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (llama-vlm live-verification + soak row)
 ~~8. cv-server :8098 metrics investigation (pre-deploy §10 said "not responding" — auth-gated-401 class vs real outage, undetermined).~~ done — CV healthy at :8098 — render smoke green ×2 (docs/status/2026-10-10_08-02 a1)
 
 ## d) TOTALLY FUCKED UP
@@ -95,59 +97,59 @@
 ~~1. `nix build /nix/store/njhj371sv6q9b1h2lwxj49gf8yckyb6f-nodejs-slim-26.9.0.drv^* -L` — capture the real build failure.~~ done — root cause captured: deterministic EPERM suid test (docs/status/2026-09-20_12-26 a3)
 ~~2. Diagnose + fix nodejs-slim (OOM vs nixpkgs breakage vs disk; check dmesg/oomd, `/nix` free space, nixpkgs issues).~~ done — fixed via upstream CI_SKIP_TESTS in 20b1ddd (docs/status/2026-09-20_12-26 a4)
 ~~3. Re-run toplevel `--keep-going` with output to file until zero root failures.~~ done — zero root failures; 786 built+deployed (docs/status/2026-09-20_15-30 M1)
-4. Pre-deploy: re-verify webui.nix hashes + `git status` (clobber check) + no untracked files under modules/.
-5. Pre-deploy: check `/proc/pressure/io`; queue the deploy if avg10 ≥20% with disk-busy corroboration (freeze-5 rule) — ask user whether to force again.
+~~4. Pre-deploy: re-verify webui.nix hashes + `git status` (clobber check) + no untracked files under modules/.~~ done — both hash slots verified correct at HEAD (pkgs/systemd-graph/webui.nix:19 `yb3w6/…`, :37 `MkUfxSvF…`)
+~~5. Pre-deploy: check `/proc/pressure/io`; queue the deploy if avg10 ≥20% with disk-busy corroboration (freeze-5 rule) — ask user whether to force again.~~ done — deploy.sh carries the pressure gate + later the tier-2 extreme-band veto (scripts/deploy.sh PSI gating; docs/agents/stability.md freeze table)
 ~~6. `nix run .#deploy` (without FORCE if green; handle exit 12 = wait, exit 13 = check if parallel session's deploy advanced the profile first).~~ done — deployed (docs/status/2026-09-20_15-30 M1)
 ~~7. Post-switch anchoring: `readlink /run/current-system` == `/nix/var/nix/profiles/system`.~~ done — verified three-way (docs/status/2026-09-20_15-30 M1/F05)
-8. `systemctl --failed` clean (via `nix run .#post-deploy-check`).
-9. Verify systemd-graph live: unit active, `graph.home.lan` serves, running binary == `w8ja1d28...`.
-10. Verify §10 loan metrics now exist in `/metrics`.
+~~8. `systemctl --failed` clean (via `nix run .#post-deploy-check`).~~ done — zero failed units at the 786/787 settles (docs/status/2026-09-20_16-31 §1.1)
+~~9. Verify systemd-graph live: unit active, `graph.home.lan` serves, running binary == `w8ja1d28...`.~~ **NOT-DO — one-shot post-deploy observation overtaken; the service has shipped and evolved since (module active in later sessions).**
+~~10. Verify §10 loan metrics now exist in `/metrics`.~~ **NOT-DO — dup of §c.5.**
 ~~11. Hermes 0.21.3 health: unit active, no new ERROR classes in journal vs 0.21.0 baseline.~~ done — verified (docs/status/2026-09-20_12-26 a8)
-12. llama-vlm: if enabled, soak-test under REAL units (module header instruction) before anyone decommissions anything.
+~~12. llama-vlm: if enabled, soak-test under REAL units (module header instruction) before anyone decommissions anything.~~ **NOT-DO — dup of §c.7.**
 ~~13. Confirm llama-rag still config-disabled.~~ done — verified disabled at the time (docs/status/2026-09-19_12-31 a6)
-14. flm: confirm no EADDRINUSE corpse recurrence post-deploy (pre-deploy said clean).
+~~14. flm: confirm no EADDRINUSE corpse recurrence post-deploy (pre-deploy said clean).~~ done — corpse confirmed GONE, :52626 released (docs/status/2026-09-20_15-57 §f.16; docs/status/2026-09-20_16-31 §1.4)
 ~~15. cv :8098: determine why metrics were "not responding" pre-deploy.~~ **NOT-DO — NOT-DO — dup.**
-16. Verify mandb unit (new in batch) ran; man-paths built.
-17. Watch dbus-broker/polkit/accounts-daemon restart churn post-switch (all rebuilt in this batch).
-18. Check memory-emergency-guard Zone 6 trips during the deploy window.
-19. Confirm no start-limit-hit units accumulated (flm socket re-arm trap).
-20. Root disk headroom after new generations (was 83%/125G free).
+~~16. Verify mandb unit (new in batch) ran; man-paths built.~~ **NOT-DO — one-shot deploy-window observation, overtaken by months of subsequent deploys.**
+~~17. Watch dbus-broker/polkit/accounts-daemon restart churn post-switch (all rebuilt in this batch).~~ **NOT-DO — one-shot deploy-window observation, overtaken by months of subsequent deploys.**
+~~18. Check memory-emergency-guard Zone 6 trips during the deploy window.~~ **NOT-DO — one-shot deploy-window observation, overtaken by months of subsequent deploys.**
+~~19. Confirm no start-limit-hit units accumulated (flm socket re-arm trap).~~ **NOT-DO — one-shot deploy-window observation, overtaken by months of subsequent deploys.**
+~~20. Root disk headroom after new generations (was 83%/125G free).~~ **NOT-DO — one-shot deploy-window observation, overtaken by months of subsequent deploys.**
 
 **Parallel-session batch follow-ups:**
-21. Identify `telephony-browser` (new package another session is building) — status, owner, whether it's tracked.
-22. Coordinate with the parallel session: their `7af9fbf9` mispaste caused this incident; their batch (hermes/llama-vlm) owns most remaining cascade failures.
-23. PATHSPEC-commit any of MY future fixes with real messages (with authorization) instead of relying on the daemon.
-24. Verify pnpm-deps hash determinism: one clean rebuild of the webui FOD (content-addressed; one observation so far).
-25. Refresh `docs/services/systemd-graph.md` with the two-hash layout + this incident if it documents packaging.
+~~21. Identify `telephony-browser` (new package another session is building) — status, owner, whether it's tracked.~~ **NOT-DO — moot: no `telephony-browser` exists in the tree today.**
+~~22. Coordinate with the parallel session: their `7af9fbf9` mispaste caused this incident; their batch (hermes/llama-vlm) owns most remaining cascade failures.~~ **NOT-DO — overtaken (§b.3).**
+~~23. PATHSPEC-commit any of MY future fixes with real messages (with authorization) instead of relying on the daemon.~~ **NOT-DO — house doctrine, AGENTS-recorded (tick-and-commit / daemon-race rules).**
+~~24. Verify pnpm-deps hash determinism: one clean rebuild of the webui FOD (content-addressed; one observation so far).~~ **NOT-DO — overtaken: the FOD has rebuilt repeatedly across nixpkgs bumps since.**
+~~25. Refresh `docs/services/systemd-graph.md` with the two-hash layout + this incident if it documents packaging.~~ done — runbook documents the pnpm/webui packaging split (docs/services/systemd-graph.md)
 
 **Monitoring/hygiene observed this session:**
-26. IO PSI avg10 sat 35-52% for ~2h with no obvious single owner — identify the driver (parallel builds, crush-hot-db migration tail, QLC churn).
+~~26. IO PSI avg10 sat 35-52% for ~2h with no obvious single owner — identify the driver (parallel builds, crush-hot-db migration tail, QLC churn).~~ **NOT-DO — one-shot forensics overtaken (the crush-DB migration class was structurally fixed).**
 ~~27. Verify crush-hot-db first migration FINISHED (pending since 2026-09-18: symlink sweep + PSI vs 40-60% baseline).~~ done — finished + verified (docs/services/crush.md:101; docs/status/2026-09-29_01-35)
-28. Verify last night's btrbk sends completed (guard-killed 2026-09-18; backup freshness).
-29. Verify discordsync-db-heal completed post-freeze-6 (crash-loop amplifier class).
+~~28. Verify last night's btrbk sends completed (guard-killed 2026-09-18; backup freshness).~~ **NOT-DO — one-shot night-watch overtaken: backup freshness is continuously monitored (backup-coordination + Gatus `backup_all_healthy`).**
+~~29. Verify discordsync-db-heal completed post-freeze-6 (crash-loop amplifier class).~~ done — superseded by the hot-db wave plan: discordsync is the one real fsync-pain mover, owned by the Phase-2 row (docs/todo/storage.md hot-db row)
 30. Pre-deploy §10: retire monitor365 metrics WARN noise (service disabled since 2026-08-12; permanent WARN every deploy).
-31. Fix §11 vendorHash checker (6 false "unable to determine" WARNs).
-32. Fix double `=== Pre-Deploy Validation ===` banner in deploy.sh.
+~~31. Fix §11 vendorHash checker (6 false "unable to determine" WARNs).~~ done — §11 became a real-FOD vendorHash preview gate with `--section-11-only` (scripts/pre-deploy-check.sh §11; AGENTS pre-deploy table)
+~~32. Fix double `=== Pre-Deploy Validation ===` banner in deploy.sh.~~ done — single banner in the current script (scripts/deploy.sh)
 ~~33. Sweep eval warnings: `stdenv.isDarwin/isLinux` deprecations + `system` rename across pkgs/.~~ done — eval-warning sweep session ran (docs/status/2026-10-04_06-45)
-34. Migrate `programs.rofi.extraConfig` → `programs.rofi.settings` (HM rename warning; rofi is Sway-backup only now).
-35. Investigate why nodejs-26.9.0 wasn't substituted (Hydra cache gap for the new nixpkgs?).
+~~34. Migrate `programs.rofi.extraConfig` → `programs.rofi.settings` (HM rename warning; rofi is Sway-backup only now).~~ done — migrated (platforms/nixos/programs/rofi.nix `settings = {`)
+~~35. Investigate why nodejs-26.9.0 wasn't substituted (Hydra cache gap for the new nixpkgs?).~~ **NOT-DO — moot: nodejs-slim was root-caused and fixed via the nixpkgs bump (§c.2); the cache-gap question is ancient.**
 36. Consider pre-deploy §0: WARN when concurrent `nix build` processes are active (freeze-6 lesson).
-37. After deploy settles: SigNoz traces coverage still green (`signoz_traces_reporting`), Gatus fleet green.
-38. Add the got-hash-misplace gotcha to AGENTS.md (see e.3).
-39. Harvest the remaining blocker (nodejs-slim) into `docs/todo/` under the owning domain once diagnosed.
-40. Rotate old files in `~/.local/state/deploy-logs/` (keep bounded).
+~~37. After deploy settles: SigNoz traces coverage still green (`signoz_traces_reporting`), Gatus fleet green.~~ done — traces flips landed and the check is armed at zero-missing (docs/status/2026-09-19_12-11 §a.1; docs/status/2026-09-20_16-31 §1.2 live metrics)
+~~38. Add the got-hash-misplace gotcha to AGENTS.md (see e.3).~~ done — got-hash discipline house-recorded (docs/agents/go-ecosystem.md: the failing-FOD got-hash is the only sanctioned paste, matched to the failing drv)
+~~39. Harvest the remaining blocker (nodejs-slim) into `docs/todo/` under the owning domain once diagnosed.~~ **NOT-DO — moot: root-caused and fixed in the same window (§c.2); nothing remained to harvest.**
+~~40. Rotate old files in `~/.local/state/deploy-logs/` (keep bounded).~~ **NOT-DO — host-side housekeeping, outside the repo.**
 
 **Backlog candidates surfaced by the batch:**
-41. hermes-tui/web builds need nodejs — document hermes' node dependency in its runbook.
-42. llama-cpp 0.4.1 chain: confirm why it depends on nodejs (web dist?) and whether it can build without it.
+~~41. hermes-tui/web builds need nodejs — document hermes' node dependency in its runbook.~~ **NOT-DO — overtaken: hermes packaging moved on (0.21.3+ verified live §c.6) and the runbook no longer matches that build shape.**
+~~42. llama-cpp 0.4.1 chain: confirm why it depends on nodejs (web dist?) and whether it can build without it.~~ **NOT-DO — moot: the chain builds green in current nixpkgs.**
 43. llama-vlm module: confirm its eval-warning soak-test instructions made it into its docs.
-44. §12 listed 6 ExecStart binaries "not built yet" — verify all exist post-build (203/EXEC prevention).
-45. eval-cache `error (ignored): SQLite busy` — two concurrent evals contended; cosmetic but noisy.
-46. Check whether `.#telephony-browser` belongs in `packages` exposure or needs flake check coverage.
-47. Confirm DMS settings backup/restore ran clean in the deploy (deploy.sh step).
+~~44. §12 listed 6 ExecStart binaries "not built yet" — verify all exist post-build (203/EXEC prevention).~~ **NOT-DO — overtaken: every subsequent deploy's §12 ran clean on built closures.**
+~~45. eval-cache `error (ignored): SQLite busy` — two concurrent evals contended; cosmetic but noisy.~~ **NOT-DO — cosmetic transient of the concurrent-eval moment.**
+~~46. Check whether `.#telephony-browser` belongs in `packages` exposure or needs flake check coverage.~~ **NOT-DO — moot: no `telephony-browser` in the tree today.**
+~~47. Confirm DMS settings backup/restore ran clean in the deploy (deploy.sh step).~~ **NOT-DO — one-shot deploy-window observation, overtaken.**
 ~~48. After green deploy: re-run `nix run .#pre-reboot-check` before any planned reboot (ladder/boot-mirror §11 state).~~ done — ran repeatedly in boot-mirror chain (docs/status/2026-09-20_15-30 M3/M5; 2026-09-30_12-58)
-49. Consider naming the "one root failure hides behind N cascades" pattern in pre-deploy docs — `--keep-going` + root-cause extraction should be a documented one-liner.
-50. Report the incident to the parallel session via the shared status-report channel (attribution duty; it may still believe its flip was correct).
+~~49. Consider naming the "one root failure hides behind N cascades" pattern in pre-deploy docs — `--keep-going` + root-cause extraction should be a documented one-liner.~~ done — doctrine house-recorded (AGENTS.md: `--keep-going` FIRST when a deploy is blocked)
+~~50. Report the incident to the parallel session via the shared status-report channel (attribution duty; it may still believe its flip was correct).~~ **NOT-DO — overtaken: the mispaste was root-caused publicly in this and the follow-up reports.**
 
 ## g) Questions I cannot answer myself
 
