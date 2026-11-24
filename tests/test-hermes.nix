@@ -233,6 +233,10 @@ in
     bound.succeed("chmod 0755 /home/hermes")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
+    bound.execute("sleep 20")
+    print(bound.execute("systemctl status hermes-perms-heal --no-pager || true"))
+    print(bound.execute("journalctl -b --no-pager -u hermes-perms-heal | tail -30"))
+    print(bound.execute("systemctl show hermes-perms-heal -p ActiveState,SubState,Result,ExecMainStatus,NRestarts --no-pager"))
     wait_perms_heal(bound, 4)
     # the guard tripped and the walk actually ran...
     assert bound.succeed("journalctl -u hermes-perms-heal --no-pager | grep -c 'hermes-perms: fixing ownership' || true").strip() == "1"
