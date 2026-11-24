@@ -980,7 +980,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-897 | P3 | stability | Extend memory-guard trip lines to top-5 child-uni... | S-1570 (stability:264) | 96 |
 | T-898 | P3 | stability | Document the three-line PSI doctrine | S-1571 (stability:269) | 96 |
 | T-899 | P3 | stability | Fixture selftest for btrfs-gc-guard itself (space... | S-1572 (stability:278) | 96 |
-| ~~T-900~~ | ~~P3~~ | ~~stability~~ | Identify the /mnt/buildcache (sdb) no-waiter ~~100... | ~~S-1573 (stability:293)~~ | ~~96~~ |
+| ~~T-900~~ | ~~P3~~ | ~~stability~~ | Identify the /mnt/buildcache (sdb) no-waiter 100... | ~~S-1573 (stability:293)~~ | ~~96~~ |
 | T-901 | P3 | stability | Identify the chromium-inside-tq-agent-pool-memcg ... | S-1574 (stability:298) | 96 |
 | T-902 | P3 | stability | Journald truncated-file warnings (system@…journal... | S-1575 (stability:301) | 96 |
 | T-903 | P3 | stability | llama-chat streaming pre-warm: ExecStartPre cat-s... | S-1576 (stability:302) | 96 |
@@ -1022,7 +1022,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-939 | P3 | storage | Sweep stale "frozen spare / SSD 2 / spare SSDs" r... | S-1612 (storage:226) | 96 |
 | T-940 | P3 | storage | Check btrbk/snapshot configs for a stale @cache-h... | S-1613 (storage:231) | 96 |
 | T-941 | P3 | storage | Reconcile the go-lint numbers between the trashed... | S-1614 (storage:232) | 96 |
-| ~~T-942~~ | ~~P3~~ | ~~storage~~ | Measure whether the 55G Trash (~~/.local/share/Tra... | ~~S-1615 (storage:233)~~ | ~~96~~ |
+| ~~T-942~~ | ~~P3~~ | ~~storage~~ | Measure whether the 55G Trash (/.local/share/Tra... | ~~S-1615 (storage:233)~~ | ~~96~~ |
 | T-943 | P3 | storage | Post-gc drain proof for the ~/tmp/go-lint reclama... | S-1616 (storage:237) | 96 |
 | T-944 | P3 | storage | crush-hot-db-migrate: 10min wall for 0 relocations | S-1617 (storage:248) | 96 |
 | T-945 | P3 | storage | bench-disk.sh's hardcoded fio store path is GC-able | S-1618 (storage:258) | 96 |

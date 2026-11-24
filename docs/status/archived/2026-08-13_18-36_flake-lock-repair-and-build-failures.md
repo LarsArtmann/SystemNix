@@ -90,7 +90,7 @@
 
 ### `nix fmt`
 
-- Not run. The auto-commit daemon may have formatted files, but I didn't explicitly verify formatting. ~~Done (moot) — formatting is enforced by the alejandra pre-commit on every commit since.~~
+- Not run. The auto-commit daemon may have formatted files, but I didn't explicitly verify formatting. Done (moot) — formatting is enforced by the alejandra pre-commit on every commit since.
 
 ---
 

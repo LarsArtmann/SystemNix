@@ -806,7 +806,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-726 | P3 | pixel6 | Immich ingestion of DCIM + WhatsApp media | S-1036 (pixel6:27) | 96 |
 | T-727 | P3 | pixel6 | Pool README day-2 update (signal key, pending XML... | S-1037 (pixel6:30) | 96 |
 | T-728 | P3 | security | Crush key-hygiene leftovers | S-1038 (security:24) | 96 |
-| ~~T-729~~ | ~~P3~~ | ~~security~~ | ~~Identify + tame the Go pprof listener on _:6060... | ~~S-1039 (security:33)~~ | ~~96~~ |
+| ~~T-729~~ | ~~P3~~ | ~~security~~ | ~~Identify + tame the Go pprof listener on _:6060...~~ | ~~S-1039 (security:33)~~ | ~~96~~ |
 | T-730 | P3 | services | bank-sync sentinel go-live | S-1040 (services:33) | 96 |
 | T-731 | P3 | services | paperless postgres collation refresh | S-1041 (services:36) | 96 |
 | T-732 | P3 | services | indexer-web ioTier assignment | S-1042 (services:44) | 96 |
@@ -992,7 +992,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-912 | P3 | stability | Extend memory-guard trip lines to top-5 child-uni... | S-1222 (stability:264) | 96 |
 | T-913 | P3 | stability | Document the three-line PSI doctrine | S-1223 (stability:269) | 96 |
 | T-914 | P3 | stability | Fixture selftest for btrfs-gc-guard itself (space... | S-1224 (stability:278) | 96 |
-| ~~T-915~~ | ~~P3~~ | ~~stability~~ | Identify the /mnt/buildcache (sdb) no-waiter ~~100... | ~~S-1225 (stability:293)~~ | ~~96~~ |
+| ~~T-915~~ | ~~P3~~ | ~~stability~~ | ~~Identify the /mnt/buildcache (sdb) no-waiter 100...~~ | ~~S-1225 (stability:293)~~ | ~~96~~ |
 | T-916 | P3 | stability | Identify the chromium-inside-tq-agent-pool-memcg ... | S-1226 (stability:298) | 96 |
 | T-917 | P3 | stability | Journald truncated-file warnings (system@…journal... | S-1227 (stability:301) | 96 |
 | T-918 | P3 | stability | llama-chat streaming pre-warm: ExecStartPre cat-s... | S-1228 (stability:302) | 96 |
@@ -1034,7 +1034,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | T-954 | P3 | storage | Sweep stale "frozen spare / SSD 2 / spare SSDs" r... | S-1264 (storage:226) | 96 |
 | T-955 | P3 | storage | Check btrbk/snapshot configs for a stale @cache-h... | S-1265 (storage:231) | 96 |
 | T-956 | P3 | storage | Reconcile the go-lint numbers between the trashed... | S-1266 (storage:232) | 96 |
-| ~~T-957~~ | ~~P3~~ | ~~storage~~ | Measure whether the 55G Trash (~~/.local/share/Tra... | ~~S-1267 (storage:233)~~ | ~~96~~ |
+| ~~T-957~~ | ~~P3~~ | ~~storage~~ | ~~Measure whether the 55G Trash (~/.local/share/Tra...~~ | ~~S-1267 (storage:233)~~ | ~~96~~ |
 | T-958 | P3 | storage | Post-gc drain proof for the ~/tmp/go-lint reclama... | S-1268 (storage:237) | 96 |
 | T-959 | P3 | storage | crush-hot-db-migrate: 10min wall for 0 relocations | S-1269 (storage:248) | 96 |
 | T-960 | P3 | storage | bench-disk.sh's hardcoded fio store path is GC-able | S-1270 (storage:258) | 96 |

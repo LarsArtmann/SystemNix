@@ -64,7 +64,7 @@ metric names, `metric_sum`-style suffix queries).~~ done 2026-08-27 evening — 
 service mid-restart during deploys).
 4. dnsblockd `service_version` label-churn decision (20+ historical
 fingerprints in ClickHouse; drop via relabeling or accept).
-~~5. SigNoz mirror of `niri_crash_loop` (Gatus-only today).~~ left deliberately — Gatus owns all health alerting (repo rule)
+~~5. SigNoz mirror of `niri_crash_loop` (Gatus-only today).~~ done — left deliberately — Gatus owns all health alerting (repo rule)
 6. Discord-delivery proof for the NEW wedge rule (never fired for real —
 by design nothing should have; route policy created but unproven).
 7. Cosmetic: "Temperature by Card" panel name is now wrong (single max series).

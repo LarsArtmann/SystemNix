@@ -23,7 +23,7 @@ WirePlumber was auto-selecting HDMI 3 (the TV) by default. The `audio.nix` modul
 > **Superseded (2026-08-14):** the static profile-priority approach developed a persistence gap (see `2026-08-13_23-39` §d.1) and is now superseded by the `smart-audio` focus-following daemon (`8ad493c9`) — see AGENTS.md "Smart-Audio".
 
 1. **Diagnosed the root cause:** WirePlumber had no explicit profile priority rules, so it auto-selected HDMI 3 (TV) over HDMI 2 (monitor) based on its internal "find-best-profile" heuristic (surround profiles have higher priority than stereo in WirePlumber's default scoring)
-2. ~~**Added `wireplumber.extraConfig` to `audio.nix`** with:
+2. ~~**Added `wireplumber.extraConfig` to `audio.nix`** with: done — shipped in the 2026-08-13 audio wave; the exact block is absent from the current tree (later audio-stack reworks superseded it)
    - `device.profile.priority.rules` matching `alsa_card.pci-0000_c5_00.1` to set explicit profile priority order
    - `device.restore-profile = false` to prevent WirePlumber from overriding the declarative priority with whatever was last selected at runtime via `wpctl set-profile`~~ done at `cfeee94d`, later superseded by the `smart-audio` daemon (`8ad493c9`)
 3. ~~**Applied runtime fix** via `wpctl set-profile 43 <index>` so audio works immediately without requiring a deploy~~ done (temporary by design), superseded by `8ad493c9`

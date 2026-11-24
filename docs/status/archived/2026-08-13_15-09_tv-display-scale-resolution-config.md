@@ -77,7 +77,7 @@ The `nix run .#deploy` command could not complete. The niri config change is in 
 
 1. Root filesystem at 95-96% (deploy hard-fails at >=95%)
 2. `cqrs-lint` vendorHash mismatch — FIXED in this session
-3. HaGeZi blocklist 404 — `HaGeZi-dga7-raw` fetch returns 404 from all mirrors, aborting the build ~~— resolved at `88c594cc` (GitLab mirror)~~
+3. HaGeZi blocklist 404 — `HaGeZi-dga7-raw` fetch returns 404 from all mirrors, aborting the build — resolved at `88c594cc` (GitLab mirror)
 4. ~~Failed systemd services (browser-history-agent, nix-build-cleanup)~~ resolved — both healthy/retired since (`c39b6d50`)
 
 ### 2. AGENTS.md not updated
@@ -152,15 +152,15 @@ Each duplicate is a different revision, creating a confused dependency graph. Th
 
 ### Config
 
-4. **Niri `outputs` should have been in the config from day one** — Relying on auto-detection means display config is non-reproducible. Adding it now is correct. ~~Done — explicit `outputs` block present since `0bd8a272`.~~
+4. **Niri `outputs` should have been in the config from day one** — Relying on auto-detection means display config is non-reproducible. Adding it now is correct. Done — explicit `outputs` block present since `0bd8a272`.
 5. **The `refresh` value for DP-1** (`59.997`) is the exact EDID value — this is fragile. If the monitor's EDID changes slightly, the mode won't match. Consider omitting `refresh` (defaults to highest available) or using a more standard `60.0`.
 6. **VRR should be enabled on the TV** — The LG TV supports variable refresh rate. `variable-refresh-rate = true` would improve gaming/video playback.
 7. **`focus-at-startup = true`** should be set on DP-1 (the primary monitor) so the session always starts focused on the main display.
 
 ### Infrastructure
 
-8. **HaGeZi blocklist URLs need monitoring** — A 404 on a blocklist fetch should not block ALL deploys. Consider a fallback or cached version. ~~Done (superseded) at `88c594cc` — lists track the GitLab mirror's mutable `main` with SRI-hash pinning; content drift fails the build loudly.~~
-9. **Automated nix GC schedule** — The system has no `nix.gc` auto-optimize-store schedule. Disk fills to 95%+ between manual GC runs. ~~Done — `nix.gc.automatic = true` (`--delete-older-than 3d`) in `platforms/common/nix-settings.nix`.~~
+8. **HaGeZi blocklist URLs need monitoring** — A 404 on a blocklist fetch should not block ALL deploys. Consider a fallback or cached version. Done (superseded) at `88c594cc` — lists track the GitLab mirror's mutable `main` with SRI-hash pinning; content drift fails the build loudly.
+9. **Automated nix GC schedule** — The system has no `nix.gc` auto-optimize-store schedule. Disk fills to 95%+ between manual GC runs. Done — `nix.gc.automatic = true` (`--delete-older-than 3d`) in `platforms/common/nix-settings.nix`.
 10. **Flake lock deduplication** — The 5 duplicate `go-cqrs-lite` entries should be consolidated. The `follows` mechanism exists for this but wasn't applied correctly.
 
 ---

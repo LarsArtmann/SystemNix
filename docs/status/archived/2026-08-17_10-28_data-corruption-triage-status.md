@@ -51,7 +51,7 @@
 
 ## f) NEXT THINGS
 
-1. ~~Re-run the fixed corrupt-file mapping scan (job 01A, script at /tmp/find-corrupt2.sh) and identify affected files.~~ progressed past this report — 13 corrupted files identified (recorded in TODO_LIST P0 root-scrub item, 2026-08-17); recovery decision still open (g.1)
+1. ~~Re-run the fixed corrupt-file mapping scan (job 01A, script at /tmp/find-corrupt2.sh) and identify affected files.~~ done — progressed past this report — 13 corrupted files identified (recorded in TODO_LIST P0 root-scrub item, 2026-08-17); recovery decision still open (g.1)
 2. Decide recovery per file: redownloadable models → delete + re-fetch; docker/pg data → restore from pool dumps; DuckDB → verify latest backup usable.
 3. After /data clean: re-kick `btrbk-data` seed (morning, not midnight; confirm no scrub running).
 4. ~~Deploy the 3-file fix batch (24h timeouts, byte gate, disk-growth preStart)~~ done — `2fbb69f9`.

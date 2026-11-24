@@ -20,7 +20,7 @@
 | Work                                                                     | Gap                                                                                                                                                                                                            |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The fix itself                                                           | Committed to the tree but **NOT deployed** — the running system still carries the old (deployed) timeout. Requires `nix run .#deploy`. Until then the user's complaint is not actually resolved on the desktop |
-| ~~AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s") | NOT updated — still documents 20 min. Only FEATURES.md was updated. Doc drift created by this session~~                                                                                                        |
+| ~~AGENTS.md gotcha bullet ("Idle DPMS via swayidle (2026-08-22): 1200s")~~ | resolved — the gotcha bullet no longer exists in AGENTS.md (grep-empty 2026-11-24); at authoring time only FEATURES.md had been updated |
 
 ## c) NOT STARTED
 

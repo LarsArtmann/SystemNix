@@ -90,7 +90,7 @@ Nothing — config is complete, just not deployed or validated at runtime.
 
 1. ~~Run `nix flake check --no-build` for full syntax validation~~ done at `b81e5094`
 2. ~~Deploy: `nix run .#deploy`~~ done at `b81e5094`
-3. ~~Post-deploy: `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to verify
+3. ~~Post-deploy: `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to verify done at `b81e5094` (settings query ran in the same post-deploy pass as items 4-5)
 4. ~~Post-deploy: Re-check thread count~~ done at `b81e5094`: `ls /proc/$(pidof clickhouse-serv)/task | wc -l`
 5. ~~Post-deploy: Check logs:~~ done at `b81e5094` `journalctl -u clickhouse -n 50 --no-pager`
 6. Watch for `Too many parts` errors over 24-48h

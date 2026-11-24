@@ -68,9 +68,9 @@
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (gates)
 
 - **G7 (NEW):** wireguard-collector is a **PRIVATE** repo — publish to crates.io / make public / vendor into the workspace? Blocks monitor365 + agent + watchdog restore entirely. ← OPEN owner decision (TODO_LIST Priority 1) — DO NOT CLOSE
-- **G2:** Did you receive ANY Discord alerts Aug 11–14? (Delivery is proven working now; your answer decides process-fix vs re-alert escalation under T9.3.) ~~— superseded: end-to-end delivery proven 2026-08-15 (96% event TRIGGERED/RESOLVED on Discord); the escalation half remains TODO_LIST Priority 3~~
-- **Deploy authority:** run the queued deploy batch yourself (`nix run .#deploy`), or approve T12 polkit first? ~~— moot: the batch was deployed; polkit remains TODO_LIST Priority 3~~
-- G3 (StorageBox order), G4 (SigNoz dashboard purge), G5 (MiniMax quota), G6 (Turso plan) — unchanged, still open. ~~— status 2026-08-17: G3 open (P0 3rd-copy decision), G4 DONE (251 zombie dashboards purged by the v7 provisioner, 2026-08-16), G5 open (carried ×4), G6 open (Turso quota outage, TODO_LIST P0)~~
+- **G2:** Did you receive ANY Discord alerts Aug 11–14? (Delivery is proven working now; your answer decides process-fix vs re-alert escalation under T9.3.) — superseded: end-to-end delivery proven 2026-08-15 (96% event TRIGGERED/RESOLVED on Discord); the escalation half remains TODO_LIST Priority 3
+- **Deploy authority:** run the queued deploy batch yourself (`nix run .#deploy`), or approve T12 polkit first? — moot: the batch was deployed; polkit remains TODO_LIST Priority 3
+- G3 (StorageBox order), G4 (SigNoz dashboard purge), G5 (MiniMax quota), G6 (Turso plan) — unchanged, still open. — status 2026-08-17: G3 open (P0 3rd-copy decision), G4 DONE (251 zombie dashboards purged by the v7 provisioner, 2026-08-16), G5 open (carried ×4), G6 open (Turso quota outage, TODO_LIST P0)
 
 ---
 

@@ -14,7 +14,7 @@ Routed with live verification (not summary-inheritance):
 
 - **2 live outages** discovered by the parallel 20-35 session, routed to Priority 0: monitor365-server dead since Aug 11 23:53 (server + watchdog both stopped cleanly, zero journal in 3 days, backup `timestamp 0`), browser-history hung post-deploy (process alive, `:8087` unbound, suspicious OTel `parse "127.0.0.1:4317"` errors) ~~— both since closed: monitor365 moot (deliberate disable, G7), browser-history fixed (storage/v4.7.0 + mkOidcGate)~~
 - **Live metrics evidence pulled myself:** `backups.prom` shows `backup_all_healthy 0` — immich AND monitor365 backups have NEVER succeeded (`backup_last_success_timestamp 0`, 999h stale) despite correct backup-coordination registration. The Gatus check for this EXISTS (`gatus-config.nix:1077`) and its condition is TRUE right now — alerting is broken or ignored
-- **aw-watcher-window-wayland dead** (start-limit-hit 20:05, still down) → Priority 1 ~~— fixed: wayland-socket gate shipped (activitywatch.nix:17-37); gate logging resumed/idle 2026-08-17~~
+- **aw-watcher-window-wayland dead** (start-limit-hit 20:05, still down) → Priority 1 — fixed: wayland-socket gate shipped (activitywatch.nix:17-37); gate logging resumed/idle 2026-08-17
 - **Registration-lock chain break** made explicit in the release item: deployed binary (flake `a1b78afa`, 08-12) predates all gate work — **MAX_USERS=1 is a no-op in production right now** ~~— chain advanced: input now `4e7604d` (v4.7.0 era); LIVE-binary gate verification remains~~ resolved — chain advanced (input `4e7604d`, v4.7.0 era); the registration-lock release is on the upstream-contribution ledger (ROADMAP Theme 5)
 - Hermes item rewritten: upstream v0.20.1 ships `registration_lifecycle` — bump input, DELETE the patch
 - Carried 16-20 §f.17-27: go-cqrs-lite `git+ssh→github`, renamer follows, zram ADR, OTel scheme eval-check, templ CI check, zram-fill Gatus alert, polkit scoped restarts, post-deploy-check escalation semantics, test-tone tooling, docs-debt items (AGENTS compression, planning triage, archived-annotation debt)
@@ -55,7 +55,7 @@ I routed NEW items and UPDATED stale ones (qmd, hermes), but the BUILD-mode rule
 
 - immich → routed (Priority 1) ✓ ~~— closable 2026-08-17: backup_healthy=1 for all seven monitored backups (10-28 §a.1)~~
 - aw-watcher → routed (Priority 1) ✓ but under-investigated (see d.3) ~~— fixed since: wayland-socket gate shipped, service healthy~~
-- foreign 13-15 → default applied (leave alone, 5th carry now) ✓ but never surfaced to the user again ~~— resolved 2026-08-17: annotated + archived as a Decision Record (docs-health pass)~~
+- foreign 13-15 → default applied (leave alone, 5th carry now) ✓ but never surfaced to the user again — resolved 2026-08-17: annotated + archived as a Decision Record (docs-health pass)
 - **MiniMax quota → NOT routed anywhere. Dropped.** (see d.2) ~~— recovered: TODO_LIST Priority 2 item, carried ×4, owner decision pending~~
 
 ### 3. Live outages — routed and evidenced, NOT remediated

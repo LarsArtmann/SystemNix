@@ -99,7 +99,7 @@ Nothing — no implementation was started.
 
 8. **~15 Crush instances running** — Multiple `crush -y` processes across many PTS sessions, consuming 1-6% CPU each. Cumulatively ~20-30% CPU. Should clean up idle sessions.
 
-9. ~~**BTRFS scrub health check failing for 2+ hours** — Gatus consistently reports `success=false` for "BTRFS Scrub Health". This could be:
+9. ~~**BTRFS scrub health check failing for 2+ hours** — Gatus consistently reports `success=false` for "BTRFS Scrub Health". This could be: done — the class resolved: the "BTRFS Scrub Health" check was split/rewritten (gatus-config.nix, 2026-09-15) and the scrub-stop saga closed the phantom class 2026-09-30
    - A real scrub finding errors (serious)
    - The scrub status script failing to run (sudo permissions?)
    - Stale metrics from the `btrfs-health-metrics` service

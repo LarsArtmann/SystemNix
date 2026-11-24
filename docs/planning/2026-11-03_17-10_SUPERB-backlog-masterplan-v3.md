@@ -1738,7 +1738,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-0692 | monitoring:86 | Gatus→Discord delivery E2E audit + chronic-red escalation** — the "mr-sync Dashb… | H2 | 8 | P3 |
 | S-0384 | monitoring:87 | Gatus canary: system_health** series presence in node_exporter /metrics_* — whol… | H2 | 8 | P2 |
 | S-0385 | monitoring:88 | Bound the system_health blind window + confirm the 93%-root-alert metric source*… | H2 | 8 | P2 |
-| ~~S-0386~~ | ~~monitoring:90~~ | Thermal alerting coverage: GPU edge (CPU/k10temp half LANDED 2026-10-12)** — ~~t… | ~~H2~~ | ~~8~~ | ~~P2~~ |
+| ~~S-0386~~ | ~~monitoring:90~~ | Thermal alerting coverage: GPU edge (CPU/k10temp half LANDED 2026-10-12)** — t… | ~~H2~~ | ~~8~~ | ~~P2~~ |
 | S-0387 | monitoring:91 | SigNoz time_series_v2 is EMPTY — metadata retention investigation** — the label … | H2 | 8 | P2 |
 | S-0693 | monitoring:92 | Hot-tier mount-degradation probe** — the doctrine-C mounts (`/var/log/caddy` cad… | H1 | 3 | P3 |
 | S-0388 | monitoring:93 | Durable hwmon fingerprint→chip mapping table in docs/agents/monitoring.md** — wi… | H2 | 8 | P2 |
@@ -2471,7 +2471,7 @@ One row per open TODO (authoring-time line refs — see §9.4). GATED rows carry
 | S-1785 | services:27 | `/data/docker` data reclaim (owner sudo execution; FILE-LEVEL since the Docker r… | GATED | 0 | P3 |
 | S-0978 | services:29 | bank-sync sentinel go-live — residual verification** (deploy-gate CLEARED 2026-1… | H2 | 8 | P3 |
 | S-0508 | services:33 | paperless-tasks-collector fixture test** — render the collector script from pape… | H2 | 8 | P2 |
-| ~~S-0219~~ | ~~services:35~~ | indexer-web post-deploy smoke + live bring-up verification** — ~~the service has… | ~~H2~~ | ~~8~~ | ~~P1~~ |
+| ~~S-0219~~ | ~~services:35~~ | indexer-web post-deploy smoke + live bring-up verification** — the service has… | ~~H2~~ | ~~8~~ | ~~P1~~ |
 | S-0979 | services:36 | indexer-web ioTier assignment** — the daily full-tree scan of `~/projects` runs … | H2 | 8 | P3 |
 | S-1354 | services:37 | Delete 4 orphaned all-scope Forgejo setup PATs (silent-cleanup leak class)** — e… | GATED | 0 | P0 |
 | S-1786 | services:38 | Trash the stale `/var/lib/forgejo/data/gitea.db` fossil** — pre-migration relic … | GATED | 0 | P3 |
