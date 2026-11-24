@@ -102,6 +102,13 @@ let
     # ExecStartPre idempotency, tripping the rate limiter from restart #6
     # on. The limiter itself is not under test here.
     systemd.services.hermes.startLimitBurst = lib.mkForce 20;
+    # Same class for the post-start heal oneshot (burst=3/3600s): the test
+    # restarts trigger it 8x in seconds, so runs #4+ refused
+    # (start-limit-hit) and the converged-marker waits starved — found
+    # 2026-11-24 once the late-applications import let the test past
+    # wait_for_unit for the first time since 2026-10-26.
+    systemd.services.hermes-perms-heal.startLimitBurst = lib.mkForce 20;
+    systemd.services.hermes-db-health.startLimitBurst = lib.mkForce 20;
   };
 in
 {
@@ -157,10 +164,6 @@ in
 
     # --- bound node: the full projects-access surface -------------------
     bound.start()
-    bound.execute("systemctl status hermes --no-pager || true")
-    print(bound.execute("systemctl show hermes -p ExecMainStatus,ExecMainCode,Result,NRestarts --no-pager"))
-    print(bound.execute("journalctl -b --no-pager -u hermes | tail -30"))
-    print(bound.execute("journalctl -b --no-pager | grep -iE 'hermes|sops' | head -40"))
     bound.wait_for_unit("hermes.service")
 
     # 0. build-time import smoke (hermes 08-14 §e.6 + 08-21 §f.13): the
@@ -233,10 +236,6 @@ in
     bound.succeed("chmod 0755 /home/hermes")
     bound.systemctl("restart hermes")
     bound.wait_for_unit("hermes.service")
-    bound.execute("sleep 20")
-    print(bound.execute("systemctl status hermes-perms-heal --no-pager || true"))
-    print(bound.execute("journalctl -b --no-pager -u hermes-perms-heal | tail -30"))
-    print(bound.execute("systemctl show hermes-perms-heal -p ActiveState,SubState,Result,ExecMainStatus,NRestarts --no-pager"))
     wait_perms_heal(bound, 4)
     # the guard tripped and the walk actually ran...
     assert bound.succeed("journalctl -u hermes-perms-heal --no-pager | grep -c 'hermes-perms: fixing ownership' || true").strip() == "1"
