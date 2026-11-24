@@ -163,6 +163,10 @@
             # them) left the queue dark until the next reboot.
             "tq-serve.service"
             "tq-agent-pool.service"
+            # tq-api carries its own explicit RequiresMountsFor (no
+            # pool-recovery implicit gating — vHost.layer = "none"), so the
+            # remount stop cascade leaves it failed too; converge it back.
+            "tq-api.service"
             # paperless-gpt is pool-bound VIA ITS TOKEN unit: the mint sets
             # RequiresMountsFor = paperless dataDir and the daemon Requires=
             # the token, so a remount's mount-stop cascade kills the daemon
