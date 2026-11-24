@@ -68,6 +68,47 @@ _: {
       };
 
       primaryUser = config.users.primaryUser;
+      domain = config.networking.domain;
+
+      # The ai-meter dashboard's SigNoz UUID (provisioned dashboard slug
+      # "systemnix-ai-meter"; live lookup: GET
+      # http://localhost:${toString ports.signoz}/api/v2/dashboards?limit=100
+      # | jq '.data.dashboards[] | select(.name == "systemnix-ai-meter") | .id').
+      # The provisioner updates dashboards IN PLACE by slug, so the id is
+      # stable across deploys; the "ai-meter dashboard" gatus check below
+      # fails loud if a recreation ever mints a new one.
+      dashboardId = "01a148a8-81c0-7605-9028-fe0d8ca11832";
+
+      # Static viewer page served at https://ai-meter.<domain>: embeds the
+      # SigNoz ai-meter dashboard full-viewport (the signoz registry entry
+      # allows this origin via vHost.frameAncestors). Layer 2 protected:
+      # LAN bypass, external requests pass oauth2-proxy forward-auth first.
+      viewer = pkgs.writeTextDir "index.html" ''
+        <!doctype html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>AI Meter - Routed AI Calls</title>
+        <style>
+          html, body { margin: 0; height: 100%; background: #0b1220; color: #e5e7eb;
+            font-family: system-ui, sans-serif; }
+          header { display: flex; align-items: baseline; gap: 1rem; padding: .6rem 1rem; }
+          header h1 { font-size: 1rem; margin: 0; }
+          header a { color: #7dd3fc; font-size: .8rem; }
+          iframe { display: block; width: 100%; height: calc(100% - 2.6rem); border: 0; }
+        </style>
+        </head>
+        <body>
+        <header>
+          <h1>AI Meter</h1>
+          <a href="https://signoz.${domain}/dashboard/${dashboardId}" target="_top">open in SigNoz</a>
+        </header>
+        <iframe src="https://signoz.${domain}/dashboard/${dashboardId}"
+                title="AI Meter dashboard"></iframe>
+        </body>
+        </html>
+      '';
 
       # Cloud upstreams (secrets via sops placeholders) + local OpenAI-compat
       # servers (key "unused" — they ignore Authorization). Local ports come
@@ -453,12 +494,24 @@ _: {
           ];
         };
 
-        # --- Registry entry: loopback-only, monitored, NO vHost ----------------
+        # --- Registry entry: viewer vHost + loopback checks -------------------
+        # ai-meter.<domain> serves the static viewer page (vHost.root, Layer 2
+        # protected) embedding the SigNoz ai-meter dashboard. The proxy itself
+        # stays loopback-only by design (8107) with the admin plane (8108)
+        # scraped by SigNoz. The entry carries NO port (exactly-one assertion:
+        # root wins), so the loopback checks below keep their absolute URLs;
+        # the two absolute-https checks cover the viewer page itself and the
+        # pinned dashboard id (drift detector).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           ai-meter = {
-            inherit (cfg) enable port;
-            vHost.layer = "none";
+            inherit (cfg) enable;
+            subdomain = "ai-meter";
+            vHost.layer = "protected";
+            vHost.root = "${viewer}";
             monitored = true;
+            homepage = {
+              icon = "prometheus.png";
+            };
             checks = [
               {
                 name = "ai-meter";
@@ -483,6 +536,31 @@ _: {
                   "[BODY] == pat(*ai_meter_requests_total*)"
                 ];
                 alert = "ai-meter admin plane down - metering metrics are not scrapeable. Check: journalctl -u ai-meter -n 50";
+              }
+              {
+                name = "ai-meter viewer";
+                group = "AI";
+                url = "https://ai-meter.${domain}/";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*signoz.${domain}/dashboard/${dashboardId}*)"
+                ];
+                alert = "ai-meter viewer page broken - the iframe embed lost its dashboard target. Check: journalctl -u caddy -n 50 and dashboardId in modules/nixos/services/ai-meter.nix";
+              }
+              {
+                # Drift detector: fails when the provisioned dashboard is
+                # deleted/recreated (SigNoz mints a NEW id on recreation, so
+                # the pinned dashboardId above must be updated).
+                name = "ai-meter dashboard";
+                group = "AI";
+                url = "https://signoz.${domain}/api/v2/dashboards/${dashboardId}";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*systemnix-ai-meter*)"
+                ];
+                alert = "ai-meter SigNoz dashboard drifted - the pinned dashboardId no longer resolves (dashboard deleted/recreated). Look up the new id (see dashboardId comment in modules/nixos/services/ai-meter.nix) and update it";
               }
             ];
           };

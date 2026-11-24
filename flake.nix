@@ -1361,6 +1361,10 @@
     # the node keys root actually resolves to.
     art-dupl.inputs.flake-parts.follows = "flake-parts";
     art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
+    # nsfw-classifier's transitive art-dupl copy evolved to its own node
+    # (art-dupl_5) when nsfw-classifier floated and re-locked art-dupl's
+    # treefmt-nix at 0d6d7390 — pin the nested copy to the root input.
+    nsfw-classifier.inputs.art-dupl.inputs.treefmt-nix.follows = "treefmt-nix";
     bank-sync.inputs.flake-parts.follows = "flake-parts";
     bank-sync.inputs.nixpkgs.follows = "nixpkgs";
     bank-sync.inputs.treefmt-nix.follows = "treefmt-nix";

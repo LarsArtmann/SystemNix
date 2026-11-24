@@ -391,10 +391,26 @@ _: {
           }
         '';
 
-      staticVHost = root: {
+      # Frame-embed headers for registry vHost.frameAncestors consumers: drop
+      # the global SAMEORIGIN (commonConfig) and default a CSP frame-ancestors
+      # allowlist. Browsers ignore X-Frame-Options entirely when any policy
+      # carries frame-ancestors, but the explicit drop covers engines without
+      # frame-ancestors support; `?` keeps an app-provided CSP intact.
+      frameHeadersFor =
+        v:
+        if v.frameAncestors == [ ] then
+          ""
+        else
+          ''
+            header -X-Frame-Options
+            header ?Content-Security-Policy "frame-ancestors 'self' ${lib.concatStringsSep " " v.frameAncestors}"
+          '';
+
+      staticVHost = root: frameExtra: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
+          ${frameExtra}
           # proxy-port:-
           root * ${root}
           file_server
@@ -409,32 +425,46 @@ _: {
         '';
       };
 
-      protectedVHost = port: hostOverride: {
-        extraConfig = ''
-          ${tlsConfig}
-          ${commonConfig}
-          # proxy-port:${toString port}
-          @external not remote_ip 127.0.0.1/8 ${lanSubnet}
-          handle @external {
-            ${forwardAuth}
-            ${proxyTo port { inherit hostOverride; }}
-          }
-          handle {
-            ${proxyTo port { inherit hostOverride; }}
-          }
-          ${serverErrorRoute}
-        '';
-      };
+      protectedVHost =
+        {
+          port,
+          hostOverride ? null,
+          frameExtra ? "",
+        }:
+        {
+          extraConfig = ''
+            ${tlsConfig}
+            ${commonConfig}
+            ${frameExtra}
+            # proxy-port:${toString port}
+            @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+            handle @external {
+              ${forwardAuth}
+              ${proxyTo port { inherit hostOverride; }}
+            }
+            handle {
+              ${proxyTo port { inherit hostOverride; }}
+            }
+            ${serverErrorRoute}
+          '';
+        };
 
-      plainVHost = port: hostOverride: {
-        extraConfig = ''
-          ${tlsConfig}
-          ${commonConfig}
-          # proxy-port:${toString port}
-          ${proxyTo port { inherit hostOverride; }}
-          ${serverErrorRoute}
-        '';
-      };
+      plainVHost =
+        {
+          port,
+          hostOverride ? null,
+          frameExtra ? "",
+        }:
+        {
+          extraConfig = ''
+            ${tlsConfig}
+            ${commonConfig}
+            ${frameExtra}
+            # proxy-port:${toString port}
+            ${proxyTo port { inherit hostOverride; }}
+            ${serverErrorRoute}
+          '';
+        };
 
       renderVHost =
         v:
@@ -449,6 +479,7 @@ _: {
                 extraConfig = ''
                   ${tlsConfig}
                   ${commonConfig}
+                  ${frameHeadersFor v}
                   # proxy-port:-
                   @external not remote_ip 127.0.0.1/8 ${lanSubnet}
                   handle @external {
@@ -463,12 +494,20 @@ _: {
                 '';
               }
             else
-              staticVHost v.root
+              staticVHost v.root (frameHeadersFor v)
           )
         else if v.layer == "protected" then
-          protectedVHost v.port v.hostOverride
+          protectedVHost {
+            inherit (v) port;
+            hostOverride = v.hostOverride;
+            frameExtra = frameHeadersFor v;
+          }
         else
-          plainVHost v.port v.hostOverride;
+          plainVHost {
+            inherit (v) port;
+            hostOverride = v.hostOverride;
+            frameExtra = frameHeadersFor v;
+          };
 
       dnsLocalSubdomains = (import ../../../platforms/common/dns-local.nix).localSubdomains;
       # Deliberate exemptions: (none live — the former voice/whisper
@@ -928,7 +967,7 @@ _: {
                 # The old alerts.<domain> PapDashboard alias has its own
                 # redirect vHost above (kept when the catch-all became a
                 # 404 page).
-                "tasks.${domain}" = protectedVHost config.services.taskchampion-sync-server.port null;
+                "tasks.${domain}" = protectedVHost { port = config.services.taskchampion-sync-server.port; };
                 # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
                 # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
                 # endpoints should be directly reachable to prevent cookie-expiry edge
@@ -1027,7 +1066,7 @@ _: {
                           '';
                         }
                       else
-                        protectedVHost ports.monitor365-server null;
+                        protectedVHost { port = ports.monitor365-server; };
                   }
               # DiscordSync / Browser History / Attic / renamer / search / graph /
               # overview vHosts moved to the registry (services.integration

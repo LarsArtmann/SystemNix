@@ -46,6 +46,7 @@
     "audiblesync"
     "discover"
     "problems"
+    "ai-meter"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is

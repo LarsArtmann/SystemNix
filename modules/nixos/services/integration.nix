@@ -243,6 +243,20 @@ _: {
                 '';
               };
 
+              vHost.frameAncestors = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                description = ''
+                  Origins (full https://host form) allowed to EMBED this
+                  vHost in an iframe. Non-empty makes Caddy drop the global
+                  X-Frame-Options SAMEORIGIN for this site and default a
+                  Content-Security-Policy frame-ancestors allowlist
+                  ('self' + the listed origins). Consumer: signoz frames
+                  the ai-meter viewer (ai-meter.<domain> embeds the
+                  ai-meter SigNoz dashboard).
+                '';
+              };
+
               checks = lib.mkOption {
                 type = lib.types.listOf (
                   lib.types.submodule {

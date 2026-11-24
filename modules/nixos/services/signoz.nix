@@ -1682,6 +1682,11 @@ in
               subdomain = "signoz";
               port = cfg.settings.queryService.port;
               vHost.layer = "protected";
+              # ai-meter.<domain> embeds this dashboard UI in an iframe (the
+              # ai-meter viewer page) — allow that sibling origin to frame us
+              # (caddy drops X-Frame-Options SAMEORIGIN + emits CSP
+              # frame-ancestors for this site only).
+              vHost.frameAncestors = [ "https://ai-meter.${config.networking.domain}" ];
               monitored = true;
               # Native BACKUP freshness (clickhouse-db-backup.timer, 03:00) —
               # gated so pool-less hosts register no phantom backup row
