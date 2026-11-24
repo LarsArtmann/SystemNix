@@ -56,6 +56,12 @@ let
   common = { lib, ... }: {
     imports = [
       hermesNixosModule
+      # late-applications.target carrier (2026-11-24: hermes.service moved
+      # to wantedBy = [ "late-applications.target" ] in the 2026-10-26
+      # ordering-cycle fix — without this import the target is ABSENT in
+      # the VM and systemd silently never starts hermes.service, leaving
+      # the whole check red at wait_for_unit).
+      (import ../modules/nixos/services/late-applications.nix { }).flake.nixosModules.late-applications
       # co-import: the module declares a services.integration entry (mkIf-wrapped options?-guard caveat, 2026-09-15)
       (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
       ./mock-sops.nix
@@ -152,7 +158,9 @@ in
     # --- bound node: the full projects-access surface -------------------
     bound.start()
     bound.execute("systemctl status hermes --no-pager || true")
-    bound.execute("journalctl -b --no-pager | grep -iE 'hermes|secrets' | head -40")
+    print(bound.execute("systemctl show hermes -p ExecMainStatus,ExecMainCode,Result,NRestarts --no-pager"))
+    print(bound.execute("journalctl -b --no-pager -u hermes | tail -30"))
+    print(bound.execute("journalctl -b --no-pager | grep -iE 'hermes|sops' | head -40"))
     bound.wait_for_unit("hermes.service")
 
     # 0. build-time import smoke (hermes 08-14 §e.6 + 08-21 §f.13): the
