@@ -118,4 +118,4 @@
 
 ---
 
-*Arte in Aeternum — pipeline built, gates green where the tree allows, deploy withheld by instruction.*
+_Arte in Aeternum — pipeline built, gates green where the tree allows, deploy withheld by instruction._

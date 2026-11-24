@@ -21,13 +21,13 @@ set -euo pipefail
 
 STATE="$(systemctl is-active monitor365-server-backup.service 2>/dev/null || true)"
 case "$STATE" in
-  active | activating | reloading)
-    echo "monitor365-pool-copy-guard: backup unit still $STATE — refusing to copy mid-quiesce (no ordering edge; next fire catches up)" >&2
-    exit 1
-    ;;
-  "")
-    echo "monitor365-pool-copy-guard: could not read backup unit state (systemctl/bus failed) — refusing to copy blind" >&2
-    exit 1
-    ;;
+active | activating | reloading)
+  echo "monitor365-pool-copy-guard: backup unit still $STATE — refusing to copy mid-quiesce (no ordering edge; next fire catches up)" >&2
+  exit 1
+  ;;
+"")
+  echo "monitor365-pool-copy-guard: could not read backup unit state (systemctl/bus failed) — refusing to copy blind" >&2
+  exit 1
+  ;;
 esac
 echo "monitor365-pool-copy-guard: backup unit is '$STATE' — clear to copy"

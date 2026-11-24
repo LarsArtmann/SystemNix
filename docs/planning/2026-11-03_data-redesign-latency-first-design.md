@@ -9,17 +9,17 @@
 
 ## 1. Current state (measured 2026-11-03, live probes + AGENTS.md composition line)
 
-| Fact | Value | Source |
-|---|---|---|
-| Partition | `/data` = `/dev/nvme1n1p8`, **BTRFS subvolid=5 toplevel** (whole partition, no subvol split) | `findmnt /data` |
-| Mount options | `rw,noatime,compress=zstd:3,ssd,space_cache=v2,commit=300` | `findmnt /data` |
-| Device | Lexar QLC (nvme1 — enumeration flips across boots; resolve via `/dev/disk/by-id`) | AGENTS.md |
-| Content | ai 543G (dominant grower; models stay per owner) · SteamLibrary 107G · gcs-staging 24G (reclaim pending) · docker dormant ~10-15G (owner reclaim pending) | AGENTS.md 2026-11-03 probe |
-| Pool backup | `btrbk-data` `/data → /mnt/pool` send **structurally DEAD since 2026-07** (EIO csum corruption; repair gate active, T04→T09 chain queued) | `platforms/nixos/system/snapshots.nix:252-284` |
-| Excludes | `/data/ai` + SteamLibrary + gcs-staging must NEVER go to the pool (owner directive 2026-11-03: re-downloadable models are never backed up) — queued, not implemented | storage.md row "btrbk-data excludes" |
-| Local snapshots | /data has its own rollback tier (never missed a window) | snapshots.nix |
-| Code blast radius | **292 references** to `/data` outside docs (units, scripts, collectors, gates) | `rg -c '/data'` 2026-11-03 |
-| Alerts | /data 85%/90% usage alerts exist (the ONLY QLC consumer with alerting — ironically the one this audit found healthy) | 19-02 audit §b |
+| Fact              | Value                                                                                                                                                                | Source                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Partition         | `/data` = `/dev/nvme1n1p8`, **BTRFS subvolid=5 toplevel** (whole partition, no subvol split)                                                                         | `findmnt /data`                                |
+| Mount options     | `rw,noatime,compress=zstd:3,ssd,space_cache=v2,commit=300`                                                                                                           | `findmnt /data`                                |
+| Device            | Lexar QLC (nvme1 — enumeration flips across boots; resolve via `/dev/disk/by-id`)                                                                                    | AGENTS.md                                      |
+| Content           | ai 543G (dominant grower; models stay per owner) · SteamLibrary 107G · gcs-staging 24G (reclaim pending) · docker dormant ~10-15G (owner reclaim pending)            | AGENTS.md 2026-11-03 probe                     |
+| Pool backup       | `btrbk-data` `/data → /mnt/pool` send **structurally DEAD since 2026-07** (EIO csum corruption; repair gate active, T04→T09 chain queued)                            | `platforms/nixos/system/snapshots.nix:252-284` |
+| Excludes          | `/data/ai` + SteamLibrary + gcs-staging must NEVER go to the pool (owner directive 2026-11-03: re-downloadable models are never backed up) — queued, not implemented | storage.md row "btrbk-data excludes"           |
+| Local snapshots   | /data has its own rollback tier (never missed a window)                                                                                                              | snapshots.nix                                  |
+| Code blast radius | **292 references** to `/data` outside docs (units, scripts, collectors, gates)                                                                                       | `rg -c '/data'` 2026-11-03                     |
+| Alerts            | /data 85%/90% usage alerts exist (the ONLY QLC consumer with alerting — ironically the one this audit found healthy)                                                 | 19-02 audit §b                                 |
 
 ## 2. The latency question — what the ranking constraint actually buys
 
@@ -33,18 +33,18 @@
 
 ### Axis A — filesystem
 
-| # | Candidate | Latency effect | Cost / risk | Verdict |
-|---|---|---|---|---|
-| A1 | **Stay btrfs, tune per-dir**: `chattr +C` (nodatacow) on model + Steam content dirs (kills per-read csum verification + CoW write penalty on huge files); disable compression where compsize proves incompressible | Direct: no csum verify on reads, no CoW on model writes | Cheap (chattr on dirs, new files inherit; EXISTING files need rewrite to pick it up — the `.rescue` zz-test chattr-cycle lesson applies) · loses csum protection on re-downloadable data = acceptable (owner: NEVER back up models) | **RECOMMENDED first leg** |
-| A2 | **Split-FS: models+games move to XFS partition** on the same QLC (best raw sequential latency, no CoW/csum/snapshot overhead) | Highest ceiling | Partition re-provision (btrfs shrinks, XFS does not — order matters); severs pool sends for those dirs **permanently** — NOTE the send is already dead since 2026-07, so this cost is smaller than it reads; 543G copy cycle needs the post-Phase-F headroom (~137G freed) + staging | Only if A1+benchmarks prove a measured gap |
-| A3 | ext4/zfs variants | — | ext4: same as XFS minus parallel-read tuning; ZFS: REJECTED already (5 s txg-sync stalls, AGENTS.md) | Rejected |
+| #  | Candidate                                                                                                                                                                                                          | Latency effect                                          | Cost / risk                                                                                                                                                                                                                                                                          | Verdict                                    |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| A1 | **Stay btrfs, tune per-dir**: `chattr +C` (nodatacow) on model + Steam content dirs (kills per-read csum verification + CoW write penalty on huge files); disable compression where compsize proves incompressible | Direct: no csum verify on reads, no CoW on model writes | Cheap (chattr on dirs, new files inherit; EXISTING files need rewrite to pick it up — the `.rescue` zz-test chattr-cycle lesson applies) · loses csum protection on re-downloadable data = acceptable (owner: NEVER back up models)                                                  | **RECOMMENDED first leg**                  |
+| A2 | **Split-FS: models+games move to XFS partition** on the same QLC (best raw sequential latency, no CoW/csum/snapshot overhead)                                                                                      | Highest ceiling                                         | Partition re-provision (btrfs shrinks, XFS does not — order matters); severs pool sends for those dirs **permanently** — NOTE the send is already dead since 2026-07, so this cost is smaller than it reads; 543G copy cycle needs the post-Phase-F headroom (~137G freed) + staging | Only if A1+benchmarks prove a measured gap |
+| A3 | ext4/zfs variants                                                                                                                                                                                                  | —                                                       | ext4: same as XFS minus parallel-read tuning; ZFS: REJECTED already (5 s txg-sync stalls, AGENTS.md)                                                                                                                                                                                 | Rejected                                   |
 
 ### Axis B — layout
 
-| # | Candidate | Value | Migration cost |
-|---|---|---|---|
+| #  | Candidate                                                                                              | Value                                                                                                                                                                                                | Migration cost                                                                                               |
+| -- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | B1 | **Per-domain subvols on the existing FS**: `@data/ai`, `@data/steam`, `@data/scratch`, `@data/staging` | Per-subvol snapshot policies + nodatacow/compression per subvol + **per-subvol btrbk excludes** (aligns exactly with the queued excludes row — subvol-level exclusion is cleaner than path excludes) | Large dirs copy per subvol creation (mv across subvols = copy); sequence inside the post-Phase-F free window |
-| B2 | Bind-mount ergonomics aliases (`/models → /data/ai/models`, `/games → /data/SteamLibrary`) | Naming clarity WITHOUT touching the 292-reference blast radius | Near-zero (bind mounts + one unit); reversible |
+| B2 | Bind-mount ergonomics aliases (`/models → /data/ai/models`, `/games → /data/SteamLibrary`)             | Naming clarity WITHOUT touching the 292-reference blast radius                                                                                                                                       | Near-zero (bind mounts + one unit); reversible                                                               |
 
 ### Axis C — mount name
 
@@ -95,4 +95,5 @@
 - This doc does not implement anything; the excludes row and repair chain own their own work.
 
 ---
+
 _Arte in Aeternum_

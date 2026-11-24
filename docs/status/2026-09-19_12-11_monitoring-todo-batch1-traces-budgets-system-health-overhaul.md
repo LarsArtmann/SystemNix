@@ -75,18 +75,18 @@
 - `GOTRACEBACK=all` on discordsync + browser-history (verified: currently NO Nix file in the repo sets GOTRACEBACK anywhere). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (GOTRACEBACK sweep row)
 - `file_storage` cursor persistence for the SigNoz journald receiver (TODO; needs collector.yaml change + collector-user storage-dir wiring). → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - Caddy access.log ingestion (filelog receiver) + log-ingestion-volume anomaly alert. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-~~- Zero-series sweep automation (ClickHouse metric-name diff script).~~ done — `scripts/metric-sweep.sh` landed 2026-10-19 (docs/todo/monitoring.md zero-series row, item 1 DONE)
+  ~~- Zero-series sweep automation (ClickHouse metric-name diff script).~~ done — `scripts/metric-sweep.sh` landed 2026-10-19 (docs/todo/monitoring.md zero-series row, item 1 DONE)
 - SigNoz migrator-gap guard (applied-migration IDs ⊆ known list per DB).
-~~- Persisted regression tests for the pool-smart collector script.~~ done — fixtures landed (docs/todo/monitoring.md pool-smart regression-test row, struck done)
+  ~~- Persisted regression tests for the pool-smart collector script.~~ done — fixtures landed (docs/todo/monitoring.md pool-smart regression-test row, struck done)
 - Deferred-scrub observability VM test (note: `btrfs_scrub_deferred_by_guard` + the split "Scrub Errors"/"Scrub Incomplete" checks ALREADY EXIST per AGENTS — only the VM test half remains). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (deferred-scrub + VM-test row)
 - Dashboard generator commit + eval-time dashboard JSON lint extension (lint partially exists as `signoz-query-lint`; the generator `/tmp/gen_dashboards.py` remains unrecreated). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (signoz-coverage test+panel additions row)
 - Test-fire "Telemetry Export Failures" → Discord (needs a maintenance window).
 - Gatus lint residuals: authenticated POST-to-ingest probe, `test -e` enable-gate sweep, papdashboard ingest success-count metric.
 - Gatus `alerting` dedup analysis (N endpoints, one root cause, one message).
-~~- `criticalSystemServices` declarative health-check — assessed as LOW-VALUE during survey (the service-health-check script already catches any failed system service dynamically; the 4-name list is a desktop-notify fallback layered under system-health + Gatus coverage). Deliberately skipped, not forgotten.~~ **NOT-DO — dup of §f.38 (deliberate low-value skip).**
-~~- buildcache SIGKILL-corpse reap + the remaining collectors (if the pattern is wanted fleet-wide).~~ **NOT-DO — dup of §b.3.**
-~~- **TODO/CHANGELOG housekeeping** — NOT done: no `[x]` prunes, no CHANGELOG entries, no queue re-sync for completed items, and the pre-existing queue hygiene debt (17 malformed `- [ ] **Source:** →` rows across storage/stability/monitoring/ai-stack/services/upstream in `TODO_LIST.md`) observed but not fixed.~~ **NOT-DO — dup of §f.8 (standing harvest/prune ritual).**
-~~- Final verification pass — **`nix flake check --no-build` has NOT been run on this session's changes**, nor `nix fmt` check, nor a post-allowlist re-run of the functional smoke test (the last build extracted the NEW drv `9wl0y8x4…` but never built or tested it).~~ done — batch deployed as system-787 with live collector output read post-deploy (docs/status/2026-09-20_16-31 §1.1/§1.2)
+  ~~- `criticalSystemServices` declarative health-check — assessed as LOW-VALUE during survey (the service-health-check script already catches any failed system service dynamically; the 4-name list is a desktop-notify fallback layered under system-health + Gatus coverage). Deliberately skipped, not forgotten.~~ **NOT-DO — dup of §f.38 (deliberate low-value skip).**
+  ~~- buildcache SIGKILL-corpse reap + the remaining collectors (if the pattern is wanted fleet-wide).~~ **NOT-DO — dup of §b.3.**
+  ~~- **TODO/CHANGELOG housekeeping** — NOT done: no `[x]` prunes, no CHANGELOG entries, no queue re-sync for completed items, and the pre-existing queue hygiene debt (17 malformed `- [ ] **Source:** →` rows across storage/stability/monitoring/ai-stack/services/upstream in `TODO_LIST.md`) observed but not fixed.~~ **NOT-DO — dup of §f.8 (standing harvest/prune ritual).**
+  ~~- Final verification pass — **`nix flake check --no-build` has NOT been run on this session's changes**, nor `nix fmt` check, nor a post-allowlist re-run of the functional smoke test (the last build extracted the NEW drv `9wl0y8x4…` but never built or tested it).~~ done — batch deployed as system-787 with live collector output read post-deploy (docs/status/2026-09-20_16-31 §1.1/§1.2)
 
 ---
 

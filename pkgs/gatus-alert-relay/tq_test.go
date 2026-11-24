@@ -81,8 +81,8 @@ func TestReportIfTriggeredPostsParsedTriggers(t *testing.T) {
 
 func TestReportIfTriggeredSkipsResolvesGarbageAndDisabled(t *testing.T) {
 	var (
-		mu        sync.Mutex
-		hits      int
+		mu       sync.Mutex
+		hits     int
 		recorder = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			mu.Lock()
 			hits++
@@ -134,7 +134,7 @@ func TestBuildIncidentReportClipsBreadcrumbs(t *testing.T) {
 		long[i] = 'x'
 	}
 	desc := []string{string(long), "", "second"}
-	for i := 0; i < 30; i++ {
+	for range 30 {
 		desc = append(desc, "extra")
 	}
 

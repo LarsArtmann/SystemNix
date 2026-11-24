@@ -17,13 +17,13 @@
 
 ## Env + unit hardening (quickshell.nix Service overrides)
 
-| Knob | Value | Why |
-| ---- | ----- | ---- |
-| `DMS_DISABLE_MATUGEN` | `1` | matugen package removed (`enableDynamicTheming = false`); DMS still probes `which matugen` and warns — the env skips the probe (Theme.qml). |
-| `DMS_DISABLE_POLKIT` | unset | See above — DMS must keep the polkit slot. |
-| `MemoryMax` | `4G` | Defense-in-depth after the 2026-06-30 rofi OOM (7 GB leak → compositor killed); DMS is now launcher, clipboard, and all modals. One real polkit prompt also exercises this cap. |
-| `Restart` | `always`, `RestartSec 2` | Upstream Quickshell ScriptModel UAF (issue #863) fires on rapid toplevel churn (polkit dialogs, window storms) — crashes are expected, recovery must be fast, backoff prevents the 2026-07-11 288-restart storm. |
-| `StartLimitBurst` | `30` / 5 min | Losing the shell is worse than quick restarts; clear with `systemctl --user reset-failed dms`. |
+| Knob                  | Value                    | Why                                                                                                                                                                                                              |
+| --------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DMS_DISABLE_MATUGEN` | `1`                      | matugen package removed (`enableDynamicTheming = false`); DMS still probes `which matugen` and warns — the env skips the probe (Theme.qml).                                                                      |
+| `DMS_DISABLE_POLKIT`  | unset                    | See above — DMS must keep the polkit slot.                                                                                                                                                                       |
+| `MemoryMax`           | `4G`                     | Defense-in-depth after the 2026-06-30 rofi OOM (7 GB leak → compositor killed); DMS is now launcher, clipboard, and all modals. One real polkit prompt also exercises this cap.                                  |
+| `Restart`             | `always`, `RestartSec 2` | Upstream Quickshell ScriptModel UAF (issue #863) fires on rapid toplevel churn (polkit dialogs, window storms) — crashes are expected, recovery must be fast, backoff prevents the 2026-07-11 288-restart storm. |
+| `StartLimitBurst`     | `30` / 5 min             | Losing the shell is worse than quick restarts; clear with `systemctl --user reset-failed dms`.                                                                                                                   |
 
 ## Settings split-brain (HM symlink vs DMS runtime file)
 

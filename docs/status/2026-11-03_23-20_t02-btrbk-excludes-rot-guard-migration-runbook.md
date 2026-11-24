@@ -39,7 +39,7 @@
 3. T-01 tomorrow (2026-11-04+): burn-in premise-check (10-28 plan Phase F ≥7d), then the 10-step ladder.
 4. Owner ladder additions: root-delete `/data/.subvol-create-probe`; SMART check; T06a sign-off list (all already T-27 batch candidates — recorded in the row UPDATE).
 
-*(Queue surface: TODO_LIST.md row "Run the /data exclude-subvol migration" carries items 1-2 with this report as Source; items 3-4 live in existing rows storage.md:226 [watch] and the T-27 pattern.)*
+_(Queue surface: TODO_LIST.md row "Run the /data exclude-subvol migration" carries items 1-2 with this report as Source; items 3-4 live in existing rows storage.md:226 [watch] and the T-27 pattern.)_
 
 ## g) Questions I can NOT figure out myself
 

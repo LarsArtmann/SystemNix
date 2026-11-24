@@ -123,9 +123,11 @@
           # bW3OHQ3D, got +JUDdQKw (first-hand keep-going,
           # keepgoing-1119.log; twin of the lars-packages surface — both
           # move together).
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
-          };
+          package =
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-+JUDdQKwLnTED8rcLg5p73ujswPvtAQJyq+adGXUdl4=";
+              };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

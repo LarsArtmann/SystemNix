@@ -156,8 +156,8 @@ mind when adding projects: each extra fast project ≈ +50k/month.
   `{__name__="run.googleapis.com/request_count"}`.
 - **DELTA = PromQL-blind (engine-verified via v3 query_range A/B):** the
   PromQL engine returns ZERO series for every Delta-temporality family
-  (request_count, request_latencies.bucket/.count, container/network/*,
-  billable_instance_time, function/execution_* — all Delta). Only the
+  (request_count, request_latencies.bucket/.count, container/network/_,
+  billable_instance_time, function/execution__ — all Delta). Only the
   gauge families render: container/containers, storage/v2/total_bytes,
   storage/v2/total_count, function/active_instances. Since the receiver
   is DELTA-only (below), counter/latency panels CANNOT render — gcp.json

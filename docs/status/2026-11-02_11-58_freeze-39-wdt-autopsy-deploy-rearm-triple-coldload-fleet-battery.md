@@ -11,31 +11,31 @@ Freeze #39 — **Branch C (combined storm + thermal ceiling), SP5100 hardware-wa
 
 ## §a Family classification — discriminators (each verified this session)
 
-| Discriminator | Reading | Source |
-| --- | --- | --- |
-| Journal cut | mid-traffic, last line 11:34:07.159 (crm-server GET 200, sub-second healthy) | `journalctl -b -1` tail |
-| Shutdown ceremony | NONE (zero PID-1 shutdown lines; user-manager lines absent too; wtmp crash class) | pull boundary section |
-| Reset reason | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired` | boot 0 kernel log, 11:35:45 |
-| cut → boot gap | 98 s (inside the 92–131 s WDT signature measured on #36/#37) | `--list-boots` |
-| pstore / vmcore | /var/crash absent (no vmcore — verified); pstore NOT probed this session (root-only dir on this box) — "empty" rests on the 8-boot doctrine, not a live read | probe + doctrine |
-| Thermal leg | 2477 DEEP THROTTLE ENTERs, first Oct 30 03:37:28 (3.6 min post-boot, 98 °C), last 11:33:35 (32 s pre-cut) | full-count grep |
-| Storm leg | IO PSI some avg60 98.71 %, disk busy 100 % at the 11:27:25 guard heartbeat | journal |
-| Memory leg | 9 OOM invocations / 10 kills whole-boot (global cascade 01:26–03:21); SEV1 "ZRAM SWAP CRITICAL" 11:33:25 (cleared by 11:33:55) | journal + pull |
+| Discriminator     | Reading                                                                                                                                                      | Source                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| Journal cut       | mid-traffic, last line 11:34:07.159 (crm-server GET 200, sub-second healthy)                                                                                 | `journalctl -b -1` tail     |
+| Shutdown ceremony | NONE (zero PID-1 shutdown lines; user-manager lines absent too; wtmp crash class)                                                                            | pull boundary section       |
+| Reset reason      | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired`                                                                        | boot 0 kernel log, 11:35:45 |
+| cut → boot gap    | 98 s (inside the 92–131 s WDT signature measured on #36/#37)                                                                                                 | `--list-boots`              |
+| pstore / vmcore   | /var/crash absent (no vmcore — verified); pstore NOT probed this session (root-only dir on this box) — "empty" rests on the 8-boot doctrine, not a live read | probe + doctrine            |
+| Thermal leg       | 2477 DEEP THROTTLE ENTERs, first Oct 30 03:37:28 (3.6 min post-boot, 98 °C), last 11:33:35 (32 s pre-cut)                                                    | full-count grep             |
+| Storm leg         | IO PSI some avg60 98.71 %, disk busy 100 % at the 11:27:25 guard heartbeat                                                                                   | journal                     |
+| Memory leg        | 9 OOM invocations / 10 kills whole-boot (global cascade 01:26–03:21); SEV1 "ZRAM SWAP CRITICAL" 11:33:25 (cleared by 11:33:55)                               | journal + pull              |
 
 → **Branch C, the #34–#38 lineage; 4th consecutive WDT-confirmed cut of the retained series.**
 
 ## §b Whole-boot census (full-count greps, no head truncation; cross-checked against the canonical pull)
 
-| Metric | Value |
-| --- | --- |
-| Window | Oct 30 03:33:49 → Nov 2 11:34:07 CET (**2 d 8 h 0 m** ≈ 56.0 h) |
-| DEEP THROTTLE ENTERs | **2477** (record; #38 = 1394); one per ~82 s while pegged |
-| Guard trips | **#4921 → #6010 = 1090** (~**19.4/h**, above the storm band 1.3–11.7/h — record rate); 26 carried socket/sacrifice actions (final-hour churn: "23 trips in the last hour" per the SEV1 notify text); the ioPause-era majority were no-matches |
-| Guard log lines | 12,527 |
-| OOM | 9 invocations / 10 kills — see §c act 4 for the victim list with memcgs |
-| journald "Under memory pressure, flushing caches" | **105 whole-boot** (corrected 12:18 from the first draft's "36+", which was eyeballed from tail-truncated probe output; events span the whole boot with the 07:42→11:27 stretch the densest) | full-count grep |
-| tq-agent-pool | crash-looping from ~08:00: 197 restart/fail lifecycle lines to death (the SEV1 "UNIT CRASH LOOP" condition) |
-| Deploys in-boot | gen-967 Oct 31 03:57, **gen-968 Nov 2 01:25:31, gen-969 Nov 2 08:12:06** |
+| Metric                                            | Value                                                                                                                                                                                                                                         |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Window                                            | Oct 30 03:33:49 → Nov 2 11:34:07 CET (**2 d 8 h 0 m** ≈ 56.0 h)                                                                                                                                                                               |
+| DEEP THROTTLE ENTERs                              | **2477** (record; #38 = 1394); one per ~82 s while pegged                                                                                                                                                                                     |
+| Guard trips                                       | **#4921 → #6010 = 1090** (~**19.4/h**, above the storm band 1.3–11.7/h — record rate); 26 carried socket/sacrifice actions (final-hour churn: "23 trips in the last hour" per the SEV1 notify text); the ioPause-era majority were no-matches |
+| Guard log lines                                   | 12,527                                                                                                                                                                                                                                        |
+| OOM                                               | 9 invocations / 10 kills — see §c act 4 for the victim list with memcgs                                                                                                                                                                       |
+| journald "Under memory pressure, flushing caches" | **105 whole-boot** (corrected 12:18 from the first draft's "36+", which was eyeballed from tail-truncated probe output; events span the whole boot with the 07:42→11:27 stretch the densest)                                                  |
+| tq-agent-pool                                     | crash-looping from ~08:00: 197 restart/fail lifecycle lines to death (the SEV1 "UNIT CRASH LOOP" condition)                                                                                                                                   |
+| Deploys in-boot                                   | gen-967 Oct 31 03:57, **gen-968 Nov 2 01:25:31, gen-969 Nov 2 08:12:06**                                                                                                                                                                      |
 
 ## §c Causal chain — six acts, every step evidenced
 

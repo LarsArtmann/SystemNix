@@ -141,7 +141,7 @@ in
     "signoz/rules/papdashboard-fed-errors.json".source = mkRule {
       name = "PapDashboard Federation Forward Failures";
       description = "papdashboard federation forwarder failing repeatedly (>5 in 5m) — the pbx replica is not accepting batches: peer down, key mismatch, or version-gap rejections. Expected-red UNTIL the pbx-artmann replica deploy lands (see docs/services/papdashboard.md handover); after that: check curl -s localhost:8088/api/health | jq .federation and journalctl -u papdashboard | grep -i fed";
-      query = ''increase(papdashboard__fed_errors_total[5m])'';
+      query = "increase(papdashboard__fed_errors_total[5m])";
       target = 5;
       severity = "critical";
     };

@@ -6,7 +6,7 @@
 **Scope line — VERIFIED here (command → result):**
 
 - Closeout report landed and survived three daemon sweeps: `git show HEAD:docs/status/tasks/2026-11-03_23-05_…md` → intact (first verification grep used `23-05` against `23:05` content → false 0; caught and re-checked with the file path — a self-inflicted scare, §d.4).
-- TODO gate hard-failure diagnosis: read `scripts/check-todo-system.sh` time-gate + pairing logic (lines 212-227, 280-320) → the ONLY hard fail was ONE foreign row (the PMA session's `[ready]` "Verify tonight's alerting legs…" with wait-language, no ` — BLOCKED:` marker, landed in TODO_LIST by their closeout); the DRIFT flood (~40 rows) and the 176 unharvested-report WARN are warn-only backlog.
+- TODO gate hard-failure diagnosis: read `scripts/check-todo-system.sh` time-gate + pairing logic (lines 212-227, 280-320) → the ONLY hard fail was ONE foreign row (the PMA session's `[ready]` "Verify tonight's alerting legs…" with wait-language, no `— BLOCKED:` marker, landed in TODO_LIST by their closeout); the DRIFT flood (~40 rows) and the 176 unharvested-report WARN are warn-only backlog.
 - Gate unblock: appended the checker-mandated marker (form fix only, content untouched) → standalone checker OK; every session tree-wide could commit again.
 - Premise-move discovered and stamped: the "abandoned staged commits" set (§c/§g.1 of the 23-05 report) LANDED ~20 min after authoring — excludes = `d315d3a3b` + `fd900d10d`, quotaboard wiring absorbed by daemon sweep `4b0954a9a` (verified: `quotaboard-env` present in HEAD's sops.nix + quickshell.nix, absent at HEAD~2). UPDATE stamps landed on both surfaces (`2a4d5e373`); the 23-05 report got an annotate-don't-rewrite addendum (authored this round, landed via daemon sweep `924240978`).
 - Final sweep: `git status` clean at authoring; nothing of mine uncommitted; six footer-bearing commits for the task ID; verdict re-recorded (753 bytes, now includes the closeout commits).
@@ -21,15 +21,15 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| Closeout report + 4 follow-up rows landed (`b0b9787df`) — cap-compliant (4 ≤ 10), dedup-checked before appending | `git show --stat b0b9787df` (3 files, 164 insertions); checker OK after |
-| TODO gate unblocked tree-wide — root-caused to the checker's time-gate rule (NOT my content), fixed with the mechanical marker on the foreign row, disclosed in the commit body | `b0b9787df` body; checker OK standalone + in-hook |
-| All closeout content verified IN-Tree after three daemon sweeps (report file, 4 TODO rows, 4 pipeline library rows, PMA marker) | `git show HEAD:` greps ×4 → 1/4/4/1 (plus the file-path check after the grep scare) |
-| Abandoned-staged premise-move stamped on BOTH surfaces + annotate-don't-rewrite addendum on the 23-05 report (addendum authored this round; landed via daemon sweep `924240978` — attribution corrected here same hour) | `2a4d5e373` + the addendum block in the 23-05 report (verified in HEAD) |
-| Final verdict re-recorded including the closeout commits | `tq verdict: recorded 753 bytes` |
-| Final sweep: tree clean, six footer commits accounted (`9f5a9f7e5`, `89d4046fe`, `533a4cdc8`, `098c3e38a`, `b0b9787df`, `2a4d5e373`), nothing of mine uncommitted | `git status` (clean) + `git log --grep` ×6 |
-| The hook's misleading post-rejection hint ("fix with git commit --amend" after a commit-msg rejection, where NOTHING landed and amend would rewrite the previous — daemon — commit) was identified, resisted live twice, and recorded for the CONTRIBUTING session-race row | queued row citing this round (pipeline.md) |
+| Item                                                                                                                                                                                                                                                                        | Evidence                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Closeout report + 4 follow-up rows landed (`b0b9787df`) — cap-compliant (4 ≤ 10), dedup-checked before appending                                                                                                                                                            | `git show --stat b0b9787df` (3 files, 164 insertions); checker OK after             |
+| TODO gate unblocked tree-wide — root-caused to the checker's time-gate rule (NOT my content), fixed with the mechanical marker on the foreign row, disclosed in the commit body                                                                                             | `b0b9787df` body; checker OK standalone + in-hook                                   |
+| All closeout content verified IN-Tree after three daemon sweeps (report file, 4 TODO rows, 4 pipeline library rows, PMA marker)                                                                                                                                             | `git show HEAD:` greps ×4 → 1/4/4/1 (plus the file-path check after the grep scare) |
+| Abandoned-staged premise-move stamped on BOTH surfaces + annotate-don't-rewrite addendum on the 23-05 report (addendum authored this round; landed via daemon sweep `924240978` — attribution corrected here same hour)                                                     | `2a4d5e373` + the addendum block in the 23-05 report (verified in HEAD)             |
+| Final verdict re-recorded including the closeout commits                                                                                                                                                                                                                    | `tq verdict: recorded 753 bytes`                                                    |
+| Final sweep: tree clean, six footer commits accounted (`9f5a9f7e5`, `89d4046fe`, `533a4cdc8`, `098c3e38a`, `b0b9787df`, `2a4d5e373`), nothing of mine uncommitted                                                                                                           | `git status` (clean) + `git log --grep` ×6                                          |
+| The hook's misleading post-rejection hint ("fix with git commit --amend" after a commit-msg rejection, where NOTHING landed and amend would rewrite the previous — daemon — commit) was identified, resisted live twice, and recorded for the CONTRIBUTING session-race row | queued row citing this round (pipeline.md)                                          |
 
 ## b) PARTIALLY DONE
 
@@ -60,12 +60,13 @@
 2. **Verification probes get a known-positive control or an explicit rc**: never quote a grep count without either a known-hit sanity check or `grep -q` rc capture (same discipline as the AGENTS.md jq/`rg -r` traps).
 3. **On edit-race give-ups, schedule the retry instead of deferring it informally** — the stamp drift existed only because "later" was unbounded; a bounded wait-loop (proven effective tonight at 45s) is the first-line move, give-up second.
 4. **Read the linter's source before re-auditing your own content on gate failure** — the checker's fail/warn split (time-gate = fail; pairing DRIFT = warn; harvest = env-strict) answered in one read what the output wall obscured.
-5. **Report-authoring flow should append ` — BLOCKED:` markers at queue-row creation time** — the PMA session shipped a row the checker was guaranteed to hard-fail; the rule exists since 2026-10-04 and the hook caught it at the worst possible place (every session's commit). A queue-row checklist line would kill the class at birth.
+5. **Report-authoring flow should append `— BLOCKED:` markers at queue-row creation time** — the PMA session shipped a row the checker was guaranteed to hard-fail; the rule exists since 2026-10-04 and the hook caught it at the worst possible place (every session's commit). A queue-row checklist line would kill the class at birth.
 6. **Path-content vs path-name grep confusion is now a twice-bitten class** (`rg -r` mangling 2026-10-23, `23-05`/`23:05` tonight) — verification greps against filenames-with-timestamps should target the file PATH or a content-anchored string deliberately chosen from the file's own header.
 
 ## f) Up to 50 things to get done next (ranked; routing-tagged)
 
 **Queued and live (harvested last round — no new rows, dedup rule):**
+
 1. Abandoned-commits coherence VERIFY leg (green evo-x2 eval + excludes skip proof) — closest to closing. Impact: High, Effort: S.
 2. Whole-tree audit scoping + regression fixture (owner contract decision first). Impact: High, Effort: S.
 3. CONTRIBUTING session-vs-session commit-block + lock-poll + amend-hint section. Impact: Medium, Effort: S.
@@ -80,28 +81,28 @@
 10. Phase F shadow reclaim AUTO-GO (~137G, burn-in ends ~Nov 4-5). Impact: Critical, Effort: M.
 11. monitor365-server 125G contain-or-relocate. Impact: High, Effort: L.
 12. T04→T09 /data EIO repair chain. Impact: Critical, Effort: L.
-13. btrbk excludes verify leg is INSIDE row 1; the excludes implementation itself landed (T-02) — row 1 closes it. *(state note, no row)*
+13. btrbk excludes verify leg is INSIDE row 1; the excludes implementation itself landed (T-02) — row 1 closes it. _(state note, no row)_
 
 **This round's grain (report-only, deliberately NOT harvested — sub-S or policy):**
-14. Add the queue-row ` — BLOCKED:`-marker-at-authoring checklist line to the status-report/report-authoring convention (§e.5) — fold into the CONTRIBUTING session-race row when it lands rather than a separate row. Impact: Low, Effort: S.
+14. Add the queue-row `— BLOCKED:`-marker-at-authoring checklist line to the status-report/report-authoring convention (§e.5) — fold into the CONTRIBUTING session-race row when it lands rather than a separate row. Impact: Low, Effort: S.
 15. "Final premise re-check before report commit" — same fold target (§e.1). Impact: Low, Effort: S.
 16. Hook message fix: post-commit-msg-failure "git commit --amend" hint is wrong (nothing landed) — inside the queued CONTRIBUTING row's scope. Impact: Low, Effort: S.
 17. Annotate-don't-rewrite addenda: consider a standing one-line convention (addendum blockquote at report top) — docs-health policy call, owner-rationalized at the next docs pass. Impact: Low, Effort: S.
-18. The checker's DRIFT wall (~40 rows) drowns its single FAIL line — consider emitting the FAIL summary LAST (it already does) and the WARN/DRIFT counts as one-liners; scanner-output ergonomics, not correctness. Impact: Low, Effort: S. *(brainstorm)*
-19. 176 unharvested §f reports — pre-existing backlog flood, deliberately untouched (not this session's debt); a docs-health harvest pass owns it. Impact: Medium, Effort: L. *(pre-existing)*
+18. The checker's DRIFT wall (~40 rows) drowns its single FAIL line — consider emitting the FAIL summary LAST (it already does) and the WARN/DRIFT counts as one-liners; scanner-output ergonomics, not correctness. Impact: Low, Effort: S. _(brainstorm)_
+19. 176 unharvested §f reports — pre-existing backlog flood, deliberately untouched (not this session's debt); a docs-health harvest pass owns it. Impact: Medium, Effort: L. _(pre-existing)_
 
 **Pre-existing queue rows re-confirmed this round (no action, no duplicates):**
 20. Commit-preflight helper (TODO_LIST:1063) — unvalidated parts still open.
 21. Daemon-race policy CONTRIBUTING §308-309 — §f.3 extends it.
 22. audit-textfile-tmp class-B surface extension (pipeline.md:201) — compatible sibling of row 2.
 23. `@cache-home` usage metric + Trash alert (owner-approved, still unwired — the redirect GC leg wants it). Impact: High, Effort: S.
-24. Per-task GOCACHE signature lint as a BuildFlow provider candidate (fleet-wide value → upstream). Impact: Medium, Effort: M. *(brainstorm)*
-25. tq domain-lease for batches (twin-executor prevention) — upstream go-taskqueue decision. Impact: Medium, Effort: M. *(brainstorm)*
-26. Session-death forensics (why two sessions died mid-commit tonight) — transcripts hold the answer if the class recurs. Impact: Low, Effort: S. *(brainstorm)*
+24. Per-task GOCACHE signature lint as a BuildFlow provider candidate (fleet-wide value → upstream). Impact: Medium, Effort: M. _(brainstorm)_
+25. tq domain-lease for batches (twin-executor prevention) — upstream go-taskqueue decision. Impact: Medium, Effort: M. _(brainstorm)_
+26. Session-death forensics (why two sessions died mid-commit tonight) — transcripts hold the answer if the class recurs. Impact: Low, Effort: S. _(brainstorm)_
 27. Automount-aware du walk guard (19-02 §e.5, still open). Impact: Medium, Effort: S.
-28. Fleet-wide compsize pass (19-02 item 22) — /data/ai slice queued; the rest still brainstorm. Impact: Medium, Effort: M. *(brainstorm)*
-29. Wave-2 purge automation once verdicts land. Impact: Medium, Effort: M. *(brainstorm)*
-30. Post-excludes pool-send delta measurement. Impact: Low, Effort: S. *(brainstorm)*
+28. Fleet-wide compsize pass (19-02 item 22) — /data/ai slice queued; the rest still brainstorm. Impact: Medium, Effort: M. _(brainstorm)_
+29. Wave-2 purge automation once verdicts land. Impact: Medium, Effort: M. _(brainstorm)_
+30. Post-excludes pool-send delta measurement. Impact: Low, Effort: S. _(brainstorm)_
 
 (31-50: intentionally empty — this round observed nothing beyond the above; padding would invent work.)
 

@@ -65,6 +65,7 @@ The deploy **is DONE and anchored**: generation system-985 (`n2kjvp2mpb…`) swi
 ## f) NEXT (up to 50, ordered roughly by impact)
 
 **rpi3 / gateway capture cluster (live incident):**
+
 1. [blocked:user] rpi3 (.151) physical triage — power/link/service (the LAN lie persists until this returns).
 2. [decision] SearXNG: allowlist engine domains in dnsblockd vs accept the outage until rpi3 returns (row live).
 3. [decision] Host-protection design gap: gateway captures the HOST when rpi3 is down — upstream self-exemption vs 9.9.9.9-first order vs allowlist floor for the box's by-name deps.

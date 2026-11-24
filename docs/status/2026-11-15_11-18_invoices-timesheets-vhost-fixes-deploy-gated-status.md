@@ -11,11 +11,11 @@
 
 ## 1. What the user sees right now (live-probed 11:17)
 
-| Surface                          | Result            | Why                                                                                |
-| -------------------------------- | ----------------- | ---------------------------------------------------------------------------------- |
-| `https://invoices.home.lan/`     | **502 Bad Gateway** | `invoices-dashboard.service` = `failed` (`start-limit-hit`); nothing on 127.0.0.1:8110 |
-| `https://timesheets.home.lan/`   | **404 Not Found**   | old binary (rev 2450b23) has no handler for `/` — net/http's bare 404              |
-| `https://timesheets.home.lan/healthz` | 200 OK        | timesheets service + API are actually healthy (PID 2024, port 8109)                |
+| Surface                               | Result              | Why                                                                                    |
+| ------------------------------------- | ------------------- | -------------------------------------------------------------------------------------- |
+| `https://invoices.home.lan/`          | **502 Bad Gateway** | `invoices-dashboard.service` = `failed` (`start-limit-hit`); nothing on 127.0.0.1:8110 |
+| `https://timesheets.home.lan/`        | **404 Not Found**   | old binary (rev 2450b23) has no handler for `/` — net/http's bare 404                  |
+| `https://timesheets.home.lan/healthz` | 200 OK              | timesheets service + API are actually healthy (PID 2024, port 8109)                    |
 
 `busctl … invoices_2ddashboard_2eservice … ActiveState` → `s "failed"`.
 `ss -ltnp` → only `127.0.0.1:8109` (timesheet); no listener on 8110.
@@ -37,7 +37,7 @@ Failed with result 'start-limit-hit'
 
 Two independent defects in upstream `LarsArtmann/invoices` (rev e5ea1549):
 
-1. **Index-collision (the actual crash):** `InitializeSchema` creates `idx_invoices_invoice_number`/`_client_name`/`_issued_at` for every boot, *then* runs the embedded PARTLY rebuild, which re-issued plain `CREATE INDEX` statements. An index name survives `ALTER TABLE invoices RENAME TO invoices_old`, so `CREATE INDEX` collided on every single boot.
+1. **Index-collision (the actual crash):** `InitializeSchema` creates `idx_invoices_invoice_number`/`_client_name`/`_issued_at` for every boot, _then_ runs the embedded PARTLY rebuild, which re-issued plain `CREATE INDEX` statements. An index name survives `ALTER TABLE invoices RENAME TO invoices_old`, so `CREATE INDEX` collided on every single boot.
 2. **The embedded migration SQL was a corrupted splice:** `healedStatusCheckMigration` (turso.go) and `sql/sqlite/migrations/2026-11-13_partly_status.sql` both contained duplicated FTS fragments, a truncated `INSERT … SELECT` column list (`JSON, period_end);,`), and an unterminated trigger body (`Parse error near …: near ")": syntax error`). Reproduced by executing the extracted constant against a copy of the live DB — even past the index error it could never parse. The `INSERT` list also omitted `id`, which would have reassigned primary keys and orphaned `invoice_work_entries`.
 3. Bonus defect found while proving it: the live DB still had the **old** schema (`status CHECK` without PARTLY ⇒ the earlier heal never applied), and the migration had no `PRAGMA foreign_keys=OFF`, so a naive rebuild would have cascade-deleted `invoice_work_entries` rows.
 
@@ -116,6 +116,7 @@ Two independent defects in upstream `LarsArtmann/invoices` (rev e5ea1549):
 ## f) UP TO 50 THINGS TO DO NEXT (ordered)
 
 **Unblock the deliverable (P0)**
+
 1. Re-check `pgrep -af 'nh os|switch-to-configuration'` until the other session's activation ends (~11:27 at its 60-min cap, earlier if PSI dips below 40 %).
 2. Run `nix run .#deploy` (my gen is pre-built; switch should be fast).
 3. Watch `switch-to-configuration` start `invoices-dashboard` — it depends on `multi-user.target`, so it starts BEFORE the calm gate's `late-applications.target` wait; verify the unit goes `active` even if the deploy command still hangs.
@@ -217,11 +218,11 @@ cat /proc/pressure/io; cat /var/lib/memory-emergency-guard/last-trip
 
 **Commits produced**
 
-| Repo       | Rev        | Subject                                                        |
-| ---------- | ---------- | -------------------------------------------------------------- |
-| `invoices` | `935a044d` | fix: rebuild pre-PARTLY invoice tables without colliding on indexes |
-| `timesheets` | `e90e7a1` | fix: land the vHost root on the health dashboard                |
-| `SystemNix` | uncommitted | `flake.lock` float + 2 runbook sections + this report         |
+| Repo         | Rev         | Subject                                                             |
+| ------------ | ----------- | ------------------------------------------------------------------- |
+| `invoices`   | `935a044d`  | fix: rebuild pre-PARTLY invoice tables without colliding on indexes |
+| `timesheets` | `e90e7a1`   | fix: land the vHost root on the health dashboard                    |
+| `SystemNix`  | uncommitted | `flake.lock` float + 2 runbook sections + this report               |
 
 **Built, not yet activated:** `/nix/store/z5imykjf96pyc5rn8avcgrprkcqhxh34-nixos-system-evo-x2-26.11.20261107.f4a03c0`
 (ships `invoices-935a044d…` and `timesheet-e90e7a1`).

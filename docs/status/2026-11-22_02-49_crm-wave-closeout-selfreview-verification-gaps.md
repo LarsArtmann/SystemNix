@@ -78,4 +78,4 @@
 
 ---
 
-*Ledger: 1 deploy landed (gen-1021, 81 min), 3 root-owned /tmp brick classes cleared, 1 unit revived, 1 deadline-critical prod event recorded, 2 TODO surfaces appended, 1 cross-repo row annotated, 1 real regression root-caused (fixed by sibling gen-1022), 3 verification holes admitted (d3/d4 + §c2), 0 secrets leaked (key read via sudo pipe, env-carried, never printed).*
+_Ledger: 1 deploy landed (gen-1021, 81 min), 3 root-owned /tmp brick classes cleared, 1 unit revived, 1 deadline-critical prod event recorded, 2 TODO surfaces appended, 1 cross-repo row annotated, 1 real regression root-caused (fixed by sibling gen-1022), 3 verification holes admitted (d3/d4 + §c2), 0 secrets leaked (key read via sudo pipe, env-carried, never printed)._

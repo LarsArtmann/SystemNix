@@ -68,6 +68,7 @@
 ## f) Next tasks (up to ~30 — grouped; deploy chain first)
 
 **Unblock the deploy (this session's chain):**
+
 1. Diagnose `meta-63fcf0ff…`: identify its owning flake input (grep flake.lock for rev 63fcf0ff4666…), locate where its vendorHash is declared (SystemNix-side or upstream flake), check upstream tip for a re-measured hash (cv pattern).
 2. Fix meta by the cheapest verified path (upstream-baked hash → re-lock; else see g.1 ruling).
 3. **Fleet sweep**: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` → capture ALL root failures, fix every stale FOD in one wave (no more dominoes).
@@ -113,4 +114,4 @@
 
 **Harvest note (per AGENTS.md self-harvest rule):** §f items are deliberately NOT harvested into `TODO_LIST.md` / `docs/todo/*` at authoring time — the owner directive governing this session is explicit ("do not research other stuff unrelated; then wait for instructions"), §f items 1–14 are the live deploy chain owned by this session (self-executing on instruction), and items 15+ belong to surfaces (monitoring/services todo libraries) whose edit should ride the owner's go-ahead. This paragraph is the explicit "not harvested because X" record.
 
-*Session attribution: all diagnosis, both deploy firings, the cv re-lock, and this report by this session. The tq monitoring batch (items 1–3 + rescued item-4 via `592592293`) by the foreign tq agent. The W3b hot-tier payload, its watcher, and its TODO rows by the W3b session. The SUPERB session owns the dirty CV checkout. The wifi-failover caller fix by the wifi-failover-contract session. Nothing foreign was edited, killed, or reverted by this session.*
+_Session attribution: all diagnosis, both deploy firings, the cv re-lock, and this report by this session. The tq monitoring batch (items 1–3 + rescued item-4 via `592592293`) by the foreign tq agent. The W3b hot-tier payload, its watcher, and its TODO rows by the W3b session. The SUPERB session owns the dirty CV checkout. The wifi-failover caller fix by the wifi-failover-contract session. Nothing foreign was edited, killed, or reverted by this session._

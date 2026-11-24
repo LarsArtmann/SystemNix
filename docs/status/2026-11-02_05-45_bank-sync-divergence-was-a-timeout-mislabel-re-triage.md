@@ -25,7 +25,7 @@ The bank-sync `[cqrs.journal_snapshot_divergence]` was NEVER a divergence: the u
 
 ## c) Why two sessions missed it (the transferable lesson)
 
-**A static remediation template is not a diagnosis.** The prior session (mine) quoted the divergence template's WHY-text ("snapshots fold more events than the journal holds") as the root-cause without resolving the WRAPPED error one layer down (`context canceled`). The general rule this feeds: *before quoting an error class's remediation as the cause, decompose the error chain to its leaf error; if the leaf contradicts the class, the leaf is the verdict.* Same family as the 2026-09-18 "answer the question the item ASKED" and the quote-scrutiny rules — the number/text must survive one layer-deeper check before it enters a report.
+**A static remediation template is not a diagnosis.** The prior session (mine) quoted the divergence template's WHY-text ("snapshots fold more events than the journal holds") as the root-cause without resolving the WRAPPED error one layer down (`context canceled`). The general rule this feeds: _before quoting an error class's remediation as the cause, decompose the error chain to its leaf error; if the leaf contradicts the class, the leaf is the verdict._ Same family as the 2026-09-18 "answer the question the item ASKED" and the quote-scrutiny rules — the number/text must survive one layer-deeper check before it enters a report.
 
 ## d) Deploy state (shared window, both gates)
 

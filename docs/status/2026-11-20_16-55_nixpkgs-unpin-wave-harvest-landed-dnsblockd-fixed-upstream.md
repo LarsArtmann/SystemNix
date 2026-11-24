@@ -11,41 +11,41 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| a1 | **Root nixpkgs UN-PINNED** — `nixpkgs.url` → `nixos-unstable`, allowlist row removed with REMOVED ledger, lock floated f4a03c00 (2026-11-07) → **0bb82723 (2026-11-19 tip)**; eval accepted both proof rounds | flake.nix + lib/flake-input-pin-audit.nix; python3 lock verify (branch `original`, NO tarball regression) |
-| a2 | **cv vendorHash shim DROPPED (25th cycle, drop-safe)** — got `7w2Mw3Mh…` == upstream bake at locked rev 53e9e8b; cv FOD + dependents built green in proof 1 | cv.nix ledger; proof 1 log |
-| a3 | **taskchampionPkgConfigOverlay dropped** — taskwarrior3 carries bd86de7 natively on tip (double-apply would fail); taskchampion-sync-server + trunk bare probes RC=0 on tip | overlays/linux.nix lift comment; tip-probe logs |
-| a4 | **nixpkgs-hermes correctly KEPT pinned** — tip patchelf 0.15.2 → collapse LIFT unmet; hermes insulated through the whole wave | patchelf probe log |
-| a5 | **nixpkgs LIFT's tools observable established** — proof 2 built the entire floated closure green except dnsblockd: cvagent/journal/discordsync/pma, signoz (+ sonic patches), paperless-gpt (python3.14 closure), inboxclean, dms-shell, geometrikks, cv, taskwarrior family | proof 2 error list = 9 lines, all dnsblockd-chain |
-| a6 | **Owner directive recorded durably** — docs/agents/nix-flakes.md pin policy now leads with "Root nixpkgs is NEVER rev-pinned (owner directive 2026-11-20…)" | nix-flakes.md |
-| a7 | **Harvest ledger EXECUTED (761214fc0)** — docs/todo/upstream.md dnsblockd `[blocked:push]` row (diagnosis + protocol), pipeline.md 1103 EXECUTED-annotation + 1104 RESOLVED (converge, never re-pin) + NEW `[ready]` root-pin-throw guard row, TODO_LIST `[ready]` queue one-liner (push-gated fix deliberately NOT queued — queue is `[ready]`-only) | the four files in 761214fc0 |
-| a8 | **cv todo rows closed** — upstream.md:15 paste-upstream row MOOT-closed; FOD-storm row's cv leg annotated | upstream.md |
-| a9 | **First report authored + superseded properly** — 15-21 report written, now carries a non-destructive SUPERSEDED-BY pointer to this file | both files |
-| a10 | **Formatter-clean** on every edited file across the session | treefmt: 0 changed each pass |
+| #   | Item                                                                                                                                                                                                                                                                                                                                                  | Evidence                                                                                                  |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| a1  | **Root nixpkgs UN-PINNED** — `nixpkgs.url` → `nixos-unstable`, allowlist row removed with REMOVED ledger, lock floated f4a03c00 (2026-11-07) → **0bb82723 (2026-11-19 tip)**; eval accepted both proof rounds                                                                                                                                         | flake.nix + lib/flake-input-pin-audit.nix; python3 lock verify (branch `original`, NO tarball regression) |
+| a2  | **cv vendorHash shim DROPPED (25th cycle, drop-safe)** — got `7w2Mw3Mh…` == upstream bake at locked rev 53e9e8b; cv FOD + dependents built green in proof 1                                                                                                                                                                                           | cv.nix ledger; proof 1 log                                                                                |
+| a3  | **taskchampionPkgConfigOverlay dropped** — taskwarrior3 carries bd86de7 natively on tip (double-apply would fail); taskchampion-sync-server + trunk bare probes RC=0 on tip                                                                                                                                                                           | overlays/linux.nix lift comment; tip-probe logs                                                           |
+| a4  | **nixpkgs-hermes correctly KEPT pinned** — tip patchelf 0.15.2 → collapse LIFT unmet; hermes insulated through the whole wave                                                                                                                                                                                                                         | patchelf probe log                                                                                        |
+| a5  | **nixpkgs LIFT's tools observable established** — proof 2 built the entire floated closure green except dnsblockd: cvagent/journal/discordsync/pma, signoz (+ sonic patches), paperless-gpt (python3.14 closure), inboxclean, dms-shell, geometrikks, cv, taskwarrior family                                                                          | proof 2 error list = 9 lines, all dnsblockd-chain                                                         |
+| a6  | **Owner directive recorded durably** — docs/agents/nix-flakes.md pin policy now leads with "Root nixpkgs is NEVER rev-pinned (owner directive 2026-11-20…)"                                                                                                                                                                                           | nix-flakes.md                                                                                             |
+| a7  | **Harvest ledger EXECUTED (761214fc0)** — docs/todo/upstream.md dnsblockd `[blocked:push]` row (diagnosis + protocol), pipeline.md 1103 EXECUTED-annotation + 1104 RESOLVED (converge, never re-pin) + NEW `[ready]` root-pin-throw guard row, TODO_LIST `[ready]` queue one-liner (push-gated fix deliberately NOT queued — queue is `[ready]`-only) | the four files in 761214fc0                                                                               |
+| a8  | **cv todo rows closed** — upstream.md:15 paste-upstream row MOOT-closed; FOD-storm row's cv leg annotated                                                                                                                                                                                                                                             | upstream.md                                                                                               |
+| a9  | **First report authored + superseded properly** — 15-21 report written, now carries a non-destructive SUPERSEDED-BY pointer to this file                                                                                                                                                                                                              | both files                                                                                                |
+| a10 | **Formatter-clean** on every edited file across the session                                                                                                                                                                                                                                                                                           | treefmt: 0 changed each pass                                                                              |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Missing half |
-|---|------|--------------|
+| #  | Item                                                                                                                                                                                                                                                                                                                                | Missing half                                     |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | b1 | **dnsblockd fix chain** — upstream FIXED (bcdd194f: views regenerated at the DECLARED v0.3.1100, pushed; also art-dupl/brandid vendor-hash refreshes); SystemNix lock floated to bcdd194f (daemon-committed `7e80d058f`) — but **no GREEN proof #3 exists**, and I did not execute the fix (observed at 16:5x, attribution unknown) | proof #3 + row closure with verified attribution |
-| b2 | **Commit hygiene** — my three daemon commits are unpushed, heuristically messaged; planned consolidation (`git reset --soft` to b365bb9ee → one properly-messaged commit) still deferred until proof green | consolidation post-proof |
-| b3 | **Deploy** — blocked on proof #3; §0.5/§11/§16/§19 battery + anchor verification + post-deploy checks all pending | everything post-proof |
-| b4 | **upstream.md dnsblockd row** — written against the 232eab3 state; its premise ("tip 232eab37 is build-red") is now stale since bcdd194f landed; closure deferred to avoid co-claiming the parallel session's work | row update with attribution |
-| b5 | **pipeline.md 1103** — annotated EXECUTED but its "REMAINING: templ drift gates proof #3" clause is stale post-bcdd194f | final status post-proof #3 |
+| b2 | **Commit hygiene** — my three daemon commits are unpushed, heuristically messaged; planned consolidation (`git reset --soft` to b365bb9ee → one properly-messaged commit) still deferred until proof green                                                                                                                          | consolidation post-proof                         |
+| b3 | **Deploy** — blocked on proof #3; §0.5/§11/§16/§19 battery + anchor verification + post-deploy checks all pending                                                                                                                                                                                                                   | everything post-proof                            |
+| b4 | **upstream.md dnsblockd row** — written against the 232eab3 state; its premise ("tip 232eab37 is build-red") is now stale since bcdd194f landed; closure deferred to avoid co-claiming the parallel session's work                                                                                                                  | row update with attribution                      |
+| b5 | **pipeline.md 1103** — annotated EXECUTED but its "REMAINING: templ drift gates proof #3" clause is stale post-bcdd194f                                                                                                                                                                                                             | final status post-proof #3                       |
 
 ## c) NOT STARTED
 
-| # | Item | Why |
-|---|------|-----|
-| c1 | Proof #3 (green toplevel at 0bb82723 + bcdd194f) | **Twin-executor hazard: a parallel session appears mid-flight on exactly this (uncommitted→daemon-swept lock float at 16:4x-16:5x). MUST check ownership before running — the 2026-10-18 twin-executor lesson** |
-| c2 | Deploy + full post-deploy battery | blocked on c1 |
-| c3 | Root-nixpkgs-pin throw guard implementation | queued `[ready]` (pipeline.md + TODO_LIST) — not implemented |
-| c4 | Fleet `_templ.go` header sweep (other owner repos may carry the same v0.3.1123-class drift) | surfaced late, not swept |
-| c5 | Tag-immutability audit (`^{}` deref vs lock for qmd/paperless-gpt/templ-components tags) | not built |
-| c6 | Pre-float generator-parity probe script | improvement, not built |
-| c7 | Darwin-side verification of the float | no `--all-systems` eval this session |
-| c8 | nix flake check --no-build --all-systems standalone run | pre-commit will run at commit time |
+| #  | Item                                                                                        | Why                                                                                                                                                                                                             |
+| -- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| c1 | Proof #3 (green toplevel at 0bb82723 + bcdd194f)                                            | **Twin-executor hazard: a parallel session appears mid-flight on exactly this (uncommitted→daemon-swept lock float at 16:4x-16:5x). MUST check ownership before running — the 2026-10-18 twin-executor lesson** |
+| c2 | Deploy + full post-deploy battery                                                           | blocked on c1                                                                                                                                                                                                   |
+| c3 | Root-nixpkgs-pin throw guard implementation                                                 | queued `[ready]` (pipeline.md + TODO_LIST) — not implemented                                                                                                                                                    |
+| c4 | Fleet `_templ.go` header sweep (other owner repos may carry the same v0.3.1123-class drift) | surfaced late, not swept                                                                                                                                                                                        |
+| c5 | Tag-immutability audit (`^{}` deref vs lock for qmd/paperless-gpt/templ-components tags)    | not built                                                                                                                                                                                                       |
+| c6 | Pre-float generator-parity probe script                                                     | improvement, not built                                                                                                                                                                                          |
+| c7 | Darwin-side verification of the float                                                       | no `--all-systems` eval this session                                                                                                                                                                            |
+| c8 | nix flake check --no-build --all-systems standalone run                                     | pre-commit will run at commit time                                                                                                                                                                              |
 
 ## d) TOTALLY FUCKED UP (honest, session-wide)
 
@@ -71,6 +71,7 @@
 ## f) NEXT THINGS (up to 50, impact-sorted)
 
 **Critical chain:**
+
 1. **Establish proof #3 ownership first** (ps/proc forensics, newest daemon commits, status pre-read) — if no session owns it, run the keep-going toplevel at bcdd194f; PROOF_RC=0 = the wave's gate.
 2. Close the upstream.md dnsblockd row with verified attribution (who pushed bcdd194f + the two lock floats c4a29effc/7e80d058f).
 3. Commit the dirty supersede note (15-21 report annotation).
@@ -101,13 +102,13 @@
 
 **Bookkeeping/cleanup:**
 24. Prune pass over the newly-closed cv rows → CHANGELOG (WARN A/B recount discipline).
-25. Refresh f4a03c00 comment tense in flake.nix (~1462/1489) once dnsblockd proof lands.
+25. Refresh f4a03c00 comment tense in flake.nix (~~1462/1489) once dnsblockd proof lands.
 26. Acknowledge/verify d14e68be4 (summit-planner registration — foreign project's work on the shared tree; owner-authored? no action from me beyond flagging).
 27. nixpkgs-compat.yml simplification decision (override == root now; value shifted).
 28. Darwin chromium parking note refresh (next darwin deploy; tryEval self-revives).
 29. inboxclean shim drop-condition test at tip (upstream bake == got?).
 30. paperless-gpt hash-ledger comment update (proof 2 built green — ledger it).
-31. Archive key probe-log outputs inline into the wave's close-out doc (~/.cache is reboot-volatile).
+31. Archive key probe-log outputs inline into the wave's close-out doc (~~/.cache is reboot-volatile).
 32. Same-surface drift check: cv.nix ledger vs upstream.md row vs this report (all three cite 53e9e8b/7w2Mw3Mh — already consistent).
 33. HARVEST this report's §f at authoring time (ledger below).
 34. After deploy: `open new terminal` owner reminder (fish completions for cv/nixos-version rebuilt).

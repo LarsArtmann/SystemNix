@@ -38,13 +38,13 @@ Proof chain: proof2 (fleet) → proof13 **EXIT=0** → deploy8.
 
 ## d) Post-switch failed units (exit 4→3) — handoff state
 
-| Unit | Cause | State |
-| --- | --- | --- |
-| forgejo-ssh-keys | 16:27 key-dedup commit added `awk` without `pkgs.gawk` in runtimeInputs (exit 127) | **Fixed in-tree** (gawk + evidence comment) — rides the NEXT deploy |
-| signoz-provision | provision jq parse-fails on one SigNoz endpoint (`Invalid numeric literal at line 1, column 10`) while rule creation succeeds (HTTP 200) — the signoz float (`d00471c`) likely changed a response shape | **OPEN — parallel session's domain** (signoz float + provision script are theirs) |
-| forgejo-github-sync | sync oneshot failed post-restart | untriaged (sync/timer class) |
-| media-atlas | `Failed to start` during activation | untriaged |
-| catalog-inventory-sync, inboxclean-sync, service-health-check | pre-existing failures (service-health-check counts the others) | pre-existing |
+| Unit                                                          | Cause                                                                                                                                                                                                   | State                                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| forgejo-ssh-keys                                              | 16:27 key-dedup commit added `awk` without `pkgs.gawk` in runtimeInputs (exit 127)                                                                                                                      | **Fixed in-tree** (gawk + evidence comment) — rides the NEXT deploy               |
+| signoz-provision                                              | provision jq parse-fails on one SigNoz endpoint (`Invalid numeric literal at line 1, column 10`) while rule creation succeeds (HTTP 200) — the signoz float (`d00471c`) likely changed a response shape | **OPEN — parallel session's domain** (signoz float + provision script are theirs) |
+| forgejo-github-sync                                           | sync oneshot failed post-restart                                                                                                                                                                        | untriaged (sync/timer class)                                                      |
+| media-atlas                                                   | `Failed to start` during activation                                                                                                                                                                     | untriaged                                                                         |
+| catalog-inventory-sync, inboxclean-sync, service-health-check | pre-existing failures (service-health-check counts the others)                                                                                                                                          | pre-existing                                                                      |
 
 ## e) Owner-authorized actions taken
 

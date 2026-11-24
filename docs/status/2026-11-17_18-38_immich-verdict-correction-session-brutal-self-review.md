@@ -63,4 +63,4 @@
 
 ---
 
-*Reported 2026-11-17 18:4x CET. §f items 4-5 self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time; item 9 records its deliberate non-queue. Commits local-only. Live IO storm during the session (avg300 ~70%, freeze-56 treadmill) — all probes capture-once. Foreign in-flight file at session end: `scripts/takeout-verify.sh` (parallel session, stood off). WAITING FOR INSTRUCTIONS.*
+_Reported 2026-11-17 18:4x CET. §f items 4-5 self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time; item 9 records its deliberate non-queue. Commits local-only. Live IO storm during the session (avg300 ~70%, freeze-56 treadmill) — all probes capture-once. Foreign in-flight file at session end: `scripts/takeout-verify.sh` (parallel session, stood off). WAITING FOR INSTRUCTIONS._

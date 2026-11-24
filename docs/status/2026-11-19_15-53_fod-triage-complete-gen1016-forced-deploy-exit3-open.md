@@ -78,7 +78,7 @@ Verified live this session: pdg own-repo `.#default`/`.#templ`/`.#checks.x86_64-
 18. Check daemon sweeps since f88a92a11 (5bccb5f6a took the docs edits; confirm nothing else pending).
 19. If the 00:10 reboot was WDT/freeze-class: stability forensics BEFORE any further forced deploy on this boot (see g.1).
 
-*Harvest status at authoring time: f.6, f.7, f.17 are owed edits (marked); f.8 (swc draft) + f.9 (flush-storm) + the five upstream rows are already rowed; f.1–5, f.10–13, f.18–19 are transient operational probes or existing-row follow-ups — deliberately not re-rowed (their owning rows exist).*
+_Harvest status at authoring time: f.6, f.7, f.17 are owed edits (marked); f.8 (swc draft) + f.9 (flush-storm) + the five upstream rows are already rowed; f.1–5, f.10–13, f.18–19 are transient operational probes or existing-row follow-ups — deliberately not re-rowed (their owning rows exist)._
 
 ## g) QUESTIONS FOR THE OWNER (cannot be derived from the repo)
 
@@ -88,4 +88,4 @@ Verified live this session: pdg own-repo `.#default`/`.#templ`/`.#checks.x86_64-
 
 ---
 
-*Session evidence: pdg fdbd4da5 (origin confirmed), gnh e0c4b70 (ls-remote confirmed), quotaboard 243c8be (origin + GitHub mirror confirmed), SystemNix f88a92a11 + daemon sweeps 103e0de46/34164cd28/5bccb5f6a, keepgoing-1119c.log (0 errors), deploy log /var/log/systemnix-deploys/2026-11-19_14-32-52.log (exit 3, 4739s), anchor c1n8kzzl… == system-1016-link, diskstats flush-rate probe (1000/s), full-depth cgroup io.stat sampling (no writer >2MB/s), nix hash convert nix32→sri conversions, gnh test drv hashes (8bbn9i9→0iind0g→2bkvj5g green).*
+_Session evidence: pdg fdbd4da5 (origin confirmed), gnh e0c4b70 (ls-remote confirmed), quotaboard 243c8be (origin + GitHub mirror confirmed), SystemNix f88a92a11 + daemon sweeps 103e0de46/34164cd28/5bccb5f6a, keepgoing-1119c.log (0 errors), deploy log /var/log/systemnix-deploys/2026-11-19_14-32-52.log (exit 3, 4739s), anchor c1n8kzzl… == system-1016-link, diskstats flush-rate probe (1000/s), full-depth cgroup io.stat sampling (no writer >2MB/s), nix hash convert nix32→sri conversions, gnh test drv hashes (8bbn9i9→0iind0g→2bkvj5g green)._

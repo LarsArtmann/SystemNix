@@ -98,23 +98,23 @@ Harvest status per item: **[HARVESTED]** rows landed in TODO_LIST.md + domain li
 
 ## Evidence appendix
 
-| Surface | Old → New | Proof |
-| --- | --- | --- |
-| overview shim | `QweKquKP` (load-bearing at 1c467991) → **DROPPED** (got `p91o0rkP` == upstream-baked at ef901296) | float-proof-20261102-043225-lars.log L398 |
-| crush-daily shim | `iPis8A3A` → **DROPPED** (upstream 85b1d7a1 bakes same) | store-prefetch of upstream vendorHash.nix |
-| go-humanize-linter | `k7GyCaMU` → `v6zJv2bV` | 043225 log L129-131 |
-| golangci-lint-auto-configure | `6rIzqRAD` → `Uvi1KtDo` | 043225 log |
-| journal (×3) | `OzU6YCvB` → `1JuET6kA` | 043225 log |
-| project-meta | `+rbh2A6r` → `CejG7L+` | 043225 log |
-| pma (×2) | `uTanAcTC` → `tR/Y9ul` | 043225 log + 045044 log |
-| tq (×2) | `4zISVNEX` → `wtkejgEG` | 043225 log + 045044 log |
-| crm | `LpMsryrv` → `J9L/KEVb` | 043225 log |
-| cv (12th re-stale) | `g1hKglo` → `bPvMOBEz` | 043225 log |
-| emeet-pixyd | none → `WONlox/C` (upstream AAAA placeholder) | 043225 log |
-| pdd pin | float `983928ff` → pinned `145cd73d` | 043225 log compile error |
-| vision-review-agent pin | float `5f6cbbed` → pinned `8cbb0ec9` | 043225 log go-floor error |
-| monitor365 pin | float `31ea3b7b` → pinned `10d25291` | 043225 log wasm-bindgen mismatch |
-| library-policy pin | float `beb8d9ed` → pinned `f3651092` (shim back to `UtUhdbS9`) | 052231 log compile error |
+| Surface                      | Old → New                                                                                          | Proof                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| overview shim                | `QweKquKP` (load-bearing at 1c467991) → **DROPPED** (got `p91o0rkP` == upstream-baked at ef901296) | float-proof-20261102-043225-lars.log L398 |
+| crush-daily shim             | `iPis8A3A` → **DROPPED** (upstream 85b1d7a1 bakes same)                                            | store-prefetch of upstream vendorHash.nix |
+| go-humanize-linter           | `k7GyCaMU` → `v6zJv2bV`                                                                            | 043225 log L129-131                       |
+| golangci-lint-auto-configure | `6rIzqRAD` → `Uvi1KtDo`                                                                            | 043225 log                                |
+| journal (×3)                 | `OzU6YCvB` → `1JuET6kA`                                                                            | 043225 log                                |
+| project-meta                 | `+rbh2A6r` → `CejG7L+`                                                                             | 043225 log                                |
+| pma (×2)                     | `uTanAcTC` → `tR/Y9ul`                                                                             | 043225 log + 045044 log                   |
+| tq (×2)                      | `4zISVNEX` → `wtkejgEG`                                                                            | 043225 log + 045044 log                   |
+| crm                          | `LpMsryrv` → `J9L/KEVb`                                                                            | 043225 log                                |
+| cv (12th re-stale)           | `g1hKglo` → `bPvMOBEz`                                                                             | 043225 log                                |
+| emeet-pixyd                  | none → `WONlox/C` (upstream AAAA placeholder)                                                      | 043225 log                                |
+| pdd pin                      | float `983928ff` → pinned `145cd73d`                                                               | 043225 log compile error                  |
+| vision-review-agent pin      | float `5f6cbbed` → pinned `8cbb0ec9`                                                               | 043225 log go-floor error                 |
+| monitor365 pin               | float `31ea3b7b` → pinned `10d25291`                                                               | 043225 log wasm-bindgen mismatch          |
+| library-policy pin           | float `beb8d9ed` → pinned `f3651092` (shim back to `UtUhdbS9`)                                     | 052231 log compile error                  |
 
 Final proof: `~/.cache/lockfloat/float-proof-20261102-052603.log` — rc=0, 0 hash mismatches. Gate: toplevel drvPath resolves. Lock+registry: committed together (7ad49750d), float-register content-verified.
 

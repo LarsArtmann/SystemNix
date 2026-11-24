@@ -117,20 +117,20 @@ browser-rename 5 `^PASS` + 2 `^leg …: OK` (= 7 legs), extract 9 `^PASS`.
 ## e) What we should improve
 
 - **Recon-before-code for live interfaces:** the zip-naming surprise (d.5)
-   and the verify-vs-helpless.ai mismatch (a.6) were both one `ls` away.
+  and the verify-vs-helpless.ai mismatch (a.6) were both one `ls` away.
 - **The `takeout-selftests` comment block in `flake/parts/checks/selftests.nix`
-   is stale** (claims dedup 16 / rename 6; reality 21/7) and nothing enforces
-   the counts — the planned leg-count assertion fixes both in one edit.
+  is stale** (claims dedup 16 / rename 6; reality 21/7) and nothing enforces
+  the counts — the planned leg-count assertion fixes both in one edit.
 - **Queue drift is still live:** rows 442/443 describe done work
-   (manifest trap fixed; selftests wired) and were never ticked; the tick +
-   CHANGELOG + library pairing remains the resumption plan's step 2.
+  (manifest trap fixed; selftests wired) and were never ticked; the tick +
+  CHANGELOG + library pairing remains the resumption plan's step 2.
 - **`takeout-ingest-photos.sh`'s 5 fixture legs are not in CI** (the 41 legs
-   cover verify/dedup/intake/rename only) — its stub-immich-go harness should
-   join the derivation.
+  cover verify/dedup/intake/rename only) — its stub-immich-go harness should
+  join the derivation.
 - **immsg:** verify's G2.1/G2.2 part-name hardcoding vs the fleet's two
-   naming schemes should be one decision (rename-everything-at-intake vs
-   verify tolerance), not a per-script accident — extract now handles both,
-   verify does not.
+  naming schemes should be one decision (rename-everything-at-intake vs
+  verify tolerance), not a per-script accident — extract now handles both,
+  verify does not.
 
 ## f) What we should get done next (ordered)
 

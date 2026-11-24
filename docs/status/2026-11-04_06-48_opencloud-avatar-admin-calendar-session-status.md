@@ -46,6 +46,7 @@
 **Shipped by this session: nothing fucked up landed.** (All five tree changes are docs/description-string fixes, each verified: eval green, fmt clean, queue pair non-drifting.)
 
 **Fucked up and NOTICED this session (pre-existing, now visible):**
+
 1. The D1 calendar gate ran on a stale premise for ~6 months of pin drift — the 2026-10-29 doctrine declared "no CalDAV server" while the deployed stack (stalwart 0.16 FORWARD migration completed 2026-10-23) now answers CalDAV well-known. The ratified plan's gate was never re-checked against the moving pin. (Queued `[ready]` today.)
 2. The OpenCloud runbook shipped a verify recipe grepping the WRONG port (9100 vs live 9500) for ~2 days — a human following it gets a false "proxy missing" (the human-version of the phantom-metric class). Fixed today.
 3. The gatus WebFinger check is permanently red on a HEALTHY service (body-pat never matches 7.x responses) — tracked since 2026-11-02, still open.
@@ -61,6 +62,7 @@
 ## f) UP TO 50 NEXT THINGS (impact-sorted; harvest ledger inline)
 
 **QUEUED THIS SESSION:**
+
 1. Re-run the ratified Stalwart CalDAV probe (authenticated principal-props + calendar collection) at the current pin — the D1 gate verdict; unauthenticated 307 is not a verdict. `[ready — TODO_LIST + services.md, queued]`
 2. When upstream PR #2704 merges and a nixpkgs bump ships it: wire `PROXY_OIDC_PICTURE_CLAIM` + `GRAPH_PROFILE_PICTURE_URL_ALLOWLIST` (allow `https://auth.home.lan`), re-verify avatar import. `[watch — services.md, queued]`
 

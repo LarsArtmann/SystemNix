@@ -23,15 +23,18 @@
 ## The self-review, answered honestly
 
 **1. What did you forget?**
+
 - **The status-report pre-read at session start (the 2026-10-23 discipline, verbatim in AGENTS.md).** The parallel flm-disable report sat on disk the whole session; I read it only when THIS status request forced the `ls -t`. It didn't invalidate the research, but two of my queued rows name fastflowlm as a live profiling target while another session had just disabled it in the tree.
 - **The queue-authors premise-check rule (also AGENTS.md, also quoted in my own context).** I queued the demand-profiling row claiming "journal/ai-meter" as data sources without verifying either captures local llama-server traffic — ai-meter meters the API proxy; per-service local request counts may not exist anywhere. A wrong premise costs a dispatch cycle; the rule exists because of exactly this.
 - **The research-doc home convention.** `docs/research/` exists with a README index — I even READ the pipeline row citing that pattern during my harvest — and still wrote the doc into `docs/planning/`. The fact was in front of me and I missed it.
 
 **2. What is stupid that we do anyway?** (repo-level, noticed this session)
+
 - The box keeps proving it cannot boot six multi-GB cold readers simultaneously, yet every fix so far gates or disables INDIVIDUAL members; no single owner of "how many resident models does this box get" exists anywhere in config (the parallel session's §2 says the same thing independently — two sessions, same conclusion, still no row owns it).
 - `RestartSec=10` fixed-restart on model loaders fleet-wide: the pile-driver shape was fully visible in the flm ×5 SIGABRT data TWO sessions ago; the one-line canon fix was only queued today.
 
 **3. What could I have done better?**
+
 - **Answered the question from opinion first.** My first reply was a confident, citation-free verdict — and research then falsified parts of it (below). The owner had to shout "PROPER RESEARCH!" to get the quality bar. Research-first for "what is wrong with X" questions is now the default I should have had.
 - **Checked my own fleet facts before recommending.** My first answer's #1 recommendation was "socket-activation for the spiky two (kills ~13.6 GB of guaranteed boot reads)" — but **llama-vlm is ALREADY socket-activated** (Accept=true, fastflowlm.nix:10 pattern comment, vlm same rule — both facts greppable in minutes), so 9.7 GB of that 13.6 GB figure is deferred-on-first-use, not guaranteed-at-boot. The recommendation was half-wrong and delivered with full confidence.
 - **Run the 2-second systemd version check** instead of queuing "verify ≥254" as a precondition.
@@ -59,15 +62,15 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| "What is wrong with how we deploy/use AI" — properly researched answer with 6 external canon probes + internal grounding + live verification | delivered in chat; owner got the researched verdict |
-| Research report with sources, verdict-per-theme, ranked deltas | `docs/research/2026-11-05_ai-deployment-research.md` (committed in `b4606800a`) |
-| 4 substantive corrections to my own first answer surfaced (vlm already socket-activated; scale-to-zero often a liability; BFQ+ioTier enforced; warmup = by-design cold reads) | research doc §1/§2/§6 |
-| TODO harvest: 5 rows (restart backoff, ingest-job extraction, demand profiling, 465 GB attribution → ai-stack; ghost-package detector → pipeline) in queue + libraries, same pass | TODO_LIST.md `### ai-stack` + `### pipeline`; docs/todo/{ai-stack,pipeline}.md |
-| Live state stamps for this report (boot age, PSI, unit states, schedulers) | commands in Scope |
-| Parallel-session report discovered, read in full, interactions with my rows assessed | §Parallel sessions above |
-| check-todo-system.sh structure gate after my harvest | `OK: TODO queue/library structure clean` (183-unharvested WARN = pre-existing drift, unchanged by me) |
+| Item                                                                                                                                                                              | Evidence                                                                                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| "What is wrong with how we deploy/use AI" — properly researched answer with 6 external canon probes + internal grounding + live verification                                      | delivered in chat; owner got the researched verdict                                                   |
+| Research report with sources, verdict-per-theme, ranked deltas                                                                                                                    | `docs/research/2026-11-05_ai-deployment-research.md` (committed in `b4606800a`)                       |
+| 4 substantive corrections to my own first answer surfaced (vlm already socket-activated; scale-to-zero often a liability; BFQ+ioTier enforced; warmup = by-design cold reads)     | research doc §1/§2/§6                                                                                 |
+| TODO harvest: 5 rows (restart backoff, ingest-job extraction, demand profiling, 465 GB attribution → ai-stack; ghost-package detector → pipeline) in queue + libraries, same pass | TODO_LIST.md `### ai-stack` + `### pipeline`; docs/todo/{ai-stack,pipeline}.md                        |
+| Live state stamps for this report (boot age, PSI, unit states, schedulers)                                                                                                        | commands in Scope                                                                                     |
+| Parallel-session report discovered, read in full, interactions with my rows assessed                                                                                              | §Parallel sessions above                                                                              |
+| check-todo-system.sh structure gate after my harvest                                                                                                                              | `OK: TODO queue/library structure clean` (183-unharvested WARN = pre-existing drift, unchanged by me) |
 
 ## b) PARTIALLY DONE
 
@@ -104,6 +107,7 @@
 ## f) NEXT — up to 50, honest count 34 (grouped, P0→P3)
 
 **Immediate, this-repo, unblocked:**
+
 1. Answer owner questions §g below (held fleet + storm disposition — live PSI 38 % at 16:56)
 2. Deploy the tree state (flm disable + MemoryMax raise + observe-only guard) — sudo/owner-gated; the ONLY real containment of the live storm
 3. Restart backoff row (RestartSteps=4/cap 10min, serviceDefaults tier design) — one eval + one module pass
@@ -151,4 +155,4 @@
 
 ---
 
-*Self-harvest note: §e's three follow-ups are queued (ai-stack row, this session); §f items 3–12 are prior-queued rows carried here for completeness; items 13–21 are queued design/measurement rows; 22 is deliberately NOT harvested yet (needs the owning-row framing decision, Q2/Q3 input); 23–33 are pre-existing standing rows. Nothing new in §f is left entombed.*
+_Self-harvest note: §e's three follow-ups are queued (ai-stack row, this session); §f items 3–12 are prior-queued rows carried here for completeness; items 13–21 are queued design/measurement rows; 22 is deliberately NOT harvested yet (needs the owning-row framing decision, Q2/Q3 input); 23–33 are pre-existing standing rows. Nothing new in §f is left entombed._

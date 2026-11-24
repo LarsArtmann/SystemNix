@@ -64,6 +64,7 @@ Session arc: (1) diagnose `https://history.home.lan/admin/` → 403 "Your role d
 ## f) NEXT THINGS (brainstorm-grade, impact-ordered groups; harvest status in the ledger below)
 
 **Deploy & verify chain (blocked by the float, rides one deploy):**
+
 1. Land or revert the blanket `flake.lock` float (sibling session actively editing `flake.lock`/`flake.nix`/`flake/expected-locks.nix` at 01:0x; 27 roots incl. monitor365 FOD, stalwart, HM deps).
 2. Fix the monitor365-prepared-source root (`rm: cannot remove Cargo.lock: Permission denied` inside the FOD).
 3. Deploy evo-x2 once the tree is landable (carries the SUPER_ADMIN_EMAILS fix + everything already queued in-tree: fastflowlm removal, quotaboard wiring, tier-2 veto, cvagent timeout, papdashboard self-heal, monitor365 tmpfiles, zed rename…).
@@ -128,6 +129,7 @@ Session arc: (1) diagnose `https://history.home.lan/admin/` → 403 "Your role d
 ## Harvest ledger (self-harvest at authoring, per the status-report mandate)
 
 **Harvested NOW (TODO_LIST.md one-liner + domain library row, both edited):**
+
 - `pkceEnabled = true` → services.md (+ queue)
 - oauth2 tag+bump (nonce/empty_subject) → upstream.md (+ queue)
 - `merge-duplicate-users` stop-window [blocked:user] → services.md (+ queue)
@@ -136,6 +138,7 @@ Session arc: (1) diagnose `https://history.home.lan/admin/` → 403 "Your role d
 - Reconcile-empty-list + resolved-user_id logging asks → upstream.md (+ queue)
 
 **Deliberately NOT harvested (reasons):**
+
 - Items 1-7 (deploy chain): a single pending deploy event already owned by the existing stability.md row ("Re-run the pending deploy when io PSI < 20") + the runbook's /admin/ bullet — queueing a duplicate split-brains the deploy intent.
 - Items 14, 16-17: ride the already-queued superAdminEmails option row (this session's earlier harvest); a second row would drift from it.
 - Items 30, 40, 41-42: browser-history-repo-internal or ROADMAP-grade; belong in that repo's docs (30 is cited in its own 2026-10-11 report), not SystemNix's queue.

@@ -14,30 +14,30 @@ All three rulings executed, and the big prize landed on its own: **real LLM comm
 
 ## §1 What happened
 
-| Time | Event |
-| --- | --- |
-| 08:1x | Owner rulings received. |
-| 08:18 | tq start attempt: polkit-denied from the agent shell; journal shows the REAL blocker — `maintenance-entry-gate: REFUSE — IO PSI some avg10=70.96% (>= 30% band)`. The "brake" narrative from last night is corrected: it is the PSI entry gate, by design (freezers #19/#20/#21). |
-| 08:2x | **Immich key rotation** per `discordsync.nix:373`'s own contract: removed `/var/lib/discordsync/immich-api-env` (old mtime 2026-10-25), restarted `discordsync-immich-key-provision` → mint took **9m20s under 80% PSI**, minted 08:20:00; a re-triggered second pass then hit the 2min TimeoutStartSec against storm-slowed Postgres → unit left `failed` (cosmetic; file+row consistent → next calm pass is an instant no-op green). |
-| 08:23:41 | **Verify GREEN**: `Immich API key verified against http://127.0.0.1:2283 (bulk-upload-check)` — last pre-rotation 403 was 00:49. |
-| ~morning | flm kept up (ruling 1); at 08:0x I reported it "stable" while it was in fact still LOADING the model under the storm (unverified-serving miss, §6). |
-| 14:49 / 15:51 | **First real LLM commits post-fix**: `committed changes … duration=13.96s / 14.80s` — the runbook's all-clear signature, achieved WITHOUT further intervention (cooldown caps expired; flm finished loading once the disk eased). Heuristic ratio still 0.60-0.65 — roughly a third of commits still fall back. |
-| 16:38 | flm journal shows it SERVING a long completion (a D-state diagnostic rendered for someone's probe) — serving state now positively verified. flm PID changed since morning (2556142 vs 111708): a restart happened mid-day, unattributed (not investigated per scope — see §5 c). |
-| 16:44 | As-of: PSI 47.95% (storm day 2), tq still gate-refused, provision still red pending a calm pass. |
+| Time          | Event                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 08:1x         | Owner rulings received.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 08:18         | tq start attempt: polkit-denied from the agent shell; journal shows the REAL blocker — `maintenance-entry-gate: REFUSE — IO PSI some avg10=70.96% (>= 30% band)`. The "brake" narrative from last night is corrected: it is the PSI entry gate, by design (freezers #19/#20/#21).                                                                                                                                                      |
+| 08:2x         | **Immich key rotation** per `discordsync.nix:373`'s own contract: removed `/var/lib/discordsync/immich-api-env` (old mtime 2026-10-25), restarted `discordsync-immich-key-provision` → mint took **9m20s under 80% PSI**, minted 08:20:00; a re-triggered second pass then hit the 2min TimeoutStartSec against storm-slowed Postgres → unit left `failed` (cosmetic; file+row consistent → next calm pass is an instant no-op green). |
+| 08:23:41      | **Verify GREEN**: `Immich API key verified against http://127.0.0.1:2283 (bulk-upload-check)` — last pre-rotation 403 was 00:49.                                                                                                                                                                                                                                                                                                       |
+| ~morning      | flm kept up (ruling 1); at 08:0x I reported it "stable" while it was in fact still LOADING the model under the storm (unverified-serving miss, §6).                                                                                                                                                                                                                                                                                    |
+| 14:49 / 15:51 | **First real LLM commits post-fix**: `committed changes … duration=13.96s / 14.80s` — the runbook's all-clear signature, achieved WITHOUT further intervention (cooldown caps expired; flm finished loading once the disk eased). Heuristic ratio still 0.60-0.65 — roughly a third of commits still fall back.                                                                                                                        |
+| 16:38         | flm journal shows it SERVING a long completion (a D-state diagnostic rendered for someone's probe) — serving state now positively verified. flm PID changed since morning (2556142 vs 111708): a restart happened mid-day, unattributed (not investigated per scope — see §5 c).                                                                                                                                                       |
+| 16:44         | As-of: PSI 47.95% (storm day 2), tq still gate-refused, provision still red pending a calm pass.                                                                                                                                                                                                                                                                                                                                       |
 
 ---
 
 ## §2 Evidence ledger
 
-| Claim | Probe | Result |
-| --- | --- | --- |
-| tq blocker is the gate, not a brake | `journalctl -u tq-agent-pool` 08:18 | `maintenance-entry-gate: REFUSE — IO PSI some avg10=70.96% (>= 30% band)` |
-| Rotation minted | provision journal 08:20:00 | `minted new Immich API key + rendered … — restarting consumer units` |
-| Rotation verified | verify journal 08:23:41 | `Immich API key verified … (bulk-upload-check)`, `Deactivated successfully` |
-| Provision red is cosmetic | provision journal 08:22 | second pass `start operation timed out` (2min vs storm-slowed psql); mint already converged |
-| LLM path healthy | PMA journal 14:49/15:51 | `committed changes … duration=13.96s / 14.80s` (healthy band 10-20s) |
-| flm serving | flm journal 16:38 | full completion rendered in-journal; ports 52625+52626 LISTEN |
-| Storm persists | `/proc/pressure/io` | avg10 47.95% at 16:44 (70-94% through the day) |
+| Claim                               | Probe                               | Result                                                                                      |
+| ----------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| tq blocker is the gate, not a brake | `journalctl -u tq-agent-pool` 08:18 | `maintenance-entry-gate: REFUSE — IO PSI some avg10=70.96% (>= 30% band)`                   |
+| Rotation minted                     | provision journal 08:20:00          | `minted new Immich API key + rendered … — restarting consumer units`                        |
+| Rotation verified                   | verify journal 08:23:41             | `Immich API key verified … (bulk-upload-check)`, `Deactivated successfully`                 |
+| Provision red is cosmetic           | provision journal 08:22             | second pass `start operation timed out` (2min vs storm-slowed psql); mint already converged |
+| LLM path healthy                    | PMA journal 14:49/15:51             | `committed changes … duration=13.96s / 14.80s` (healthy band 10-20s)                        |
+| flm serving                         | flm journal 16:38                   | full completion rendered in-journal; ports 52625+52626 LISTEN                               |
+| Storm persists                      | `/proc/pressure/io`                 | avg10 47.95% at 16:44 (70-94% through the day)                                              |
 
 ---
 
@@ -90,6 +90,7 @@ Nothing destructive this arc: one env-file removal that the module's own contrac
 ✱ = harvested this session. (o) owner / (d) deploy-gated / (x) other session / (s) stability domain. Reports 1-2 §8 lists remain canonical for their items — only deltas listed here.
 
 ### Direct tail of this arc
+
 1. ✱ Start `tq-agent-pool` manually in the first sub-30% PSI window (refire budget may be exhausted after ~17h of refusals; one `systemctl start` via harness).
 2. ✱ Confirm the provision unit goes green on its first calm pass (file+row consistent → instant no-op); if STILL red on a calm pass, the re-insert path has a real bug — then dig.
 3. Diagnose the residual heuristic ratio 0.60-0.65: per-project cooldown caps vs flm queue saturation under parallel consumers (the 16:38 big completion hints at the latter).
@@ -102,6 +103,7 @@ Nothing destructive this arc: one env-file removal that the module's own contrac
 10. (x) Offsite-borg golive tripwire (their staged go-live) — still theirs.
 
 ### Structural (from this arc's lessons)
+
 11. Shared PSI pre-check helper for agent ops (one-liner wrapper the tq gate's band logic ≥30%).
 12. flm load-complete marker: a textfile metric or journal-signature check so "serving" is probeable (closing the listening≠serving gap).
 13. Provision unit: raise TimeoutStartSec or make the second pass storm-tolerant (2min is tight for any psql under PSI ≥70) — upstream PMA/discordsync module idea.
@@ -109,6 +111,7 @@ Nothing destructive this arc: one env-file removal that the module's own contrac
 15. Hook: per-session guard-trip strike counter (sudo/rg-r) — warn loudly at 3.
 
 ### Carry-forward (canonical in reports 1-2 §8; NOT duplicated here)
+
 16-40. First report §8 items 1-16 (deploy chain: drain watch, OPENAI_TIMEOUT chain — now DONE except row close-out, pdg-bak cleanup + writer, monitor legs, gate hardening set, flm upstream bug, queue saturation signal, deletion guard, conflicts, dependency-wave attribution, mr hygiene, stash policy, templ §21, CI watch, vendorHash treadmill) and second report §8 items (tq brake disposition — superseded by item 1 here, Immich 403 — DONE, borg tripwire, storm-suspect re-runs, PMA settling — DONE, baseline repair, canary CGO repo, gate GOCACHE, cooldown ladder, GATE-ENV classification, vet-leg check). Each retains its queue row or report pointer.
 41. ✱ Close-out upstream.md row 43 wording (push + re-lock landed; only the deploy was missing — stale-binary class; row's chain text is stale).
 42. Row-hygiene: the LLM-resumption row gets its residue note (done at harvest, see §9).
@@ -117,6 +120,7 @@ Nothing destructive this arc: one env-file removal that the module's own contrac
 45. mr dead-chdir prune (5 repos) — unchanged.
 
 ### Deliberately not minted
+
 46-50. Storm attribution theories, flm restart forensics (minor), provision OnFailure paging test (folded into the alerting-legs row), heuristic-message quality study, consolidation of the day's reports into one live doc (process note, §7.4) — recorded here for the next prune's WARN recount.
 
 ---

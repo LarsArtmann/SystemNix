@@ -54,6 +54,7 @@
 NOT harvested this pass (owner: report-then-wait). Items 1–3 overlap rows already landed this session (marked).
 
 **Direct follow-ups of this session**
+
 1. `boot-evidence-pull.sh` on boot `5819f35d` + attach to the census row (replaces my report-as-evidence).
 2. Forced-fire caller forensics: poller script/process hunt + `journalctl _COMM=sudo` deploy-window + `.crush` DB — resolve the 19:42-poller contradiction.
 3. Re-run the pending deploy when calm + anchor battery — ALREADY ROW (stability.md/TODO_LIST, landed).

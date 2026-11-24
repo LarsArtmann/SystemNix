@@ -12,7 +12,7 @@ Owner ask: "my OpenCloud instance should have these Apps/plugins installed (via 
 - **Package builds green:** `pkgs/opencloud-web-apps.nix` → `/nix/store/ns6mf0wm2irrgk8b2pkbqw9zzjlv5jx9-opencloud-web-apps-7`; layout `apps/json-viewer/{manifest.json,js,assets}` + `apps/unzip/{manifest.json,js,assets}`; both manifest `entrypoint` files **exist on disk** (`js/remoteEntry-DLHttYkq.mjs`, `js/remoteEntry-DT_ywuAe.mjs`).
 - **Hashes pinned from real FOD builds:** json-viewer 2.1.0 `sha256-hLeyNYbcrv6mgmuupK3xCf606eEkUeOPeCa0fhL7lzo=`, unzip 2.2.0 `sha256-xAUKQSSVN+LdO+QX/2mU8kmUn4fcjNQhB0HB9Gi0V3Q=`.
 - **Host wiring evals:** `nix eval --raw …config.systemd.services.opencloud.environment.WEB_ASSET_APPS_PATH` → `/nix/store/ns6mf0wm2irrgk8b2pkbqw9zzjlv5jx9-opencloud-web-apps-7/apps`.
-- **Whole-host eval currently GREEN:** `…config.system.build.toplevel.drvPath` → `/nix/store/mx57s2lxsrxwgk0ffvx7i9khp44bzd22-nixos-system-evo-x2-26.11.20261107.f4a03c0.drv` (the earlier assertion failures were a *parallel session's* unfinished journal-mesh work; they fixed it mid-session).
+- **Whole-host eval currently GREEN:** `…config.system.build.toplevel.drvPath` → `/nix/store/mx57s2lxsrxwgk0ffvx7i9khp44bzd22-nixos-system-evo-x2-26.11.20261107.f4a03c0.drv` (the earlier assertion failures were a _parallel session's_ unfinished journal-mesh work; they fixed it mid-session).
 - **Formatting:** `nix fmt -- --fail-on-change` on all 6 touched files (3 `.nix`, 3 `.md`) — traversed 6, **0 changed**.
 - **TODO-system gate:** `scripts/check-todo-system.sh` → `OK: TODO queue/library structure clean` (45 pre-existing unharvested-report WARNs, none mine).
 - **Version-compatibility matrix established (the load-bearing fact of this session):** opencloud-production **7.2.4 ships web 7.1.5**; `json-viewer` tag **2.1.0** declares `@opencloud-eu/web-client ^7` (2.2.0/main → `^8`); `unzip` tag **2.2.0** declares `^7` (2.2.1 → `^8`); **every** excalidraw tag (1.0.0, 1.0.1, 1.1.0) declares `^8` and its README requires **web ≥ 8.1.0** (shared Yjs runtime, opencloud-eu/web#3398) plus a Yjs server (`WEB_OPTION_YJS_SERVER_URL`).
@@ -20,10 +20,10 @@ Owner ask: "my OpenCloud instance should have these Apps/plugins installed (via 
 
 **NOT verified (and why):**
 
-- **The apps are NOT live.** No deploy fired: the tree carries a parallel session's journal-mesh/bank-sync work and the deploy pressure gate is refusing on a *real* storm (PSI some avg10 60%, avg300 71%). Change is tree-side only; `cloud.home.lan` currently serves zero external apps (`/mnt/pool/services/opencloud/web/` does not exist; `WEB_ASSET_APPS_PATH` was unset on the live unit).
+- **The apps are NOT live.** No deploy fired: the tree carries a parallel session's journal-mesh/bank-sync work and the deploy pressure gate is refusing on a _real_ storm (PSI some avg10 60%, avg300 71%). Change is tree-side only; `cloud.home.lan` currently serves zero external apps (`/mnt/pool/services/opencloud/web/` does not exist; `WEB_ASSET_APPS_PATH` was unset on the live unit).
 - `/assets/apps/json-viewer/manifest.json` HTTP 200 — documented as the verify recipe, **unrun** (needs deploy).
 - "The App Store shows it as installed" — **inference**, not verified (the bundled `web-app-app-store` chunk exists in the web dist; whether it lists locally-discovered apps vs only store-catalog apps was not probed).
-- Excalidraw on this line — verified as *impossible* from upstream requirements, not "tried and failed" (no compatible artifact exists to try).
+- Excalidraw on this line — verified as _impossible_ from upstream requirements, not "tried and failed" (no compatible artifact exists to try).
 
 ---
 
@@ -35,7 +35,7 @@ Owner ask: "my OpenCloud instance should have these Apps/plugins installed (via 
 4. **Module wiring** — `modules/nixos/services/opencloud.nix` sets `WEB_ASSET_APPS_PATH = "${pkgs.opencloud-web-apps}/apps"` in the `environment` attrset (all overrides ride env by design; no `settings` file introduced, so the `opencloud init` trigger condition is untouched).
 5. **App set vetted for the running web line** — JSON Viewer 2.1.0 + Unzip 2.2.0 (both `web-client ^7`). Explicitly rejected the tempting "latest tag" (2.2.0/2.2.1 → `^8`).
 6. **Excalidraw verdict** — blocked, with the precise reason, version gate, and the two independent requirements (Yjs runtime sharing + Yjs server) recorded; not silently omitted.
-7. **Runbook** — `docs/services/opencloud.md` §Web apps: table of installed apps + versions, the install/activation path, the pinning trap with exact tag boundaries, the Excalidraw blocker, and a verify recipe using the *correct* URL (`/assets/apps/<name>/manifest.json`).
+7. **Runbook** — `docs/services/opencloud.md` §Web apps: table of installed apps + versions, the install/activation path, the pinning trap with exact tag boundaries, the Excalidraw blocker, and a verify recipe using the _correct_ URL (`/assets/apps/<name>/manifest.json`).
 8. **CHANGELOG entry** — one paragraph, dated, user-facing, names the compatibility pins and the Excalidraw blocker.
 9. **Queue/library row** — Excalidraw `[watch]` row in `docs/todo/services.md` with the re-check trigger (next `opencloud-production` pin bump) and the exact one-entry change needed.
 10. **Artifact inspection** — bundle layout + manifest entrypoint existence proven by hand (after the GC incident below); out-link kept at `~/.cache/ocapps/apps-result`.
@@ -67,7 +67,7 @@ Owner ask: "my OpenCloud instance should have these Apps/plugins installed (via 
 
 Nothing broke live — no service, no data, no config regression. But the process had four real misses:
 
-1. **Evidence discipline gap (self-inflicted):** I first built with `nix build --no-link`, then inspected the path minutes later — a GC had reclaimed it. I rebuilt to the *same* deterministic path and pinned it with an out-link. The first inspection attempt errored on a missing file and, for a moment, looked like a broken bundle. Lesson already in repo doctrine (pin what you will re-inspect).
+1. **Evidence discipline gap (self-inflicted):** I first built with `nix build --no-link`, then inspected the path minutes later — a GC had reclaimed it. I rebuilt to the _same_ deterministic path and pinned it with an out-link. The first inspection attempt errored on a missing file and, for a moment, looked like a broken bundle. Lesson already in repo doctrine (pin what you will re-inspect).
 2. **Entrypoint existence was checked only AFTER that scare** — "manifest.json present" is not "app loadable". Both entrypoints exist, but that check should have preceded any "done" claim.
 3. **Wrong first assumption on the public URL** (`/apps/<name>/`). I had already drafted the runbook verify recipe with it and caught it only by reading `_customAppsEndpoint` in source. Shipping that recipe would have sent the owner chasing a 404.
 4. **A meaningless version string:** the derivation is `opencloud-web-apps-7` (`version = "7"`, meaning "web line 7"). It builds and reads fine, but it is a wart, not a version.
@@ -76,15 +76,16 @@ Nothing broke live — no service, no data, no config regression. But the proces
 ## e) WHAT WE SHOULD IMPROVE (ranked by leverage)
 
 1. **Make the compatibility rule mechanical.** `apps = { json-viewer = { version; hash; webMajor = 7; }; }` + `assert webMajor == pinnedWebLine` where `pinnedWebLine` is derived from `pkgs.opencloud-production.web.version`. That single assert converts the highest-cost trap in this session (a silently non-loading app) into a build failure. **Highest value remaining item.**
-2. **Monitor the app surface.** One gatus check with a body condition (`"name":"json-viewer"`) makes an apps-path regression page instead of disappearing silently. The fleet doctrine ("every new service MUST be monitored") applies to a new *surface*, not just a new port.
+2. **Monitor the app surface.** One gatus check with a body condition (`"name":"json-viewer"`) makes an apps-path regression page instead of disappearing silently. The fleet doctrine ("every new service MUST be monitored") applies to a new _surface_, not just a new port.
 3. **A `webApps` module option** instead of a hardcoded env string: list of attrs → derivation → env. Then "install Excalidraw" is one entry, and the runbook table is generated truth, not prose.
 4. **Post-deploy leg** in `scripts/post-deploy-check.sh` (manifest 200 for each installed app) — the battery is where every other launch verification lives.
-5. **Track upstream release compatibility in the watch row** — the row exists; consider also naming the *nixpkgs* signal (opencloud-production webVersion) rather than a date, which it already does. Good.
-6. **Session hygiene:** when a concurrent session's unfinished module reddens whole-host eval, record the *assertion text* immediately in the report/queue (I did) and re-check eval before declaring anything "blocked by them" — I re-checked at close and the tree is now green, which changed the deployment story (blocked by pressure, not by eval).
+5. **Track upstream release compatibility in the watch row** — the row exists; consider also naming the _nixpkgs_ signal (opencloud-production webVersion) rather than a date, which it already does. Good.
+6. **Session hygiene:** when a concurrent session's unfinished module reddens whole-host eval, record the _assertion text_ immediately in the report/queue (I did) and re-check eval before declaring anything "blocked by them" — I re-checked at close and the tree is now green, which changed the deployment story (blocked by pressure, not by eval).
 
 ## f) Up to 50 next things (session-scoped, actionable)
 
 **Verify what we built (highest priority)**
+
 1. Fire the deploy in a PSI-calm window (gate: some avg10 < 20 sustained; now 60%).
 2. `GET https://cloud.home.lan/assets/apps/json-viewer/manifest.json` → 200 + `"name":"json-viewer"`.
 3. `GET …/assets/apps/unzip/manifest.json` → 200 + `"name":"web-app-unzip"`.
@@ -117,11 +118,11 @@ Nothing broke live — no service, no data, no config regression. But the proces
 24. When web ≥ 8.1.0: add `excalidraw = { version = "<tag>"; hash = …; webMajor = 8; }` — module change: none.
 25. Evaluate a Nix-packaged Yjs server (upstream image only) — websocket route through the opencloud proxy (`/yjs`, `additional_policies`) and `WEB_OPTION_YJS_SERVER_URL`.
 26. Decide whether collaboration is even wanted LAN-only (single user ⇒ maybe read/write local whiteboards suffice).
-27. If the owner wants Excalidraw *now*: evaluate a deliberate switch to the rolling line (`pkgs.opencloud` 8.1.0) — irreversible-ish (no path back to production until 8.x ships there); decision row, not an agent call.
+27. If the owner wants Excalidraw _now_: evaluate a deliberate switch to the rolling line (`pkgs.opencloud` 8.1.0) — irreversible-ish (no path back to production until 8.x ships there); decision row, not an agent call.
 28. Or: stay on 7.2.4 and check whether the browser extension / desktop app path offers any whiteboard alternative.
 
 **Documentation / queue hygiene**
-29. Note in the runbook that apps are discovered at *startup* (restart required, no live reload).
+29. Note in the runbook that apps are discovered at _startup_ (restart required, no live reload).
 30. Note the fallback FS order (configured path wins over builtin `assets/core|apps`) — explains "app disappeared" symptoms.
 31. Harvest the live-verification steps into the queue (done: paired row landed this report).
 32. Add an entry to `docs/gotchas-archive.md` for the web-7/web-8 app-tag trap (it is an upstream-metadata trap, not a config bug).
@@ -145,7 +146,7 @@ Nothing broke live — no service, no data, no config regression. But the proces
 46. Confirm backups: apps live in the store, but `apps.yaml` (if ever added) lives in `/etc/opencloud` — NOT snapshotted (trap #4 class).
 47. Add the app set to the pilot acceptance checklist (owner-hands items).
 48. Re-check the bundle after any `opencloud-production` bump — nixpkgs bumps `webVersion`, so the installed app set must be re-vetted in the SAME change.
-49. Consider pinning the *web-extensions* repo commit instead of release zips if reproducibility of a tag ever breaks.
+49. Consider pinning the _web-extensions_ repo commit instead of release zips if reproducibility of a tag ever breaks.
 50. Re-read this report's §f after the deploy and tick what actually held.
 
 ## g) Questions I CANNOT answer myself (max 3)

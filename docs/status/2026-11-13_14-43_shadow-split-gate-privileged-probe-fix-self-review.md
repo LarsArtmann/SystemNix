@@ -196,9 +196,9 @@ Nothing destructive, but two honest misses:
 
 ---
 
-*Self-harvest note: §f items 1–15 are direct follow-ups of this report and are
+_Self-harvest note: §f items 1–15 are direct follow-ups of this report and are
 deliberately NOT yet harvested into TODO_LIST.md / domain libraries because
 those surfaces carried a parallel session's in-flight edits at authoring time
 (since landed as `ead3881d0`); harvest is item f.11 itself. This paragraph
 constitutes the "deliberately not harvested because X" record required by the
-TODO-system rules.*
+TODO-system rules._

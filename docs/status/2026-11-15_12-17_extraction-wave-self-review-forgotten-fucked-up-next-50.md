@@ -32,7 +32,7 @@
 
 ## d) TOTALLY FUCKED UP (chronological honesty)
 
-1. **The 2-hour dead watcher** — my storm-drain loop grepped `/proc/pressure/io` for `^io ` — a line that DOES NOT EXIST (the file's lines start `some`/`full`). It slept 60×120s reporting EMPTY readings and never fired: the deploy waited 2 hours on a probe that could never return data. Textbook violation of this repo's own doctrine (an empty read is never evidence; validate one known value through the pipeline first — the rule exists BECAUSE of prior incidents). Worst single failure of the session.
+1. **The 2-hour dead watcher** — my storm-drain loop grepped `/proc/pressure/io` for `^io` — a line that DOES NOT EXIST (the file's lines start `some`/`full`). It slept 60×120s reporting EMPTY readings and never fired: the deploy waited 2 hours on a probe that could never return data. Textbook violation of this repo's own doctrine (an empty read is never evidence; validate one known value through the pipeline first — the rule exists BECAUSE of prior incidents). Worst single failure of the session.
 2. **The jq `-S` phantom-green parity diff** — `diff <(jq -S . a) <(jq -S . b)` under the direnv shell: jq 1.8.2 misparsed `-S` as filter code, both sides came back EMPTY, and diff pronounced the renders "identical". I nearly reported parity success validated by comparing two empty streams — the exact direnv-jq trap this repo's AGENTS.md documents (a THIRD form of it, `-S`, now discovered). Caught it seconds later because the error lines printed after the diff; redid with python. If the task had ended there, the parity gate would have been theater.
 3. **Wrapper write() shipped garbage** — my first `write()` of the new `audiblesync.nix` omitted the ENTIRE `let` block (every helper unbound) AND left a stray `dnsGate = ...;` trailing line outside the attrset. Two eval failures before the file was even structurally valid. Then a repair edit dropped `inherit pkgs;` from `mkSqliteBackupUnit`. Sloppy drafting of a 250-line file from memory instead of assembling bindings first.
 4. **AGENTS.md edit clobbered the `self`-binding bullet** — I used the bullet's first LINE as `old_string` and replaced it with my new bullet, orphaning the rest of the paragraph mid-sentence. Caught immediately, restored both bullets — but the edit was an INSERT done as a REPLACE. Sloppy.
@@ -57,6 +57,7 @@
 ## f) Next-50 (candidates — deliberately NOT auto-queued; awaiting owner triage per this session's report-then-wait instruction)
 
 **Wave close-out (highest value first):**
+
 1. Verify `audiblesync-backup` 02:35 tick from THIS morning: journal Result, `/mnt/pool/backups/audiblesync` contents, Backup Freshness endpoint → tick the existing `[watch]` row (partially-done item b1).
 2. Owner: eyeball dash.home.lan → exactly ONE "AudibleSync" Media tile (the queued watch row; acceptance).
 3. Gatus live state: `AudibleSync health` + `AudibleSync dashboard` green post-switch; confirm no stale audible-named check lingered anywhere.
@@ -68,7 +69,7 @@
 9. audiblesync ROADMAP: add-or-reject "pipeline-in-Go" (in-app weekly scheduler; single-book path already exists as `SyncRunner`) — makes today's silent boundary an explicit decision.
 10. audiblesync: VM-test seam (`nix/vm-test.nix`) to upgrade the eval gate to a boot test (recipe's named seam).
 11. `scripts/` (or nixos-modules collection): parity-render helper script (render units → strip store paths → normalize → diff) codifying today's gate.
-12. SystemNix AGENTS.md memory: `/proc/pressure` field-parse gotcha (`^io ` never matches; lines start `some`/`full`; validate one known value before any wait loop).
+12. SystemNix AGENTS.md memory: `/proc/pressure` field-parse gotcha (`^io` never matches; lines start `some`/`full`; validate one known value before any wait loop).
 13. SystemNix AGENTS.md memory: deploy-flock-holder pre-check + "a waiting holder deploys your committed tree" insight.
 14. crush-config `lessons.md` (cross-project, by commit): deepSeq-on-overridable-derivation stack overflow → force `drvPath` via `hashString` to strip context (eval-gate recipe).
 15. crush-config `lessons.md`: jq `-S` joins the direnv misparse family; python or `env -u DIRENV_DIFF` always.
@@ -118,7 +119,7 @@
 
 ## g) Questions only the owner can answer
 
-1. **`books:0` expectation:** have you actually imported/tracked books in audiblesync.home.lan yet — or is an EMPTY tracker the current intended state? (If you expect your library visible, the Local-files naming-mismatch row is load-bearing and jumps the queue; I can read the DB myself to count rows, but only you know what you *tried* to do in the UI.)
+1. **`books:0` expectation:** have you actually imported/tracked books in audiblesync.home.lan yet — or is an EMPTY tracker the current intended state? (If you expect your library visible, the Local-files naming-mismatch row is load-bearing and jumps the queue; I can read the DB myself to count rows, but only you know what you _tried_ to do in the UI.)
 2. **Tile acceptance + taste:** does ONE "AudibleSync" tile in Media fully settle the dashboard question — or do you want the weekly archive visible again as its own tile (distinct name, Sync & Backup group), or different wording/group for the merged tile?
 3. **Pipeline-in-Go:** do you want the audible-cli shell pipeline (weekly full-library + single-book sync) reimplemented INSIDE the audiblesync Go app (in-app scheduler, one process owns everything; retires the oneshot unit + timer + both shell scripts), or keep the proven shell pipeline as the permanent shape?
 

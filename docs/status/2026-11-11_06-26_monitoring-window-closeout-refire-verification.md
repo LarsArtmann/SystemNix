@@ -48,10 +48,11 @@ All candidates dedup-checked against TODO_LIST — every item this window surfac
 ## g) QUESTIONS FOR THE OWNER
 
 All three live [decision] rows are already in TODO_LIST ending in BLOCKED (appended by the first fire; not duplicated here):
+
 1. GC WARN tier before the /nix 90% page — 85% observability-only, or one threshold?
 2. Chronic-red routing — shared Discord channel, or a quieter "patterns, not pages" channel?
 3. Absence-trip tolerance for absence-tripped gatus checks — accept fail-closed blips, or authorize N-consecutive-failure tolerance?
-Plus the parked time_series_v2 DROP ruling (expires 2026-11-12, tq question 55a39b9a) and the provenance-split rebase ruling.
+   Plus the parked time_series_v2 DROP ruling (expires 2026-11-12, tq question 55a39b9a) and the provenance-split rebase ruling.
 
 ## h) BAND DRIFT
 

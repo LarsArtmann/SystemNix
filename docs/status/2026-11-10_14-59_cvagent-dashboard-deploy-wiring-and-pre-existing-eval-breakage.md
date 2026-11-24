@@ -2,6 +2,7 @@
 
 > **CONTINUATION ADDENDUM (2026-11-10 ~17:4x, same-day second session)** — the §f next-list
 > executed, minus the two owner-gated legs:
+>
 > - **§f.1 DONE** — `services.catalog.cvagent` added (cv.nix imports-position pattern,
 >   unconditional, no `options` read); the derived-DNS warning no longer names cvagent (legacy
 >   24 remain, accepted debt per catalog.nix census). NOTE the §f.1 premise was half-wrong: the

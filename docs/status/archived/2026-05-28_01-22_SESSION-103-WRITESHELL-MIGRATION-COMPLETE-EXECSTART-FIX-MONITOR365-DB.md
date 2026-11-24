@@ -171,7 +171,7 @@
 | ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D.                        |        |                         |
 | 16     | Convert `/data` BTRFS from toplevel to `@data` subvolume                                                                                                        | 30 min | Enables /data snapshots |
 | ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP)                                                          | —      | —                       |
-| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — lib/images.nix (removed in `f5feb77d7`) registry                                                                          | —      | —                       |
+| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — lib/images.nix (removed in `f5feb77d7`) registry                                                   | —      | —                       |
 | ~~19~~ | ~~Standardize on `lib.getExe`~~ **DONE (S105)** — 31 conversions, zero old-style remaining                                                                      | —      | —                       |
 
 ### Tier 4: Nice to Have

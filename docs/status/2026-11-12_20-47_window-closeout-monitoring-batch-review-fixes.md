@@ -57,6 +57,7 @@ All pre-queued by the window's own closeouts and the prior fires; verified still
 ## f) NEXT THINGS (up to 50 — the priority picture; dedup-checked against 3,260 open rows)
 
 **Already queued, highest value first (do NOT re-dispatch — row numbers verified this fire):**
+
 1. Run row 374's post-deploy verify leg — 66 h overdue, cheapest probe in the queue; tick it and ride the pattern-fixture rows (375/376) in the same session.
 2. A1 value-less-emission class gate (3429) as a textfile-emission-lint extension + rendered fixture (06-14 §e.3: one change, not two gates).
 3. A2 SigNoz absence retro (3430) — one ClickHouse query bounds whether the fail-dark path ever fired pre-guard.

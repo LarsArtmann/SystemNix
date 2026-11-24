@@ -52,6 +52,7 @@ Session scope: the continuation session after `docs/status/2026-11-10_19-32_depl
 ## f) NEXT (each with owner — rows marked [row] already exist in the libraries; report-internal items harvested per the TODO-system rule)
 
 **Deployment window / verification**
+
 1. Tomorrow ~03:29 verify timesheets backup landed (marker + backups.prom) [morning checklist, no row needed]
 2. Tomorrow ~03:58 verify invoices backup landed [same]
 3. Tomorrow ~07:02 verify cvagent `/health` 200 after the ~05:58 scan latches; if still degraded, the git warn is the holder → item 4 [row: cvagent battery, TODO_LIST tail]

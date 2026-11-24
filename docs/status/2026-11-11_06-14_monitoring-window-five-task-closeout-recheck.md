@@ -65,6 +65,7 @@ All pre-queued by the window's own closeouts and verified still open at HEAD (no
 The top items are ALREADY QUEUED (verified present; listed for the priority picture — do NOT re-dispatch): post-deploy verify leg (row 374, now 35h overdue); A1 class gate (extend textfile-emission-lint + rendered fixture); A2 absence retro; A3 meta-errors consumer audit; A4 blip watch; fixture legs for the two new patterns; chronic-red SQL promotion to flake check; flap-absorption fleet pass; footer-vs-tick cross-check audit; …087e73f1 disposition note + anchor-check fixes (2 rows + 1 [decision]); time_series_v2 drop [decision]; Discord-receipt glance [blocked:user]; provenance-split rebase ruling [decision].
 
 New from THIS report (the three [decision] rows are already appended to TODO_LIST):
+
 1. Run row 374's verify leg NOW — the premise (gen-997 carries everything) has been true for ~35h; this is the cheapest high-value probe in the queue.
 2. Fold the textfile-emission-lint regex extension into A1's execution scope (see (e).3) — one change, not two gates.
 3. Record the "window handed twice" dedup rule for done-prompt tasks in CONTRIBUTING.md (second runner greps docs/status/ first).
@@ -79,6 +80,7 @@ New from THIS report (the three [decision] rows are already appended to TODO_LIS
 ## g) QUESTIONS FOR THE OWNER
 
 (all three appended to TODO_LIST as [decision] rows ending in BLOCKED:)
+
 1. **GC WARN tier:** do you want an 85% observability-only WARN tier before the /nix 90% page threshold, or is one threshold right?
 2. **Chronic-red routing:** same Discord channel as everything else (current), or a quieter "patterns, not pages" channel for the 15m chronic-red check?
 3. **Absence-trip tolerance:** accept single-sample fail-closed blips on absence-tripped checks (default, doctrine-consistent), or authorize an N-consecutive-failure tolerance as a deliberate deviation?

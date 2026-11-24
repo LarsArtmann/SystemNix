@@ -51,6 +51,7 @@ Session arc since report #1: deep-dive finished + done-bar closed (except screen
 ## f) NEXT THINGS (updated state; ★ = landed/resolved since report #1)
 
 **Deploy chain:**
+
 1. D2: fire `nix run .#deploy` in a PSI-calm window (watcher v2 armed until ~04:35; else owner-timed morning).
 2. Post-deploy: anchor check (newest system-N-link by NUMBER vs `readlink /run/current-system`), pre-reboot-check if rebooting.
 3. Journal close-out: `admin: super admin granted` naming `lars@larsartmann.cloud` + `01M000JA6…` (WHICH-user), owner renders `/admin/`.

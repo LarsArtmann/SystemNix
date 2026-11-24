@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 deed9c84 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Nov 02 22:09:02 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Nov 02 22:09:02 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/3pkkb0m4jqpispsk5dp3y99bx2k5mv5k-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Nov 02 22:09:02 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Nov 03 16:16:26 evo-x2 crm-server[3086371]: time=2026-11-03T16:16:26.811+01:00 level=INFO msg=request method=PATCH path=/rest/opportunities/01M4RESN87N2YNF4YWC400103G status=404 duration=175µs
 Nov 03 16:16:26 evo-x2 cv[2623379]: 2026/11/03 16:16:26 WARN crm sync: update opportunity stage failed opportunity_id=01M4RESN87N2YNF4YWC400103G stage=evaluated error="crm: opportunity not found: update opportunity: HTTP 404: 01M4RESN87N2YNF4YWC400103G"
@@ -30,6 +32,7 @@ Nov 03 16:16:27 evo-x2 clickhouse-server[6370]: 2026.11.03 16:16:27.025616 [ 679
 ```
 
 ## Census
+
 - oom-lines: 3
 - oom kill-pass join: 1 killed process(es) — 1 memcg-attested, 0 unit-joined, 0 unresolved
 - guard-lines (memory-emergency-guard): 2200
@@ -37,6 +40,7 @@ Nov 03 16:16:27 evo-x2 clickhouse-server[6370]: 2026.11.03 16:16:27.025616 [ 679
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 Nov 03 15:52:38 evo-x2 kernel: kswapd0 invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
 Nov 03 15:52:38 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/llama-chat.service,task=llama-server,pid=574425,uid=1000
@@ -44,11 +48,13 @@ Nov 03 15:52:38 evo-x2 kernel: Out of memory: Killed process 574425 (llama-serve
 ```
 
 ## OOM kill-pass join — memcg per killed process (kernel-attested or systemd unit-join, never inferred)
+
 ```
 pid=574425 task=llama-server uid=1000 memcg=/system.slice/llama-chat.service basis=attested
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Nov 02 22:11:00 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
 Nov 02 22:11:30 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -2253,22 +2259,26 @@ Nov 03 16:16:14 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated s
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Nov 02 22:42:18 evo-x2 thermal-pstate-guard-check[650461]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=95C(hi:95/lo:80)
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Nov 02 22:09:02 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/3pkkb0m4jqpispsk5dp3y99bx2k5mv5k-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 02 22:09:02 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/3pkkb0m4jqpispsk5dp3y99bx2k5mv5k-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 02 22:09:02 evo-x2 kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
 Nov 02 22:09:04 evo-x2 kernel: amdgpu 0000:c6:00.0: [drm] Registered 4 planes with drm panic
 ```
+
 ## Remote log tail — ClickHouse death window (signoz_logs.distributed_logs_v2)
 
 Death window per M22: [journal cut -> next boot], epoch-ns UTC. At a watchdog death the local journal loses its final ~30-90s to flush lag; when the OTel->ClickHouse pipeline is alive the remote tail is FRESHER than the journal cut (#36: newest row 5s before the cut), and when the collector died pre-death the pipeline is silently DARK (#37: 4h19m outage).
 Window: 1793718987000000000 -> 1793719085000000000 epoch-ns UTC (2026-11-03 15:16:27 -> 2026-11-03 15:18:05 UTC)
 PIPELINE DARK FOR THIS WINDOW — 0 rows in the window.
 Per M22: ClickHouse absence is NOT evidence of absence — the collector has a fatal-at-startup failure mode that silences the whole log pipeline (proven #37). Cross-check signoz-collector liveness across this boot BEFORE trusting the gap.
+
 ```
 ```

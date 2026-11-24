@@ -9,7 +9,7 @@ Top-N (default 5) processes by **total-vm (`VmSize`)**, emitted as a node_export
 - `node_vm_top_vmsize_bytes{pid,comm}` — per-process VmSize in bytes
 - `node_vm_top_vmsize_hwm_bytes` — max of the top set (single trending line)
 
-**VmSize is RESERVED address space, not RSS.** The metric tracks *reservation pressure* — the exact currency of the oom-kill cascade class (the 2026-11-02 b0d70d73 chromium reservation cascade: balloons grew silently until the swap-exhausted kill pass). First live run on evo-x2 (2026-11-07): three helium tabs + one electron at ~1.45 TiB VmSize each — normal for Chromium-family reservation, but now *visible and trendable*.
+**VmSize is RESERVED address space, not RSS.** The metric tracks _reservation pressure_ — the exact currency of the oom-kill cascade class (the 2026-11-02 b0d70d73 chromium reservation cascade: balloons grew silently until the swap-exhausted kill pass). First live run on evo-x2 (2026-11-07): three helium tabs + one electron at ~1.45 TiB VmSize each — normal for Chromium-family reservation, but now _visible and trendable_.
 
 ## Traps
 

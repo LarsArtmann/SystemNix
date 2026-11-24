@@ -136,6 +136,7 @@ gen-974 deploy-time discrepancy (TODO row "15:46" vs link mtime 16:01:35) — no
 ## f) Up to 50 things to get done next (brainstorm, impact-ordered in groups; most route through HARVEST/ROADMAP, not auto-commitments)
 
 **Upstream CV fix (the real unlock):**
+
 1. Nil-guard/restructure `ChatstoreSessions.HealthCheck` (`sessions_chatstore.go:112`) so a
    never-resolved chatstore cannot SIGSEGV.
 2. Decide degraded semantics: rehydration failure → warn-health + alive (recommended) vs clean exit-1.
@@ -169,14 +170,14 @@ gen-974 deploy-time discrepancy (TODO row "15:46" vs link mtime 16:01:35) — no
 
 **Monitoring/why-nobody-knew:**
 25. Audit why 36 h of crash loop raised no visible alarm (gatus catalog healthPath — was it failing
-    silently? protectedVHost?).
+silently? protectedVHost?).
 26. Add crash-loop detection (NRestarts-delta or unit-failure-rate check) for cv-server.
 27. Check `/health/live` behavior between panics (does it answer pass while degraded?).
 28. Owner-facing impact statement: how long has the CV tile been flapping (Caddy 5xx scan).
 29. Document the "invisible crash loop" recurrence (nsfw → cv) in monitoring docs.
 30. Review remaining pin-audit allowlist rows for the same unverified-rationale pattern.
 31. Hygiene check: does `~/.cache/lockfloat/float-proof-20261102-210359.log` claim runtime
-    verification (it should be vendorHash-only)?
+verification (it should be vendorHash-only)?
 
 **Process/attribution loose ends from this session:**
 32. Reconcile gen-974 deploy time (15:46 TODO-row claim vs 16:01:35 mtime).
@@ -187,16 +188,16 @@ gen-974 deploy-time discrepancy (TODO row "15:46" vs link mtime 16:01:35) — no
 37. Review cv-agent unit/timer impact; open `cvagent.md`.
 38. Decide pin disposition finally (keep-as-stability vs drop-now) — owner may reverse my call.
 39. Lessons candidates for crush-config `references/lessons.md` (via commit, owner): busctl escape
-    phantom-read; timestamp-in-evidence discipline.
+phantom-read; timestamp-in-evidence discipline.
 40. Extend `docs/agents/systemd.md` busctl guidance with the concrete object-path escape trap.
 41. docs-health VERIFY pass over the 7 corrected surfaces after the daemon sweep (claims vs code).
 42. Confirm CHANGELOG/TODO_LIST dirty edits sweep cleanly (no daemon-race fragmentation).
 43. Baseline panic cadence (panics/hour) now, for post-fix comparison.
 44. Watch cv-server across the next reboot (does deed9c84-style boot still loop?).
 45. Consider StartLimit documentation (cv-server currently restarts unboundedly — counter 17+ seen;
-    is that intended?).
+is that intended?).
 46. cv.nix: reconsider ExecStartPre CRM-wait usefulness under the storm class (it logged "starting
-    anyway" paths).
+anyway" paths).
 47. Queue a "[watch] cv-server" stability row linking the evidence report.
 48. ROADMAP: events-store scaling design (chunked queries everywhere, not just rehydration).
 49. ROADMAP: CV store retention as product feature (prune/compact command).

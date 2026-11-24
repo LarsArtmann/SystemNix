@@ -57,6 +57,7 @@
 ## f) NEXT (up to 50 — session-scoped candidates, NOT yet queued except where marked)
 
 **Owner-gated / decisions**
+
 1. Deploy HEAD (green tree, stale running gen) + full post-deploy battery (anchor, §17 sweep, §19, smoke) — freeze-day timing call.
 2. Float-gate policy revisit: 4 fleet inputs broke at daemon-floated revs within 26 h of the gate's retirement (cv, erraudit, health-hub, invoices — all first-hand today) — accept as documented tradeoff, or reinstate a lightweight post-float eval probe / expected-locks for FOD-sensitive inputs.
 3. health-hub input removal: deliberate diet or fixwave collateral? (attribution).
@@ -64,10 +65,10 @@
 5. CHANGELOG dedup once the rollback-deploy session lands their round-3 entry.
 
 **Docs / doctrine (cheap, agent-ready)**
-6. Land the nix-flakes.md lesson: stale lock-node original is inert, never self-repairs; graft recipe via metadata locks object + idempotence check. *(HARVESTED → TODO_LIST + pipeline.md)*
-7. Land the run-3 lesson: rc≠0 + zero error lines = eval throw, tail first. *(same row)*
-8. Land the pin-lift ladder: FOD solo → package solo → surfaces → toplevel last; no green claims pre-proof. *(same row)*
-9. flake-input-pin-audit: lock-node-original coherence assertion + negative-test leg. *(HARVESTED → TODO_LIST + pipeline.md)*
+6. Land the nix-flakes.md lesson: stale lock-node original is inert, never self-repairs; graft recipe via metadata locks object + idempotence check. _(HARVESTED → TODO_LIST + pipeline.md)_
+7. Land the run-3 lesson: rc≠0 + zero error lines = eval throw, tail first. _(same row)_
+8. Land the pin-lift ladder: FOD solo → package solo → surfaces → toplevel last; no green claims pre-proof. _(same row)_
+9. flake-input-pin-audit: lock-node-original coherence assertion + negative-test leg. _(HARVESTED → TODO_LIST + pipeline.md)_
 10. `probe-input-fod` flake app: build one input's go-modules FOD without a full toplevel eval (this session's #1 time-saver had it existed).
 11. Cross-link the templ-wave row (docs/todo/upstream.md:264) with the CV/g-c-s templ-1100 instance from today.
 12. cv.nix entry numbering gap (NINETEENTH → TWENTY-FIRST after my deletion): renumber or annotate the gap.
@@ -87,14 +88,14 @@
 **Hygiene (low priority)**
 23. 30+ stale `result-*` symlinks in repo root (mtimes spread all day): sweep candidate.
 24. My pre-correction report version riding heuristic commit 6a79d3d58 beneath 051e77d9b: acceptable history noise; no rewrite (would violate history-rewrite caution for zero value).
-25. CHANGELOG "31-hour" → "36-hour" one-word fix. *(FIXED in this pass)*
+25. CHANGELOG "31-hour" → "36-hour" one-word fix. _(FIXED in this pass)_
 26. `flake/parts/checks/research-index.nix` foreign dirty file: coordinate with its owner session (not mine).
 27. When CV's lift finally lands: unpin URL → delete row → `nix flake update cv` → toplevel proof — sequence already documented in the row; just execute it then.
 28. Re-run `nix fmt --` on cv.nix after the comment deletion? Deletion only — no format risk (verified pattern); skip.
 29. If the rollback-deploy session publishes their own 14:xx report: cross-link mine ↔ theirs (two independent runs of the same gate are the strongest evidence pair this repo has produced for one pin).
 30. After the next daemon dep-wave: spot-check that NO fleet input regressed to a stale-bake failure mode (today's classes: stale vendorHash bake, mid-refactor import, sqlc mid-wave) — the three failure signatures are now documented; a future negative-test could assert the guard messages stay fail-closed.
 
-*(Items 1–5 + 15 + 23 + 26 need owner input or cross-session coordination; 6–14 + 25 are the agent-ready set — of which 6–9 are harvested now, 25 is fixed, the rest deliberately not harvested pending your triage.)*
+_(Items 1–5 + 15 + 23 + 26 need owner input or cross-session coordination; 6–14 + 25 are the agent-ready set — of which 6–9 are harvested now, 25 is fixed, the rest deliberately not harvested pending your triage.)_
 
 ## g. QUESTIONS (cannot self-answer)
 

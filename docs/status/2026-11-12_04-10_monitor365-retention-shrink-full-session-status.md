@@ -7,14 +7,14 @@ VERIFIED live: cgroup memory breakdown (`memory.stat`: anon 259M / file 3.3G at 
 
 The session started as "why does monitor365 use so much memory" and ended with the entire Apr–Aug backlog era deleted, the DuckDB at its true floor, and the retention machinery actually working:
 
-| Metric | Session start | Now (2026-11-12 04:10) |
-|---|---|---|
-| DB rows | 133,359,860 | **1,443,248** (all recent) |
-| DB file | 39 GB (41.7 GB bytes) | **13 GB** (compact, 1.4M rows) |
-| Deletable backlog rows | 131,932,708 | **0 remaining** (all deleted) |
-| Server cgroup memory | 3.5 GB (94% page cache) | **385 MB** |
-| Nightly retention | silent OOM every fire since ≥Nov 6 | **working** (batched, converged, stderr logged) |
-| Deploy state of the fix | repo-only | **deployed** (overnight deploy carried commit `a0ea1c123`) |
+| Metric                  | Session start                      | Now (2026-11-12 04:10)                                     |
+| ----------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| DB rows                 | 133,359,860                        | **1,443,248** (all recent)                                 |
+| DB file                 | 39 GB (41.7 GB bytes)              | **13 GB** (compact, 1.4M rows)                             |
+| Deletable backlog rows  | 131,932,708                        | **0 remaining** (all deleted)                              |
+| Server cgroup memory    | 3.5 GB (94% page cache)            | **385 MB**                                                 |
+| Nightly retention       | silent OOM every fire since ≥Nov 6 | **working** (batched, converged, stderr logged)            |
+| Deploy state of the fix | repo-only                          | **deployed** (overnight deploy carried commit `a0ea1c123`) |
 
 ## Session arc (what happened, in order)
 
@@ -91,6 +91,7 @@ The session started as "why does monitor365 use so much memory" and ended with t
 ## f) NEXT (up to 50 — brainstorm weight: harvest-marked items are queued now; the rest is ROADMAP fuel)
 
 **Immediate (harvested → queue):**
+
 1. Trash `monitor365.duckdb.pre-shrink` (39G) → ~+28G on the 93% root. Gate satisfied tonight. **[HARVESTED]**
 2. Spot-verify SSO identity heal line + one real UI login on the rebuilt DB. **[HARVESTED]**
 3. Align the gatus buffer-pressure check/threshold to the post-shrink reality (stop the standing red). **[HARVESTED]**

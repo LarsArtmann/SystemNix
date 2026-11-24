@@ -7,18 +7,19 @@ actually landed, what is live, and what never got proven**.
 
 ## Scope — what this report VERIFIED vs did NOT
 
-| Claim | Verified with (command/artifact) | Result |
-|---|---|---|
-| Commit pushed | `git merge-base --is-ancestor 6977c5754 origin/master` | PUSHED |
-| My settings block untouched since | `git log 6977c5754..HEAD -- modules/nixos/services/immich.nix` | one later commit (`e08caa916`, converger CAP_DAC_OVERRIDE — another session, different section); settings block intact |
-| **Deployed** | deployed generation `system-1027` (store path `…26.11.20261119.0bb8272`); grepped the DEPLOYED pre-start script (`/nix/store/kcah156x…/immich-server-pre-start`) heredoc | all four settings present: `"trash":{"days":365}`, `"user":{"deleteDelay":3650}`, `"smtp":{"enabled":true,"from":"immich@larsartmann.cloud","transport":{"host":"127.0.0.1","port":25,"secure":false}`, `"preview":{"progressive":true}`; `progressiveJpeg` count **0** |
-| Stale-key warning dead | `journalctl -u immich-server --since 2026-11-15 \| grep -c "Unknown keys found"` | 9 hits in the 11-15→11-19 pre-deploy window; **0 since 11-19**; 0 on current boot |
-| Relay healthy | `/var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom` | queue 0, over-threshold 0, placeholder 0, scrape-errors 0 |
-| **Relay accepts the immich@ envelope** | non-mutating SMTP probe (EHLO/MAIL FROM `<immich@larsartmann.cloud>`/RCPT TO `<lars@larsartmann.cloud>`/QUIT — no DATA, nothing queued) via the house `/dev/tcp` pattern | `MAIL: 250 2.1.0 Ok`, `RCPT: 250 2.1.5 Ok` |
-| Immich mail attempts since deploy | `journalctl -u immich-server --since 2026-11-19 \| grep -icE "smtp\|mailer\|nodemailer"` | 0 (nothing triggered, nothing failed) |
-| Live environment | `journalctl --list-boots`, `pgrep -f 'nh os\|switch-to-configuration\|bin/deploy'`, deploy logs | boot 0 started 21:13:15 today (previous boot ended 21:12:17); **a deploy is LIVE RIGHT NOW** (PID 2727005, log `2026-11-23_23-59-48.log`, no exit line at authoring time); earlier today 19:19 + 19:35 deploys exited code=3 (quotaboard smoke class — already rowed, not this work) |
+| Claim                                  | Verified with (command/artifact)                                                                                                                                         | Result                                                                                                                                                                                                                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Commit pushed                          | `git merge-base --is-ancestor 6977c5754 origin/master`                                                                                                                   | PUSHED                                                                                                                                                                                                                                                                               |
+| My settings block untouched since      | `git log 6977c5754..HEAD -- modules/nixos/services/immich.nix`                                                                                                           | one later commit (`e08caa916`, converger CAP_DAC_OVERRIDE — another session, different section); settings block intact                                                                                                                                                               |
+| **Deployed**                           | deployed generation `system-1027` (store path `…26.11.20261119.0bb8272`); grepped the DEPLOYED pre-start script (`/nix/store/kcah156x…/immich-server-pre-start`) heredoc | all four settings present: `"trash":{"days":365}`, `"user":{"deleteDelay":3650}`, `"smtp":{"enabled":true,"from":"immich@larsartmann.cloud","transport":{"host":"127.0.0.1","port":25,"secure":false}`, `"preview":{"progressive":true}`; `progressiveJpeg` count **0**              |
+| Stale-key warning dead                 | `journalctl -u immich-server --since 2026-11-15 \| grep -c "Unknown keys found"`                                                                                         | 9 hits in the 11-15→11-19 pre-deploy window; **0 since 11-19**; 0 on current boot                                                                                                                                                                                                    |
+| Relay healthy                          | `/var/lib/prometheus-node-exporter/textfile_collectors/mail-relay.prom`                                                                                                  | queue 0, over-threshold 0, placeholder 0, scrape-errors 0                                                                                                                                                                                                                            |
+| **Relay accepts the immich@ envelope** | non-mutating SMTP probe (EHLO/MAIL FROM `<immich@larsartmann.cloud>`/RCPT TO `<lars@larsartmann.cloud>`/QUIT — no DATA, nothing queued) via the house `/dev/tcp` pattern | `MAIL: 250 2.1.0 Ok`, `RCPT: 250 2.1.5 Ok`                                                                                                                                                                                                                                           |
+| Immich mail attempts since deploy      | `journalctl -u immich-server --since 2026-11-19 \| grep -icE "smtp\|mailer\|nodemailer"`                                                                                 | 0 (nothing triggered, nothing failed)                                                                                                                                                                                                                                                |
+| Live environment                       | `journalctl --list-boots`, `pgrep -f 'nh os\|switch-to-configuration\|bin/deploy'`, deploy logs                                                                          | boot 0 started 21:13:15 today (previous boot ended 21:12:17); **a deploy is LIVE RIGHT NOW** (PID 2727005, log `2026-11-23_23-59-48.log`, no exit line at authoring time); earlier today 19:19 + 19:35 deploys exited code=3 (quotaboard smoke class — already rowed, not this work) |
 
 **NOT verified (and why):**
+
 - **End-to-end delivery through Resend into an inbox** — needs a real DATA send; I did not send mail without consent (probe stayed pre-DATA by design).
 - **Admin UI rendering of the values** — `/api/system-config` is 401-gated; no browser session.
 - **Outcome of the right-now deploy** — still running at authoring time; my pushed work rides it either way (it evaluates the current tree).
@@ -60,16 +61,19 @@ actually landed, what is live, and what never got proven**.
 ## e) WHAT WE SHOULD IMPROVE
 
 **What I forgot (last session):**
+
 - The end-to-end mail verification row should have been queued AT AUTHORING TIME on 11-15 — the self-harvest discipline I applied to status reports applies equally to a change session's own follow-ups. It sat unqueued for a week.
 - I stated "not deployed yet" but didn't say WHO/WHEN deploys — a week passed before anyone looked; the config was inert on disk while the admin UI (if consulted) contradicted it.
 - The admin-UI save-lockout behavior change ("Cannot update configuration while IMMICH_CONFIG_FILE is in use") was buried in runbook prose; it's an experience change the owner would hit without context.
 
 **What could have been done better:**
+
 - The relay-envelope probe takes two minutes and closes the mail claim's weakest link — doing it on 11-15 instead of tonight would have made the 11-15 close-out claim actually answer "is mail live" instead of "is mail configured" (the 2026-09-18 lesson: a close-out must answer the question the item ASKED).
 - The from-address is a hardcoded `larsartmann.cloud` literal — consistent with house patterns (mail-relay's default is too), but it's now the same domain string in 3+ modules with no single source (split-brain seed).
 - I reported the settings eval result but never re-verified the runbook edits rendered correctly in context (I did — minor).
 
 **What we should still improve:**
+
 1. Data-presence legs for declarative app config: a post-deploy battery leg asserting the four values in the rendered `/run/immich/config.json` (the class the 2026-10-21 incident report asked for; immich currently has none for settings).
 2. Single-source the mail domain (`larsartmann.cloud`) the way ports are single-sourced, before another module hardcodes it.
 3. Queue authors' premise-check habit held here (config greps before queueing), but verification CLAIMS in final messages should carry their probe command inline — tonight's report format (scope table with commands) is the standard to keep.
@@ -79,38 +83,39 @@ actually landed, what is live, and what never got proven**.
 The skill guidance says a large N is a brainstorm, not a commitment list. I stopped at **30 grounded items**: every one is either (i) this session's direct follow-up, (ii) a pre-existing queue row I re-verified is still open tonight (pointer, no duplicate), or (iii) a small idea born of something I directly observed. Padding to 50 would mean inventing items with no observation behind them — anti-value.
 
 **HARVESTED NOW (rows landing with this report):**
-1. Immich mail end-to-end delivery proof (DATA send) — relay-accepted ≠ delivered; owner test-email or one consented probe send. *(→ services.md + TODO_LIST now)*
-2. immich@larsartmann.cloud mailbox: wanted or sender-identity-only final? *(same row, decision leg)*
+
+1. Immich mail end-to-end delivery proof (DATA send) — relay-accepted ≠ delivered; owner test-email or one consented probe send. _(→ services.md + TODO_LIST now)_
+2. immich@larsartmann.cloud mailbox: wanted or sender-identity-only final? _(same row, decision leg)_
 
 **EPHEMERAL — act on next interaction, no row:**
 3. Read the RIGHT-NOW deploy's outcome (`/var/log/systemnix-deploys/2026-11-23_23-59-48.log` tail + generation-anchor check) — it carries the pushed master tip; verify `readlink /run/current-system` == newest `system-N-link` per anchor discipline once it exits.
 4. Note tonight's storm tail (1m load 28, 15m 102) resolved itself; if a freeze/PSI row ever cites this window, boot 0 started 21:13:15 (previous boot ended 21:12:17). <!-- fresh:skip: deliberately not harvested - point-in-time storm observation for freeze forensics; freeze rows carry their own boot evidence -->
 
 **ALREADY ROWED — re-verified open tonight (pointers, do not re-add):**
-5. Quotaboard availability contract + deploy-smoke treatment of session-scoped user services *(TODO_LIST 3898, BLOCKED on owner answer)*
-6. Attribute the 19:09/19:19 deploys *(TODO_LIST 3896, BLOCKED on owner answer)* <!-- fresh:skip: represented verbatim at TODO_LIST.md:3896 (BLOCKED on owner answer) -->
-7. Prune-candidates paging policy *(TODO_LIST 3897, BLOCKED on owner answer)*
-8. Reviewfix sessions must stamp Task-Queue-ID footers on fix commits *(TODO_LIST 3895)*
-9. Standing quotaboard :8791 connection-refusal *(TODO_LIST 3894)*
-10. browser-history-agent rejected-visit loop upstream *(TODO_LIST 3893 — 62+ failures, P0 pages)*
-11. project-discovery-daemon OTEL terminal state *(TODO_LIST 3892)* <!-- fresh:skip: represented verbatim at TODO_LIST.md:3892 -->
-12. project-discovery degraded-health gatus leg *(services.md 1264)*
-13. audiblesync progressCmd flip decision *(services.md 1263)* <!-- fresh:skip: represented verbatim at docs/todo/services.md:1263 -->
-14. Undated `library.json` weekly-archive verify (next run 2026-11-29 05:01) *(services.md 1262 — time-boxed, do before Saturday)*
-15. Parked audiblesync lock float deploy *(services.md 1261)*
-16. journal-serve cold-boot SQLITE_BUSY race *(services.md 1260)*
-17. Immich runbook probe-permission matrix *(services.md ~1187)*
-18. Takeout ingest reconcile: state both count semantics *(services.md ~1184)* <!-- fresh:skip: represented at docs/todo/services.md:1204 + TODO_LIST.md:3707 (line pointer in text was stale) -->
-19. Migrate drive-paperless onto `services.immich.apiKeys` *(services.md ~632)*
-20. Catalog 21-subdomain eval warning *(services.md ~380)*
-21. Pocket ID auto-rotation deploy + apply-flip mechanics *(services.md ~389-390)*
-22. Client-secrets consumers ↔ pocket-id cycles (stale-secret class) *(services.md ~1142)*
-23. CI nix-check + VM-test leg cluster *(pipeline.md CI cluster rows: branching-flow SSH 44, nix-check watch 48, compat 49, actionlint 50, RO-PAT 73, selftest carrier 108)* <!-- fresh:skip: represented as the CI cluster in docs/todo/pipeline.md -->
-24. Re-anchor the four dump legs *(services.md ~911)*
-25. tq-agent-pool start in the first sub-30% PSI window *(services.md ~745 — tonight's declining load may be that window; the 15m avg still >30% at 00:07)*
+5. Quotaboard availability contract + deploy-smoke treatment of session-scoped user services _(TODO_LIST 3898, BLOCKED on owner answer)_
+6. Attribute the 19:09/19:19 deploys _(TODO_LIST 3896, BLOCKED on owner answer)_ <!-- fresh:skip: represented verbatim at TODO_LIST.md:3896 (BLOCKED on owner answer) -->
+7. Prune-candidates paging policy _(TODO_LIST 3897, BLOCKED on owner answer)_
+8. Reviewfix sessions must stamp Task-Queue-ID footers on fix commits _(TODO_LIST 3895)_
+9. Standing quotaboard :8791 connection-refusal _(TODO_LIST 3894)_
+10. browser-history-agent rejected-visit loop upstream _(TODO_LIST 3893 — 62+ failures, P0 pages)_
+11. project-discovery-daemon OTEL terminal state _(TODO_LIST 3892)_ <!-- fresh:skip: represented verbatim at TODO_LIST.md:3892 -->
+12. project-discovery degraded-health gatus leg _(services.md 1264)_
+13. audiblesync progressCmd flip decision _(services.md 1263)_ <!-- fresh:skip: represented verbatim at docs/todo/services.md:1263 -->
+14. Undated `library.json` weekly-archive verify (next run 2026-11-29 05:01) _(services.md 1262 — time-boxed, do before Saturday)_
+15. Parked audiblesync lock float deploy _(services.md 1261)_
+16. journal-serve cold-boot SQLITE_BUSY race _(services.md 1260)_
+17. Immich runbook probe-permission matrix _(services.md ~1187)_
+18. Takeout ingest reconcile: state both count semantics _(services.md ~1184)_ <!-- fresh:skip: represented at docs/todo/services.md:1204 + TODO_LIST.md:3707 (line pointer in text was stale) -->
+19. Migrate drive-paperless onto `services.immich.apiKeys` _(services.md ~632)_
+20. Catalog 21-subdomain eval warning _(services.md ~380)_
+21. Pocket ID auto-rotation deploy + apply-flip mechanics _(services.md ~389-390)_
+22. Client-secrets consumers ↔ pocket-id cycles (stale-secret class) _(services.md ~1142)_
+23. CI nix-check + VM-test leg cluster _(pipeline.md CI cluster rows: branching-flow SSH 44, nix-check watch 48, compat 49, actionlint 50, RO-PAT 73, selftest carrier 108)_ <!-- fresh:skip: represented as the CI cluster in docs/todo/pipeline.md -->
+24. Re-anchor the four dump legs _(services.md ~911)_
+25. tq-agent-pool start in the first sub-30% PSI window _(services.md ~745 — tonight's declining load may be that window; the 15m avg still >30% at 00:07)_
 
 **BRAINSTORM — deliberately NOT harvested (with reasons):**
-26. Post-deploy battery leg asserting the four rendered config values — no failing signal exists yet; queue it when a settings regression ever bites (§c4). 
+26. Post-deploy battery leg asserting the four rendered config values — no failing signal exists yet; queue it when a settings regression ever bites (§c4).
 27. DB-era settings audit — file-ownership predates this session; blast radius is not this week's work (§c3).
 28. Runbook semantics notes (deleteDelay=3650 ≈ purge-off; trash-365 snapshot interplay) — sub-5-min doc append; do on sight at the next immich touch (§c5).
 29. Single-source the mail domain literal across mail-relay/immich/pocket-id — real split-brain seed, but a refactor with zero current failure; ROADMAP-grade. <!-- fresh:skip: routed to ROADMAP.md Theme 4 (single-source the mail sender-domain literal, verified 8-module duplication) -->

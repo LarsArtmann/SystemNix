@@ -150,64 +150,64 @@
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT (priority order)
 
-| # | Task | Impact | Effort |
-| - | --- | --- | --- |
-| 1 | Upload the 11 missing corpus files (same archiver run) | 🔴 closes the only corpus gap | S |
-| 2 | Add `--limit-plans` + fix counters to reflect real DB changes | 🟠 prevents false "done" | S |
-| 3 | Populate `bank_sync_tx_url` (URL field) for matched docs; clear it for unlinked | 🟠 clickable Paperless→bank-sync | S |
-| 4 | Remove `bank-sync-unmatched` from docs that are now linked | 🟡 metadata truth | S |
-| 5 | Full converged run: 1,027/1,027 checksums, 0 patches, 0 failures | 🔴 proof | M |
-| 6 | Verify ledger rows via `bank-sync paperless --verify` + `--receipts` | 🔴 proves tx→doc readable by bank-sync | S |
-| 7 | `shellcheck` + fix findings; `nix fmt -- -- scripts/archive-qonto-corpus.sh` | 🟠 build hygiene | S |
-| 8 | `nix eval` the new unit; then `nix run .#deploy` | 🔴 makes heal durable (boot + weekly) | M |
-| 9 | Verify systemd unit run: `systemctl start bank-sync-qonto-corpus`, journal, 0 writes | 🟠 live proof | S |
-| 10 | Add a corpus-completeness check (checksum set equality) as a script mode | 🟠 regression tripwire | M |
-| 11 | Update `docs/todo/services.md` rows 501/884 → done with evidence | 🟡 backlog truth | S |
-| 12 | Update `TODO_LIST.md` queue + prune done rows | 🟡 dispatch truth | S |
-| 13 | Add `CHANGELOG.md` entry for the corpus + linkage | 🟡 history | S |
-| 14 | Correct `docs/services/bank-sync.md` URL-field claim | 🔴 honesty | S |
-| 15 | Retire `bank-sync-qonto-paperless` unit + marker (or document why kept) | 🟠 removes latent no-op trap | S |
-| 16 | Add fixture test for the archiver (Paperless stub) | 🟠 regression safety | L |
-| 17 | Add `--verify-only` mode exiting non-zero on any missing checksum | 🟠 deploy/Gatus gate | M |
-| 18 | Run a converged dry-run and archive the output as evidence | 🟡 audit trail | S |
-| 19 | Decide and handle the 8 unlinked invoices (accept tagged, or link heuristically to a fee line item) | 🟡 completeness semantics | S |
-| 20 | Check whether tech 2023 statements exist outside the export (Qonto web/API) | 🟡 archive ceiling | M |
-| 21 | Archive the Sparkasse/Wise receipt folders (60 files) if in scope | 🟡 owner asked in row 501 | M |
-| 22 | Add a link-out in bank-sync's dashboard (requires upstream commit + push approval) | 🟠 true both-ways UI | M |
-| 23 | Add a Paperless saved view "Qonto transactions" filtering `bank_sync_receipt` | 🟡 usability | S |
-| 24 | Verify `bank_sync_tx_url` renders clickable in the Paperless UI | 🟡 feature proof | S |
-| 25 | Verify downstream auto-tagger does not clobber titles/tags; document the heal behavior | 🟡 stability | S |
-| 26 | Add unit test for matching (date±1, amount, counterparty, least-used, ambiguous) | 🟠 logic safety | M |
-| 27 | Add unit test for invoice total extraction on both layouts | 🟠 logic safety | S |
-| 28 | Add ledger `changes()` assertion to detect ignored inserts | 🟠 silent-failure guard | S |
-| 29 | Move ledger writes to parameterized SQL (or a Go helper) | 🟡 robustness | M |
-| 30 | Log manual runs to the dataDir, not `/tmp` | 🟢 durability | S |
-| 31 | Add `set -o pipefail` audit / shellcheck SC rules for the script | 🟢 hygiene | S |
-| 32 | Verify unit memory cap (1G) under a full run | 🟢 stability | S |
-| 33 | Verify unit failure alerts (`onFailure`) and start limits | 🟢 ops | S |
-| 34 | Add Gatus/post-deploy probe for corpus completeness | 🟠 monitoring | M |
-| 35 | Document the staging re-seed procedure (`--source ~/Downloads/...`) in the runbook | 🟡 recovery | S |
-| 36 | Document the root-owned staging permissions + CAP_DAC_OVERRIDE requirement | 🟡 future deploy | S |
-| 37 | Check for duplicate docs created by the old unit / raw corpus ingest (checksum dedupe covers uploads, but verify) | 🟡 truth | S |
-| 38 | Check statement `created` vs `added` and month-end semantics | 🟢 data quality | S |
-| 39 | Add a `--only` value for "verify" / "converge" | 🟢 ergonomics | S |
-| 40 | Add a summary JSON (`--json`) for agents/post-deploy | 🟢 automation | S |
-| 41 | Re-run the original three-question audit and store it as evidence | 🟡 close-out | S |
-| 42 | Record the background-shell lesson in `docs/CONTRIBUTING.md` / AGENTS | 🟠 prevents repeat | S |
-| 43 | Check `paperless-db-restore` guards against this class (archive lost + ledger claims done) | 🟠 incident class | M |
-| 44 | Add an alert when a ledger checksum is missing from Paperless (bank-sync verify timer) | 🟠 drift detection | M |
-| 45 | Decide whether `qonto-corpus` should be included in restic/offsite backup | 🟡 disaster recovery | S |
-| 46 | Check the 12 unmatched-tag docs one by one | 🟢 data quality | S |
-| 47 | Add explicit `duplicate` handling in the script summary | 🟢 observability | S |
-| 48 | Add per-kind counts to the summary (already partly there; verify) | 🟢 observability | S |
-| 49 | Verify no secret/token leaked into logs/argv (curl uses `-K -`) | 🟠 security | S |
-| 50 | Final full status report after convergence + deploy | 🟡 close-out | S |
+| #  | Task                                                                                                              | Impact                                 | Effort |
+| -- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------ |
+| 1  | Upload the 11 missing corpus files (same archiver run)                                                            | 🔴 closes the only corpus gap          | S      |
+| 2  | Add `--limit-plans` + fix counters to reflect real DB changes                                                     | 🟠 prevents false "done"               | S      |
+| 3  | Populate `bank_sync_tx_url` (URL field) for matched docs; clear it for unlinked                                   | 🟠 clickable Paperless→bank-sync       | S      |
+| 4  | Remove `bank-sync-unmatched` from docs that are now linked                                                        | 🟡 metadata truth                      | S      |
+| 5  | Full converged run: 1,027/1,027 checksums, 0 patches, 0 failures                                                  | 🔴 proof                               | M      |
+| 6  | Verify ledger rows via `bank-sync paperless --verify` + `--receipts`                                              | 🔴 proves tx→doc readable by bank-sync | S      |
+| 7  | `shellcheck` + fix findings; `nix fmt -- -- scripts/archive-qonto-corpus.sh`                                      | 🟠 build hygiene                       | S      |
+| 8  | `nix eval` the new unit; then `nix run .#deploy`                                                                  | 🔴 makes heal durable (boot + weekly)  | M      |
+| 9  | Verify systemd unit run: `systemctl start bank-sync-qonto-corpus`, journal, 0 writes                              | 🟠 live proof                          | S      |
+| 10 | Add a corpus-completeness check (checksum set equality) as a script mode                                          | 🟠 regression tripwire                 | M      |
+| 11 | Update `docs/todo/services.md` rows 501/884 → done with evidence                                                  | 🟡 backlog truth                       | S      |
+| 12 | Update `TODO_LIST.md` queue + prune done rows                                                                     | 🟡 dispatch truth                      | S      |
+| 13 | Add `CHANGELOG.md` entry for the corpus + linkage                                                                 | 🟡 history                             | S      |
+| 14 | Correct `docs/services/bank-sync.md` URL-field claim                                                              | 🔴 honesty                             | S      |
+| 15 | Retire `bank-sync-qonto-paperless` unit + marker (or document why kept)                                           | 🟠 removes latent no-op trap           | S      |
+| 16 | Add fixture test for the archiver (Paperless stub)                                                                | 🟠 regression safety                   | L      |
+| 17 | Add `--verify-only` mode exiting non-zero on any missing checksum                                                 | 🟠 deploy/Gatus gate                   | M      |
+| 18 | Run a converged dry-run and archive the output as evidence                                                        | 🟡 audit trail                         | S      |
+| 19 | Decide and handle the 8 unlinked invoices (accept tagged, or link heuristically to a fee line item)               | 🟡 completeness semantics              | S      |
+| 20 | Check whether tech 2023 statements exist outside the export (Qonto web/API)                                       | 🟡 archive ceiling                     | M      |
+| 21 | Archive the Sparkasse/Wise receipt folders (60 files) if in scope                                                 | 🟡 owner asked in row 501              | M      |
+| 22 | Add a link-out in bank-sync's dashboard (requires upstream commit + push approval)                                | 🟠 true both-ways UI                   | M      |
+| 23 | Add a Paperless saved view "Qonto transactions" filtering `bank_sync_receipt`                                     | 🟡 usability                           | S      |
+| 24 | Verify `bank_sync_tx_url` renders clickable in the Paperless UI                                                   | 🟡 feature proof                       | S      |
+| 25 | Verify downstream auto-tagger does not clobber titles/tags; document the heal behavior                            | 🟡 stability                           | S      |
+| 26 | Add unit test for matching (date±1, amount, counterparty, least-used, ambiguous)                                  | 🟠 logic safety                        | M      |
+| 27 | Add unit test for invoice total extraction on both layouts                                                        | 🟠 logic safety                        | S      |
+| 28 | Add ledger `changes()` assertion to detect ignored inserts                                                        | 🟠 silent-failure guard                | S      |
+| 29 | Move ledger writes to parameterized SQL (or a Go helper)                                                          | 🟡 robustness                          | M      |
+| 30 | Log manual runs to the dataDir, not `/tmp`                                                                        | 🟢 durability                          | S      |
+| 31 | Add `set -o pipefail` audit / shellcheck SC rules for the script                                                  | 🟢 hygiene                             | S      |
+| 32 | Verify unit memory cap (1G) under a full run                                                                      | 🟢 stability                           | S      |
+| 33 | Verify unit failure alerts (`onFailure`) and start limits                                                         | 🟢 ops                                 | S      |
+| 34 | Add Gatus/post-deploy probe for corpus completeness                                                               | 🟠 monitoring                          | M      |
+| 35 | Document the staging re-seed procedure (`--source ~/Downloads/...`) in the runbook                                | 🟡 recovery                            | S      |
+| 36 | Document the root-owned staging permissions + CAP_DAC_OVERRIDE requirement                                        | 🟡 future deploy                       | S      |
+| 37 | Check for duplicate docs created by the old unit / raw corpus ingest (checksum dedupe covers uploads, but verify) | 🟡 truth                               | S      |
+| 38 | Check statement `created` vs `added` and month-end semantics                                                      | 🟢 data quality                        | S      |
+| 39 | Add a `--only` value for "verify" / "converge"                                                                    | 🟢 ergonomics                          | S      |
+| 40 | Add a summary JSON (`--json`) for agents/post-deploy                                                              | 🟢 automation                          | S      |
+| 41 | Re-run the original three-question audit and store it as evidence                                                 | 🟡 close-out                           | S      |
+| 42 | Record the background-shell lesson in `docs/CONTRIBUTING.md` / AGENTS                                             | 🟠 prevents repeat                     | S      |
+| 43 | Check `paperless-db-restore` guards against this class (archive lost + ledger claims done)                        | 🟠 incident class                      | M      |
+| 44 | Add an alert when a ledger checksum is missing from Paperless (bank-sync verify timer)                            | 🟠 drift detection                     | M      |
+| 45 | Decide whether `qonto-corpus` should be included in restic/offsite backup                                         | 🟡 disaster recovery                   | S      |
+| 46 | Check the 12 unmatched-tag docs one by one                                                                        | 🟢 data quality                        | S      |
+| 47 | Add explicit `duplicate` handling in the script summary                                                           | 🟢 observability                       | S      |
+| 48 | Add per-kind counts to the summary (already partly there; verify)                                                 | 🟢 observability                       | S      |
+| 49 | Verify no secret/token leaked into logs/argv (curl uses `-K -`)                                                   | 🟠 security                            | S      |
+| 50 | Final full status report after convergence + deploy                                                               | 🟡 close-out                           | S      |
 
 ---
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
-1. **May I push the upstream bank-sync repository?** The database/Paperless side is complete without it, but a clickable *bank-sync dashboard → Paperless document* link requires a bank-sync template/view-model change, and the deployed binary comes from `git+ssh://…/bank-sync?ref=refs/heads/master`. Without a push (currently forbidden), the reverse UI link cannot go live.
+1. **May I push the upstream bank-sync repository?** The database/Paperless side is complete without it, but a clickable _bank-sync dashboard → Paperless document_ link requires a bank-sync template/view-model change, and the deployed binary comes from `git+ssh://…/bank-sync?ref=refs/heads/master`. Without a push (currently forbidden), the reverse UI link cannot go live.
 2. **Should the old marker-gated `bank-sync-qonto-paperless` unit + `qonto-statements-paperless.done` marker be retired entirely**, or kept as a fallback? The new corpus unit supersedes it; keeping both means two statement uploaders with different convergence semantics.
 3. **Are the Sparkasse/Wise `receipts/` + `reciepts/` folders (~60 non-Qonto files) in scope** for the same archival pass? The queued TODO row said yes; I archived only the Qonto corpus.
 

@@ -10,17 +10,17 @@
 
 1. **The eval blocker that started the whole session is FIXED and BUILT.** The pasted deploy died at §1 because `checks.x86_64-linux.crowdsec-render` still read `services.crowdsec.localConfig.acquisitions`, an option nixpkgs PR #446307 removed (`mkRemovedOptionModule`). `tests/test-crowdsec-render.nix` now reads `crowdsec.settings.acquisitions` with the migration note. Proof: `nix build .#checks.x86_64-linux.crowdsec-render` → rc=0 (the render test's assertion list runs at BUILD, so this is stronger than the eval-only check). `nix flake check --no-build` then reached `all checks passed!`.
 
-2. **Lock floated to TRUE tips — including the `--refresh` discovery that explains the whole wave.** `nix flake update` moved 9 inputs; `nix flake update --refresh` moved 14 more *nodes*. Without `--refresh`, branch-tracked nodes whose parent flake's own `flake.lock` pins a rev are never re-resolved — that is why `templ-components` (master, `938dbd97`, 2026-10-31) survived a "latest" update while origin/master was already at `9a67228a` (2026-11-06). Evidence: `~/.cache/buildwave/update-*.log`, `update-refresh-*.log`.
+2. **Lock floated to TRUE tips — including the `--refresh` discovery that explains the whole wave.** `nix flake update` moved 9 inputs; `nix flake update --refresh` moved 14 more _nodes_. Without `--refresh`, branch-tracked nodes whose parent flake's own `flake.lock` pins a rev are never re-resolved — that is why `templ-components` (master, `938dbd97`, 2026-10-31) survived a "latest" update while origin/master was already at `9a67228a` (2026-11-06). Evidence: `~/.cache/buildwave/update-*.log`, `update-refresh-*.log`.
 
 3. **FOD hash wave: ≈50 distinct hash values across 18 files, every one probe-evidenced.** Three passes, in this order:
    - the 38-row `mismatch-table-0814.tsv` applied repo-wide (`~/.cache/buildwave/apply-hashes.log`: 38 OK, 1 skip = buildflow, 1 skip = a template fakeHash placeholder);
    - a cross-file sweep after the build showed 5 packages declared in BOTH a service module and `lib/lars-packages.nix` (journal, mr-sync, project-discovery-daemon, projects-management-automation, discordsync) — the first-match-only pass had left the second declaration stale;
    - fakeHash FOD probes for packages whose **stale fixed-output path was silently reused** (a fixed-output store path is keyed by the SPECIFIED hash, so an old build short-circuits): `art-dupl` (probed twice, once per rev), `branching-flow`, `tq` (both surfaces), `buildflow`, `quotaboard`, `cv`;
-   - and then six values *reversed* to the pinned-back revs' own values (§a.6). Files: `platforms/common/dns-blocklists.nix`, `lib/lars-packages.nix`, `overlays/linux.nix`, `modules/nixos/services/{_signoz-packages,crm,cv,discordsync,inboxclean,journal-serve,journal-backup,mr-sync,papdashboard,project-discovery-daemon,projects-management-automation,visionreviewd,tq-agent-pool}.nix`, `platforms/nixos/desktop/quickshell.nix`, `flake.nix`.
+   - and then six values _reversed_ to the pinned-back revs' own values (§a.6). Files: `platforms/common/dns-blocklists.nix`, `lib/lars-packages.nix`, `overlays/linux.nix`, `modules/nixos/services/{_signoz-packages,crm,cv,discordsync,inboxclean,journal-serve,journal-backup,mr-sync,papdashboard,project-discovery-daemon,projects-management-automation,visionreviewd,tq-agent-pool}.nix`, `platforms/nixos/desktop/quickshell.nix`, `flake.nix`.
 
 4. **Three consumer-side shims added, each with first-hand probe evidence and a drop condition.**
-   - `buildflow` → `flakePkgShim … "sha256-SRdpoBO+…"` (reverses the 2026-10-28 drop: that drop was evidenced for ce10b79 under the *then* toolchain; the 1d060086 float re-staled it).
-   - `art-dupl` → new `flakePkgShim … "sha256-AFkwR+…"` at fork tip `e36712aa` (19: PROVEN the stale-path trap: "reading …/xo/terminfo/@v/v1.3.0.zip: no such file" is a *reused* FOD, never a download bug).
+   - `buildflow` → `flakePkgShim … "sha256-SRdpoBO+…"` (reverses the 2026-10-28 drop: that drop was evidenced for ce10b79 under the _then_ toolchain; the 1d060086 float re-staled it).
+   - `art-dupl` → new `flakePkgShim … "sha256-AFkwR+…"` at fork tip `e36712aa` (19: PROVEN the stale-path trap: "reading …/xo/terminfo/@v/v1.3.0.zip: no such file" is a _reused_ FOD, never a download bug).
    - `quotaboard` → `package = lib.mkForce (… .overrideAttrs { vendorHash = "sha256-ajV4Osr8…"; })` in `platforms/nixos/desktop/quickshell.nix`, because upstream `61801b1` "chore(deps)" bumped go.mod without refreshing `nix/vendorHash.nix`; without `mkForce` the option collides with the upstream module's own plain definition (caught by eval, fixed before the next build).
 
 5. **The 20-list HaGeZi daily deploy bomb is disarmed.** `platforms/common/dns-blocklists.nix` used a `main`-tracking GitLab URL with per-file pinned hashes — every upstream re-publish re-broke ~20 FODs (the 07:4x deploy died on exactly this: `HaGeZi-hoster-raw` specified `mME4che8`, got `BBE5rsFW`). Now **commit-pinned** at `f8c1f9f8` (mirror HEAD 2026-11-06 02:09) and two independent `nix-prefetch-url` checks confirm the new hashes byte-match the pinned commit (`hoster` → `BBE5rsFW…`, `ultimate` → `QpCn56gx…`). A moving ref with a pinned hash was a self-arming deploy bomb; bump commit+hashes together from now on.
@@ -61,8 +61,8 @@
 1. **Ordering bug — registry regenerated BEFORE the refresh float.** I re-derived `expected-locks.nix` at 08:35, then ran `nix flake update --refresh`, leaving lock≠registry; every eval then threw the float-audit "floated rev X, registry expects Y" wall (exactly what the owner's deploy battery hit in §13/§14/§16/§19 of the earlier paste). Fixed by regenerating again, but the drift window was self-inflicted.
 2. **Four overlapping toplevel builds.** I launched builds and never reaped the previous clients; they queued on the daemon and one looked hung for **1h25m**. I then spent ~20 minutes diagnosing "why is the build stuck" before checking `/proc/<pid>`/children. One build at a time, always.
 3. **Edited files while a build was running — and broke the owner's deploy battery with it.** Their `nix run .#deploy` aborted at the LAST gate with `§11 eval-relevant tree MUTATED during §11 (c0996aa → c0996aa*)`. That mutation was mine. A pre-deploy battery needs a quiescent tree; I treated the tree as mine alone.
-4. **Trusted the parallel session's mismatch table as authority for the current lock.** `mismatch-table-0814.tsv` was extracted from a *different* graph; ~half the 38 hashes I pasted were for revs we then abandoned, which forced a full reversal pass (§a.3 last bullet). The table needs the lock sha it was taken from printed in the file name.
-5. **Hash ping-pong.** I mass-applied "latest" hashes before deciding the latest-vs-pin-back policy; when the pin decision came, six values had to be reversed. The decision should precede the wave: *if tips are internally inconsistent upstream, hashes are a treadmill*.
+4. **Trusted the parallel session's mismatch table as authority for the current lock.** `mismatch-table-0814.tsv` was extracted from a _different_ graph; ~half the 38 hashes I pasted were for revs we then abandoned, which forced a full reversal pass (§a.3 last bullet). The table needs the lock sha it was taken from printed in the file name.
+5. **Hash ping-pong.** I mass-applied "latest" hashes before deciding the latest-vs-pin-back policy; when the pin decision came, six values had to be reversed. The decision should precede the wave: _if tips are internally inconsistent upstream, hashes are a treadmill_.
 6. **Corrupted prose in several edit payloads.** Multiple `edit`/`write` payloads contained garbled words (rendering artifacts on my side). Each was caught by re-reading with `sed -n` afterwards, but it cost cycles and could easily have shipped nonsense into a comment.
 7. **Skipped the parallel-session pre-read.** I read the 06:35 report and not the 08:40 one until the very end — that report documents a parallel executor landing `768ac75bb` (12 files, the same hash wave) and pushing BuildFlow/cv upstream rescues. A 20-second read at session start would have redirected me to the half nobody was covering.
 
@@ -70,7 +70,7 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Decide policy before touching hashes.** The tree's problem was never hashes; it was that ~9 fleet apps' *tips* are mutually inconsistent (templ 0.3.1100 vs pre-regen generated code, plus the `a-h/parse` break). Hash work is only worth doing after that is settled.
+1. **Decide policy before touching hashes.** The tree's problem was never hashes; it was that ~9 fleet apps' _tips_ are mutually inconsistent (templ 0.3.1100 vs pre-regen generated code, plus the `a-h/parse` break). Hash work is only worth doing after that is settled.
 2. **`nix flake update` is not "latest" without `--refresh`.** Branch-tracked transitive nodes are pinned by their parent's `flake.lock`; only `--refresh` re-resolves them. This deserves a line in `docs/agents/nix-flakes.md` and in `AGENTS.md`'s build section.
 3. **Script the FOD sweep against the multi-declaration layout.** Each tool package exists in a service module AND `lib/lars-packages.nix`; a first-match `rg` leaves half of them stale (5/5 did). The sweep should rewrite every declaration of a given hash, not the first.
 4. **Never edit during a build or a deploy battery.** Both are tree-stamped; edits void the verdict and (worse) abort the owner's deploy at the last gate.
@@ -101,20 +101,20 @@
 
 ## Evidence index (quote roots only with these)
 
-| What | Where |
-| --- | --- |
-| crowdsec render check green | `nix build .#checks.x86_64-linux.crowdsec-render` (rc=0, drv `k2malzld5djb7i1a7q979z4zndwwhj7q`) |
-| eval green (x86_64-linux) | `~/.cache/fc/check-071916.log` → `all checks passed!` |
-| first lock float | `~/.cache/buildwave/update-*.log` (9 inputs) |
-| `--refresh` float | `~/.cache/buildwave/update-refresh-*.log` (14 nodes) |
-| hash application pass | `~/.cache/buildwave/apply-hashes.log` (38 OK) |
-| hash→declaration map | `~/.cache/buildwave/hash-map.tsv` |
-| probe evidence (art-dupl/branching-flow/tq) | session drvs `g4i7z32v…`, `hcd2q3pq…`, `wpnqzln1…` |
-| buildflow probe | drv `96c9wjgjp4qkzy1pyii42izy9hl5y40m` |
-| quotaboard probe | drv `7gvsk9ahjlysk3by72lipa04nnr4lgs0` (got `ajV4Osr8…`) |
-| templ A/B proof | `~/projects/library-policy` worktree at `fca47ff` (removed after the test) |
-| hagezi prefetch checks | `nix-prefetch-url … /raw/f8c1f9f8…` → base32 → base64 = `BBE5rsFW…`, `QpCn56gx…` |
-| current proof | `~/.cache/buildwave/proof-102811.log` |
+| What                                        | Where                                                                                            |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| crowdsec render check green                 | `nix build .#checks.x86_64-linux.crowdsec-render` (rc=0, drv `k2malzld5djb7i1a7q979z4zndwwhj7q`) |
+| eval green (x86_64-linux)                   | `~/.cache/fc/check-071916.log` → `all checks passed!`                                            |
+| first lock float                            | `~/.cache/buildwave/update-*.log` (9 inputs)                                                     |
+| `--refresh` float                           | `~/.cache/buildwave/update-refresh-*.log` (14 nodes)                                             |
+| hash application pass                       | `~/.cache/buildwave/apply-hashes.log` (38 OK)                                                    |
+| hash→declaration map                        | `~/.cache/buildwave/hash-map.tsv`                                                                |
+| probe evidence (art-dupl/branching-flow/tq) | session drvs `g4i7z32v…`, `hcd2q3pq…`, `wpnqzln1…`                                               |
+| buildflow probe                             | drv `96c9wjgjp4qkzy1pyii42izy9hl5y40m`                                                           |
+| quotaboard probe                            | drv `7gvsk9ahjlysk3by72lipa04nnr4lgs0` (got `ajV4Osr8…`)                                         |
+| templ A/B proof                             | `~/projects/library-policy` worktree at `fca47ff` (removed after the test)                       |
+| hagezi prefetch checks                      | `nix-prefetch-url … /raw/f8c1f9f8…` → base32 → base64 = `BBE5rsFW…`, `QpCn56gx…`                 |
+| current proof                               | `~/.cache/buildwave/proof-102811.log`                                                            |
 
 ---
 
@@ -132,6 +132,7 @@ The deploy log's own error (`read "…/art-dupl/@v/…zip": stream error: stream
 **Correction to my own §f evidence table:** the row `buildflow probe | drv 96c9wjgjp4qkzy1pyii42izy9hl5y40m` is the receipt for the misattribution — that drv is `a1d0c14`, not the locked `ba3cd98`. A probe's rev receipt is the drv NAME; check it against the lock before pasting.
 
 **Post-fix state (all first-hand):**
+
 - `nix-store -qR <toplevel.drv> | grep -i buildflow` → **one** `buildflow-ba3cd98` (was two).
 - `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` → **EXIT=0**, 0 builder failures (`~/.cache/buildwave/proof-final2-114500.log`, drv `lqfgrh2da6j1wlv2bih8p2gs1s3jdphh`).
 - `nix flake check --no-build --all-systems` → `all checks passed!` (`~/.cache/buildwave/fc-113500.log`).

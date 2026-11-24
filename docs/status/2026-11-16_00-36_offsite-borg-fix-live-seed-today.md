@@ -7,15 +7,15 @@
 
 ## Landing evidence (all probed 00:3x, live)
 
-| Probe | Result |
-| --- | --- |
-| `/etc/systemd/system/borgbackup-job-hetzner.service` ExecStartPre | `/nix/store/bvvc483…-borg-offsite-golive-check` — FLAT, `test -x` YES (the `/bin/` corpse is gone) |
-| §16 legs on the live unit | marker wired ✓, `EnvironmentFile=/run/secrets/rendered/borg-env` ✓, `IOSchedulingClass=best-effort` + `Priority=6` ✓, backups.prom coordination row present ✓ |
-| Smoke battery of the landing deploy | `tripwire binary not executable` occurrences: **0** (was present in every battery since 11-07); PASS 172 / FAIL 6 / SKIP 3 / WARN 17 |
-| Anchor | system-1012-link == `readlink /run/current-system` == `vqi67vah5…-nixos-system-evo-x2-26.11.20261107.f4a03c0` (deploy.sh self-repaired the profile to the running system, standard arc) |
-| Timer | NextElapseUSecRealtime = **2026-11-16 06:30 CET** (persistent) |
-| Journal since 15:00 | no borg entries yet (expected — nothing fires before 06:30) |
-| Flake check on the deployed tree | the 13:52 attempt PASSED check 1 (the storage-collector FOD breakage that blocked the 13:06 attempt was fixed by the foreign arc in between — my 13:46 report's open flake-re-proof item is thereby closed: the deployed tree evals+checks green) |
+| Probe                                                             | Result                                                                                                                                                                                                                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/etc/systemd/system/borgbackup-job-hetzner.service` ExecStartPre | `/nix/store/bvvc483…-borg-offsite-golive-check` — FLAT, `test -x` YES (the `/bin/` corpse is gone)                                                                                                                                                |
+| §16 legs on the live unit                                         | marker wired ✓, `EnvironmentFile=/run/secrets/rendered/borg-env` ✓, `IOSchedulingClass=best-effort` + `Priority=6` ✓, backups.prom coordination row present ✓                                                                                     |
+| Smoke battery of the landing deploy                               | `tripwire binary not executable` occurrences: **0** (was present in every battery since 11-07); PASS 172 / FAIL 6 / SKIP 3 / WARN 17                                                                                                              |
+| Anchor                                                            | system-1012-link == `readlink /run/current-system` == `vqi67vah5…-nixos-system-evo-x2-26.11.20261107.f4a03c0` (deploy.sh self-repaired the profile to the running system, standard arc)                                                           |
+| Timer                                                             | NextElapseUSecRealtime = **2026-11-16 06:30 CET** (persistent)                                                                                                                                                                                    |
+| Journal since 15:00                                               | no borg entries yet (expected — nothing fires before 06:30)                                                                                                                                                                                       |
+| Flake check on the deployed tree                                  | the 13:52 attempt PASSED check 1 (the storage-collector FOD breakage that blocked the 13:06 attempt was fixed by the foreign arc in between — my 13:46 report's open flake-re-proof item is thereby closed: the deployed tree evals+checks green) |
 
 **How it landed (sequencing beat re-firing, exactly per the AGENTS 2026-11-15 doctrine):** I did NOT fire a third deploy. The foreign session's 13:52 holder evaluated the CURRENT tree — which already carried my committed fix (4f687f460) — forced through the entry pressure gate (41% avg10, 102% disk busy, their call), switched, and the battery confirmed the tripwire leg green. My 84-min background watcher caught the exit and verified the landing. Re-firing would have bounced rc=13 on the flock for nothing.
 
@@ -28,22 +28,22 @@
 
 ## a) FULLY DONE (cumulative session, all committed)
 
-| Item | Where |
-| --- | --- |
-| Root cause proven 3 layers deep (unit line, tree eval, journal 203/EXEC ×9 nights) + `getExe`-on-writeShellScript mechanism named | 12:55 report §a |
-| Root fix: `ExecStartPre = "${goliveCheck}"` (flat path) | backup.nix:319, commit 4f687f460 |
-| Eval-time class guard: no-`/bin/` ExecStartPre assert | offsite-borg-positive-render, selftests.nix |
-| **FIX LIVE ON THE HOST** | deployed unit flat+executable since 15:15 Nov 15; tripwire FAIL count 0 in the landing battery |
-| All 5 §16 legs green on the live unit | probed 00:3x (table above) |
-| Anchor discipline | system-1012 == current-system (self-repaired by deploy.sh in the standard arc) |
-| Repo-wide getExe/writeShellScript audit closed (backup.nix was the only misuse) | 12:55 report §e |
-| Wrong-premise queue rows corrected + ticked (both surfaces) | TODO_LIST + pipeline.md (commits 4f687f460/e12b96fbb) |
-| meta.mainProgram hygiene leg resolved (was the same getExe fallback warning) | bundle row updated |
-| Runbook trap paragraph | offsite-borg.md |
-| Three status reports incl. this one | 12:55, 13:46, this file |
-| Watch rows queued AND kept premise-accurate | storage.md:348 + TODO_LIST:3654 (now LANDED) |
-| Self-harvested follow-up rows (fixtures shape, OnFailure/SigNoz audit, services.md twin drift) | TODO_LIST + pipeline/monitoring/services.md (commit fee55fb7a + the 00:3x row fixes, pending sweep) |
-| Verification proofs | tree eval flat, mainProgram warning gone, positive-render build green, smoke fixture 21/21, fmt 0-changed, statix clean |
+| Item                                                                                                                              | Where                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Root cause proven 3 layers deep (unit line, tree eval, journal 203/EXEC ×9 nights) + `getExe`-on-writeShellScript mechanism named | 12:55 report §a                                                                                                         |
+| Root fix: `ExecStartPre = "${goliveCheck}"` (flat path)                                                                           | backup.nix:319, commit 4f687f460                                                                                        |
+| Eval-time class guard: no-`/bin/` ExecStartPre assert                                                                             | offsite-borg-positive-render, selftests.nix                                                                             |
+| **FIX LIVE ON THE HOST**                                                                                                          | deployed unit flat+executable since 15:15 Nov 15; tripwire FAIL count 0 in the landing battery                          |
+| All 5 §16 legs green on the live unit                                                                                             | probed 00:3x (table above)                                                                                              |
+| Anchor discipline                                                                                                                 | system-1012 == current-system (self-repaired by deploy.sh in the standard arc)                                          |
+| Repo-wide getExe/writeShellScript audit closed (backup.nix was the only misuse)                                                   | 12:55 report §e                                                                                                         |
+| Wrong-premise queue rows corrected + ticked (both surfaces)                                                                       | TODO_LIST + pipeline.md (commits 4f687f460/e12b96fbb)                                                                   |
+| meta.mainProgram hygiene leg resolved (was the same getExe fallback warning)                                                      | bundle row updated                                                                                                      |
+| Runbook trap paragraph                                                                                                            | offsite-borg.md                                                                                                         |
+| Three status reports incl. this one                                                                                               | 12:55, 13:46, this file                                                                                                 |
+| Watch rows queued AND kept premise-accurate                                                                                       | storage.md:348 + TODO_LIST:3654 (now LANDED)                                                                            |
+| Self-harvested follow-up rows (fixtures shape, OnFailure/SigNoz audit, services.md twin drift)                                    | TODO_LIST + pipeline/monitoring/services.md (commit fee55fb7a + the 00:3x row fixes, pending sweep)                     |
+| Verification proofs                                                                                                               | tree eval flat, mainProgram warning gone, positive-render build green, smoke fixture 21/21, fmt 0-changed, statix clean |
 
 ## b) PARTIALLY DONE
 
@@ -79,6 +79,7 @@
 ## f) NEXT — what to get done (session-adjacent, ordered)
 
 **Seed day (TODAY):**
+
 1. **06:30 fire watch:** journal `-u borgbackup-job-hetzner` shows the tripwire EXECUTE (first time ever), borg connect to the StorageBox (port-23 known-hosts pin + r2 key validation), then create start. Expect hours-to-days (TimeoutStartSec 2d).
 2. Post-fire: `backup_ever_succeeded{backup="offsite-borg"}` flips 1 only after create+prune+compact — until then it stays 0 (do NOT misread as failure mid-seed; `.last_success` appears at completion).
 3. First-run `borg create --stats` = irreplaceable-set measurement vs ~800 G BX21 trigger (BX11 is 1 TB; seed ~646 G raw, dedup+compress lands lower).

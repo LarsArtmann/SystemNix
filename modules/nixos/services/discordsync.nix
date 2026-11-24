@@ -604,7 +604,7 @@
           ];
           keyFile = provisionedEnvPath;
           owner = cfg.user;
-          group = cfg.group;
+          inherit (cfg) group;
           url = cfg.immich.url;
           restartUnits = [
             "discordsync.service"

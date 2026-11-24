@@ -3,6 +3,7 @@
 **Session reviewed:** 00:53 → 01:43 CET incident response (owner prompt: "how can dnsblockd just be offline"), report authored 08:22-08:30 with overnight live-verification. Companion to `docs/status/2026-11-11_01-15_dnsblockd-startup-wedge-io-storm-status.md` (the incident's close-out). NOTE ON FORMAT: the `brutal-self-review` skill's HTML-at-docs/reviews output was overridden by the owner's explicit instruction (this .md at docs/status, sections a-g); the skill's honesty questions are folded into §d/§e.
 
 **OVERNIGHT RESOLUTION (live-verified 08:24, supersedes the 01:15 report's "no recovery yet"):**
+
 - dnsblockd **self-healed at 03:34:33** — the 03:31:18 start completed all 5 phases with `server_init` **192.7s**, under the then-live 300s gate: the loop broke while fstrim was STILL running (its intensity varies; it ended 04:02:11 after **3h32m**). Ten starts (counter 1-10) had died at the gate before that.
 - The 07:33:56 deploy (gen-998) carried the gate bump — **`TimeoutStartSec=660s` verified live on the deployed unit** — and the 07:46:41 restart ran clean (`server_init` 162.2s). Budget 600s is LIVE, not just committed.
 - Current state: unit active/running, :53 on UDP+TCP both. `system_local_dns_resolves` path restored.
@@ -58,6 +59,7 @@
 ## f) NEXT TASKS (grounded strictly in what this session touched/saw; ~40, impact-ordered)
 
 **Close the loop (this incident's residue):**
+
 1. Reframe the `[ready]` services.md + TODO_LIST deploy row: bump DEPLOYED gen-998 07:33 (`TimeoutStartSec=660s` verified); remaining ask = verify one storm-window start completes under 600s (edit BOTH surfaces, tick discipline).
 2. Append resolution addenda: 01:15 status report + runbook gate section ("counter 8/10" → final ten, recovery 03:34 at 192.7s, fstrim end 04:02 after 3h32m).
 3. Live-probe VRRP once: `dig @192.168.1.53 auth.home.lan` + keepalived `chk_dns` state on both hosts; annotate the 01:15 report's failover claim with the result.

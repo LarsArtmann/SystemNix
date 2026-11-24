@@ -65,6 +65,7 @@ Verification method: all four task closeout reports read in full (`docs/status/t
 ## f) NEXT THINGS (up to 50 — the queue already holds the deep backlog; existing rows cited, not re-minted)
 
 **NEW this pass (appended to TODO_LIST, 2):**
+
 1. Re-stamp README:18 services-table Gatus count (298 → live 302) + widen doc-counts anchor coverage to that row; audit ALL embedded README count surfaces in the same pass (row-742 sibling; Source: this report §d.8).
 2. Re-fire closeout protocol: adopt the existing skeleton/filled report at HEAD (fill + amend that commit) instead of minting a fresh skeleton per fire — artifact-dedup sibling of rows 1469/3606 (Source: this report §d.1–§d.2).
 

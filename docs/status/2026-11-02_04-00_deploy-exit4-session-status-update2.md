@@ -48,14 +48,14 @@ The wave-fix work is complete and self-harvested; the only live gap remains the 
 
 ## f) Things to get done next (updated; harvest state per item)
 
-*Already queued from v1 (self-harvested, daemon-swept in `d0a5e0e51`) — unchanged, re-listed for completeness:*
+_Already queued from v1 (self-harvested, daemon-swept in `d0a5e0e51`) — unchanged, re-listed for completeness:_
 
 1. Deploy the opencloud 9100→9500 fix + full post-deploy verify — `[ready]` (queued).
 2. Investigate nh `os switch` → `stc test` profile trap — `[ready]` (queued).
 3. Soak HM fleet timers (first real ticks) + trash the `.backup` files after green — `[watch]` (queued).
 4. Verify the `notify-failure@<unit>.service.service` double-suffix — `[watch]` (queued).
 
-*New/not-yet-queued:*
+_New/not-yet-queued:_
 
 5. Observe the next site-monitor hourly tick NOW (two hourly boundaries may already have passed silently since the 01:28 fix — if so, pull the timer journal; fold into row 3). — part of row 3, no new row.
 6. Fire the deploy the moment PSI < 20% (57.35 at 04:00 and falling — likely within the hour if the storm's cold-loads settle). — part of row 1.
@@ -73,4 +73,4 @@ The wave-fix work is complete and self-harvested; the only live gap remains the 
 
 ---
 
-*Self-harvest: no NEW queue rows from this update (f1-f4 already queued in `d0a5e0e51`; f5-f11 recorded above as folded/blocked/deliberately-not-harvested).*
+_Self-harvest: no NEW queue rows from this update (f1-f4 already queued in `d0a5e0e51`; f5-f11 recorded above as folded/blocked/deliberately-not-harvested)._

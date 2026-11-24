@@ -10,16 +10,16 @@
 
 **Verified fresh this window (04:46 → 06:42):**
 
-| Claim | Evidence |
-| --- | --- |
-| The box SURVIVED — boot `5819f35d` still up at 06:39 (3 h 23 m; longest since #46) | `uptime`, watch log |
-| Deploy did NOT land: 109 polls, calm_streak never reached 2 (avg10 39–66 %) | `~/.cache/calmgate/watch.log` |
-| cvagent page #3 fired as predicted: 05:53 slot → TERMed at exactly 20 min (06:17:00), 1 G read, AI traffic flowing (180 K in / 524 K out) | journalctl -u cvagent 06:17 lines |
-| **v1 watch script had the freeze-#22 flaw** — no guard-trip recency condition; the guard tripped **83 s before** I checked (06:39) | `last-trip` epoch vs `date +%s` |
-| v2 watch live (adds: trip_age ≥ 3600 s at fire time) | job relaunched 06:41, `bash -n` clean |
-| The 02:07:42Z forensic bundle is GONE (guard rotates /var/tmp; ~50 newer bundles 03:23→06:38, one per ~2.5 min — the surviving boot has tripped zone-6 all night) | `ls /var/tmp` raw |
-| flm-real SIGABRT is 5×, not 2×: 02:50:56, 02:55:10, **03:13:15 (the #48 death minute)**, 03:37:23, 03:55:04 — plus a NEW victim: sway-audio-idle-inhibit SIGABRT 03:12:30 | `coredumpctl list` raw re-run |
-| The 782 MB flm core is now rotated away ("missing") — what survives is the journal stack evidence inside the evidence pulls | same |
+| Claim                                                                                                                                                                     | Evidence                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| The box SURVIVED — boot `5819f35d` still up at 06:39 (3 h 23 m; longest since #46)                                                                                        | `uptime`, watch log                   |
+| Deploy did NOT land: 109 polls, calm_streak never reached 2 (avg10 39–66 %)                                                                                               | `~/.cache/calmgate/watch.log`         |
+| cvagent page #3 fired as predicted: 05:53 slot → TERMed at exactly 20 min (06:17:00), 1 G read, AI traffic flowing (180 K in / 524 K out)                                 | journalctl -u cvagent 06:17 lines     |
+| **v1 watch script had the freeze-#22 flaw** — no guard-trip recency condition; the guard tripped **83 s before** I checked (06:39)                                        | `last-trip` epoch vs `date +%s`       |
+| v2 watch live (adds: trip_age ≥ 3600 s at fire time)                                                                                                                      | job relaunched 06:41, `bash -n` clean |
+| The 02:07:42Z forensic bundle is GONE (guard rotates /var/tmp; ~50 newer bundles 03:23→06:38, one per ~2.5 min — the surviving boot has tripped zone-6 all night)         | `ls /var/tmp` raw                     |
+| flm-real SIGABRT is 5×, not 2×: 02:50:56, 02:55:10, **03:13:15 (the #48 death minute)**, 03:37:23, 03:55:04 — plus a NEW victim: sway-audio-idle-inhibit SIGABRT 03:12:30 | `coredumpctl list` raw re-run         |
+| The 782 MB flm core is now rotated away ("missing") — what survives is the journal stack evidence inside the evidence pulls                                               | same                                  |
 
 **NOT verified (and now partially unverifiable):** per-device split of the #48 boot storm (bundle's `diskstats.txt` rotated before I read it — §d.2); the flm abort REASON (core gone; stack-only attribution remains); darwin toplevel eval (§d.7); contents of the daemon commits that carried my staged files (§d.6).
 
@@ -59,13 +59,13 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Pattern | Fix |
-| --- | --- |
-| Ephemeral forensic bundles read partially | Doctrine line: a triggered bundle must be read WHOLE in the triggering session — it rotates in hours. Optionally: `boot-evidence-pull.sh` should sweep the triggering bundle into the evidence dir at pull time |
+| Pattern                                                       | Fix                                                                                                                                                                                                                    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ephemeral forensic bundles read partially                     | Doctrine line: a triggered bundle must be read WHOLE in the triggering session — it rotates in hours. Optionally: `boot-evidence-pull.sh` should sweep the triggering bundle into the evidence dir at pull time        |
 | Ad-hoc automation with doctrine in my head, not in the script | Every wait/fire loop I author must encode the guard-trip window (the `maintenance-entry-gate` binary EXISTS for this — v2 reimplements its check instead of calling it; productized version should just call the gate) |
-| Cores rot while unanalyzed | When a coredump is incident evidence: extract abort reason + stack summary IMMEDIATELY (one command), or copy the core into the evidence pull |
-| "Assessed minimal" verification hedges | Either verify or mark UNVERIFIED in the report — the hedge phrasing invites the reader to over-trust |
-| Superlatives in ledger rows | Same standing rule as numbers: recompute against the full table before writing "first/shortest/worst since X" |
+| Cores rot while unanalyzed                                    | When a coredump is incident evidence: extract abort reason + stack summary IMMEDIATELY (one command), or copy the core into the evidence pull                                                                          |
+| "Assessed minimal" verification hedges                        | Either verify or mark UNVERIFIED in the report — the hedge phrasing invites the reader to over-trust                                                                                                                   |
+| Superlatives in ledger rows                                   | Same standing rule as numbers: recompute against the full table before writing "first/shortest/worst since X"                                                                                                          |
 
 ## f) NEXT (session-derived; ✘ = already has a queue row)
 
@@ -91,4 +91,4 @@
 
 **Self-harvest compliance:** §f 2–4 landed as queue one-liners + library rows at authoring time; §f 5's row amended with the 5-abort/core-rotated evidence; §f 8–10 recorded here as session-local process notes (fold into their owning rows when touched); §f 11 is owner-gated (§g).
 
-*Then wait for instructions.*
+_Then wait for instructions._

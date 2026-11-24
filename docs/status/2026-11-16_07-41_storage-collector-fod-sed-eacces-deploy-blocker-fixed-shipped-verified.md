@@ -74,7 +74,8 @@
 ## f) Things we should get done next (brainstorm — NOT harvested except where noted; ordered by impact)
 
 **Session-direct, actionable:**
-1. `[blocked:user]` Re-arm the post-crash calm gate (gated AI fleet down since 15:07 yesterday; same boot) — queued to `docs/todo/services.md` this session ✅ *(harvested)*
+
+1. `[blocked:user]` Re-arm the post-crash calm gate (gated AI fleet down since 15:07 yesterday; same boot) — queued to `docs/todo/services.md` this session ✅ _(harvested)_
 2. Decide the REFUSE policy: is "gate refused → fleet down until next boot" acceptable as a terminal state on a long-lived boot, or should a 24h-calm re-poll re-run the gate? → [decision] for owner (§g Q1)
 3. storage-collector upstream: CI leg that realizes its own prepared-source FOD (catches sed-in-readonly + manifest shape pre-push)
 4. Audit the monitor365 family builders (monitor365, monitor365-ui-sdk, collector-utils, wireguard-collector) for the cp-then-sed-without-chmod shape
@@ -120,4 +121,4 @@
 
 ---
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

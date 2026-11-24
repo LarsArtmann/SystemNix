@@ -69,4 +69,5 @@ The qmd iGPU fix (06:42 session) is fully closed out: CHANGELOG, gotchas row, §
 4. **crm templ regen** — the upstream fix is a mechanical `templ generate` + commit + push in ~/projects/crm; it retires the b7f8615 lock rollback. Authorize the push?
 
 ---
-*Evidence: `~/.cache/lockfloat/keepgoing-1118.log` (9-FOD enumeration) + `keepgoing2-1118.log` (warm build, in flight) + deploy logs 08-13/08-50 + the drafts' inline readelf/probe transcripts.*
+
+_Evidence: `~/.cache/lockfloat/keepgoing-1118.log` (9-FOD enumeration) + `keepgoing2-1118.log` (warm build, in flight) + deploy logs 08-13/08-50 + the drafts' inline readelf/probe transcripts._

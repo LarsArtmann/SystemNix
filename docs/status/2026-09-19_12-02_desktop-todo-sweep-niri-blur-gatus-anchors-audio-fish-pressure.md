@@ -41,9 +41,9 @@
 3. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged; restore ONE ghostty vs ZERO). → [docs/todo/desktop.md](docs/todo/desktop.md)
 4. `[blocked:user]` Post-storm niri-session-manager live confirmation (one login/restart cycle, exactly one restore pass, no ghostty pile). → [docs/todo/desktop.md](docs/todo/desktop.md) (post-deploy session-manager verification row)
 5. `[decision]` Signal Desktop backlog (green preset in UI vs SQLCipher seeding script; docs/services/signal.md; verify-or-retract the "appearance syncs to linked devices" claim). → [docs/todo/desktop.md](docs/todo/desktop.md)
-~~6. `[blocked:user]` The live niri gatus replay (above).~~ **NOT-DO — dup of §b.2.**
-7. **Fleet-wide bare-VALUE-0 sweep** — ~20 remaining bare `pat(*metric 0*)` checks outside niri (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5). Scoped OUT of §f23 (which asked for exactly the four sibling checks); already covered by the existing "extend gatus-pattern-lint to ENFORCE anchored value-checks" item in `docs/todo/monitoring.md`. The four niri anchors shrink that future lint's blast radius but don't close it. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-8. No new work started on any other domain (per instructions: report, don't research).
+   ~~6. `[blocked:user]` The live niri gatus replay (above).~~ **NOT-DO — dup of §b.2.**
+6. **Fleet-wide bare-VALUE-0 sweep** — ~20 remaining bare `pat(*metric 0*)` checks outside niri (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5). Scoped OUT of §f23 (which asked for exactly the four sibling checks); already covered by the existing "extend gatus-pattern-lint to ENFORCE anchored value-checks" item in `docs/todo/monitoring.md`. The four niri anchors shrink that future lint's blast radius but don't close it. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+7. No new work started on any other domain (per instructions: report, don't research).
 
 ---
 

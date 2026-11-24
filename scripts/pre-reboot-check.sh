@@ -585,18 +585,18 @@ else
     mirror_trigger_probe
   done
   case "$MIRROR_VERDICT" in
-    ok)
-      pass "mirror path trigger armed ($MIRROR_PATH_UNIT active/waiting — a gen-install outside deploy.sh re-syncs)"
-      ;;
-    deaf)
-      mirror_issue "mirror path trigger is DEAF: $MIRROR_PATH_UNIT sits active/running because $MIRROR_SVC_UNIT is parked active (exited) — systemd removes a path unit's watch while its target is active, so this trigger cannot fire until reboot and every gen-install outside deploy.sh leaves the mirror stale. Deploy the nixos-modules fix (sync service without RemainAfterExit); until then run: systemctl restart $MIRROR_SVC_UNIT after ANY gen-install"
-      ;;
-    busy | transitional)
-      warn "mirror sync still in flight after ${MIRROR_TRIGGER_WAITED}s ($MIRROR_SVC_UNIT $MIRROR_SVC_STATE/$MIRROR_SVC_SUB) — trigger state unsettled and the tree-diff below may read a half-written mirror; re-run once it finishes"
-      ;;
-    *)
-      mirror_issue "mirror path trigger is NOT armed: $MIRROR_PATH_UNIT is ${MIRROR_PATH_STATE:-not loaded}/${MIRROR_PATH_SUB} (expected active/waiting) — a gen-install outside deploy.sh will not re-sync the mirror (systemctl status '$MIRROR_PATH_UNIT')"
-      ;;
+  ok)
+    pass "mirror path trigger armed ($MIRROR_PATH_UNIT active/waiting — a gen-install outside deploy.sh re-syncs)"
+    ;;
+  deaf)
+    mirror_issue "mirror path trigger is DEAF: $MIRROR_PATH_UNIT sits active/running because $MIRROR_SVC_UNIT is parked active (exited) — systemd removes a path unit's watch while its target is active, so this trigger cannot fire until reboot and every gen-install outside deploy.sh leaves the mirror stale. Deploy the nixos-modules fix (sync service without RemainAfterExit); until then run: systemctl restart $MIRROR_SVC_UNIT after ANY gen-install"
+    ;;
+  busy | transitional)
+    warn "mirror sync still in flight after ${MIRROR_TRIGGER_WAITED}s ($MIRROR_SVC_UNIT $MIRROR_SVC_STATE/$MIRROR_SVC_SUB) — trigger state unsettled and the tree-diff below may read a half-written mirror; re-run once it finishes"
+    ;;
+  *)
+    mirror_issue "mirror path trigger is NOT armed: $MIRROR_PATH_UNIT is ${MIRROR_PATH_STATE:-not loaded}/${MIRROR_PATH_SUB} (expected active/waiting) — a gen-install outside deploy.sh will not re-sync the mirror (systemctl status '$MIRROR_PATH_UNIT')"
+    ;;
   esac
   if diff -r -x random-seed -x "System Volume Information" "$BOOT_DIR" "$MIRROR_DIR" >/dev/null 2>&1; then
     pass "mirror tree identical to $BOOT_DIR (per-ESP random-seed excluded)"

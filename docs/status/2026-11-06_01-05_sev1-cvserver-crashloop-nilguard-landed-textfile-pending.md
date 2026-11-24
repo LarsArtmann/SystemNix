@@ -23,16 +23,16 @@
 
 ## Verification matrix
 
-| check | result |
-| --- | --- |
-| Full journal error lines (not truncated paste) | EACCES on crush_events.prom; panic stack names sessions_chatstore.go:112 |
-| Crash-loop unit identification | cv-server.service, counter 15, ~20 min death cycle |
-| Config truth (`sessions_engine`) | unset everywhere — sops.nix:836-891 + both cv modules grep-verified |
-| Open-failure path live tonight | 0 `unusable` journal lines; tracker rehydration 585 ms |
-| Deployed gen-983 collector has the fix | NO — grep of the store script shows mktemp+mv only |
-| CV fix tests | package suite + di suite + `go build ./...` + vet + full pre-commit gates green |
-| SystemNix eval (lock audit) | RED at session start → GREEN after the parallel 00:49 float-register commit |
-| Deploy-needed probe | repo drv dmhrdgi3 ≠ deployed deriver 89ysb14 ⇒ real drift, deploy pending |
+| check                                          | result                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| Full journal error lines (not truncated paste) | EACCES on crush_events.prom; panic stack names sessions_chatstore.go:112        |
+| Crash-loop unit identification                 | cv-server.service, counter 15, ~20 min death cycle                              |
+| Config truth (`sessions_engine`)               | unset everywhere — sops.nix:836-891 + both cv modules grep-verified             |
+| Open-failure path live tonight                 | 0 `unusable` journal lines; tracker rehydration 585 ms                          |
+| Deployed gen-983 collector has the fix         | NO — grep of the store script shows mktemp+mv only                              |
+| CV fix tests                                   | package suite + di suite + `go build ./...` + vet + full pre-commit gates green |
+| SystemNix eval (lock audit)                    | RED at session start → GREEN after the parallel 00:49 float-register commit     |
+| Deploy-needed probe                            | repo drv dmhrdgi3 ≠ deployed deriver 89ysb14 ⇒ real drift, deploy pending       |
 
 ## f) Follow-ups — harvest record
 

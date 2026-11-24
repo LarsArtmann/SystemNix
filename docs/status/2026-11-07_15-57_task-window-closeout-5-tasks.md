@@ -70,6 +70,7 @@ Nothing destroyed or data-lossy this window. Honest defects the closeouts self-r
 Already-standing rows this window re-confirmed as high-value (do NOT re-queue): strict-gate cold-load baseline; durable gate-number ledger; round-9 float-registration completion (eval RED, blocks deploy); hermes embeddings routing; ClickHouse probe; bep systemd-OOM-section + `.raw` companion + `oom-invocations` census; guard-trip lineage capture; collector textfile staleness gauges; MSRV 1.86 compile; monitor365-server containment (owner).
 
 New this session (all appended to TODO_LIST below, dedup-checked):
+
 1. Fix the pre-existing SC2016 in boot-evidence-pull.sh (standalone shellcheck exit 0).
 2. bep selftest/check.nix fixture-existence gate lists BOTH cascade fixtures.
 3. bep known-value unit leg for `bep_ts_delta` (78 s pair, helper-direct).

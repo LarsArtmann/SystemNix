@@ -17,17 +17,17 @@ touched.
 
 ### 1. crm pin: rolled, then lifted (final state: floats on master)
 
-| Step | Evidence |
-| --- | --- |
-| goModules FOD probe at `98cd15c` (latest master at probe time) | green, no override (job 005) |
-| FULL package build at `98cd15c` lock-free | `rc=0`, `kith-crm-98cd15c…` (job 00C) |
-| Pin rolled `9d96dad` → `98cd15c` in `flake.nix` + allowlist row updated | commit `ad8fe3a0d` (daemon-swept) |
-| Owner challenge → pin LIFTED, input now `?ref=refs/heads/master` | `flake.nix` crm block + `lib/flake-input-pin-audit.nix` row removed, commit `865e27458` |
-| Re-lock to current tip `f6ccd43b2fd41888441215219f4d1b3ad682b9ae` | `nix flake lock --update-input crm --refresh` |
-| FULL package build at `f6ccd43` lock-free | `rc=0`, `kith-crm-f6ccd43…` (job 04E) |
-| Build through the SystemNix lock | `rc=0` (job 050) |
-| Service wire-up proof | `nix eval .#nixosConfigurations.evo-x2.config.services.crm-server.package.name` → `kith-crm-f6ccd43b2fd41888441215219f4d1b3ad682b9ae` |
-| Infra follows survived the float | lock node keeps `flake-parts`/`go-nix-helpers` → root arrays, `nixpkgs` → root node, `docs-gates` → crm's own `docs-gates_2` |
+| Step                                                                    | Evidence                                                                                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| goModules FOD probe at `98cd15c` (latest master at probe time)          | green, no override (job 005)                                                                                                          |
+| FULL package build at `98cd15c` lock-free                               | `rc=0`, `kith-crm-98cd15c…` (job 00C)                                                                                                 |
+| Pin rolled `9d96dad` → `98cd15c` in `flake.nix` + allowlist row updated | commit `ad8fe3a0d` (daemon-swept)                                                                                                     |
+| Owner challenge → pin LIFTED, input now `?ref=refs/heads/master`        | `flake.nix` crm block + `lib/flake-input-pin-audit.nix` row removed, commit `865e27458`                                               |
+| Re-lock to current tip `f6ccd43b2fd41888441215219f4d1b3ad682b9ae`       | `nix flake lock --update-input crm --refresh`                                                                                         |
+| FULL package build at `f6ccd43` lock-free                               | `rc=0`, `kith-crm-f6ccd43…` (job 04E)                                                                                                 |
+| Build through the SystemNix lock                                        | `rc=0` (job 050)                                                                                                                      |
+| Service wire-up proof                                                   | `nix eval .#nixosConfigurations.evo-x2.config.services.crm-server.package.name` → `kith-crm-f6ccd43b2fd41888441215219f4d1b3ad682b9ae` |
+| Infra follows survived the float                                        | lock node keeps `flake-parts`/`go-nix-helpers` → root arrays, `nixpkgs` → root node, `docs-gates` → crm's own `docs-gates_2`          |
 
 Rationale recorded in `flake.nix`: the "vendorHash treadmill" that motivated the
 2026-10-14 policy pin is dead — crm's own `vendorHash.nix` bakes the correct hash
@@ -49,16 +49,16 @@ templ-components") was **wrong**:
 
 Upstream fix, pushed as `cc4ed62a` (`ece22b9c..cc4ed62a` on master):
 
-| Input | was | now |
-| --- | --- | --- |
-| templ-components-src | v1.26.0 (pre-regen) | v1.27.0 (v0.3.1100-regenerated) |
-| cqrs-htmx-src | rev `357cdfc` | v4.16.0 |
-| cmdguard-src | v5.0.0 | v5.1.0 |
-| go-output-src | v0.38.5 | v0.38.7 |
-| go-health-src | v0.8.1 | v0.10.0 |
-| go-health-dashboard-src | v0.12.2 | v0.13.2 |
-| go-datastar-src | v0.6.2 | v0.6.3 |
-| go-sse-src | v0.6.2 | v0.7.0 |
+| Input                   | was                 | now                             |
+| ----------------------- | ------------------- | ------------------------------- |
+| templ-components-src    | v1.26.0 (pre-regen) | v1.27.0 (v0.3.1100-regenerated) |
+| cqrs-htmx-src           | rev `357cdfc`       | v4.16.0                         |
+| cmdguard-src            | v5.0.0              | v5.1.0                          |
+| go-output-src           | v0.38.5             | v0.38.7                         |
+| go-health-src           | v0.8.1              | v0.10.0                         |
+| go-health-dashboard-src | v0.12.2             | v0.13.2                         |
+| go-datastar-src         | v0.6.2              | v0.6.3                          |
+| go-sse-src              | v0.6.2              | v0.7.0                          |
 
 - vendorHash re-derived: `sha256-b4OBzRC3EkTKfNUonBLos7d0NXafklDsbDslj7Txh3w=`.
 - Clean-tree `nix build .#default` green (`rc=0`), `go build ./...` + `go vet ./...`
@@ -276,16 +276,16 @@ Stray 95 MB `file-renamer` binary produced by the local `go build` was trashed.
 
 ## Session evidence index
 
-| Artifact | What it proves |
-| --- | --- |
-| `~/.cache/crm-tip-build.log` | crm `98cd15c` full package build rc=0 |
-| `~/.cache/crm-tip-f6ccd43.log` | crm `f6ccd43` full package build rc=0 |
-| `~/.cache/sn-crm-lockbuild.log`, `~/.cache/sn-crm-lock2.log` | crm builds through the SystemNix lock, both revs |
-| `~/.cache/fir-build1.log` … `fir-build5.log` | FIR failure modes → pin alignment → clean green |
-| `~/.cache/fir-build2.log` | stale vendorHash `specified/got` pair before re-derivation |
-| `~/.cache/sn-fir-lockbuild.log` | FIR package green through the SystemNix lock |
-| `~/.cache/fc-pinupdate.log` | `nix flake check --no-build --all-systems` green after the FIR lift |
-| `~/.cache/fc-crm-float.log`, `fc-crm-float2.log` | post-crm-float check, blocked only by `journal-mesh` port 4222 |
+| Artifact                                                     | What it proves                                                      |
+| ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `~/.cache/crm-tip-build.log`                                 | crm `98cd15c` full package build rc=0                               |
+| `~/.cache/crm-tip-f6ccd43.log`                               | crm `f6ccd43` full package build rc=0                               |
+| `~/.cache/sn-crm-lockbuild.log`, `~/.cache/sn-crm-lock2.log` | crm builds through the SystemNix lock, both revs                    |
+| `~/.cache/fir-build1.log` … `fir-build5.log`                 | FIR failure modes → pin alignment → clean green                     |
+| `~/.cache/fir-build2.log`                                    | stale vendorHash `specified/got` pair before re-derivation          |
+| `~/.cache/sn-fir-lockbuild.log`                              | FIR package green through the SystemNix lock                        |
+| `~/.cache/fc-pinupdate.log`                                  | `nix flake check --no-build --all-systems` green after the FIR lift |
+| `~/.cache/fc-crm-float.log`, `fc-crm-float2.log`             | post-crm-float check, blocked only by `journal-mesh` port 4222      |
 
 **Commits (SystemNix):** `ad8fe3a0d` (crm rev 98cd15c + audit row),
 `4613dc841` (FIR lift: flake.nix/lock/audit/docs), `865e27458` (crm float +

@@ -10,20 +10,20 @@
 
 **Verified with fresh commands/artifacts this session:**
 
-| Claim | Evidence |
-| --- | --- |
-| cvagent.service has NEVER completed a cycle | `journalctl -u cvagent.service --since 2026-10-25 \| grep 'systemd\[1\]'` → exactly ONE run ever (2026-11-04 05:56:35–38), zero `done:`/success lines |
-| First (and only) timer fire failed systemic | journal 05:56: `ERROR: every repository scan failed (systemic)`, exit 1, `Failed to start cvagent`, `Triggering OnFailure=` dependencies; root cause on every scan: `exec: "git": executable file not found in $PATH` on `git log -1 --format=%aI` |
-| Timer IS armed and will re-fire | `busctl get-property … cvagent_2etimer … LastTriggerUSec NextElapseUSecRealtime` → last 1793768195179807 (2026-11-04 04:56:35 UTC = 05:56 CET), next 1793854569384405 (2026-11-05 ~05:56 CET) |
+| Claim                                                | Evidence                                                                                                                                                                                                                                                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| cvagent.service has NEVER completed a cycle          | `journalctl -u cvagent.service --since 2026-10-25 \| grep 'systemd\[1\]'` → exactly ONE run ever (2026-11-04 05:56:35–38), zero `done:`/success lines                                                                                                                                                                     |
+| First (and only) timer fire failed systemic          | journal 05:56: `ERROR: every repository scan failed (systemic)`, exit 1, `Failed to start cvagent`, `Triggering OnFailure=` dependencies; root cause on every scan: `exec: "git": executable file not found in $PATH` on `git log -1 --format=%aI`                                                                        |
+| Timer IS armed and will re-fire                      | `busctl get-property … cvagent_2etimer … LastTriggerUSec NextElapseUSecRealtime` → last 1793768195179807 (2026-11-04 04:56:35 UTC = 05:56 CET), next 1793854569384405 (2026-11-05 ~05:56 CET)                                                                                                                             |
 | No cvagent mesh artifacts ever landed in the CV repo | `ls /home/lars/projects/CV/data/cv/` → no `lars_artmann-en-cvagent.patch.json` (only the repo's own curated `*-app-*.patch.json` set); `ls data/projects-v2/` → 4 hand-curated pages (hornbach, rolls-royce, wolt, README); `git -C ~/projects/CV log --since 2026-10-30 -- data/projects-v2 data/cv` → no export commits |
-| The event journal itself works | `~/.local/state/cvagent/cvagent.db` 4.9 MB; during today's failed run the per-scan journal replay counts grew 66→68→70 (failure events ARE recorded; the runbook's "empty-repo failure recording" claim is true) |
-| Root cause | `modules/nixos/services/cvagent.nix:46` read `runtimeInputs = [ cfg.package ]` — unit PATH carries ONLY runtimeInputs; `Environment` sets just `HOME`. Convention check: sibling `github-auto-assign.nix:46-49` lists `pkgs.gh` + `pkgs.coreutils` explicitly |
-| Fix applied + swept | `runtimeInputs = [ cfg.package pkgs.git pkgs.coreutils ]` + why-comment; daemon-swept into commit `024794b75` (10 insertions / 1 deletion, `git show --stat` verified); working tree == HEAD for the module |
-| Fix evals green | `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` → `/nix/store/21qbxf2…-nixos-system-evo-x2-….drv` (EVAL-OK; warnings in output are pre-existing, cvagent-unrelated) |
-| Fix formats canonical | `nix fmt -- modules/nixos/services/cvagent.nix` → "formatted 1 files (0 changed)" |
-| Fix verified at BUILD level, not just config level | built the actual unit script (`nix eval …serviceConfig.ExecStart` → `/nix/store/anvh45…-cvagent-scan-mesh/bin/cvagent-scan-mesh`, `nix build` + `head`) → `export PATH="…cvagent…/bin:…git-2.55.0/bin:…coreutils-9.11/bin:$PATH"` |
-| Deploy correctly REFUSED | live `/proc/pressure/io` → `some avg10=83.03 full avg10=54.48`, `/proc/loadavg` → 95.31 (freeze-#46 storm day, parallel sessions active); tree clean of eval-relevant dirt; flake.nix/lock mtimes 20:20 (>5 min old) — quiescence heat-check FAILS on PSI alone |
-| Docs + queue updated | runbook TRAP + busctl line in `docs/services/cvagent.md`; deploy row on `TODO_LIST.md` + `docs/todo/services.md` (20:44); 3 self-harvest rows queued (20:49, ledger below) |
+| The event journal itself works                       | `~/.local/state/cvagent/cvagent.db` 4.9 MB; during today's failed run the per-scan journal replay counts grew 66→68→70 (failure events ARE recorded; the runbook's "empty-repo failure recording" claim is true)                                                                                                          |
+| Root cause                                           | `modules/nixos/services/cvagent.nix:46` read `runtimeInputs = [ cfg.package ]` — unit PATH carries ONLY runtimeInputs; `Environment` sets just `HOME`. Convention check: sibling `github-auto-assign.nix:46-49` lists `pkgs.gh` + `pkgs.coreutils` explicitly                                                             |
+| Fix applied + swept                                  | `runtimeInputs = [ cfg.package pkgs.git pkgs.coreutils ]` + why-comment; daemon-swept into commit `024794b75` (10 insertions / 1 deletion, `git show --stat` verified); working tree == HEAD for the module                                                                                                               |
+| Fix evals green                                      | `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` → `/nix/store/21qbxf2…-nixos-system-evo-x2-….drv` (EVAL-OK; warnings in output are pre-existing, cvagent-unrelated)                                                                                                                    |
+| Fix formats canonical                                | `nix fmt -- modules/nixos/services/cvagent.nix` → "formatted 1 files (0 changed)"                                                                                                                                                                                                                                         |
+| Fix verified at BUILD level, not just config level   | built the actual unit script (`nix eval …serviceConfig.ExecStart` → `/nix/store/anvh45…-cvagent-scan-mesh/bin/cvagent-scan-mesh`, `nix build` + `head`) → `export PATH="…cvagent…/bin:…git-2.55.0/bin:…coreutils-9.11/bin:$PATH"`                                                                                         |
+| Deploy correctly REFUSED                             | live `/proc/pressure/io` → `some avg10=83.03 full avg10=54.48`, `/proc/loadavg` → 95.31 (freeze-#46 storm day, parallel sessions active); tree clean of eval-relevant dirt; flake.nix/lock mtimes 20:20 (>5 min old) — quiescence heat-check FAILS on PSI alone                                                           |
+| Docs + queue updated                                 | runbook TRAP + busctl line in `docs/services/cvagent.md`; deploy row on `TODO_LIST.md` + `docs/todo/services.md` (20:44); 3 self-harvest rows queued (20:49, ledger below)                                                                                                                                                |
 
 **NOT verified here (and why):**
 
@@ -46,17 +46,17 @@ Answers delivered: (1) it HAS a timer (`cvagent.timer`, daily 05:53 ±10 min jit
 
 ## a) FULLY DONE
 
-| Work | Evidence | Scope |
-| --- | --- | --- |
-| Root-caused the dead unit: unit PATH = `runtimeInputs` only, no `git` | journal 05:56 systemic failure + module line read | `modules/nixos/services/cvagent.nix` |
-| Fixed: `runtimeInputs += pkgs.git + pkgs.coreutils`, why-comment added | commit `024794b75` (daemon-swept, contents verified via `git show --stat`); eval green; fmt canonical (0 changed) | same file |
-| Build-level proof of the fix | built the rendered `cvagent-scan-mesh` script; its `export PATH` line carries cvagent + git-2.55.0 + coreutils-9.11 | store derivation (not yet live) |
-| Runbook trap recorded | `docs/services/cvagent.md:17` — "the unit's PATH carries only `runtimeInputs`" with the 2026-11-04 incident | docs |
-| Runbook agent trigger line added | busctl `StartUnit` alternative next to the `systemctl` line (agent shells ban systemctl) — fixed on sight | docs |
-| Deploy row queued on BOTH surfaces (no drift) | `TODO_LIST.md` + `docs/todo/services.md`, QUIESCENCE-GATED, with post-switch verify ladder | todo surfaces |
-| Timer/timer-state live verification | busctl properties read; "timer exists, fires tomorrow" answered from live state | live system |
-| Event-sourced-vs-AI question answered accurately | journal event growth + unit script (no `--ai`) + FEATURES.md | live system + docs |
-| Code-To-CV-Agent capability inventory delivered | its `FEATURES.md` (audited 2026-11-02): 9 commands, Go rewrite 2026-08-15, event-sourced core, web UI, golden snapshots | read-only |
+| Work                                                                   | Evidence                                                                                                                | Scope                                |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Root-caused the dead unit: unit PATH = `runtimeInputs` only, no `git`  | journal 05:56 systemic failure + module line read                                                                       | `modules/nixos/services/cvagent.nix` |
+| Fixed: `runtimeInputs += pkgs.git + pkgs.coreutils`, why-comment added | commit `024794b75` (daemon-swept, contents verified via `git show --stat`); eval green; fmt canonical (0 changed)       | same file                            |
+| Build-level proof of the fix                                           | built the rendered `cvagent-scan-mesh` script; its `export PATH` line carries cvagent + git-2.55.0 + coreutils-9.11     | store derivation (not yet live)      |
+| Runbook trap recorded                                                  | `docs/services/cvagent.md:17` — "the unit's PATH carries only `runtimeInputs`" with the 2026-11-04 incident             | docs                                 |
+| Runbook agent trigger line added                                       | busctl `StartUnit` alternative next to the `systemctl` line (agent shells ban systemctl) — fixed on sight               | docs                                 |
+| Deploy row queued on BOTH surfaces (no drift)                          | `TODO_LIST.md` + `docs/todo/services.md`, QUIESCENCE-GATED, with post-switch verify ladder                              | todo surfaces                        |
+| Timer/timer-state live verification                                    | busctl properties read; "timer exists, fires tomorrow" answered from live state                                         | live system                          |
+| Event-sourced-vs-AI question answered accurately                       | journal event growth + unit script (no `--ai`) + FEATURES.md                                                            | live system + docs                   |
+| Code-To-CV-Agent capability inventory delivered                        | its `FEATURES.md` (audited 2026-11-02): 9 commands, Go rewrite 2026-08-15, event-sourced core, web UI, golden snapshots | read-only                            |
 
 ## b) PARTIALLY DONE
 
@@ -65,19 +65,19 @@ Answers delivered: (1) it HAS a timer (`cvagent.timer`, daily 05:53 ±10 min jit
    - Missing: a deploy carrying the fix → first verified unit cycle (`done: scanned=6 failed=0`) → mesh artifacts in `~/projects/CV` → PMA commit → `cv-server-content-sync` ship. That final ship leg has NEVER happened for a unit-driven export.
    - Blocker: 2026-11-04 storm (IO PSI some 83%, load 95, freeze #46, SECCOMP crash loops, multiple parallel sessions). Effort to finish once a window opens: **S** (deploy + one busctl start + journal/artifact checks).
 
-2. **External-binary safety net** — git is fixed, but the *class* is open: nothing in the prevention layers catches "unit script shells out to a binary not in runtimeInputs".
+2. **External-binary safety net** — git is fixed, but the _class_ is open: nothing in the prevention layers catches "unit script shells out to a binary not in runtimeInputs".
    - Done: this instance fixed; audit designed (§f item 3, queued).
    - Missing: the eval-time audit itself, the health preflight, the post-deploy §-leg. Effort: **M** total.
 
 ## c) NOT STARTED
 
-| Planned | Why not started | Priority |
-| --- | --- | --- |
-| cvagent §-leg in `scripts/post-deploy-check.sh` (§f 2) | designed this session, queued; needs the fix deployed first to have something green to assert | High |
-| Eval-time `runtimeInputs` coverage audit (§f 3) | new lint class, queued into pipeline.md; nothing written | High |
-| `cvagent health` preflight in the unit script (§f 4) | queued; one-line change after next deploy window | Medium |
-| system-health oneshot-failure metric verification (§f 5) | rides the deploy; never probed | Medium |
-| Everything else already queued fleet-wide | storm day consumed the fleet's capacity (freeze #46 triage, monitor365 SECCOMP loop, tmpfiles mystery) | see TODO_LIST.md |
+| Planned                                                  | Why not started                                                                                        | Priority         |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------- |
+| cvagent §-leg in `scripts/post-deploy-check.sh` (§f 2)   | designed this session, queued; needs the fix deployed first to have something green to assert          | High             |
+| Eval-time `runtimeInputs` coverage audit (§f 3)          | new lint class, queued into pipeline.md; nothing written                                               | High             |
+| `cvagent health` preflight in the unit script (§f 4)     | queued; one-line change after next deploy window                                                       | Medium           |
+| system-health oneshot-failure metric verification (§f 5) | rides the deploy; never probed                                                                         | Medium           |
+| Everything else already queued fleet-wide                | storm day consumed the fleet's capacity (freeze #46 triage, monitor365 SECCOMP loop, tmpfiles mystery) | see TODO_LIST.md |
 
 ## d) TOTALLY FUCKED UP
 
@@ -88,72 +88,72 @@ Answers delivered: (1) it HAS a timer (`cvagent.timer`, daily 05:53 ±10 min jit
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Pattern | Impact | Concrete fix |
-| --- | --- | --- |
-| Integrations adding a TIMER queue no first-fire verification task | cost 3 dead days here (integration 2026-11-01 → first fire 2026-11-04 → failure); ci-watchdog/pim-sync did queue theirs | rule + checklist line in `docs/agents/integration-registry.md`: "timer integration = first-fire verification row queued at integration time" (§f 47) |
-| Verification claims don't name their SURFACE | "cvagent works" (manual CLI) vs "cvagent.service works" (unit) were conflated for 3 days | the AGENTS.md rule exists; extend integration-registry docs with the manual-vs-unit example (§f 48) |
-| Eval-time layer blind spot: PATH coverage of `writeShellApplication` scripts | one systemic prod failure; silently future-recurring for any new external binary | the queued audit (§f 3), negative-tested like its siblings |
-| Runtime layer blind spot: unit never invokes the CLI's own health check | failure surfaced as 6 confusing per-repo errors instead of 1 actionable health line | queued preflight (§f 4) |
-| Oneshot deploys have no post-deploy surface | a deploy that BREAKS a oneshot surfaces only at its next fire + page | queued post-deploy leg (§f 2) |
-| Storm-day discipline worked — keep it | tq gate, quiescence-gated rows, refused deploy all prevented a repeat of freeze #46 | no change; the pattern held |
-| Agent-shell probe discipline worked — mostly | journal `--since` midnight trap and case-sensitive grep both nearly produced false "no runs" reads; both caught in-session by re-querying (empty read is never evidence) | no change; discipline reconfirmed live |
+| Pattern                                                                      | Impact                                                                                                                                                                   | Concrete fix                                                                                                                                         |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Integrations adding a TIMER queue no first-fire verification task            | cost 3 dead days here (integration 2026-11-01 → first fire 2026-11-04 → failure); ci-watchdog/pim-sync did queue theirs                                                  | rule + checklist line in `docs/agents/integration-registry.md`: "timer integration = first-fire verification row queued at integration time" (§f 47) |
+| Verification claims don't name their SURFACE                                 | "cvagent works" (manual CLI) vs "cvagent.service works" (unit) were conflated for 3 days                                                                                 | the AGENTS.md rule exists; extend integration-registry docs with the manual-vs-unit example (§f 48)                                                  |
+| Eval-time layer blind spot: PATH coverage of `writeShellApplication` scripts | one systemic prod failure; silently future-recurring for any new external binary                                                                                         | the queued audit (§f 3), negative-tested like its siblings                                                                                           |
+| Runtime layer blind spot: unit never invokes the CLI's own health check      | failure surfaced as 6 confusing per-repo errors instead of 1 actionable health line                                                                                      | queued preflight (§f 4)                                                                                                                              |
+| Oneshot deploys have no post-deploy surface                                  | a deploy that BREAKS a oneshot surfaces only at its next fire + page                                                                                                     | queued post-deploy leg (§f 2)                                                                                                                        |
+| Storm-day discipline worked — keep it                                        | tq gate, quiescence-gated rows, refused deploy all prevented a repeat of freeze #46                                                                                      | no change; the pattern held                                                                                                                          |
+| Agent-shell probe discipline worked — mostly                                 | journal `--since` midnight trap and case-sensitive grep both nearly produced false "no runs" reads; both caught in-session by re-querying (empty read is never evidence) | no change; discipline reconfirmed live                                                                                                               |
 
 ## f) 50 things to get done next (ranked by impact; disposition-marked)
 
 **HARVESTED-NOW** = queued this session into TODO_LIST.md + domain library. **QUEUED** = already in the queue, listed for completeness, NOT re-harvested. **RIDES-DEPLOY** = verification leg of the already-queued deploy row (deliberately not queued separately — see ledger). **UPSTREAM** = Code-To-CV-Agent repo owns it (its own status reports track these). **ROADMAP** = brainstorm fuel per docs-health routing, recorded here only.
 
-| # | Task | Impact | Effort | Category | Disposition |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Deploy the cvagent PATH fix in the first quiescence window; then busctl-start the unit, verify `done: scanned=6 failed=0`, artifacts land, anchor check by generation NUMBER | Critical | S | Bug | QUEUED (20:44) |
-| 2 | Add cvagent §-leg to `post-deploy-check.sh` (unit result + `done: scanned=` + artifacts) | High | S | Quality | HARVESTED-NOW |
-| 3 | Eval-time audit: writeShellApplication scripts shelling out to binaries not in `runtimeInputs` | High | M | Quality | HARVESTED-NOW |
-| 4 | `cvagent health` preflight before the scan loop in the unit script | Medium | S | Quality | HARVESTED-NOW |
-| 5 | Verify system-health metric flips on cvagent oneshot failure (extraMonitoredServices semantics) | Medium | S | Quality | RIDES-DEPLOY |
-| 6 | After first good cycle: verify the read model replaced today's failure facts (journal 66→70 self-healing proof on the real store) | Medium | S | Quality | RIDES-DEPLOY |
-| 7 | First happy-path E2E: PMA auto-commits the export → `cv-server-content-sync` ships `data/projects-v2/` on next CV deploy | High | S | Verify | RIDES-DEPLOY |
-| 8 | Upstream cvagent: document/wrap the git runtime dependency (verify-before-filing gate first) | Medium | S | Docs | UPSTREAM |
-| 9 | Runbook: agent-shell busctl trigger line | Low | S | Docs | DONE this session |
-| 10 | Journal-growth note in runbook (failure events accumulate; ~5 MB today, bounded growth) | Low | S | Docs | ROADMAP |
-| 11 | Deploy monitor365 tmpfiles `mkBefore` fix + tmpfiles-apply pre/post legs | High | S | Bug | QUEUED |
-| 12 | Determine why `systemd-tmpfiles-setup` didn't re-run on gen-977/978 switches; deploy-pipeline guard | High | M | Bug | QUEUED |
-| 13 | Triage monitor365-user dmesg SECCOMP crash-loop (name the unit, fix filter or drop the dmesg call) | High | S | Bug | QUEUED |
-| 14 | Start tq-agent-pool in the first sub-30% PSI window | Medium | S | Ops | QUEUED |
-| 15 | PMA post-deploy stale-binary standing check (running rev == pinned rev) | High | S | Quality | QUEUED |
-| 16 | OTel localhost:4318 refusals — name the owning unit, check it is up | Medium | S | Bug | QUEUED |
-| 17 | Freeze-#46 residual attribution (diskstats split, hermes-perms-heal convergence, foreign du pid) | Medium | M | Bug | QUEUED |
-| 18 | Stalwart CalDAV authenticated round-trip probe (stale premise row) | Medium | S | Verify | QUEUED |
-| 19 | Deploy the All-Backups-Healthy gatus fix (26 freshness endpoints, in tree) | High | S | Bug | QUEUED |
-| 20 | Audit mkPoolDirUnit owner/mode pairing + eval invariant | Medium | M | Quality | QUEUED |
-| 21 | pim-sync owner-gated flip ladder (sops values, dry-run review, live flip) | High | M | Feature | QUEUED (blocked:user) |
-| 22 | indexer-web post-deploy smoke + ioTier assignment | Medium | S | Quality | QUEUED |
-| 23 | paperless-tasks-collector fixture test (both 2026-10-03 bug classes) | Medium | M | Quality | QUEUED |
-| 24 | buildcache-recovery VM legs: foreign-fs refusal, zombie, concurrency, mutation negative | Medium | M | Quality | QUEUED |
-| 25 | Productize `scripts/fod-probe.sh <input>` + document the flake.lock node-name gotcha | Medium | S | Tooling | QUEUED |
-| 26 | Upstream: commit the uncommitted 2026-11-03 humanize work (9 files were uncommitted at 23:10) | High | S | Hygiene | UPSTREAM |
-| 27 | Upstream: re-propagate the `technologys` fix into exported CV-repo artifacts | Medium | S | Bug | UPSTREAM |
-| 28 | Upstream: fix the "1 repos" pluralization copy bug in web goldens | Low | S | Bug | UPSTREAM |
-| 29 | Upstream: `watch` two-pass E2E spec (FEATURES ⚠️ row) | Low | M | Quality | UPSTREAM |
-| 30 | Upstream: web-UI accessibility audit (axe/vnu pass) | Low | M | Quality | UPSTREAM |
-| 31 | Upstream: hermetic CSS rebuild (`scripts/build-css.sh` not reproducible) | Low | M | Quality | UPSTREAM |
-| 32 | Upstream: CI unblock (Actions billing) | Medium | — | Infra | UPSTREAM (blocked:user) |
-| 33 | Upstream: determinism E2E — two consecutive mesh runs byte-identical | Low | S | Quality | UPSTREAM |
-| 34 | Upstream: AI-extraction path E2E against a mock OpenAI server | Low | M | Quality | UPSTREAM |
-| 35 | Decide the scan repo list (currently 6; the projects tree holds many more) | Medium | — | Decision | ROADMAP (owner, see §g Q2) |
-| 36 | Decide the extraction backend: rule-based vs `--ai` (OpenAI key vs local llama-server) | Medium | — | Decision | ROADMAP (owner, see §g Q1) |
-| 37 | Decide: `cvagent serve` dashboard as an internal vHost/tile (conflicts with daemon-less doctrine) | Low | — | Decision | ROADMAP |
-| 38 | Decide: rev-pin the cvagent input for build-hash stability (the `cv` input precedent) | Low | — | Decision | ROADMAP |
-| 39 | Decide: backup leg for `cvagent.db` or declare it regenerable-by-rescan | Low | — | Decision | ROADMAP |
-| 40 | mesh export diff-preview (review the delta before PMA commits it) | Low | M | Feature | ROADMAP |
-| 41 | Per-oneshot duration metric in system-health (scan runtime visibility) | Low | M | Feature | ROADMAP |
-| 42 | Decide: does the darwin host need cvagent (its repos in the CV narrative?) | Low | — | Decision | ROADMAP |
-| 43 | facts-explorer tile on dash.home.lan (read-only serve behind the auth gateway) | Low | M | Feature | ROADMAP |
-| 44 | Event-journal retention/GC policy (unbounded append per repo) | Low | S | Quality | ROADMAP |
-| 45 | Keyword drift report: mesh patch vs curated base divergence over time | Low | M | Feature | ROADMAP |
-| 46 | Check the 05:53+jitter slot for collisions with other 05:xx timers | Low | S | Verify | ROADMAP |
-| 47 | Integration-registry rule: "timer integration ⇒ first-fire verification row queued at integration time" | High | S | Process | ROADMAP (process change; registry is the right home) |
-| 48 | Integration-registry rule: "manual-run verification ≠ unit verification" with this incident as the example | High | S | Process | ROADMAP (same home) |
-| 49 | Upstream: `cvagent mesh --dry-run` (plan-mode export) | Low | M | Feature | ROADMAP |
-| 50 | Upstream: prove or retire `watch` (FEATURES lists it; no evidence of use) | Low | S | Cleanup | ROADMAP |
+| #  | Task                                                                                                                                                                         | Impact   | Effort | Category | Disposition                                          |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- | ---------------------------------------------------- |
+| 1  | Deploy the cvagent PATH fix in the first quiescence window; then busctl-start the unit, verify `done: scanned=6 failed=0`, artifacts land, anchor check by generation NUMBER | Critical | S      | Bug      | QUEUED (20:44)                                       |
+| 2  | Add cvagent §-leg to `post-deploy-check.sh` (unit result + `done: scanned=` + artifacts)                                                                                     | High     | S      | Quality  | HARVESTED-NOW                                        |
+| 3  | Eval-time audit: writeShellApplication scripts shelling out to binaries not in `runtimeInputs`                                                                               | High     | M      | Quality  | HARVESTED-NOW                                        |
+| 4  | `cvagent health` preflight before the scan loop in the unit script                                                                                                           | Medium   | S      | Quality  | HARVESTED-NOW                                        |
+| 5  | Verify system-health metric flips on cvagent oneshot failure (extraMonitoredServices semantics)                                                                              | Medium   | S      | Quality  | RIDES-DEPLOY                                         |
+| 6  | After first good cycle: verify the read model replaced today's failure facts (journal 66→70 self-healing proof on the real store)                                            | Medium   | S      | Quality  | RIDES-DEPLOY                                         |
+| 7  | First happy-path E2E: PMA auto-commits the export → `cv-server-content-sync` ships `data/projects-v2/` on next CV deploy                                                     | High     | S      | Verify   | RIDES-DEPLOY                                         |
+| 8  | Upstream cvagent: document/wrap the git runtime dependency (verify-before-filing gate first)                                                                                 | Medium   | S      | Docs     | UPSTREAM                                             |
+| 9  | Runbook: agent-shell busctl trigger line                                                                                                                                     | Low      | S      | Docs     | DONE this session                                    |
+| 10 | Journal-growth note in runbook (failure events accumulate; ~5 MB today, bounded growth)                                                                                      | Low      | S      | Docs     | ROADMAP                                              |
+| 11 | Deploy monitor365 tmpfiles `mkBefore` fix + tmpfiles-apply pre/post legs                                                                                                     | High     | S      | Bug      | QUEUED                                               |
+| 12 | Determine why `systemd-tmpfiles-setup` didn't re-run on gen-977/978 switches; deploy-pipeline guard                                                                          | High     | M      | Bug      | QUEUED                                               |
+| 13 | Triage monitor365-user dmesg SECCOMP crash-loop (name the unit, fix filter or drop the dmesg call)                                                                           | High     | S      | Bug      | QUEUED                                               |
+| 14 | Start tq-agent-pool in the first sub-30% PSI window                                                                                                                          | Medium   | S      | Ops      | QUEUED                                               |
+| 15 | PMA post-deploy stale-binary standing check (running rev == pinned rev)                                                                                                      | High     | S      | Quality  | QUEUED                                               |
+| 16 | OTel localhost:4318 refusals — name the owning unit, check it is up                                                                                                          | Medium   | S      | Bug      | QUEUED                                               |
+| 17 | Freeze-#46 residual attribution (diskstats split, hermes-perms-heal convergence, foreign du pid)                                                                             | Medium   | M      | Bug      | QUEUED                                               |
+| 18 | Stalwart CalDAV authenticated round-trip probe (stale premise row)                                                                                                           | Medium   | S      | Verify   | QUEUED                                               |
+| 19 | Deploy the All-Backups-Healthy gatus fix (26 freshness endpoints, in tree)                                                                                                   | High     | S      | Bug      | QUEUED                                               |
+| 20 | Audit mkPoolDirUnit owner/mode pairing + eval invariant                                                                                                                      | Medium   | M      | Quality  | QUEUED                                               |
+| 21 | pim-sync owner-gated flip ladder (sops values, dry-run review, live flip)                                                                                                    | High     | M      | Feature  | QUEUED (blocked:user)                                |
+| 22 | indexer-web post-deploy smoke + ioTier assignment                                                                                                                            | Medium   | S      | Quality  | QUEUED                                               |
+| 23 | paperless-tasks-collector fixture test (both 2026-10-03 bug classes)                                                                                                         | Medium   | M      | Quality  | QUEUED                                               |
+| 24 | buildcache-recovery VM legs: foreign-fs refusal, zombie, concurrency, mutation negative                                                                                      | Medium   | M      | Quality  | QUEUED                                               |
+| 25 | Productize `scripts/fod-probe.sh <input>` + document the flake.lock node-name gotcha                                                                                         | Medium   | S      | Tooling  | QUEUED                                               |
+| 26 | Upstream: commit the uncommitted 2026-11-03 humanize work (9 files were uncommitted at 23:10)                                                                                | High     | S      | Hygiene  | UPSTREAM                                             |
+| 27 | Upstream: re-propagate the `technologys` fix into exported CV-repo artifacts                                                                                                 | Medium   | S      | Bug      | UPSTREAM                                             |
+| 28 | Upstream: fix the "1 repos" pluralization copy bug in web goldens                                                                                                            | Low      | S      | Bug      | UPSTREAM                                             |
+| 29 | Upstream: `watch` two-pass E2E spec (FEATURES ⚠️ row)                                                                                                                         | Low      | M      | Quality  | UPSTREAM                                             |
+| 30 | Upstream: web-UI accessibility audit (axe/vnu pass)                                                                                                                          | Low      | M      | Quality  | UPSTREAM                                             |
+| 31 | Upstream: hermetic CSS rebuild (`scripts/build-css.sh` not reproducible)                                                                                                     | Low      | M      | Quality  | UPSTREAM                                             |
+| 32 | Upstream: CI unblock (Actions billing)                                                                                                                                       | Medium   | —      | Infra    | UPSTREAM (blocked:user)                              |
+| 33 | Upstream: determinism E2E — two consecutive mesh runs byte-identical                                                                                                         | Low      | S      | Quality  | UPSTREAM                                             |
+| 34 | Upstream: AI-extraction path E2E against a mock OpenAI server                                                                                                                | Low      | M      | Quality  | UPSTREAM                                             |
+| 35 | Decide the scan repo list (currently 6; the projects tree holds many more)                                                                                                   | Medium   | —      | Decision | ROADMAP (owner, see §g Q2)                           |
+| 36 | Decide the extraction backend: rule-based vs `--ai` (OpenAI key vs local llama-server)                                                                                       | Medium   | —      | Decision | ROADMAP (owner, see §g Q1)                           |
+| 37 | Decide: `cvagent serve` dashboard as an internal vHost/tile (conflicts with daemon-less doctrine)                                                                            | Low      | —      | Decision | ROADMAP                                              |
+| 38 | Decide: rev-pin the cvagent input for build-hash stability (the `cv` input precedent)                                                                                        | Low      | —      | Decision | ROADMAP                                              |
+| 39 | Decide: backup leg for `cvagent.db` or declare it regenerable-by-rescan                                                                                                      | Low      | —      | Decision | ROADMAP                                              |
+| 40 | mesh export diff-preview (review the delta before PMA commits it)                                                                                                            | Low      | M      | Feature  | ROADMAP                                              |
+| 41 | Per-oneshot duration metric in system-health (scan runtime visibility)                                                                                                       | Low      | M      | Feature  | ROADMAP                                              |
+| 42 | Decide: does the darwin host need cvagent (its repos in the CV narrative?)                                                                                                   | Low      | —      | Decision | ROADMAP                                              |
+| 43 | facts-explorer tile on dash.home.lan (read-only serve behind the auth gateway)                                                                                               | Low      | M      | Feature  | ROADMAP                                              |
+| 44 | Event-journal retention/GC policy (unbounded append per repo)                                                                                                                | Low      | S      | Quality  | ROADMAP                                              |
+| 45 | Keyword drift report: mesh patch vs curated base divergence over time                                                                                                        | Low      | M      | Feature  | ROADMAP                                              |
+| 46 | Check the 05:53+jitter slot for collisions with other 05:xx timers                                                                                                           | Low      | S      | Verify   | ROADMAP                                              |
+| 47 | Integration-registry rule: "timer integration ⇒ first-fire verification row queued at integration time"                                                                      | High     | S      | Process  | ROADMAP (process change; registry is the right home) |
+| 48 | Integration-registry rule: "manual-run verification ≠ unit verification" with this incident as the example                                                                   | High     | S      | Process  | ROADMAP (same home)                                  |
+| 49 | Upstream: `cvagent mesh --dry-run` (plan-mode export)                                                                                                                        | Low      | M      | Feature  | ROADMAP                                              |
+| 50 | Upstream: prove or retire `watch` (FEATURES lists it; no evidence of use)                                                                                                    | Low      | S      | Cleanup  | ROADMAP                                              |
 
 ## Self-harvest ledger (report-authoring obligation)
 
@@ -176,7 +176,7 @@ See the three questions surfaced to the owner at report time: (1) extraction bac
 
 ---
 
-*Then wait for instructions.*
+_Then wait for instructions._
 
 ---
 
@@ -186,17 +186,17 @@ The owner answered §g: (1) AI extraction via zai/GLM-5.3; (2) repo list from `m
 
 **Verified this addendum (fresh commands):**
 
-| Claim | Evidence |
-| --- | --- |
-| Upstream `ai.baseurl` support exists | Code-To-CV-Agent `2b735e5` pushed (config field + defaultsMap + example + `option.WithBaseURL` + `CVAGENT_AI_BASEURL` env mapping test; `go build`/`vet`/tests green, gofmt clean) |
-| `sk-` key-prefix rejection dropped | same rev; test flipped to "accepts non-sk- keys (OpenAI-compatible providers)"; length check retained |
-| Per-call timeout raised 90s→300s | `1484234` pushed, after probe-1 PROVED 90s dies against z.ai (200-commit prompt, `context deadline exceeded`, rule-based fallback caught it: 18 facts, extractor "rule-based") |
-| Concurrent-session overlap handled | another session's tree carried the SAME two lines this feature needed (cli.go plumb + ai.Config.BaseURL field) PLUS unrelated go-atomic-write adoption (T01); attributed, complemented, not duplicated; their work pushed alongside mine in `2b735e5` (daemon commit) |
-| SystemNix lock on `1484234`, FOD green | `nix flake update cvagent` ×2; probe builds `cvagent-2b735e5` AND `cvagent-1484234` (prepared-source + go-modules + package, vendorHash unchanged) |
-| Follow-audit hit fixed | `cvagent.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix"` added (nested deep-copy hit on the lock move); follow-up eval clean |
-| sops key wired without owner action | `cvagent_ai_api_key` = hermes.yaml `glm_api_key` (second consumer, renamer precedent), guarded `svcEnabled "cvagent"`, owner primaryUser; `cvagent-env` template renders `OPENAI_API_KEY` (not CVAGENT_-prefixed → env trap does not apply) |
-| Module wave evals green | aiEnable/aiModel/aiBaseUrl options (glm-5.3-flash @ z.ai coding endpoint — fleet-verified triple, sops.nix cv-agent 2026-11-02); `--config` + `--ai` in the scan loop; 24 repos (meta importance ≥80, owner directive; templates/forks/CV-target excluded); `TimeoutStartSec` 20min; EVAL-OK ×3 |
-| Probe-1 fallback path PROVEN live | /home/lars/.cache/cvagent/probe-ai.sh (throwaway db): AI timeout → automatic rule-based fallback — the unit can never hard-fail on AI errors alone |
-| Probe-2 (300s) | PENDING at addendum time — result decides: AI facts land (extractor "ai") or the endpoint rejects (escalate to owner with evidence; aiEnable flip is one line) |
+| Claim                                  | Evidence                                                                                                                                                                                                                                                                                        |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upstream `ai.baseurl` support exists   | Code-To-CV-Agent `2b735e5` pushed (config field + defaultsMap + example + `option.WithBaseURL` + `CVAGENT_AI_BASEURL` env mapping test; `go build`/`vet`/tests green, gofmt clean)                                                                                                              |
+| `sk-` key-prefix rejection dropped     | same rev; test flipped to "accepts non-sk- keys (OpenAI-compatible providers)"; length check retained                                                                                                                                                                                           |
+| Per-call timeout raised 90s→300s       | `1484234` pushed, after probe-1 PROVED 90s dies against z.ai (200-commit prompt, `context deadline exceeded`, rule-based fallback caught it: 18 facts, extractor "rule-based")                                                                                                                  |
+| Concurrent-session overlap handled     | another session's tree carried the SAME two lines this feature needed (cli.go plumb + ai.Config.BaseURL field) PLUS unrelated go-atomic-write adoption (T01); attributed, complemented, not duplicated; their work pushed alongside mine in `2b735e5` (daemon commit)                           |
+| SystemNix lock on `1484234`, FOD green | `nix flake update cvagent` ×2; probe builds `cvagent-2b735e5` AND `cvagent-1484234` (prepared-source + go-modules + package, vendorHash unchanged)                                                                                                                                              |
+| Follow-audit hit fixed                 | `cvagent.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix"` added (nested deep-copy hit on the lock move); follow-up eval clean                                                                                                                                                  |
+| sops key wired without owner action    | `cvagent_ai_api_key` = hermes.yaml `glm_api_key` (second consumer, renamer precedent), guarded `svcEnabled "cvagent"`, owner primaryUser; `cvagent-env` template renders `OPENAI_API_KEY` (not CVAGENT_-prefixed → env trap does not apply)                                                     |
+| Module wave evals green                | aiEnable/aiModel/aiBaseUrl options (glm-5.3-flash @ z.ai coding endpoint — fleet-verified triple, sops.nix cv-agent 2026-11-02); `--config` + `--ai` in the scan loop; 24 repos (meta importance ≥80, owner directive; templates/forks/CV-target excluded); `TimeoutStartSec` 20min; EVAL-OK ×3 |
+| Probe-1 fallback path PROVEN live      | /home/lars/.cache/cvagent/probe-ai.sh (throwaway db): AI timeout → automatic rule-based fallback — the unit can never hard-fail on AI errors alone                                                                                                                                              |
+| Probe-2 (300s)                         | PENDING at addendum time — result decides: AI facts land (extractor "ai") or the endpoint rejects (escalate to owner with evidence; aiEnable flip is one line)                                                                                                                                  |
 
 **Still open (unchanged)**: deploy + battery (§f row 1 ladder, now including the facts extractor-mix check and `sudo -n busctl … ss` trigger per the polkit note another session added to the runbook); the technologys-typo export propagation (§f 27, upstream); post-deploy §-leg + eval audit + health preflight (§f 2–4, harvested at 20:49).

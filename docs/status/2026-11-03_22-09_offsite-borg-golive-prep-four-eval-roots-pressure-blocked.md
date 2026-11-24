@@ -57,6 +57,7 @@
 ## f) What we should get done next (this workstream + session-learned)
 
 **Immediate go-live chain (owner-gated steps marked 🧑):**
+
 1. 🧑 Paste the r2 pubkey into StorageBox → SSH Keys (auth probe still `Permission denied`).
 2. 🧑 Let the ghostty I/O storm drain (PSI avg10 < 20%) — or explicitly order `DEPLOY_FORCE_PRESSURE=1` (not recommended: freeze-precursor class).
 3. Pre-flight exclude reconcile: diff `ls /data` (+ `/home` top-levels) against the 27 exclude patterns in `backup.nix`; decide `gcs-staging` (24 G) explicitly. 🧑 for the decision.

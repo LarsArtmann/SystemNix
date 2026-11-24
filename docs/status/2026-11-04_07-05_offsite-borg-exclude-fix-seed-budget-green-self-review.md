@@ -6,14 +6,14 @@
 
 ## Live state at authoring
 
-| What | State |
-| --- | --- |
-| Deploy watcher | **ARMED** (background job 04D, 06:57): 300s PSI polls, max 6 h → expires silently ~12:57 if the storm never drains |
-| io PSI some avg10 | 96–97% at arm — storm unbroken since ≥04:46 (prior session) |
-| Seed budget | **GREEN**: ~692 G raw vs 1006 GB box free, under the ~800 G BX21 trigger |
-| Eval gate | `nix flake check --no-build` **passed** ~06:52 (on the tree as of then; parallel session edits since — watcher re-probes at trigger) |
-| Auth to box | key-only rc=0 (prior session, unchanged; not re-probed this session) |
-| Parallel session | ACTIVE — `catalog-platform.nix`, `opencloud.md`, `FEATURES.md`, `docs/todo/services.md` edited concurrently; two live `crush -y` processes on the box |
+| What              | State                                                                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy watcher    | **ARMED** (background job 04D, 06:57): 300s PSI polls, max 6 h → expires silently ~12:57 if the storm never drains                                    |
+| io PSI some avg10 | 96–97% at arm — storm unbroken since ≥04:46 (prior session)                                                                                           |
+| Seed budget       | **GREEN**: ~692 G raw vs 1006 GB box free, under the ~800 G BX21 trigger                                                                              |
+| Eval gate         | `nix flake check --no-build` **passed** ~06:52 (on the tree as of then; parallel session edits since — watcher re-probes at trigger)                  |
+| Auth to box       | key-only rc=0 (prior session, unchanged; not re-probed this session)                                                                                  |
+| Parallel session  | ACTIVE — `catalog-platform.nix`, `opencloud.md`, `FEATURES.md`, `docs/todo/services.md` edited concurrently; two live `crush -y` processes on the box |
 
 ## a) FULLY DONE
 
@@ -102,6 +102,6 @@
 - **Ticked [x]:** storage.md:59 + TODO_LIST.md:106 twin (runbook step-3 correction — both surfaces, same pass).
 - **Deliberately NOT harvested:** watcher re-arm/expiry watch (session orchestration); stale-header fixes (completed in-session, post-review); §g questions (conversational, gated on owner); sizing log (harness artifact under `~/.cache/borg-golive/`, path recorded in :58).
 
-*Config excluded the trap, the audit that caught it is now green, automation is armed behind the PSI gate — and the self-review found the rot the body fixes left in the headers.*
+_Config excluded the trap, the audit that caught it is now green, automation is armed behind the PSI gate — and the self-review found the rot the body fixes left in the headers._
 
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2-4 f.5 f.7 f.8 f.10 · already-tracked f.9 f.11-17 f.19-24 · OBSOLETE f.1 · merges into 06-25 rows (f.6 f.18)

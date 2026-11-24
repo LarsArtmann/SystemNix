@@ -18,19 +18,19 @@
 
 1. **The Phase-2 item as a whole** — agent-executable scope (measurement, unblock, runbook) is done; the actual migrations are owner windows and did not start (correctly out of agent reach: no sudo in this sandbox). **→ docs/todo/storage.md**
 2. **Baseline quality** — the matrix ran under a heavy ambient storm (nightly nix-gc/fstrim window, PSI some avg10 57-66% for the full 20-min poll; never quieted). Conditions are labeled per row and the 9-13x contrast carries the verdict, but the ABSOLUTE numbers are window-bound; clean-idle baselines remain unmeasured. **→ docs/todo/storage.md**
-~~3. **bank-sync fsync number** — not measured (all pool dirs are root-owned; the agent cannot drop a scratch file on `/mnt/pool`). The STAYS verdict rests on coverage/cadence logic, not a measurement.~~ done — decided in the living row — bank-sync STAYS on coverage/cadence grounds, no measurement built (docs/todo/storage.md:32)
-~~4. **My task footer commit** — the properly-messaged commit with `Task-Queue-ID:` never landed (see d.1); the anchor that exists (`79f89062`) was written by the parallel verification round.~~ done — anchor verified this pass — `79f89062` resolves in this repo (written by the parallel round; this session's footer commit never existed, as owned)
-~~5. **status report §h file list** — superseded within hours by parallel addenda (§i); accurate at write time, no longer the full change set for the item.~~ done — narrative record — no open work
+   ~~3. **bank-sync fsync number** — not measured (all pool dirs are root-owned; the agent cannot drop a scratch file on `/mnt/pool`). The STAYS verdict rests on coverage/cadence logic, not a measurement.~~ done — decided in the living row — bank-sync STAYS on coverage/cadence grounds, no measurement built (docs/todo/storage.md:32)
+   ~~4. **My task footer commit** — the properly-messaged commit with `Task-Queue-ID:` never landed (see d.1); the anchor that exists (`79f89062`) was written by the parallel verification round.~~ done — anchor verified this pass — `79f89062` resolves in this repo (written by the parallel round; this session's footer commit never existed, as owned)
+   ~~5. **status report §h file list** — superseded within hours by parallel addenda (§i); accurate at write time, no longer the full change set for the item.~~ done — narrative record — no open work
 
 ## c) NOT STARTED (all owner-gated or later-wave; nothing agent-side left for this item)
 
 1. Wave 1-3 migration windows: pocket-id → postgres → discordsync (runbook ready). **→ docs/todo/storage.md**
    ~~2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.~~ done — implemented 9546e7a1 (paperless.nix paperless-db-backup 02:00 timer); verified 2026-09-22_05-07 closeout §a.3; tests/test-paperless.nix steps 8+13
    ~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:98 — Docker data-root stayed /data/docker; Docker REMOVED 2026-10-08, docs/agents/storage.md:29).**
-~~2. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.~~ done — RPO inventory live — docs/services/hot-db.md:9 (dump-only RPO doctrine) + :145 (per-service backup/RPO table)
-3. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail. **→ docs/todo/storage.md**
+   ~~2. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.~~ done — RPO inventory live — docs/services/hot-db.md:9 (dump-only RPO doctrine) + :145 (per-service backup/RPO table)
+2. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail. **→ docs/todo/storage.md**
    ~~6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.~~ done — hot-db.nix:393-495 hot-db-metrics collector + per-entry Gatus (T14, 2026-09-30; CHANGELOG:439); VM failure-transition test green
-4. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green. **→ docs/todo/storage.md**
+3. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green. **→ docs/todo/storage.md**
 
 ## d) TOTALLY FUCKED UP (honest list)
 
@@ -98,8 +98,8 @@
 ## g) QUESTIONS (cannot self-answer)
 
 1. **Wave timing/order:** when do you want the three hot-db migration windows executed, and do you ratify the runbook order pocket-id → postgres → discordsync (smallest/hottest first), or a different sequence? **→ docs/todo/storage.md**
-~~2. **cow-flag deviation:** my measurement shows nodatacow buys nothing on TLC while costing checksums — do you ratify DEVIATING from the ratified "nodatacow hot subvol" layout (pocket-id `cow=true`), and should postgres also flip to `cow=true` or keep `cow=false` for large-file fragmentation reasons?~~ done — ratified + landed — all five entries are `cow = true` per the measurement (docs/services/hot-db.md:464); the postgres wave is ratified `cow = false`
-~~3. **Docker data-root:** the item says it "moves here too" — with container churn (not fsync-bound) and ~20 G plus growth on a disk that also carries `/nix` and the hot tier, do you still want it on the Samsung, or keep it on the QLC `/data` partition?~~ done — decided-against and now MOOT — Docker data-root stayed /data/docker on QLC and Docker was REMOVED 2026-10-08 (docs/agents/storage.md:98/:29)
+   ~~2. **cow-flag deviation:** my measurement shows nodatacow buys nothing on TLC while costing checksums — do you ratify DEVIATING from the ratified "nodatacow hot subvol" layout (pocket-id `cow=true`), and should postgres also flip to `cow=true` or keep `cow=false` for large-file fragmentation reasons?~~ done — ratified + landed — all five entries are `cow = true` per the measurement (docs/services/hot-db.md:464); the postgres wave is ratified `cow = false`
+   ~~3. **Docker data-root:** the item says it "moves here too" — with container churn (not fsync-bound) and ~20 G plus growth on a disk that also carries `/nix` and the hot tier, do you still want it on the Samsung, or keep it on the QLC `/data` partition?~~ done — decided-against and now MOOT — Docker data-root stayed /data/docker on QLC and Docker was REMOVED 2026-10-08 (docs/agents/storage.md:98/:29)
 
 ---
 

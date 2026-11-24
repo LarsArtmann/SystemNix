@@ -46,20 +46,20 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 
 ## 3. What was done this session
 
-| Time (CET) | Action |
-|---|---|
-| ~07:00 | Session discovery sweep: repo grep, status-report pre-read (`ls -t docs/status`), TODO/todo pre-read per Session Discipline |
-| ~07:05 | Live state: `media-atlas.service` active/running; journal since Nov 3 → `readiness lost reason=engine` bursts + one graceful-shutdown timeout; no warnings today |
-| ~07:10 | Source dive: `internal/cli/serve_health.go` — `reason=engine` = go-cqrs-lite engine ping failure (SQLite journal), NOT Immich (ML probe is display-truth only) |
-| ~07:15 | Timer units: poll-embeddings (03:14, joined=13881, parity ✓), umap (03:16-03:17, fit 109.9s, applied=13881), lane-join (04:03, idempotent) — all clean; **backup FAILED 05:06** |
-| ~07:18 | Pool + endpoint probes: /mnt/pool healthy, hub /health/ready + /health/timers fresh; first HTTPS probe used a WRONG IP (192.168.1.2; correct is 192.168.1.150) — re-probed |
-| ~07:25 | Root cause chain: lib/default.nix `mkPoolDirUnit` owner contract vs media-atlas call site; geometrikks precedent read |
-| ~07:28 | Gatus forensics: live rendered config (store path via busctl), backups.prom rows, alert history since Oct 25 |
-| ~07:30 | **Edit applied**: `owner = cfg.user; mode = "0750"` on the pool-leaf call site; parse OK; group check OK |
-| 07:33-07:52 | Quiescence watch for the deploy: 10 rounds, NEVER green (Tctl 96-99, io PSI 35-90, load 31-119); storm attributed to 3 tq-pool crush agents building CV (`go run ./scripts/eventmap --check`, gcc/compile/link, domains.test) + crm-server/llama-server/celery steady CPU; deploy deliberately NOT started |
-| ~07:50 | **Error caught + corrected**: the CHANGELOG entry I drafted claimed "deployed, converger re-chowned, manual backup run verified" — ALL FALSE at write time (deploy never happened). Rewritten truthfully ("fix in working tree — deploy PENDING"). Also fixed placeholder `07-3x` report filename pointers → real path |
-| ~07:52 | Daemon swept my 5 files into `966ebb503` (heuristic); per daemon-race policy I verified what it staged (`git show` implied by status; my file set only) and continued editing on top (corrections now sit as working-tree changes) |
-| 07:56 | This report; background watch killed at round 10 |
+| Time (CET)  | Action                                                                                                                                                                                                                                                                                                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~07:00      | Session discovery sweep: repo grep, status-report pre-read (`ls -t docs/status`), TODO/todo pre-read per Session Discipline                                                                                                                                                                                            |
+| ~07:05      | Live state: `media-atlas.service` active/running; journal since Nov 3 → `readiness lost reason=engine` bursts + one graceful-shutdown timeout; no warnings today                                                                                                                                                       |
+| ~07:10      | Source dive: `internal/cli/serve_health.go` — `reason=engine` = go-cqrs-lite engine ping failure (SQLite journal), NOT Immich (ML probe is display-truth only)                                                                                                                                                         |
+| ~07:15      | Timer units: poll-embeddings (03:14, joined=13881, parity ✓), umap (03:16-03:17, fit 109.9s, applied=13881), lane-join (04:03, idempotent) — all clean; **backup FAILED 05:06**                                                                                                                                        |
+| ~07:18      | Pool + endpoint probes: /mnt/pool healthy, hub /health/ready + /health/timers fresh; first HTTPS probe used a WRONG IP (192.168.1.2; correct is 192.168.1.150) — re-probed                                                                                                                                             |
+| ~07:25      | Root cause chain: lib/default.nix `mkPoolDirUnit` owner contract vs media-atlas call site; geometrikks precedent read                                                                                                                                                                                                  |
+| ~07:28      | Gatus forensics: live rendered config (store path via busctl), backups.prom rows, alert history since Oct 25                                                                                                                                                                                                           |
+| ~07:30      | **Edit applied**: `owner = cfg.user; mode = "0750"` on the pool-leaf call site; parse OK; group check OK                                                                                                                                                                                                               |
+| 07:33-07:52 | Quiescence watch for the deploy: 10 rounds, NEVER green (Tctl 96-99, io PSI 35-90, load 31-119); storm attributed to 3 tq-pool crush agents building CV (`go run ./scripts/eventmap --check`, gcc/compile/link, domains.test) + crm-server/llama-server/celery steady CPU; deploy deliberately NOT started             |
+| ~07:50      | **Error caught + corrected**: the CHANGELOG entry I drafted claimed "deployed, converger re-chowned, manual backup run verified" — ALL FALSE at write time (deploy never happened). Rewritten truthfully ("fix in working tree — deploy PENDING"). Also fixed placeholder `07-3x` report filename pointers → real path |
+| ~07:52      | Daemon swept my 5 files into `966ebb503` (heuristic); per daemon-race policy I verified what it staged (`git show` implied by status; my file set only) and continued editing on top (corrections now sit as working-tree changes)                                                                                     |
+| 07:56       | This report; background watch killed at round 10                                                                                                                                                                                                                                                                       |
 
 **Concurrent-session note:** two files NOT authored by me were modified in the tree mid-session (`docs/services/projects-management-automation.md`, `docs/status/2026-11-03_23-18_pma-…`) — the live PMA session's work; flagged here, untouched.
 
@@ -83,6 +83,7 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 ## 5. State inventory
 
 ### a) FULLY DONE
+
 - Full diagnosis of the backup failure (root cause, precedent, evidence: journal ×2 fires, dir state, backups.prom rows, sibling dirs).
 - Diagnosis of plate-alert transient + alerting-gap mechanism (episode semantics, no send-on-resolved, chronic dnsblockd/data red).
 - Module fix authored in tree: `owner = cfg.user; mode = "0750"` (parse-checked, group existence verified).
@@ -92,12 +93,14 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 - This report (referenced by all the above).
 
 ### b) PARTIALLY DONE
+
 - **The fix itself**: authored + parse-checked, but NOT eval-gated (`nix flake check --no-build --all-systems` never ran — storm), NOT committed properly (daemon heuristic sweep `966ebb503` carries it; my corrections are uncommitted working-tree changes), NOT deployed, NOT live-verified. The nightly will fail again tomorrow 05:00 unless the deploy lands first.
 - Alerting-gap fix: diagnosed + queued, not implemented (design choice pending).
 - mkPoolDirUnit owner/user audit: queued, not started.
 - CHANGELOG truthfulness: corrected, but the corrected text is uncommitted while the false version is in `966ebb503`.
 
 ### c) NOT STARTED
+
 - Deploy (blocked on a quiescent window — 10 greenless rounds 07:33-07:52).
 - Post-deploy verify battery: converger re-chown check, manual `media-atlas-backup` trigger, `backups.prom` flip confirmation, plate/ready/timers re-probe, anchor-by-generation-number.
 - Standalone re-run of the lint legs the daemon commit skipped (eval-relevant `.nix` → the hook's `nix flake check --no-build --all-systems` + scoped `nix fmt -- <files> --fail-on-change`) — required after any daemon-swept commit per CONTRIBUTING.
@@ -106,10 +109,12 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 - The "Canceling current execution" gatus mystery (§2.3) — recorded only.
 
 ### d) TOTALLY FUCKED UP
+
 - The pre-written deploy claims in CHANGELOG (§4.1) — including one fabricated detail in my OWN first correction attempt ("gen-977" — a generation number that never existed; the file's actual text never had it, my old_string invented it, which is also why the first edit failed). Corrected as of 07:56, but the daemon commit carries the lie.
 - Two `rg -rn` strikes in one session on a host that documents this trap (§4.3).
 
 ### e) WHAT WE SHOULD IMPROVE
+
 - Never draft verification text before the verifying action runs — write CHANGELOG entries AFTER the action, or leave an explicit `deploy pending` marker (the buildcache entry's style) from the first keystroke.
 - The freshness alerting needs an episode-independent signal (per-service rows or newly-stale delta) — a chronically-red aggregate is structurally mute.
 - `mkPoolDirUnit` should not allow a silent owner/user mismatch: eval-time invariant pairing the leaf owner with the sibling backup unit's `User` (queued).
@@ -120,6 +125,7 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 ### f) NEXT THINGS (session-scoped, ordered by impact)
 
 **This arc (media-atlas):**
+
 1. Deploy the fix in the first quiescent window (Tctl <85, io PSI <40, load <20, tree-stable 4×60s) + green-eval probe → `nix run .#deploy`.
 2. Post-switch: anchor by generation NUMBER (readlink == newest system-N-link).
 3. Verify converger: `ls -ld /mnt/pool/backups/media-atlas` → `media_atlas:media_atlas` 0750.
@@ -161,7 +167,7 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 
 ---
 
-*Harvest note: §f items 1-10 are harvested as the `[ready]` deploy row + corrected surfaces already in TODO_LIST.md/docs/todo/services.md; 11-14 harvested as the alerting-gap + audit rows; 15 harvested as the `[watch]` plate row; 16-24 deliberately NOT harvested (observations without enough definition to dispatch, or explicitly owner-gated per the questions above; 25-28 are pre-existing rows).*
+_Harvest note: §f items 1-10 are harvested as the `[ready]` deploy row + corrected surfaces already in TODO_LIST.md/docs/todo/services.md; 11-14 harvested as the alerting-gap + audit rows; 15 harvested as the `[watch]` plate row; 16-24 deliberately NOT harvested (observations without enough definition to dispatch, or explicitly owner-gated per the questions above; 25-28 are pre-existing rows)._
 
 ---
 
@@ -171,13 +177,13 @@ The owner's follow-up instruction was READ→UNDERSTAND→RESEARCH→REFLECT→e
 
 **§g.2 — the chronic-red rows were NOT two, they were FIVE, and only one was benign-by-design:**
 
-| Row | Verdict | Evidence | Disposition |
-| --- | --- | --- | --- |
-| `dnsblockd` | FALSE red (design mismatch) | `/var/lib/dnsblockd/allowlist` does not exist (user never used "Always allow"); the unit exits 0 with "no allowlist content yet — keeping last copy" and correctly refuses to write a file — but the freshness pattern `allowlist` can then never match. Unit itself healthy (journal: finished clean 02:55 daily). | FIXED in-tree: `ExecStartPost` touches `.last_success` (offsite-borg precedent) on every successful run incl. the empty path; registry `filePattern = ".last_success"`. Health contract becomes "leg ran recently", not "a file exists". |
-| `monitor365-pool` | GENUINE broken, fix already in-tree but UNDEPLOYED | `cp: cannot stat /mnt/pool/services/monitor365/backups/…: Permission denied` (2026-11-03 + 11-04 03:25/03:44 fires). The S5 tmpfiles rules (0711 traverse on `agentStoragePath`, 0750 server-owned leaf) are in the module since the 2026-10-27 lesson but `/etc/tmpfiles.d` has NO monitor365 entries — the rule never went live. | Rides the deploy: `systemd-tmpfiles-setup` re-runs on activation, chown/chmod the chain, pool-copy can then write. Verify leg added to the battery. |
-| `data` | GENUINE, deliberately loud, owner-gated | `btrbk-data-repair-gate`: "nightly pool send deliberately SKIPPED (known /data EIO, docs/todo/storage.md P0). This failure is the tripwire and is EXPECTED while the marker is absent." | No agent action — the SUPERB storage plan (docs/planning/2026-11-03) owns the repair. Stays red until then, by design. |
-| `offsite-borg` | GENUINE pending, NOT mine | `offsite-borg.enable = true` LIVE (configuration.nix:2078) but `borgbackup-job-hetzner` + `borg-offsite-dir` are `inactive/dead`, `.last_success` absent — the go-live flip/seed has not been executed by the parallel session that owns it (their 06:25/07:05 reports were pre-deploy verification). | Flagged; the row self-heals on their first successful seed (ExecStartPost touch). |
-| `media-atlas` | the original finding | unchanged | deploy pending (below). |
+| Row               | Verdict                                            | Evidence                                                                                                                                                                                                                                                                                                                           | Disposition                                                                                                                                                                                                                              |
+| ----------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dnsblockd`       | FALSE red (design mismatch)                        | `/var/lib/dnsblockd/allowlist` does not exist (user never used "Always allow"); the unit exits 0 with "no allowlist content yet — keeping last copy" and correctly refuses to write a file — but the freshness pattern `allowlist` can then never match. Unit itself healthy (journal: finished clean 02:55 daily).                | FIXED in-tree: `ExecStartPost` touches `.last_success` (offsite-borg precedent) on every successful run incl. the empty path; registry `filePattern = ".last_success"`. Health contract becomes "leg ran recently", not "a file exists". |
+| `monitor365-pool` | GENUINE broken, fix already in-tree but UNDEPLOYED | `cp: cannot stat /mnt/pool/services/monitor365/backups/…: Permission denied` (2026-11-03 + 11-04 03:25/03:44 fires). The S5 tmpfiles rules (0711 traverse on `agentStoragePath`, 0750 server-owned leaf) are in the module since the 2026-10-27 lesson but `/etc/tmpfiles.d` has NO monitor365 entries — the rule never went live. | Rides the deploy: `systemd-tmpfiles-setup` re-runs on activation, chown/chmod the chain, pool-copy can then write. Verify leg added to the battery.                                                                                      |
+| `data`            | GENUINE, deliberately loud, owner-gated            | `btrbk-data-repair-gate`: "nightly pool send deliberately SKIPPED (known /data EIO, docs/todo/storage.md P0). This failure is the tripwire and is EXPECTED while the marker is absent."                                                                                                                                            | No agent action — the SUPERB storage plan (docs/planning/2026-11-03) owns the repair. Stays red until then, by design.                                                                                                                   |
+| `offsite-borg`    | GENUINE pending, NOT mine                          | `offsite-borg.enable = true` LIVE (configuration.nix:2078) but `borgbackup-job-hetzner` + `borg-offsite-dir` are `inactive/dead`, `.last_success` absent — the go-live flip/seed has not been executed by the parallel session that owns it (their 06:25/07:05 reports were pre-deploy verification).                              | Flagged; the row self-heals on their first successful seed (ExecStartPost touch).                                                                                                                                                        |
+| `media-atlas`     | the original finding                               | unchanged                                                                                                                                                                                                                                                                                                                          | deploy pending (below).                                                                                                                                                                                                                  |
 
 **§g.3 — alerting-gap design DECIDED and implemented: per-service freshness endpoints, generated centrally.** The integration-registry fan-out emits collector rows only — no per-backup checks existed anywhere; the aggregate was the only alert surface. New shape in `backup-coordination.nix`: one `Backup Freshness: <name>` endpoint per `cfg.backups` entry (26 on evo-x2, ALL registration paths covered — integration entries, snapshots.nix, monitor365.nix, dns-blocker.nix alike), each reading its own anchored `pat(*\nbackup_healthy{backup="<name>"} 1*)` row (real newline, gatus-pattern-lint clean): a new stale backup creates a NEW alert episode and pages; a vanished row (dead collector) fails the pat fail-closed; chronic reds (data tripwire, offsite-borg go-live) fire their own single initial alerts and stop masking. The aggregate check is kept as the overview tile. Rationale vs the rejected alternatives: a `backup_newly_stale` delta metric needs cross-run state in the collector and a new alert channel; relay fire-on-change adds a moving part outside gatus — per-service endpoints are pure composition of two existing mechanisms (the collector rows + the mkHttpCheck/discordAlert path every other check already rides).
 

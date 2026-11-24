@@ -87,15 +87,15 @@ No natural pair existed (all live sessions already on the hot tier), so I synthe
 
 ## e) Verification ledger
 
-| Surface | Verdict |
-| --- | --- |
-| shape-audit negative test | build rc=0 (was exit-1 on 5 legs) |
-| tmp-cleaner-audit negative test | build rc=0 |
-| evo-x2 parity (A1a) | byte-identical 2675/0 (pre-pause, still valid — delegation surfaces unchanged since) |
-| live-skip guard | live-proven 21:14 (§d); 0 relocated; timer NEXT Sat 04:10 |
-| anchor | gen-1005 by-number = `/run/current-system` (parallel session's deploy, verified) |
+| Surface                                         | Verdict                                                                                                                                                                                                                           |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shape-audit negative test                       | build rc=0 (was exit-1 on 5 legs)                                                                                                                                                                                                 |
+| tmp-cleaner-audit negative test                 | build rc=0                                                                                                                                                                                                                        |
+| evo-x2 parity (A1a)                             | byte-identical 2675/0 (pre-pause, still valid — delegation surfaces unchanged since)                                                                                                                                              |
+| live-skip guard                                 | live-proven 21:14 (§d); 0 relocated; timer NEXT Sat 04:10                                                                                                                                                                         |
+| anchor                                          | gen-1005 by-number = `/run/current-system` (parallel session's deploy, verified)                                                                                                                                                  |
 | full `nix flake check --no-build --all-systems` | **rc=1 — FOREIGN**: `systemd.immich-api-key-provision does not exist` (immich.nix, parallel session's 19:29/20:32 commits; their pipeline row confirms "immich eval repairs" in flight). Hands off; re-run after their fix lands. |
-| CI (nix-check) | red all day on VM-test builder failures + eval legs — already queued in pipeline.md rows (not mine) |
+| CI (nix-check)                                  | red all day on VM-test builder failures + eval legs — already queued in pipeline.md rows (not mine)                                                                                                                               |
 
 ## f) Harvest ledger
 

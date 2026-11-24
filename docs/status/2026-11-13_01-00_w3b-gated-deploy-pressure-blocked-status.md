@@ -77,4 +77,4 @@
 
 ---
 
-*Session attribution: W3a code (collection modules/checks/docs) authored by the prior instance of this conversation; W3b delegation, parity, gates, docs, and this report by this session. The 20:47/21:56 gen-1004 deploy is FOREIGN (the pin-move session). The collection's in-flight `wifi-failover-contract` work is a parallel session's — untouched, rides a later push.*
+_Session attribution: W3a code (collection modules/checks/docs) authored by the prior instance of this conversation; W3b delegation, parity, gates, docs, and this report by this session. The 20:47/21:56 gen-1004 deploy is FOREIGN (the pin-move session). The collection's in-flight `wifi-failover-contract` work is a parallel session's — untouched, rides a later push._

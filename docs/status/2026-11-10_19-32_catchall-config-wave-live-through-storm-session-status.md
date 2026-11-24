@@ -86,9 +86,9 @@
 
 ## Addendum 21:4x — owner answered Q2 with a demand; the structural fix is IMPLEMENTED
 
-The owner's response to §g2 (2026-11-10 ~20:0x): *"How the fuck do we just make
+The owner's response to §g2 (2026-11-10 ~20:0x): _"How the fuck do we just make
 sure this never ever happens again and we only ever send out 1 fucking proper
-e-mail per project per recruiter???"* — treated as the directive it is.
+e-mail per project per recruiter???"_ — treated as the directive it is.
 
 **Landed: at-most-once send claims (CV repo commit `be687de00`, ADR
 `docs/adr/2026-11-10_at-most-once-send-claims.md`).** Root cause of the

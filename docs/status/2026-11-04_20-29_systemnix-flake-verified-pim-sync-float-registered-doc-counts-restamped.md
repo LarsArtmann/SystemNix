@@ -28,4 +28,4 @@
 - The float ceremony's daemon-race fallback checks `git diff --quiet` (unstaged only); a staged-but-uncommitted registry passes it. Benign here (daemon sweeps), but if the daemon ever stalls, a manual `git commit` of the staged pair is the completion step.
 - `nix build` + parallel evals contend on the eval-cache SQLite ("busy" warnings, ignored, non-fatal) — run the heavy evals sequentially when practical.
 
-*Report per `status-report` skill; no commit performed — the auto-commit daemon sweeps this file.*
+_Report per `status-report` skill; no commit performed — the auto-commit daemon sweeps this file._

@@ -34,6 +34,7 @@ None appended. Prior passes queued their (f) subsets; all rows remain open and d
 ## g) OWNER QUESTIONS
 
 **By citation to the 15-46 report §g (still unanswered, already encoded in rows 496/3848):**
+
 1. When is the next acceptable PSI-calm deploy window?
 2. Guard appetite: claim-vs-diff commit check — blocking pre-commit leg or WARN-only selftest?
 
@@ -43,4 +44,4 @@ None appended. Prior passes queued their (f) subsets; all rows remain open and d
 
 ---
 
-*Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`; prior re-verifies: 16-05 and 16-16 reports.*
+_Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`; prior re-verifies: 16-05 and 16-16 reports._

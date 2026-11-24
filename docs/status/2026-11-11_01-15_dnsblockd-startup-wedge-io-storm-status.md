@@ -6,15 +6,15 @@
 
 ## What happened (journal-verified timeline)
 
-| Time | Event |
-| --- | --- |
-| Nov 10 19:01:54 | Last healthy start (PID 3542633): `server_init` **220.2s** — longest healthy on record, 80s inside the 300s gate under moderate load. Served 5h43m without incident. |
-| Nov 10 23:34:57 | Deploy starts (bank-sync SCA arc session). sops secret re-encrypts at 23:43. |
-| Nov 11 00:30:13 | **`fstrim.service` starts — a NEW unit from that deploy's switch, its first full-pool trim.** `io.pressure full` pins ~50-58% for 45+ min (still running at 01:15). |
-| 00:45:40 | Deploy switch lands; dnsblockd restarts (attempt 1, PID 1068087). OIDC secret written fine. |
-| 00:45:49 → 00:51:01 | Attempt 1: 3 of 5 phases complete, then silence — gate kills at 300s (`no :53 listener … init wedged before listeners_start`). Attempt consumed only **2.3G disk read in 5m19s ≈ 7MB/s**. |
-| 00:51-01:12 | Attempts 2-5 (PIDs 1400746, 1698855, 2021449, 2353306): identical 3-phase wedge, gate kill every cycle, ~5.3min/cycle, restart counter 1→5. Attempt reads as low as **510MB/5min ≈ 1.6MB/s** against a **9.7G journal.db + 3.3G tracking.db** init. OnFailure notify legs fire each cycle (Discord P0 pages). |
-| 00:47:39 | Second deploy attempt **fails code=13** — deploy flock held by the still-running 23:34 deploy. No switch. |
+| Time                | Event                                                                                                                                                                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nov 10 19:01:54     | Last healthy start (PID 3542633): `server_init` **220.2s** — longest healthy on record, 80s inside the 300s gate under moderate load. Served 5h43m without incident.                                                                                                                                          |
+| Nov 10 23:34:57     | Deploy starts (bank-sync SCA arc session). sops secret re-encrypts at 23:43.                                                                                                                                                                                                                                  |
+| Nov 11 00:30:13     | **`fstrim.service` starts — a NEW unit from that deploy's switch, its first full-pool trim.** `io.pressure full` pins ~50-58% for 45+ min (still running at 01:15).                                                                                                                                           |
+| 00:45:40            | Deploy switch lands; dnsblockd restarts (attempt 1, PID 1068087). OIDC secret written fine.                                                                                                                                                                                                                   |
+| 00:45:49 → 00:51:01 | Attempt 1: 3 of 5 phases complete, then silence — gate kills at 300s (`no :53 listener … init wedged before listeners_start`). Attempt consumed only **2.3G disk read in 5m19s ≈ 7MB/s**.                                                                                                                     |
+| 00:51-01:12         | Attempts 2-5 (PIDs 1400746, 1698855, 2021449, 2353306): identical 3-phase wedge, gate kill every cycle, ~5.3min/cycle, restart counter 1→5. Attempt reads as low as **510MB/5min ≈ 1.6MB/s** against a **9.7G journal.db + 3.3G tracking.db** init. OnFailure notify legs fire each cycle (Discord P0 pages). |
+| 00:47:39            | Second deploy attempt **fails code=13** — deploy flock held by the still-running 23:34 deploy. No switch.                                                                                                                                                                                                     |
 
 ## Root cause chain (each link evidence-backed)
 

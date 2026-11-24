@@ -59,6 +59,7 @@
 3. **Owner decision: 243 Drive-product photos** (`dedup/photos.txt` bucket) — import to Immich as well, or leave for G4 (Drive→OpenCloud) only?
 
 > **[ANNOTATED 2026-11-17 (resumption session):]** premise reshaped — see the g.2 annotation: all 243 are already in Immich.
+
 4. G6 full balance run (destination counts into the report) — closes the gate formally.
 5. Watch Immich ML job completion (2,003 new assets processing; thumbnails/ML on CPU/GTT).
 6. G4: Drive → OpenCloud via rclone `--files-from dedup/new-files.txt` (1,300 files, cycle-1 = whole tree).
@@ -78,4 +79,5 @@
 2. **Do the 243 Drive photos go to Immich too, or only through Drive→OpenCloud (G4)?** The plan buckets them as "immich pre-filter" but importing them duplicates G4's tree role unless the owner wants photos unified in Immich.
 
 > **[ANNOTATED 2026-11-17 (resumption session):]** premise reshaped by forensics: all 243 Drive photos are ALREADY in Immich (238 uploaded during the import + 5 absorbed as server-dups). The live question is the inverse of the original: keep Immich-only (the dedup plan's current shape — they are excluded from G4's `new-files.txt`) or ALSO copy them through G4 into OpenCloud. Evidence: the 15:17 forensics report §d3.
+
 3. **Is the racedriver8k browser-click window (expires 2026-11-18 03:13) still planned this weekend, or should the fleet treat it as expired-and-re-request?** Only the owner can click the rart wall; the decision changes whether racedriver8k queue rows stay `[blocked:user]` with a deadline or move to re-request posture.

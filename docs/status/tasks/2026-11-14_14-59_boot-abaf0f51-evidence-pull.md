@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 abaf0f51 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Nov 14 09:29:52 evo-x2 kernel: Linux version 7.3.3 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1793989110
 Nov 14 09:29:52 evo-x2 kernel: Command line: initrd=\EFI\nixos\hax4lzv0p0czdmnqci6q20ywkam7cq9h-initrd-linux-7.3.3-initrd.efi init=/nix/store/xfbd8lvrkwkla7w2ffri64mnj5ssf7i4-nixos-system-evo-x2-26.11.20261107.f4a03c0/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Nov 14 09:29:52 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Nov 14 15:41:18 evo-x2 systemd[1]: Unmounting /home/lars/.cache/go-mod...
 Nov 14 15:41:18 evo-x2 systemd[1]: Unmounting /home/lars/.cache/golangci-lint...
@@ -30,6 +32,7 @@ Nov 14 15:41:18 evo-x2 systemd[1]: Unmounted /boot.
 ```
 
 ## Census
+
 - oom-lines: 10
 - oom kill-pass join: 2 killed process(es) — 2 memcg-attested, 0 unit-joined, 0 unresolved
 - guard-lines (memory-emergency-guard): 1273
@@ -37,6 +40,7 @@ Nov 14 15:41:18 evo-x2 systemd[1]: Unmounted /boot.
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 Nov 14 10:00:08 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
 Nov 14 10:00:08 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=272197,uid=1000
@@ -51,12 +55,14 @@ Nov 14 14:48:38 evo-x2 kernel: Out of memory: Killed process 255935 (helium) tot
 ```
 
 ## OOM kill-pass join — memcg per killed process (kernel-attested or systemd unit-join, never inferred)
+
 ```
 pid=3265754 task=llama-server uid=1000 memcg=/system.slice/llama-vlm-cap.service basis=attested
 pid=255935 task=helium uid=1000 memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/helium.service basis=attested
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Nov 14 09:30:06 evo-x2 post-crash-calm-gate[1845]: REFUSE: post-crash-calm-gate — memory-emergency-guard tripped 6 min ago (window 60 min).
 Nov 14 09:31:06 evo-x2 post-crash-calm-gate[28962]: REFUSE: post-crash-calm-gate — memory-emergency-guard tripped 7 min ago (window 60 min).
@@ -1334,6 +1340,7 @@ Nov 14 15:39:43 evo-x2 sudo[1176902]:     lars : PWD=/home/lars/projects/SystemN
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Nov 14 09:46:09 evo-x2 thermal-pstate-guard-check[311430]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
 Nov 14 13:43:21 evo-x2 thermal-pstate-guard-check[710158]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=71C(hi:95/lo:80)
@@ -1343,17 +1350,20 @@ Nov 14 14:03:12 evo-x2 thermal-pstate-guard-check[1254485]: thermal-pstate-guard
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Nov 14 09:29:52 evo-x2 kernel: Command line: initrd=\EFI\nixos\hax4lzv0p0czdmnqci6q20ywkam7cq9h-initrd-linux-7.3.3-initrd.efi init=/nix/store/xfbd8lvrkwkla7w2ffri64mnj5ssf7i4-nixos-system-evo-x2-26.11.20261107.f4a03c0/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 14 09:29:52 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\hax4lzv0p0czdmnqci6q20ywkam7cq9h-initrd-linux-7.3.3-initrd.efi init=/nix/store/xfbd8lvrkwkla7w2ffri64mnj5ssf7i4-nixos-system-evo-x2-26.11.20261107.f4a03c0/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 14 09:29:52 evo-x2 kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
 Nov 14 09:29:54 evo-x2 kernel: amdgpu 0000:c6:00.0: [drm] Registered 4 planes with drm panic
 ```
+
 ## Remote log tail — ClickHouse death window (signoz_logs.distributed_logs_v2)
 
 Death window per M22: [journal cut -> next boot], epoch-ns UTC. At a watchdog death the local journal loses its final ~30-90s to flush lag; when the OTel->ClickHouse pipeline is alive the remote tail is FRESHER than the journal cut (#36: newest row 5s before the cut), and when the collector died pre-death the pipeline is silently DARK (#37: 4h19m outage).
 Window: 1794667278000000000 -> 1794667306000000000 epoch-ns UTC (2026-11-14 14:41:18 -> 2026-11-14 14:41:46 UTC)
 PIPELINE DARK FOR THIS WINDOW — 0 rows in the window.
 Per M22: ClickHouse absence is NOT evidence of absence — the collector has a fatal-at-startup failure mode that silences the whole log pipeline (proven #37). Cross-check signoz-collector liveness across this boot BEFORE trusting the gap.
+
 ```
 ```

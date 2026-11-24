@@ -90,7 +90,7 @@
 ## g) QUESTIONS FOR THE OWNER
 
 1. **Compact-vs-guard sequencing (time-sensitive)**: gen-1020 runs tonight's 03:00 backup with the compact ARMED but the pool-copy guard and count-gate diagnostics UNDEPLOYED (PSI refused the 01:34 deploy). Do you want the compact disarmed before 03:00 (owner-side edit + deploy, ~30 min window), or accept the one-night soft risk (count-gate failure would clobber its own stderr log; backup overrun past 03:25 could cost tonight's pool copy — both self-healing, no data-loss path identified)? If no answer by 03:00, the standing config fires as-is.
-2. *(standing, no new rows)*: deploy-prioritization for the rider wave, the fresh SSO login, and the pre-shrink trash all already have owner-gated rows (minted by prior closeouts) — unchanged by this window.
+2. _(standing, no new rows)_: deploy-prioritization for the rider wave, the fresh SSO login, and the pre-shrink trash all already have owner-gated rows (minted by prior closeouts) — unchanged by this window.
 
 ## h) BAND DRIFT
 

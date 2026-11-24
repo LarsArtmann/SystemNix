@@ -5,12 +5,12 @@ All numbers below were measured this session (journal greps cached under `~/.cac
 
 ## Boot boundaries (`journalctl --list-boots`)
 
-| Boot | Full ID | First entry | Last entry | Span |
-| --- | --- | --- | --- | --- |
-| -3 | `6d2a69e459d0481ba122847b1fc65a53` | Nov 6 05:58:59 | Nov 7 01:06:21 | freeze #51 (owner power cut) |
-| -2 | `309f2cb8fd714ef8a71f90a493523b07` | Nov 7 01:06:40 | **Nov 14 09:20:19** | 7 d 8 h 14 m — **freeze #52** |
-| -1 | `aaffd03f86ca421f98007f8389594743` | Nov 14 09:21:18 | **Nov 14 09:27:13** | 5 m 55 s — **freeze #53** |
-| 0 | `abaf0f511515482ba85ec05b7adf3492` | Nov 14 09:29:52 | (live) | cut→boot gaps: **59 s** (#52), **159 s** (#53) |
+| Boot | Full ID                            | First entry     | Last entry          | Span                                           |
+| ---- | ---------------------------------- | --------------- | ------------------- | ---------------------------------------------- |
+| -3   | `6d2a69e459d0481ba122847b1fc65a53` | Nov 6 05:58:59  | Nov 7 01:06:21      | freeze #51 (owner power cut)                   |
+| -2   | `309f2cb8fd714ef8a71f90a493523b07` | Nov 7 01:06:40  | **Nov 14 09:20:19** | 7 d 8 h 14 m — **freeze #52**                  |
+| -1   | `aaffd03f86ca421f98007f8389594743` | Nov 14 09:21:18 | **Nov 14 09:27:13** | 5 m 55 s — **freeze #53**                      |
+| 0    | `abaf0f511515482ba85ec05b7adf3492` | Nov 14 09:29:52 | (live)              | cut→boot gaps: **59 s** (#52), **159 s** (#53) |
 
 ## Freeze #52 measured facts (boot -2)
 

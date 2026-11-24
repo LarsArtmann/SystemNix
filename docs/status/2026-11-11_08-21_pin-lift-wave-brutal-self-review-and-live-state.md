@@ -136,4 +136,4 @@
 
 ---
 
-*Verification anchors: probes `~/.cache/pin-lift/summary.log`; proofs `toplevel-proof5.log` (7 shims)/`proof6.log` (green); float-register no-drift at 03:4x; deploy logs `/var/log/systemnix-deploys/2026-11-11_{03-48-55,03-59-00,07-33-56}.log`; lock revs re-verified 08:18 (python3, not jq).*
+_Verification anchors: probes `~/.cache/pin-lift/summary.log`; proofs `toplevel-proof5.log` (7 shims)/`proof6.log` (green); float-register no-drift at 03:4x; deploy logs `/var/log/systemnix-deploys/2026-11-11_{03-48-55,03-59-00,07-33-56}.log`; lock revs re-verified 08:18 (python3, not jq)._

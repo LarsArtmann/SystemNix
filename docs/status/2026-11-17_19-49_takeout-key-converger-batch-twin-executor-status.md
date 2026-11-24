@@ -25,15 +25,15 @@
    - api_key DB row `takeout-import (nix-managed)` = 1 row / 16 permissions via `sudo -n setpriv --reuid postgres … psql` (WARN-skip without sudo, never a false FAIL);
    - journal markers: `minted takeout-import` <2h = "minted THIS deploy window", else mint-or-converge <30h (daily timer + 6h RandomizedDelaySec = 30h worst-case gap), regex-safe patterns (`--grep=` form; an unescaped `(` in the first pattern matched nothing — live-caught);
    - `takeout-dedup.sh balance --preflight` sweep over `scripts/takeout-accounts.tsv` (header row skipped; empty-zips = SKIP — import-time honesty stays with G2).
-   EVERY probe live-verified against the host before landing: DB probe answers `1/16`; the mint journal line (15:12:13, gen-1012) matched by the corrected pattern; the registry loop SKIP/PASS verified on both accounts.
-   **Four real bugs found and fixed in this leg before/just-after landing:** (1) SQL `count(*) || array_length(permissions,1)` mixed aggregate+non-aggregate → ERROR (fixed: `max(array_length(...))`, live-verified `1/16`); (2) unescaped-ERE paren in the converged grep matched nothing; (3) the 2h minted-window was too tight for the 30h jitter math (branch restructured to 2h/30h); (4) registry header row parsed as data; (5) empty-zips staging reported FAIL instead of SKIP. Fixes carried by daemon `0ba8ec7cb` (footless, traced post-hoc), the vacuous-cycle fix below by `0f49231a5`. Battery tick: sibling's `215e200c0`.
+     EVERY probe live-verified against the host before landing: DB probe answers `1/16`; the mint journal line (15:12:13, gen-1012) matched by the corrected pattern; the registry loop SKIP/PASS verified on both accounts.
+     **Four real bugs found and fixed in this leg before/just-after landing:** (1) SQL `count(*) || array_length(permissions,1)` mixed aggregate+non-aggregate → ERROR (fixed: `max(array_length(...))`, live-verified `1/16`); (2) unescaped-ERE paren in the converged grep matched nothing; (3) the 2h minted-window was too tight for the 30h jitter math (branch restructured to 2h/30h); (4) registry header row parsed as data; (5) empty-zips staging reported FAIL instead of SKIP. Fixes carried by daemon `0ba8ec7cb` (footless, traced post-hoc), the vacuous-cycle fix below by `0f49231a5`. Battery tick: sibling's `215e200c0`.
 
 4. **Item 4 — verify hardening trio.** IMPLEMENTED THIS SESSION.
    - **Per-account manifest path:** the embedded 68-product `PRODUCTS_MANIFEST` block is GONE from `scripts/takeout-verify.sh`; it now lives as DATA at `scripts/takeout-manifests/racedriver8k.products.tsv` (69 lines = header + 68 rows, all 3-field, shape-validated). `--manifest <path>` validates existence + header line with clear die messages; the `racedriver8k` literal whitelist is deleted.
    - **Product-size band gate (G2.3):** a matched present-product's actual zip bytes must sit inside `size_band(expected)` (±15%; plain-integer = exact; new `<N unit` case for export-page "<1 MB" forms) — a stale/partial/wrong-size manifest now FAILS loudly instead of certifying completeness.
    - **Extras→FAIL under an explicit manifest:** a folder the manifest doesn't list = hard FAIL (manifest proven partial); WARN kept on the self-derived path (unreachable by construction).
    - **Selftest:** fixture products.tsv sizes corrected to actual fixture bytes; new legs `file-manifest` (path seeding passes), `partial-manifest` (some correct rows + one wrong size + one omitted product must STILL fail — via BOTH the size gate and the extras gate), `no-hash` (green, no SHA256SUMS written). 11 legs green (was 9: −manifest-optin +3). CI floor `want_pass=9→11`; `takeout-selftests` check BUILT GREEN with exactly 78 leg lines matching the new floors (11+21+14+7+9+8+8).
-   Two lint blocks fixed: SC2034 (awk projection for the inventory bytes map), SC2100 false positives on hyphenated `leg=` assignments (renamed `leak-manifest`/`file-manifest`; queued the docs row rather than suppress).
+     Two lint blocks fixed: SC2034 (awk projection for the inventory bytes map), SC2100 false positives on hyphenated `leg=` assignments (renamed `leak-manifest`/`file-manifest`; queued the docs row rather than suppress).
 
 5. **Item 5 — Takeout `status` one-liner.** IMPLEMENTED THIS SESSION.
    `scripts/takeout-status.sh` (259 lines): per-registered-account one-line truth — parts N/M (parts.tsv-declared names present in zips/), ledger rows+bytes (dedup ledger), `balance --preflight` verdict (PASS/FAIL/SKIP), last verify stamp (verification-report.md G2 GREEN/FAIL(n) + date). Table + `--tsv` + `--account` filters; read-only. Selftest 8 legs (parts count, ledger stats, preflight pass/fail/skip, verify stamps green+fail, missing staging, missing root) wired into `takeout-selftests` with a floor. **The selftest caught two real bugs pre-landing:** (1) a bare "unknown" cycle filtered the ledger to zero rows → balance reported a VACUOUS PASS (fixed: latest-ledger-cycle fallback); (2) fixture zips must be real archives (balance reads `unzip -l` listings). LIVE output reproduces the known fleet state exactly: racedriver8k 0/23 + preflight SKIP; helpless.ai 7/7 + 6582 rows / 19.41 GB + preflight PASS + G2 GREEN 2026-11-14 16:16. Closed by my `bca66b787`.
@@ -91,6 +91,7 @@
 ## f) NEXT (up to 50, from THIS session's observations only)
 
 **Immediate (this batch's loose ends):**
+
 1. One-time cleanup of the 5 orphan `.immich-api-key.*` tmp files in `/var/lib/immich-api-keys` (sudo -n works in this shell class; verify ages >1 day first).
 2. Run the FULL `post-deploy-check.sh` at the next deploy window — prove §25 end-to-end in a real invocation (piecewise-verified only so far).
 3. size_band real-range check against racedriver8k's live parts.tsv (queued row) BEFORE its G2 — the product-size gate makes a wrong unit parse fail-closed at verify time.
@@ -147,4 +148,4 @@
 
 ---
 
-*Awaiting instructions.*
+_Awaiting instructions._

@@ -9,19 +9,19 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| shellcheck added to global `environment.systemPackages` | `platforms/common/packages/base.nix` developmentPackages (next to actionlint), commented with the why |
-| Both hosts eval green | evo-x2 + darwin toplevel drvPaths eval'd OK before commit |
-| evo-x2 toplevel builds | `/nix/store/pmydw5k54cg9x…` after the two upstream fixes; §11 preview showed exactly **+1 store path** (shellcheck), SIZE flat 64.2 GiB |
-| Deployed + anchored | gen-**1015**, `readlink /run/current-system` == `system-1015-link` (`0ail8450…`), deploy exited **code=0** at 19:11:10 after 4132s (log `2026-11-15_18-02-18.log`) |
-| shellcheck live-verified | `/run/current-system/sw/bin/shellcheck --version` → 0.11.0 |
-| actionlint shellcheck integration verified | `actionlint 1.7.12 -shellcheck /run/current-system/sw/bin/shellcheck` rc=0 in a workflow-less probe dir |
-| CV upstream FOD repair | `LarsArtmann/CV` @ `7257cba96`: `go mod tidy` pruned **174 stale go.sum rows** (go.mod untouched — exact 2026-11-12 precedent class), tidy-guard unblocked; vendorHash pin proven ALREADY correct by their guarded refresh tool (`VENDOR_HASH_STATUS=no-op`); pushed |
-| quotaboard lock unblocked | `LarsArtmann/quotaboard` @ `c5d5643df`: sibling session's vendorHash re-pin (`aab7cf6`) was sitting UNPUSHED since 16:55; pushed their 2 commits so the lock could float to it; their pin value matched my build's `got:` hash exactly |
-| SystemNix lock floats committed properly | `79627c036` "lock: float cv + quotaboard to fixed upstream revs" (amend-forward over daemon sweep `f210c62b8`) |
-| 4 TODO rows ticked, no queue/library drift | `53c718b8b`: "shellcheck on PATH in agent shells" (TODO_LIST:3348 + pipeline:1080) + "Verify actionlint shellcheck integration" (TODO_LIST:2348 + pipeline:775), all four with gen-1015 evidence |
-| Sibling's mislabeled-commit damage fully repaired | Their watch-row commit (rewritten by my amend mid-race) restored byte-identical with their original message as `0fc622d06` |
+| Item                                                    | Evidence                                                                                                                                                                                                                                                             |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| shellcheck added to global `environment.systemPackages` | `platforms/common/packages/base.nix` developmentPackages (next to actionlint), commented with the why                                                                                                                                                                |
+| Both hosts eval green                                   | evo-x2 + darwin toplevel drvPaths eval'd OK before commit                                                                                                                                                                                                            |
+| evo-x2 toplevel builds                                  | `/nix/store/pmydw5k54cg9x…` after the two upstream fixes; §11 preview showed exactly **+1 store path** (shellcheck), SIZE flat 64.2 GiB                                                                                                                              |
+| Deployed + anchored                                     | gen-**1015**, `readlink /run/current-system` == `system-1015-link` (`0ail8450…`), deploy exited **code=0** at 19:11:10 after 4132s (log `2026-11-15_18-02-18.log`)                                                                                                   |
+| shellcheck live-verified                                | `/run/current-system/sw/bin/shellcheck --version` → 0.11.0                                                                                                                                                                                                           |
+| actionlint shellcheck integration verified              | `actionlint 1.7.12 -shellcheck /run/current-system/sw/bin/shellcheck` rc=0 in a workflow-less probe dir                                                                                                                                                              |
+| CV upstream FOD repair                                  | `LarsArtmann/CV` @ `7257cba96`: `go mod tidy` pruned **174 stale go.sum rows** (go.mod untouched — exact 2026-11-12 precedent class), tidy-guard unblocked; vendorHash pin proven ALREADY correct by their guarded refresh tool (`VENDOR_HASH_STATUS=no-op`); pushed |
+| quotaboard lock unblocked                               | `LarsArtmann/quotaboard` @ `c5d5643df`: sibling session's vendorHash re-pin (`aab7cf6`) was sitting UNPUSHED since 16:55; pushed their 2 commits so the lock could float to it; their pin value matched my build's `got:` hash exactly                               |
+| SystemNix lock floats committed properly                | `79627c036` "lock: float cv + quotaboard to fixed upstream revs" (amend-forward over daemon sweep `f210c62b8`)                                                                                                                                                       |
+| 4 TODO rows ticked, no queue/library drift              | `53c718b8b`: "shellcheck on PATH in agent shells" (TODO_LIST:3348 + pipeline:1080) + "Verify actionlint shellcheck integration" (TODO_LIST:2348 + pipeline:775), all four with gen-1015 evidence                                                                     |
+| Sibling's mislabeled-commit damage fully repaired       | Their watch-row commit (rewritten by my amend mid-race) restored byte-identical with their original message as `0fc622d06`                                                                                                                                           |
 
 ## b) PARTIALLY DONE
 
@@ -62,6 +62,7 @@
 ## f) NEXT (up to 50 — grounded in this session; harvest state marked)
 
 Direct follow-ups (harvest decision inline):
+
 1. [HARVESTED this commit → TODO_LIST + pipeline.md] Add a PSI gate/`--psi` mode to `scripts/deploy-when-quiescent.sh` — tree quiescence ≠ pressure quiescence (live 17:34 rc=12 waste).
 2. [not harvested: sibling owns the live CV wave; advisory self-describes] Re-verify the CV browser render smoke when calm (STORM-SUSPECT, io avg60 48.48% at smoke time).
 3. [DONE in this commit] AGENTS.md: `nix flake lock --update-input` silently no-ops on current nix — canonize `nix flake update <input>`.

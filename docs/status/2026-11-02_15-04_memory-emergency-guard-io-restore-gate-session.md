@@ -20,42 +20,42 @@ The restore `elif` in `modules/nixos/services/memory-emergency-guard.nix` gated 
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Root-cause diagnosis | live prom (io 83%, capped 1, socket 0) + module read + asymmetry vs churn re-arm line |
-| 2 | Restore elif io gate + option `restoreIoSomeAvg60ThresholdPercent` (default 20) + header incident paragraph + capped/cleared journal wording | in HEAD; option declared exactly once; grep count 8 |
-| 3 | Deployed | gen-968 (01:04 Nov 2, parallel session); live `/etc/systemd/system` ExecStart `b87z7izw…` carries the gate at script line 709 |
-| 4 | Live validation | 463-trip freeze-#39 night: budget 0 used, capped 0 — Oct-25 all-day-dark did NOT recur; socket still trips at peaks (sacrifice semantics, 3 flm cycles) and self-recovers post-drain |
-| 5 | VM scenario 6-io + fixtures `restoreIoMild`/`restoreIoDrained` authored (mild-storm hold must NOT restore or consume budget; drained restore must fire) | in HEAD; budget-neutral vs 6a/6b-cap (its reset_state clears counters) |
-| 6 | `guard-restore-io-gate-selftest` static tripwire | built green locally (`nix build .#checks.x86_64-linux.guard-restore-io-gate-selftest`) |
-| 7 | `nix flake check --no-build` | ALL CHECKS PASSED (at my-edit HEAD) |
-| 8 | Rendered-script proof | realized ExecStart script: `bash -n` OK + threshold ladder visible (trip 40 line 255, restore 5/10/**20** lines 555-557) |
-| 9 | Scoped treefmt | 0 changed (alejandra-clean) |
-| 10 | Runbook `docs/services/memory-emergency-guard.md` restore section | updated (io gate + incident); later sessions extended it for ioPause |
-| 11 | CHANGELOG entry | landed + two precision passes (deploy-pending → DEPLOYED by gen-968; socket-UP claim softened to budget-unspent + flap semantics) |
-| 12 | `docs/todo/stability.md` decision rows (restore-cap policy, boot reset) | io-gate context appended to both |
-| 13 | `system-health.nix` trip alert text | now mentions the io-drain restore bar |
-| 14 | browser-history AGENTS.md gotcha | updated ×2 (root-cause fixed + deployed + live-validated); daemon-swept `60822a9` |
-| 15 | CI red root-caused | `Permission denied (publickey)` fetching SSH-form inputs (Oct-29 `ca3acb6e3` sweep); NOT content; existing `[blocked:user]` row `docs/todo/pipeline.md` updated with the widening + consequence (no green CI since 10-29) |
-| 16 | Daemon-wave co-rider review | foreign files flagged (caddy.nix/otel-endpoint-audit/signoz-coverage rode my waves = parallel session's; freeze-39 commit is docs-only) |
-| 17 | Storm-gated builder v2 armed | `~/tmp/tmpdir/vmtest-guard-gate.sh` → log `~/tmp/tmpdir/vmtest-guard-build.log`; freshness-checked, io<20 sustained 9 min, nice/ionice, 7.5 h budget; currently correctly holding (io 98) |
+| #  | Item                                                                                                                                                    | Evidence                                                                                                                                                                                                                  |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Root-cause diagnosis                                                                                                                                    | live prom (io 83%, capped 1, socket 0) + module read + asymmetry vs churn re-arm line                                                                                                                                     |
+| 2  | Restore elif io gate + option `restoreIoSomeAvg60ThresholdPercent` (default 20) + header incident paragraph + capped/cleared journal wording            | in HEAD; option declared exactly once; grep count 8                                                                                                                                                                       |
+| 3  | Deployed                                                                                                                                                | gen-968 (01:04 Nov 2, parallel session); live `/etc/systemd/system` ExecStart `b87z7izw…` carries the gate at script line 709                                                                                             |
+| 4  | Live validation                                                                                                                                         | 463-trip freeze-#39 night: budget 0 used, capped 0 — Oct-25 all-day-dark did NOT recur; socket still trips at peaks (sacrifice semantics, 3 flm cycles) and self-recovers post-drain                                      |
+| 5  | VM scenario 6-io + fixtures `restoreIoMild`/`restoreIoDrained` authored (mild-storm hold must NOT restore or consume budget; drained restore must fire) | in HEAD; budget-neutral vs 6a/6b-cap (its reset_state clears counters)                                                                                                                                                    |
+| 6  | `guard-restore-io-gate-selftest` static tripwire                                                                                                        | built green locally (`nix build .#checks.x86_64-linux.guard-restore-io-gate-selftest`)                                                                                                                                    |
+| 7  | `nix flake check --no-build`                                                                                                                            | ALL CHECKS PASSED (at my-edit HEAD)                                                                                                                                                                                       |
+| 8  | Rendered-script proof                                                                                                                                   | realized ExecStart script: `bash -n` OK + threshold ladder visible (trip 40 line 255, restore 5/10/**20** lines 555-557)                                                                                                  |
+| 9  | Scoped treefmt                                                                                                                                          | 0 changed (alejandra-clean)                                                                                                                                                                                               |
+| 10 | Runbook `docs/services/memory-emergency-guard.md` restore section                                                                                       | updated (io gate + incident); later sessions extended it for ioPause                                                                                                                                                      |
+| 11 | CHANGELOG entry                                                                                                                                         | landed + two precision passes (deploy-pending → DEPLOYED by gen-968; socket-UP claim softened to budget-unspent + flap semantics)                                                                                         |
+| 12 | `docs/todo/stability.md` decision rows (restore-cap policy, boot reset)                                                                                 | io-gate context appended to both                                                                                                                                                                                          |
+| 13 | `system-health.nix` trip alert text                                                                                                                     | now mentions the io-drain restore bar                                                                                                                                                                                     |
+| 14 | browser-history AGENTS.md gotcha                                                                                                                        | updated ×2 (root-cause fixed + deployed + live-validated); daemon-swept `60822a9`                                                                                                                                         |
+| 15 | CI red root-caused                                                                                                                                      | `Permission denied (publickey)` fetching SSH-form inputs (Oct-29 `ca3acb6e3` sweep); NOT content; existing `[blocked:user]` row `docs/todo/pipeline.md` updated with the widening + consequence (no green CI since 10-29) |
+| 16 | Daemon-wave co-rider review                                                                                                                             | foreign files flagged (caddy.nix/otel-endpoint-audit/signoz-coverage rode my waves = parallel session's; freeze-39 commit is docs-only)                                                                                   |
+| 17 | Storm-gated builder v2 armed                                                                                                                            | `~/tmp/tmpdir/vmtest-guard-gate.sh` → log `~/tmp/tmpdir/vmtest-guard-build.log`; freshness-checked, io<20 sustained 9 min, nice/ionice, 7.5 h budget; currently correctly holding (io 98)                                 |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State |
-|---|------|-------|
+| # | Item                           | State                                                                                                                                                                             |
+| - | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **VM scenario 6-io execution** | authored+pushed but NEVER run (CI infra-red; local gate armed, holding). Closure is warm — dry-run shows exactly ONE derivation to build, so the run is minutes once calm returns |
-| 2 | CI validation of the fix wave | blocked entirely by the SSH-input auth gap (owner console needed) |
-| 3 | Behavioral proof of the fix | live-production observation only (strong: budget survived a 463-trip night) — harness proof pending item b1 |
+| 2 | CI validation of the fix wave  | blocked entirely by the SSH-input auth gap (owner console needed)                                                                                                                 |
+| 3 | Behavioral proof of the fix    | live-production observation only (strong: budget survived a 463-trip night) — harness proof pending item b1                                                                       |
 
 ## c) NOT STARTED
 
-| # | Item |
-|---|------|
+| # | Item                                                                                                                                                                                                                                                                           |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1 | browser-history product UX for the sacrificed-LLM window: chat/summary SSE toast still shows generic "Temporary error" during storm peaks — could distinguish "LLM backend temporarily sacrificed by memory guard" (map the ECONNREFUSED class in `client.Classify` consumers) |
-| 2 | PSI-gating my OWN eval/build commands (I ran flake check/selftest-build/dry-runs during active churn — light, but ungated) |
-| 3 | Self-harvest of §f follow-ups into TODO_LIST + domain library — **deliberately deferred**: TODO_LIST.md + stability.md are mid-edit by the parallel freeze-#40 session (concurrent-edit race); harvest after quiescence (rows f1–f3 below name the targets) |
-| 4 | Any deploy action by me (correctly out of scope: deploy.sh PSI/trip-recency gates + owner action) |
+| 2 | PSI-gating my OWN eval/build commands (I ran flake check/selftest-build/dry-runs during active churn — light, but ungated)                                                                                                                                                     |
+| 3 | Self-harvest of §f follow-ups into TODO_LIST + domain library — **deliberately deferred**: TODO_LIST.md + stability.md are mid-edit by the parallel freeze-#40 session (concurrent-edit race); harvest after quiescence (rows f1–f3 below name the targets)                    |
+| 4 | Any deploy action by me (correctly out of scope: deploy.sh PSI/trip-recency gates + owner action)                                                                                                                                                                              |
 
 ## d) TOTALLY FUCKED UP (honest)
 
@@ -81,6 +81,7 @@ No damage shipped; all self-caught or corrected, but four real stumbles:
 ## f) NEXT (curated, grouped; ~34)
 
 **Verification closure (this fix)**
+
 1. Read `~/tmp/tmpdir/vmtest-guard-build.log` → want `BUILD_EXIT=0`; if red, triage scenario 6-io vs ioPause scenarios (the latter = other sessions').
 2. If the gate prints DEFERRED, run `nix build .#checks.x86_64-linux.memory-emergency-guard --no-link` manually in the first io<20 window (1 derivation, minutes).
 3. After 6-io runs green, cite it in the CHANGELOG entry (replace "pinned red-green by VM test" aspirational wording with the actual run).

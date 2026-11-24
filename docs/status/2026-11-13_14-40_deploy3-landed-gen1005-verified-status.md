@@ -29,18 +29,18 @@ Both vendorHash fixes were swept into auto-commit-daemon commits mixed with fore
 
 ## e) Verification ledger (live 14:0x–14:3x)
 
-| Surface | Verdict |
-| --- | --- |
-| Anchor | system-1005-link → `d825m2l3` = `/run/current-system`; newest gen by NUMBER; process tree drained |
-| Smoke re-run | 170 PASS / 6 FAIL / 5 SKIP / 0 STORM-SUSPECT (was 11 FAIL at 10:33) |
-| cv-server | ACTIVE, uptime 3h39m+, `/health` 200 (45 checks, warn) — the documented SIGSEGV crash-loop class did **NOT** fire (owner Q2 moot); the 10:33 CV smoke trio was settle-time |
-| Loaned metrics | psi.prom `node_psi_scrape_errors 0` (file fresh 14:09:36); `system_psi_metrics_fresh 1` |
-| SigNoz rules | v3 live: `data.total` = **61**, exact-set; several rules legitimately FIRING (alerts work end-to-end). `/api/v1/rules` serves SPA HTML — provisioner (`RULES_PATH` v1, tracked row) + smoke probe (new row) both stale-surface |
-| Payload daemons | cv-server, crm-server (10:33's 502 healed), monitor365, bank-sync, discordsync, openseo all ACTIVE |
-| Hub 503 drivers | cvagent `/health` 503 = known row 745 (serve env lacks git; ai+db checks pass) + the W3b read-loop row; nsfw remote 000 = unit inactive, no journal ≥2d (pre-existing idle) |
-| Self-healed oneshots | cv-scan, bank-sync-qonto-corpus, post-crash-calm-gate → Result=success via timers |
-| Pre-existing reds | forgejo-github-sync (dnsblockd PULL-mirror refusal gate, services.md:1086, 72 refusals/3d); inboxclean-sync (Gmail 429 quota loop, 536/3d — new watch row); service-health-check fails BY DESIGN while those two are red |
-| Borg tripwire smoke FAIL | script path-shape bug: the derivation outputs a flat 417-byte executable FILE; the smoke probes `<path>/bin/<name>` → ENOTDIR. `test -x <path>` verified green → false FAIL, new pipeline row |
+| Surface                  | Verdict                                                                                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Anchor                   | system-1005-link → `d825m2l3` = `/run/current-system`; newest gen by NUMBER; process tree drained                                                                                                                              |
+| Smoke re-run             | 170 PASS / 6 FAIL / 5 SKIP / 0 STORM-SUSPECT (was 11 FAIL at 10:33)                                                                                                                                                            |
+| cv-server                | ACTIVE, uptime 3h39m+, `/health` 200 (45 checks, warn) — the documented SIGSEGV crash-loop class did **NOT** fire (owner Q2 moot); the 10:33 CV smoke trio was settle-time                                                     |
+| Loaned metrics           | psi.prom `node_psi_scrape_errors 0` (file fresh 14:09:36); `system_psi_metrics_fresh 1`                                                                                                                                        |
+| SigNoz rules             | v3 live: `data.total` = **61**, exact-set; several rules legitimately FIRING (alerts work end-to-end). `/api/v1/rules` serves SPA HTML — provisioner (`RULES_PATH` v1, tracked row) + smoke probe (new row) both stale-surface |
+| Payload daemons          | cv-server, crm-server (10:33's 502 healed), monitor365, bank-sync, discordsync, openseo all ACTIVE                                                                                                                             |
+| Hub 503 drivers          | cvagent `/health` 503 = known row 745 (serve env lacks git; ai+db checks pass) + the W3b read-loop row; nsfw remote 000 = unit inactive, no journal ≥2d (pre-existing idle)                                                    |
+| Self-healed oneshots     | cv-scan, bank-sync-qonto-corpus, post-crash-calm-gate → Result=success via timers                                                                                                                                              |
+| Pre-existing reds        | forgejo-github-sync (dnsblockd PULL-mirror refusal gate, services.md:1086, 72 refusals/3d); inboxclean-sync (Gmail 429 quota loop, 536/3d — new watch row); service-health-check fails BY DESIGN while those two are red       |
+| Borg tripwire smoke FAIL | script path-shape bug: the derivation outputs a flat 417-byte executable FILE; the smoke probes `<path>/bin/<name>` → ENOTDIR. `test -x <path>` verified green → false FAIL, new pipeline row                                  |
 
 ## f) §f follow-ups — HARVEST LEDGER (all landed this session)
 

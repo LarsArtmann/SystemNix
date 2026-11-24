@@ -10,13 +10,13 @@
 
 ## a) Boundary and family
 
-| Fact | Value |
-|---|---|
-| Boot | `abaf0f51` 09:29:52 → 15:41:18 (**6 h 11 m**; the freeze-#53 recovery boot) |
-| Reset | `0x00200800` ACPI power state transition — **owner power-button**, logind ran a CLEAN poweroff ceremony (same class as #51; NOT WDT, NOT software reset) |
-| Next boot | 15:41:46 (28 s gap — clean poweroff) |
-| Census | 126 guard trips #9853→#9978 (**all** "NO eligible headless tree matched"); 200 DEEP THROTTLE ENTERs 09:47:11→15:38:50 (k10temp 98 °C, never-cooled, 3rd consecutive boot); 4 OOM inv / 4 kills; trips/h ≈ 20.4 |
-| Family | **C — memory-cliff-led finish, first since #43** |
+| Fact      | Value                                                                                                                                                                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Boot      | `abaf0f51` 09:29:52 → 15:41:18 (**6 h 11 m**; the freeze-#53 recovery boot)                                                                                                                                    |
+| Reset     | `0x00200800` ACPI power state transition — **owner power-button**, logind ran a CLEAN poweroff ceremony (same class as #51; NOT WDT, NOT software reset)                                                       |
+| Next boot | 15:41:46 (28 s gap — clean poweroff)                                                                                                                                                                           |
+| Census    | 126 guard trips #9853→#9978 (**all** "NO eligible headless tree matched"); 200 DEEP THROTTLE ENTERs 09:47:11→15:38:50 (k10temp 98 °C, never-cooled, 3rd consecutive boot); 4 OOM inv / 4 kills; trips/h ≈ 20.4 |
+| Family    | **C — memory-cliff-led finish, first since #43**                                                                                                                                                               |
 
 ## b) Timeline (all times CET, from the journal capture)
 
@@ -36,13 +36,13 @@
 
 ## c) The memory topology at death (systemd teardown accounting)
 
-| Scope | RAM peak | Swap peak | Notes |
-|---|---|---|---|
-| `user.slice` / `user-1000.slice` | **81.7 G / 80.9 G** | **60 G** | 450 G read / 446 G written in 6 h 11 m |
-| `session-115.scope` | **77.9 G** | **53.6 G** | ONE session; 2 h 52 m CPU, 54.2 G written, 820 M network out; started ~10:02 — right after the nix memcg kills |
-| `session-46.scope` | 67.9 G | — | hog #2, oomd-killed 14:49 |
-| ~8 more session scopes | 23–27 G each | — | the agent fleet |
-| `nix-daemon.service` | 14.5 G | — | builds |
+| Scope                            | RAM peak            | Swap peak  | Notes                                                                                                          |
+| -------------------------------- | ------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `user.slice` / `user-1000.slice` | **81.7 G / 80.9 G** | **60 G**   | 450 G read / 446 G written in 6 h 11 m                                                                         |
+| `session-115.scope`              | **77.9 G**          | **53.6 G** | ONE session; 2 h 52 m CPU, 54.2 G written, 820 M network out; started ~10:02 — right after the nix memcg kills |
+| `session-46.scope`               | 67.9 G              | —          | hog #2, oomd-killed 14:49                                                                                      |
+| ~8 more session scopes           | 23–27 G each        | —          | the agent fleet                                                                                                |
+| `nix-daemon.service`             | 14.5 G              | —          | builds                                                                                                         |
 
 ## d) Why every defense failed (the actual root causes)
 

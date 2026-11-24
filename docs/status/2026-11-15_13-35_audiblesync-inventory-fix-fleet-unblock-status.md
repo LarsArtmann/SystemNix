@@ -282,14 +282,14 @@ step at a time… keep going until everything works") — that resolves §g by a
 
 **Live battery (14:07 restart, all green):**
 
-| Check | Result |
-| ----- | ------ |
-| Unit env | `AUDIBLESYNC_LIBRARY_DIR=/mnt/pool/services/audible/books` present in live unit |
-| Binary | `audiblesync-0.1.1` ExecStart, PID restarted 14:07:00 |
-| healthz | `{"status":"ok","version":"0.1.1","books":0}` — counters honestly 0 pending Q1 |
-| `/files` inventory | All 72 rows render (ASIN-prefix + B-ASIN + `Propaganda - Bernard Woolner (B0741DTNNT).m4b` tail shapes), ASIN extraction correct on every row, `orphan` badges honest |
-| Journal | Clean — INFO http-request lines only |
-| Anchor | Pending: `switch-to-configuration test` (17+ min) holds behind `post-crash-calm-gate` (60-min no-trip window; memory-emergency-guard re-trips reset it). Profile still `system-1012-link`, current-system flipped to the new toplevel. Watcher live — flip to gen-1013 closes the battery |
+| Check              | Result                                                                                                                                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit env           | `AUDIBLESYNC_LIBRARY_DIR=/mnt/pool/services/audible/books` present in live unit                                                                                                                                                                                                           |
+| Binary             | `audiblesync-0.1.1` ExecStart, PID restarted 14:07:00                                                                                                                                                                                                                                     |
+| healthz            | `{"status":"ok","version":"0.1.1","books":0}` — counters honestly 0 pending Q1                                                                                                                                                                                                            |
+| `/files` inventory | All 72 rows render (ASIN-prefix + B-ASIN + `Propaganda - Bernard Woolner (B0741DTNNT).m4b` tail shapes), ASIN extraction correct on every row, `orphan` badges honest                                                                                                                     |
+| Journal            | Clean — INFO http-request lines only                                                                                                                                                                                                                                                      |
+| Anchor             | Pending: `switch-to-configuration test` (17+ min) holds behind `post-crash-calm-gate` (60-min no-trip window; memory-emergency-guard re-trips reset it). Profile still `system-1012-link`, current-system flipped to the new toplevel. Watcher live — flip to gen-1013 closes the battery |
 
 Residual risk while unanchored: a reboot before the profile flip reverts the switch.
 The calm gate + guard machinery is the parallel session's deploy tail and self-resolves

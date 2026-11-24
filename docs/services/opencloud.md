@@ -38,10 +38,10 @@ All three provisioned by `pocket-id-config.provision` (`isPublic = true`, `pkceE
 
 ## Web apps (extensions)
 
-| App         | Version | Source                                       |
-| ----------- | ------- | -------------------------------------------- |
+| App         | Version | Source                                        |
+| ----------- | ------- | --------------------------------------------- |
 | JSON Viewer | 2.1.0   | `pkgs/opencloud-web-apps.nix` (release asset) |
-| Unzip       | 2.2.0   | same                                         |
+| Unzip       | 2.2.0   | same                                          |
 
 Installed declaratively: the derivation fetches the official `opencloud-eu/web-extensions` release archives (the same artifacts the in-app App Store downloads) and `WEB_ASSET_APPS_PATH` points at that read-only store tree — no imperative copy into `$OC_DATA_DIR/web/assets/apps`, so a rebuild is the only install step. The web service auto-discovers the tree at startup (`services/web/pkg/server/http/server.go`: `apps.List` → `external_apps` in `config.json`) and serves it at `/assets/apps/<name>/`; a restart is the only activation step.
 

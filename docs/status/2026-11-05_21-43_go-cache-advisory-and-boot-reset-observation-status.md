@@ -118,17 +118,17 @@
 
 ## Evidence appendix (point-in-time)
 
-| Time | Probe | Result |
-| --- | --- | --- |
-| 19:48–19:50 | (pre-reboot) uptime/PSI/pgrep | load 1248→1292; io PSI some avg10 98.99→99.00; 8 lint runs / 5 repos / 5 linkers; details in the 19:50 report appendix |
-| 20:09 | uptime, PSI | load 22.64 (1min avg), PSI some avg10 42.29 — storm drained |
-| 20:09 | file reads | home.nix:400-485; buildcache.nix:560-650 |
-| 21:43 | `date` | 21:43:47 CET |
-| 21:43 | uptime | **up 1:04 — REBOOTED**; load 47.43, PSI some avg10 60.27 avg60 74.32 (new boot busy) |
-| 21:43 | `journalctl --list-boots` | `-2` 30b6b4cb… 03:05:44→03:13:47 (8 min); `-1` 5819f35d… 03:16:27→**20:36:40**; `0` 7c876ae0… 20:39:20→ |
-| 21:43 | `journalctl -b -1 -n 8` | tail = ordinary crm-server INFO logs at 20:36:40, NO shutdown markers |
-| 21:43 | `echo $GOLANGCI_LINT_CACHE` | `/mnt/buildcache/golangci-lint` |
-| 21:43 | `du -sh /mnt/buildcache/go-build` | **96G** (corrects the 151G mount-total figure used in the tmpfs dismissal) |
+| Time        | Probe                             | Result                                                                                                                 |
+| ----------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 19:48–19:50 | (pre-reboot) uptime/PSI/pgrep     | load 1248→1292; io PSI some avg10 98.99→99.00; 8 lint runs / 5 repos / 5 linkers; details in the 19:50 report appendix |
+| 20:09       | uptime, PSI                       | load 22.64 (1min avg), PSI some avg10 42.29 — storm drained                                                            |
+| 20:09       | file reads                        | home.nix:400-485; buildcache.nix:560-650                                                                               |
+| 21:43       | `date`                            | 21:43:47 CET                                                                                                           |
+| 21:43       | uptime                            | **up 1:04 — REBOOTED**; load 47.43, PSI some avg10 60.27 avg60 74.32 (new boot busy)                                   |
+| 21:43       | `journalctl --list-boots`         | `-2` 30b6b4cb… 03:05:44→03:13:47 (8 min); `-1` 5819f35d… 03:16:27→**20:36:40**; `0` 7c876ae0… 20:39:20→                |
+| 21:43       | `journalctl -b -1 -n 8`           | tail = ordinary crm-server INFO logs at 20:36:40, NO shutdown markers                                                  |
+| 21:43       | `echo $GOLANGCI_LINT_CACHE`       | `/mnt/buildcache/golangci-lint`                                                                                        |
+| 21:43       | `du -sh /mnt/buildcache/go-build` | **96G** (corrects the 151G mount-total figure used in the tmpfs dismissal)                                             |
 
 **Sources:** live probes as tabled; `docs/status/2026-11-05_19-50_go-build-slowness-storm-diagnosis-status.md` (predecessor report, §f tier-2 carrier); `docs/status/2026-11-05_19-42_deploy-blocker-fixes-storm-gated-deploy-status.md` §e (inherited forensics); `platforms/nixos/users/home.nix:400-485`; `modules/nixos/services/buildcache.nix:595-650`; `docs/agents/storage.md:66,92-93,111-125`; `docs/todo/pipeline.md:217`; `docs/agents/stability.md` (freeze ledger, S-0035, boot-evidence discipline incl. the full-id `-b` trap).
 

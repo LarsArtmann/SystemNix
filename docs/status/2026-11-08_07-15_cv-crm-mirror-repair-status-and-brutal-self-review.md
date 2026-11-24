@@ -57,6 +57,7 @@
 ## f) NEXT (up to 50, tiered; most derive directly from this session's residuals)
 
 **Now / small:**
+
 1. Quantify the replay's reopen blast radius (count `deal.reopened` / closed→open view flips in the 06:42–06:53 window) and present the number to the owner (g.1).
 2. Verify cv-scan's 12:23 tick — first organic cycle on the healed mirror; expect zero new sync errors.
 3. Verify tonight's 03:40 crm-backup artifact over the rekeyed db + restore-drill it (quarterly drill is due anyway).

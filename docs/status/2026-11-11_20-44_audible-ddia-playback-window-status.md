@@ -1,14 +1,16 @@
 # Audible playback window: DDIA started, verified, then died silently
 
 **When:** 2026-11-11 20:44 CET · **HEAD:** `2d70f1644` · **Tree:** clean (foreign takeout files excluded) · **Books:** 65 / 28 GB (stable)
-**Session window:** 20:04→20:44 — the owner browsed the archive (pasted four `ls` views), asked what M4B is + the biggest book, asked to start *Designing Data-Intensive Applications*, and asked whether the archive works without Audible.
+**Session window:** 20:04→20:44 — the owner browsed the archive (pasted four `ls` views), asked what M4B is + the biggest book, asked to start _Designing Data-Intensive Applications_, and asked whether the archive works without Audible.
 
 **Owner's opener answered in one line each:**
+
 - **Forgot:** to verify AUDIO actually reached an output device (the IPC said "playing", which is not sound), and to keep mpv's logs — I launched with output discarded, so when it died ~30 min later the death was undiagnosable.
 - **Could have done better:** shipped control recipes as raw chat one-liners instead of a committed helper script; the owner can't re-find them and socat (the natural tool) isn't installed on the box.
 - **Can still improve:** a `scripts/audible-ctl` helper (status/play/pause/seek/stop/now-playing) with file-logged mpv and `--save-position-on-quit` so a 21-hour book survives restarts with position intact.
 
 **Scope — VERIFIED here:**
+
 - Biggest book: `stat -c '%s'` sorted → **1,196,749,462 bytes** — `B08VL79B2C_Designing_Data-Intensive_Applications…` (runner-up `B09DT83XTV_Secrets_of_Professional_Tournament_Poker…` at 1,185,061,486).
 - Playback start: mpv launched detached (setsid, PID 3084218) with IPC socket `/run/user/1000/mpv-audible.sock`; python socket query verified `duration=75404.7s (20h56m)`, `time-pos=16.5s advancing`, `pause=false`, correct media title.
 - DRM-free confirmation: the files are plain AAC-in-M4B (RC4 DRM decrypted during the `-c copy` remux); the running playback used a bare filesystem path with zero Audible processes/credentials/network — offline playback proven by construction.
@@ -16,6 +18,7 @@
 - Tree/commits: HEAD `2d70f1644` unchanged this window (no new commits by me); foreign takeout session staged files observed, untouched.
 
 **Scope — NOT verified:**
+
 - **Why mpv died** (~20:15→20:44 window): output was discarded at launch (`>/dev/null 2>&1`) — crash vs owner-kill unknowable. The owner had the kill command in chat, so an intentional stop is plausible.
 - **Whether sound reached the speakers** while it played: IPC state is not audio verification; no sink-input check was run.
 - Position lost: mpv had no `--save-position-on-quit`; wherever playback died, restarting restarts at 0:00 unless a start offset is passed.
@@ -60,7 +63,7 @@
 
 ## f) NEXT — up to 50 things to get done next
 
-*(items 1-8 NEW/carried-forward from this window; the queued backbone from today's reports stays live — listed at the bottom; full detail in `2026-11-11_20-04_…` §f.)*
+_(items 1-8 NEW/carried-forward from this window; the queued backbone from today's reports stays live — listed at the bottom; full detail in `2026-11-11_20-04_…` §f.)_
 
 1. **Commit `scripts/audible-ctl`** (status/play/pause/seek/stop/now-playing + log tail; connect-refused = "not running") — High / S / Feature (NEW).
 2. **Relaunch DDIA with hygiene**: log file + `--save-position-on-quit` (+ resume offset on request) — High / S / Feature (NEW).
@@ -108,7 +111,7 @@
 44. **eval-cache SQLite busy watch** — Low / S / Watch (roadmap).
 45. **Audible: cover/PDF dedupe decision** (same as 13, kept separate if owner wants both formats kept) — Low / M / Cleanup (roadmap).
 
-*(deliberately NOT harvested: 1-3 harvested below as the audible-ctl row + playback-hygiene row; 5-7 owner questions in §g; the queued backbone already has rows.)*
+_(deliberately NOT harvested: 1-3 harvested below as the audible-ctl row + playback-hygiene row; 5-7 owner questions in §g; the queued backbone already has rows.)_
 
 ## g) Questions I can NOT figure out yourself
 

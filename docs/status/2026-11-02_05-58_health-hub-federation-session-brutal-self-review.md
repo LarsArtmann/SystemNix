@@ -49,6 +49,7 @@
 ## f) Up to 50 things to get done next (session-scoped, ranked by impact)
 
 **Deploy-gated (rides the shared window):**
+
 1. Post-deploy: verify 8 cards at health.home.lan, no `*/reachable` rows.
 2. Post-deploy: `systemctl start health-dashboard-rediscover` exits 0; timer armed (`list-timers`).
 3. Post-deploy: Gatus "Health Hub Federation" green with tq's warn rows present (warn≠fail proof).

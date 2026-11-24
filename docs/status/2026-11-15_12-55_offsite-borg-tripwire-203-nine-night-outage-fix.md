@@ -5,16 +5,16 @@
 
 ## §a Evidence (all live-probed this session)
 
-| Probe | Result |
-| --- | --- |
-| Deployed unit `/etc/systemd/system/borgbackup-job-hetzner.service:24` | `ExecStartPre=/nix/store/bvvc483…-borg-offsite-golive-check/bin/borg-offsite-golive-check` (the `/bin/` form) |
-| `test -x` flat store path | YES (executable single 417-byte file at the drv root) |
-| `test -x` `<file>/bin/borg-offsite-golive-check` | rc=1 (`Not a directory`) |
-| Journal `borgbackup-job-hetzner` since go-live | **203/EXEC every nightly 06:30 fire Nov 07 → Nov 15 (9 consecutive)**: `Unable to locate executable …: Not a directory`, `Failed at step EXEC` |
-| `/var/lib/borg-offsite/.last_success` | does not exist (never created) |
-| `backups.prom` | `backup_ever_succeeded{backup="offsite-borg"} 0`, `backup_last_success_timestamp 0`, `backup_age_hours 999`, `backup_healthy 0` |
-| Tree eval `systemd.services.borgbackup-job-hetzner.serviceConfig.ExecStartPre` (pre-fix) | renders the SAME `/bin/` form (current tree was broken too; next deploy would have re-rendered it) |
-| Eval stderr (pre-fix) | `evaluation warning: getExe: Package borg-offsite-golive-check does not have the meta.mainProgram attribute … use getExe' to specify the name` |
+| Probe                                                                                    | Result                                                                                                                                         |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deployed unit `/etc/systemd/system/borgbackup-job-hetzner.service:24`                    | `ExecStartPre=/nix/store/bvvc483…-borg-offsite-golive-check/bin/borg-offsite-golive-check` (the `/bin/` form)                                  |
+| `test -x` flat store path                                                                | YES (executable single 417-byte file at the drv root)                                                                                          |
+| `test -x` `<file>/bin/borg-offsite-golive-check`                                         | rc=1 (`Not a directory`)                                                                                                                       |
+| Journal `borgbackup-job-hetzner` since go-live                                           | **203/EXEC every nightly 06:30 fire Nov 07 → Nov 15 (9 consecutive)**: `Unable to locate executable …: Not a directory`, `Failed at step EXEC` |
+| `/var/lib/borg-offsite/.last_success`                                                    | does not exist (never created)                                                                                                                 |
+| `backups.prom`                                                                           | `backup_ever_succeeded{backup="offsite-borg"} 0`, `backup_last_success_timestamp 0`, `backup_age_hours 999`, `backup_healthy 0`                |
+| Tree eval `systemd.services.borgbackup-job-hetzner.serviceConfig.ExecStartPre` (pre-fix) | renders the SAME `/bin/` form (current tree was broken too; next deploy would have re-rendered it)                                             |
+| Eval stderr (pre-fix)                                                                    | `evaluation warning: getExe: Package borg-offsite-golive-check does not have the meta.mainProgram attribute … use getExe' to specify the name` |
 
 ## §b Root cause
 
@@ -29,14 +29,14 @@ Impact framing: the 203 was also **accidentally fail-closing the signed-off go-l
 
 ## §c Fix surfaces (all landed; daemon commits 4f687f460 + e12b96fbb)
 
-| Surface | Change |
-| --- | --- |
-| `platforms/nixos/system/backup.nix:316` | `ExecStartPre = "${goliveCheck}";` — interpolate the flat file path directly; comment documents the getExe/getExe' no-op history |
-| `flake/parts/checks/selftests.nix` (`offsite-borg-positive-render`) | new assert: **no `/bin/` infix on ExecStartPre** — eval-time shape guard for the 203/EXEC class, fires on every flake check |
-| `docs/services/offsite-borg.md` | TRIPWIRE PATH SHAPE paragraph in the go-live checklist |
-| `TODO_LIST.md` tripwire row + `docs/todo/pipeline.md:1124` | ticked, premise corrected (smoke was right; unit was broken) |
-| `TODO_LIST.md` hygiene bundle | borg leg marked RESOLVED (warning gone from eval); pipewire + caddy legs remain |
-| Smoke (`scripts/lib/offsite-borg-smoke.sh`) | UNCHANGED — its `-x` probe was correct all along; fixture selftest re-run 21/21 |
+| Surface                                                             | Change                                                                                                                           |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `platforms/nixos/system/backup.nix:316`                             | `ExecStartPre = "${goliveCheck}";` — interpolate the flat file path directly; comment documents the getExe/getExe' no-op history |
+| `flake/parts/checks/selftests.nix` (`offsite-borg-positive-render`) | new assert: **no `/bin/` infix on ExecStartPre** — eval-time shape guard for the 203/EXEC class, fires on every flake check      |
+| `docs/services/offsite-borg.md`                                     | TRIPWIRE PATH SHAPE paragraph in the go-live checklist                                                                           |
+| `TODO_LIST.md` tripwire row + `docs/todo/pipeline.md:1124`          | ticked, premise corrected (smoke was right; unit was broken)                                                                     |
+| `TODO_LIST.md` hygiene bundle                                       | borg leg marked RESOLVED (warning gone from eval); pipewire + caddy legs remain                                                  |
+| Smoke (`scripts/lib/offsite-borg-smoke.sh`)                         | UNCHANGED — its `-x` probe was correct all along; fixture selftest re-run 21/21                                                  |
 
 ## §d Verification
 
@@ -48,7 +48,7 @@ Impact framing: the 203 was also **accidentally fail-closing the signed-off go-l
 
 ## §e Repo-wide class audit
 
-Every other `lib.getExe`/`lib.getExe'` call site targets a `writeShellApplication` (bin/ layout — getExe correct) or a real package: monitor365 ×5, forgejo scripts (`_forgejo-scripts.nix`, all writeShellApplication), system-health ×2, memory-emergency-guard ×2, crm ×2, pim-sync, gatus-config (`mkSecretCheck` + oidc env), bank-sync, immich (`mkImmichApiKeyProvision`), snapshots (scrubGuard writeShellApplication + its `lib.getExe is REQUIRED` comment). **backup.nix was the only writeShellScript+getExe misuse.** The 2026-09-11 scrubGuard incident (bare `"${scrubGuard}"` on a writeShellApplication → "Is a directory") is the same family in the opposite direction; together the two incidents pin the rule: *writeShellScript → interpolate the flat path; writeShellApplication → getExe.*
+Every other `lib.getExe`/`lib.getExe'` call site targets a `writeShellApplication` (bin/ layout — getExe correct) or a real package: monitor365 ×5, forgejo scripts (`_forgejo-scripts.nix`, all writeShellApplication), system-health ×2, memory-emergency-guard ×2, crm ×2, pim-sync, gatus-config (`mkSecretCheck` + oidc env), bank-sync, immich (`mkImmichApiKeyProvision`), snapshots (scrubGuard writeShellApplication + its `lib.getExe is REQUIRED` comment). **backup.nix was the only writeShellScript+getExe misuse.** The 2026-09-11 scrubGuard incident (bare `"${scrubGuard}"` on a writeShellApplication → "Is a directory") is the same family in the opposite direction; together the two incidents pin the rule: _writeShellScript → interpolate the flat path; writeShellApplication → getExe._
 
 ## f) Deploy + follow-ups
 

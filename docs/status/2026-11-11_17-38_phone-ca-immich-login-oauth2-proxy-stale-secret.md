@@ -6,6 +6,7 @@
 ## Scope — what this report VERIFIED vs did NOT verify
 
 **Verified live this session (command/artifact named):**
+
 - `immich.home.lan` server health: `/api/server/ping` → `{"res":"pong"}`, `/api/server/version` → 3.3.6, `/.well-known/immich` → `{"api":{"endpoint":"/api"}}` (openssl s_client probes, 17:1x)
 - oauth2-proxy journal (`journalctl -u oauth2-proxy`): phone fresh-login callbacks at 17:26:47 + 17:30:02 → **500, `invalid_client` "Client authentication failed"** at token exchange with Pocket ID; UA Chrome/156 Mobile, source `100.112.80.216` (a NetBird IP — the phone WAS inside the tunnel)
 - `pocket-id-provision` 16:50:50 run: every client row reads "Secret file already exists" (no rotation by the provisioner) — `journalctl -u pocket-id-provision --since today`
@@ -16,6 +17,7 @@
 - Upstream Immich error provenance: `mobile/lib/pages/common/splash_screen.page.dart` `resumeSession()` — "Missing crucial offline login info" fires when `serverUrl`/`serverEndpoint`/`accessToken` were never persisted (subagent research, immich-app/immich#29050 et al.)
 
 **NOT verified (why):**
+
 - **The fix itself** — end-to-end phone login after the 17:32 restart has NOT been retried by the owner yet. The whole repair rests on the hypothesis "disk secret file == Pocket ID DB expectation; only oauth2-proxy's memory was stale". If the phone still 500s, the disk file itself has drifted and the repair is a forced rotation of the `oauth2-proxy` client in Pocket ID.
 - Whether **Pocket ID's expected secret actually changed** today at 16:50 and WHO/WHAT changed it (the 16:38 deploy log was not opened; a UI-side client edit is equally possible). Attribution open — see §g.3.
 - Whether the **Immich native-OIDC client** (`id: immich`, same `client-secrets/` directory, also read-once-at-start) suffers the same staleness — the phone never got past the forward-auth leg, so this is untested.
@@ -49,7 +51,7 @@
 
 ## d) TOTALLY FUCKED UP (own failures this session, honestly)
 
-1. **Diagnosis ordering was wrong for three round trips.** The real blocker was SERVER-side (oauth2-proxy `invalid_client`) from the start; the journal one grep away. Instead the first three answers steered phone-side micro-causes (URL scheme, browser choice, app version, NetBird DNS theory). The phone-side advice was not *wrong* (the CA genuinely had to go into the user store; Chrome-vs-Firefox matters) but it was not the blocker, and I had the server logs accessible the entire time. Cost: ~3 owner round trips before the owner's own "500 after oauth2-proxy" observation pointed at the right layer. Lesson: for "app X fails to log in" against MY infrastructure, journal-first, client-theory-second.
+1. **Diagnosis ordering was wrong for three round trips.** The real blocker was SERVER-side (oauth2-proxy `invalid_client`) from the start; the journal one grep away. Instead the first three answers steered phone-side micro-causes (URL scheme, browser choice, app version, NetBird DNS theory). The phone-side advice was not _wrong_ (the CA genuinely had to go into the user store; Chrome-vs-Firefox matters) but it was not the blocker, and I had the server logs accessible the entire time. Cost: ~3 owner round trips before the owner's own "500 after oauth2-proxy" observation pointed at the right layer. Lesson: for "app X fails to log in" against MY infrastructure, journal-first, client-theory-second.
 2. **One verification leg was garbage and I shipped the session on the good one.** The `openssl s_client` probe against the plain-HTTP 18000 server returned empty (TLS handshake against a non-TLS listener); the python urllib leg was the real check. Sloppy probe design in the moment; caught nothing because the other leg covered it.
 3. **First answer was impractical** (`scp` a file to a phone) — caught by the owner, cost one round trip.
 4. **Nothing was destroyed / no data loss / no secret exposure** — proportionality note: the §d list here is diagnostic slowness, not damage. The single prod mutation (oauth2-proxy restart) was evidence-backed, announced in-flight, and low-risk.
@@ -65,6 +67,7 @@
 ## f) NEXT — up to 50, impact-sorted (direct follow-ups marked; the rest is brainstorm-grade, no new research behind it)
 
 **Direct follow-ups of THIS session (1–8):**
+
 1. **[HARVESTED → monitoring.md + TODO_LIST]** Continuous end-to-end auth check: a gatus check that walks the oauth2 sign_in → callback/token-exchange path (or a canary OIDC token request against Pocket ID with the oauth2-proxy client) so `invalid_client` 500s page instead of waiting for a human login.
 2. **[HARVESTED → services.md + TODO_LIST]** Close the stale-secret class structurally: oauth2-proxy (and the other client-secrets consumers) need restart-on-provision ordering (`pocket-id-provision.service` → `restart`/`reload` of consumers, or ExecStartPre freshness-compare + exit to fail closed), so a Pocket ID cycle can never leave a stale in-memory client secret again.
 3. **Verify the fix end-to-end**: owner retries Immich login on the phone; if it 500s again → forced rotation of the `oauth2-proxy` client in Pocket ID (admin) + provisioner re-sync + restart. (Owner-gated; question §g.1.)

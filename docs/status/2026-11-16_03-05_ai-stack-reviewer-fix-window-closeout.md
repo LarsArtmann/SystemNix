@@ -6,13 +6,13 @@
 
 **The window's five tasks:**
 
-| Task | What | Landing (verified at HEAD) |
-| --- | --- | --- |
-| 000001a1d8cbc255 | Research-doc follow-ups (3-item ai-stack batch) | GREEN — 254246429, d99ab169f, 9081d2bac (+ daemon 54351154b); closeout 30fb44a26 |
-| 000001a1d902b185 | Reviewer fix: dangling status-report citation in re-embed design doc | GREEN — 1f04026ba; phantom filename zero-references at HEAD |
-| 000001a1d902afe126 | 5-item ai-stack/pipeline batch (research-index mechanize [skipped-as-done], #19482 watch re-probe, planning→research sweep ×8 files, llmUpstream verify, F08 annotation) | GREEN — 2805fa39a, 1e1b39e8a, fb8ad28ac, 3c1d5014d, edfa4aa04; closeout 131a0a36b |
-| 000001a1d902b168 | Reviewer fix: demand-profile Method-note correction | GREEN — 9688d2a3c; CORRECTION note live in the report at HEAD; closeout 7f48518f7 |
-| 000001a1d902b18b | Reviewer fix: RestartSteps regression gate | MIXED — gate real and verified (pre-existing via dead session's daemon commit fa78a834c), but the ticket's own closeout carries TWO claims that are FALSE at HEAD (see §d.1) |
+| Task               | What                                                                                                                                                                     | Landing (verified at HEAD)                                                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 000001a1d8cbc255   | Research-doc follow-ups (3-item ai-stack batch)                                                                                                                          | GREEN — 254246429, d99ab169f, 9081d2bac (+ daemon 54351154b); closeout 30fb44a26                                                                                             |
+| 000001a1d902b185   | Reviewer fix: dangling status-report citation in re-embed design doc                                                                                                     | GREEN — 1f04026ba; phantom filename zero-references at HEAD                                                                                                                  |
+| 000001a1d902afe126 | 5-item ai-stack/pipeline batch (research-index mechanize [skipped-as-done], #19482 watch re-probe, planning→research sweep ×8 files, llmUpstream verify, F08 annotation) | GREEN — 2805fa39a, 1e1b39e8a, fb8ad28ac, 3c1d5014d, edfa4aa04; closeout 131a0a36b                                                                                            |
+| 000001a1d902b168   | Reviewer fix: demand-profile Method-note correction                                                                                                                      | GREEN — 9688d2a3c; CORRECTION note live in the report at HEAD; closeout 7f48518f7                                                                                            |
+| 000001a1d902b18b   | Reviewer fix: RestartSteps regression gate                                                                                                                               | MIXED — gate real and verified (pre-existing via dead session's daemon commit fa78a834c), but the ticket's own closeout carries TWO claims that are FALSE at HEAD (see §d.1) |
 
 ---
 
@@ -84,6 +84,7 @@
 ## f) Up to 50 next things (top items → TODO_LIST; the rest report-only)
 
 Queued this pass (6 new + 1 evidence tick, dedup-checked):
+
 1. Extend `checks.crash-loop-backoff-contract` to fastflowlm/llama-vlm/llama-chat (the never-landed b18b row, re-minted). → TODO_LIST ✓
 2. Restore b18b's two claimed-but-absent attribution surfaces (§d.4 annotation + a footer-bearing commit). → TODO_LIST ✓
 3. Closeout receipt rule (post-commit greps for own-write claims). → TODO_LIST ✓

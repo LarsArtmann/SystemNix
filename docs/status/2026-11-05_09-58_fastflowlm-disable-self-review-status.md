@@ -7,19 +7,23 @@
 ## Self-review (the questions, answered honestly)
 
 **1. What did you forget?**
+
 - **The queue twin.** I resolved the `[decision]` row in `docs/todo/services.md` but missed its TODO_LIST.md:1454 twin — a direct violation of the repo's "queue one-liners and their library entries must not drift — edit both" rule. CAUGHT while writing this report (grep for the twin), fixed at authoring time (both rows now `[x]`).
 - **That `systemctl stop fastflowlm` is not containment on this box.** The user's stop (07:2x) left `fastflowlm.socket` accepting; the documented re-arm class fired AGAIN: flm-real was observed RUNNING at 09:56:14 under a new PID (367525), D-state, PSI io 42.6% — the storm is live while I write this. Likely vector: the PMA auto-commit daemon's go-commit LLM calls against the still-listening :52625 — i.e. **my own tree edits, committed by the daemon, re-armed the model I was disabling.** I gave the correct 3-unit stop command in my hand-off but never verified the stop HELD; the deploy is the only real containment and it has not run.
 - **The gatus-coverage audit break.** My first disable edit broke evo-x2 eval (PMA's env still names :52625, exemption vanished with the module). I did not predict it — the eval gate caught it. Good gate, sloppy anticipation; the flm module's `allowPorts` was visible in my own first read of the module.
 
 **2. What is something that's stupid that we do anyway?**
+
 - The box runs TWO AI stacks that keep killing it (flm, llama-chat, llama-rag disabled/re-enabled in waves; 48 documented freezes) while a 3rd copy of similar models sits in `/data/ai/models/jan` (114 GB) and a 4th in `image` (259 GB). The disable treats the symptom of the week, not the fleet-level "how many multi-GB cold-load LLMs does one 128 GB box with one shared system disk deserve" question.
 
 **3. What could you have done better?**
+
 - Anticipate dependent surfaces BEFORE the first eval: the gatus-exemption miss and the queue-twin miss were both visible in files I had already read.
 - Verify hand-off claims: I wrote "instant relief" for the user's stop without re-checking PSI minutes later — the re-arm proved that claim time-boxed at best.
 - Tool hygiene: three edit-before-read rejections (FEATURES.md, selftests.nix, fastflowlm.md), one `rg -rn` hook block, one `rg --include` misuse, one lost `PIPESTATUS` on a backgrounded check. ~6 wasted round-trips; each was avoidable by reading first / knowing the tool.
 
 **4. What could you still improve?**
+
 - The `'''` Nix-closing typo in test-fastflowlm-idle.nix (caught by immediate re-read, never reached an eval — but a syntax slip in a moved string block is exactly where indented-string pitfalls live; the formatter-then-rebuild dance that proved content-identity was the right instinct, keep it).
 - Cite line numbers only where stable; my final hand-off cited `fastflowlm.nix:489` for ceilings that had already drifted past my own comment insertion.
 
@@ -43,18 +47,18 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| Root-cause diagnosis of the 100% I/O storm (flm cgroup thrash, not buildflow/pre-deploy-check) | pidstat/iostat/PSI/cgroup/fd forensics, 07:22–07:35; findings baked into configuration.nix evidence ledger |
-| `fastflowlm.enable = false` + evidence-ledger comment | configuration.nix; eval green |
-| MemoryMax 40G→56G, MemoryHigh 32G→48G + rationale | fastflowlm.nix (the "set the MemoryMax up" ask) |
-| memory-guard sacrifice/socket lists → observe-only | configuration.nix; asserted live: `[]`/`[]` |
-| gatus-coverage exemption for :52625 (PMA env reference) | configuration.nix; eval gate caught the need |
-| 3 eval-dependent surfaces made state-tracking (port-guard legs, idle test, bridge contract) | all three BUILT green; SKIP lines read from store outputs |
-| Docs: FEATURES 🔧 DISABLED row, runbook banner, CHANGELOG entry, [decision] resolved (library) | all four surfaces edited |
-| Queue-twin drift fix (TODO_LIST.md:1454) | fixed while authoring this report |
-| Self-harvest of this report's §f | 2 rows added to docs/todo/services.md (1× [ready], 1× [decision]) |
-| Verification battery | toplevel eval ×2 green; flake check --no-build exit 0; buildflow fast run (only pre-existing dprint/lock drift failing); treefmt on my files with content-identity proof |
+| Item                                                                                           | Evidence                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Root-cause diagnosis of the 100% I/O storm (flm cgroup thrash, not buildflow/pre-deploy-check) | pidstat/iostat/PSI/cgroup/fd forensics, 07:22–07:35; findings baked into configuration.nix evidence ledger                                                               |
+| `fastflowlm.enable = false` + evidence-ledger comment                                          | configuration.nix; eval green                                                                                                                                            |
+| MemoryMax 40G→56G, MemoryHigh 32G→48G + rationale                                              | fastflowlm.nix (the "set the MemoryMax up" ask)                                                                                                                          |
+| memory-guard sacrifice/socket lists → observe-only                                             | configuration.nix; asserted live: `[]`/`[]`                                                                                                                              |
+| gatus-coverage exemption for :52625 (PMA env reference)                                        | configuration.nix; eval gate caught the need                                                                                                                             |
+| 3 eval-dependent surfaces made state-tracking (port-guard legs, idle test, bridge contract)    | all three BUILT green; SKIP lines read from store outputs                                                                                                                |
+| Docs: FEATURES 🔧 DISABLED row, runbook banner, CHANGELOG entry, [decision] resolved (library) | all four surfaces edited                                                                                                                                                 |
+| Queue-twin drift fix (TODO_LIST.md:1454)                                                       | fixed while authoring this report                                                                                                                                        |
+| Self-harvest of this report's §f                                                               | 2 rows added to docs/todo/services.md (1× [ready], 1× [decision])                                                                                                        |
+| Verification battery                                                                           | toplevel eval ×2 green; flake check --no-build exit 0; buildflow fast run (only pre-existing dprint/lock drift failing); treefmt on my files with content-identity proof |
 
 ## b) PARTIALLY DONE
 
@@ -113,4 +117,4 @@
 
 ---
 
-*Report self-harvested per the TODO system rule: §f direct follow-ups landed as 2 rows in docs/todo/services.md (dead-reference audit [ready], local-LLM story [decision]); items 7, 8, 11 are report-internal candidates deliberately NOT harvested (each needs the deploy or an owner decision first — harvesting them now would queue work that cannot start). No manual commit: the auto-commit daemon owns this tree.*
+_Report self-harvested per the TODO system rule: §f direct follow-ups landed as 2 rows in docs/todo/services.md (dead-reference audit [ready], local-LLM story [decision]); items 7, 8, 11 are report-internal candidates deliberately NOT harvested (each needs the deploy or an owner decision first — harvesting them now would queue work that cannot start). No manual commit: the auto-commit daemon owns this tree._

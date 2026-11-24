@@ -89,4 +89,4 @@ Systemic (this session's evidence): the fix wave is deploy-gated behind a storm 
 
 ---
 
-*Reported 2026-11-17 17:44 CET. §f items 6–11, 15–21 deliberately NOT harvested into TODO surfaces yet (owner's report-then-wait instruction; the escape-clause record lives here). Waiting for instructions.*
+_Reported 2026-11-17 17:44 CET. §f items 6–11, 15–21 deliberately NOT harvested into TODO surfaces yet (owner's report-then-wait instruction; the escape-clause record lives here). Waiting for instructions._

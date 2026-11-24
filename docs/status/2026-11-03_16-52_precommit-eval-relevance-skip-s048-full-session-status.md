@@ -13,14 +13,14 @@
 
 ## Timeline
 
-| Time | Event |
-| --- | --- |
-| 16:03 | Diagnosed PID 2540799: hook leg, 22GB RSS, 7min elapsed; parent = parallel session's commit; check completed green mid-diagnosis; no kill needed |
+| Time        | Event                                                                                                                                                                                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 16:03       | Diagnosed PID 2540799: hook leg, 22GB RSS, 7min elapsed; parent = parallel session's commit; check completed green mid-diagnosis; no kill needed                                                                                                                                                                                                       |
 | 16:05–16:15 | Pre-reads: S-048 row (TODO_LIST:1610 / pipeline:547) = exact match; `precommit-eval-cache.sh` (NO verdict cache — documented); `eval-relevant-paths.sh` shared array; nix-flakes.md memory profile (~20GB known since 2026-10-12); docs-skip fixture + selftests.nix wiring pattern; buildflow skill loaded (hook is repo-owned; buildflow is one leg) |
-| 16:20–16:32 | Implemented: array + reap-names, hook classification, new selftest (rename from test-precommit-docs-skip.sh), wiring + 2 mutation negatives, eval-cache comment, 6 doc surfaces, 3 row ticks |
-| 16:32–16:47 | Verification loop; found and fixed 4 self-inflicted test bugs (details §d); shellcheck/fmt clean |
-| 16:47–16:50 | Daemon swept finals (`3550341b8`); sandbox `nix build` of the check GREEN; parallel session `825b8a4aa` landed my row close-outs under a named message |
-| 16:52 | This report |
+| 16:20–16:32 | Implemented: array + reap-names, hook classification, new selftest (rename from test-precommit-docs-skip.sh), wiring + 2 mutation negatives, eval-cache comment, 6 doc surfaces, 3 row ticks                                                                                                                                                           |
+| 16:32–16:47 | Verification loop; found and fixed 4 self-inflicted test bugs (details §d); shellcheck/fmt clean                                                                                                                                                                                                                                                       |
+| 16:47–16:50 | Daemon swept finals (`3550341b8`); sandbox `nix build` of the check GREEN; parallel session `825b8a4aa` landed my row close-outs under a named message                                                                                                                                                                                                 |
+| 16:52       | This report                                                                                                                                                                                                                                                                                                                                            |
 
 ---
 

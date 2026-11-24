@@ -2,7 +2,7 @@
 
 **Session scope:** user pasted a failing `DEPLOY_FORCE_PRESSURE=2 nix run .#deploy` (the
 `apps.deploy.program` "expected a set but found a function" eval error) and said
-*"fix i want a new deployment!"*. This report covers THIS session's run only —
+_"fix i want a new deployment!"_. This report covers THIS session's run only —
 the diagnosis chain, the fixes, what landed, what is still broken, and the honest
 misses. One parallel session ran concurrently the entire time and landed the actual
 switch; attribution is called out per item.
@@ -61,7 +61,7 @@ IO PSI some avg10 ≈ 43% still draining, 170/177 post-deploy smoke checks pass.
    first-hand enumeration log.
 9. **Eval-gate conformance for the new services** (the prevention layers did their
    jobs; I fixed what they flagged): cvagent homepage tile icon `mdi-source-branch`
-   → `git.png` (dashboard-icons pack gate); io-tier-coverage-audit allowlist += 
+   → `git.png` (dashboard-icons pack gate); io-tier-coverage-audit allowlist +=
    `timesheets-backup-dir`, `invoices-dashboard-backup-dir` (metadata-only boot legs,
    same census section as the sibling backup-dir units); scripts/deploy.sh converger
    restart loop += both backup-dir units (deploy-restart-audit: oneshot+RemainAfterExit
@@ -245,6 +245,7 @@ IO PSI some avg10 ≈ 43% still draining, 170/177 post-deploy smoke checks pass.
 ## f) UP TO 50 NEXT THINGS (dispatch-ordered, grouped)
 
 **Immediate hygiene (today):**
+
 1. Re-run `scripts/post-deploy-check.sh` standalone once PSI < 20% and record a
    green bill (or the true residual set).
 2. Verify a real re-admission path for the calm-gated fleet: confirm llama-embeddings
@@ -281,89 +282,89 @@ IO PSI some avg10 ≈ 43% still draining, 170/177 post-deploy smoke checks pass.
 
 **Upstream-first floats (next quiet window):**
 16. hermes-agent: upstream fix so `pm-packages` tolerates the pinned nixpkgs
-    (pass `patchelfUnstable or patchelf` into `patchelfFixed`, or drop the patch
-    when the fetched patchelf ≥ fixed version), push, float past 84f30c73.
+(pass `patchelfUnstable or patchelf` into `patchelfFixed`, or drop the patch
+when the fetched patchelf ≥ fixed version), push, float past 84f30c73.
 17. dnsblockd: regenerate `app.min.css` with the current tailwind, commit, push,
-    float 696c73e → 9fe62ce (or tip).
+float 696c73e → 9fe62ce (or tip).
 18. go-taskqueue: the local checkout is 9 commits ahead UNPUSHED with a different
-    baked vendorHash — push upstream (with the hash our graph produces), then
-    re-float and drop the tq shims per the lift ritual.
+baked vendorHash — push upstream (with the hash our graph produces), then
+re-float and drop the tq shims per the lift ritual.
 19. cv: re-attempt the 32e6d0eb float deliberately (content-identical flake-wise; it
-    only needs a keep-going proof) so the registry row and lock converge on tip.
+only needs a keep-going proof) so the registry row and lock converge on tip.
 20. Re-float the rest of today's reverted set (go-humanize-linter, bank-sync lineage)
-    once upstream bakes the got hashes; each has a documented LIFT observable.
+once upstream bakes the got hashes; each has a documented LIFT observable.
 21. timesheets: confirm NEW golden fixtures added by future dev are NOT re-burned by
-    any ignore rule (the negation covers the dir — verify with `git check-ignore`
-    after the first new fixture).
+any ignore rule (the negation covers the dir — verify with `git check-ignore`
+after the first new fixture).
 
 **Monitoring/observability:**
 22. Fleet-visible metric for maintenance-entry-gate REFUSE counts per unit.
 23. Alertable event for post-crash-calm-gate timeout (today it silently cascaded a
-    fleet-dark window).
+fleet-dark window).
 24. psi-wait-gate queue-depth metric (llama-vlm-cap sat queued 450s+; the gauge exists
-    in the journal, not in SignNoz).
+in the journal, not in SignNoz).
 25. Signoz rule or gatus check on Health Hub remotes so a gated-remote-dark window
-    pages BEFORE the daily smoke catches it.
+pages BEFORE the daily smoke catches it.
 26. node-exporter journal-volume alarm (474 lines/min tripped Service Sanity; a
-    sustained-rate rule would catch log-storm regressions).
+sustained-rate rule would catch log-storm regressions).
 
 **Pipeline/prevention:**
 27. Lint: module attrsets with `config`/`options` + non-structural top-level keys
-    (the offline-banner class) — eval-time or negative-test harness leg.
+(the offline-banner class) — eval-time or negative-test harness leg.
 28. Lint or lint-idea: module function that references `config` without binding it
-    while an outer scope binds one (shadowing hazard — offline-banner bug #2).
+while an outer scope binds one (shadowing hazard — offline-banner bug #2).
 29. float-register: split roots extraction into EVAL roots vs BUILD roots with
-    separate sections, so build failures aren't discovered only after eval clears.
+separate sections, so build failures aren't discovered only after eval clears.
 30. Pre-commit: eval-relevant files (modules/, platforms/, flake/) should not ride
-    bare daemon commits — a filetype-keyed refusal or a marker file the daemon
-    respects (mirror the TODO tick-and-commit rule).
+bare daemon commits — a filetype-keyed refusal or a marker file the daemon
+respects (mirror the TODO tick-and-commit rule).
 31. pre-deploy §16: update the negative-test probe to the dual-surface
-    `serviceConfig.Environment` reality (the single-surface probe silently reads
-    empty since the F3 delegation).
+`serviceConfig.Environment` reality (the single-surface probe silently reads
+empty since the F3 delegation).
 32. Post-deploy smoke baseline: grace window for services younger than N hours
-    (first-harvest CPU churn today produced 2 of the 7 FAILs).
+(first-harvest CPU churn today produced 2 of the 7 FAILs).
 33. Consider baking ioTier into `mkPoolDirUnit` (opt-out arg) to retire the
-    backup-dir allowlist section.
+backup-dir allowlist section.
 34. expected-locks regen audit: today the registry and lock were reverted/edited by
-    three actors (float-register, parallel session, me) — a post-wave
-    `flake.lock`-vs-registry consistency report would catch half-states.
+three actors (float-register, parallel session, me) — a post-wave
+`flake.lock`-vs-registry consistency report would catch half-states.
 35. The deploy lock refusal (exit 13) should print the OTHER deploy's log path, not
-    just PIDs (I found the live log only via ls -t).
+just PIDs (I found the live log only via ls -t).
 36. Extend the deploy lock holder scan to include the nh/nix child PIDs' elapsed
-    time in the refusal message (I polled manually).
+time in the refusal message (I polled manually).
 
 **Docs/memory:**
 37. AGENTS.md session-discipline: add "before deploy-unblock work, read
-    /var/log/systemnix-deploys + `ls -t docs/status` for an in-flight deploy arc".
+/var/log/systemnix-deploys + `ls -t docs/status` for an in-flight deploy arc".
 38. docs/services/timesheets.md + invoices-dashboard.md: add the gitignore-fixture
-    trap note (their runbooks currently assume the fixtures are tracked).
+trap note (their runbooks currently assume the fixtures are tracked).
 39. docs/services/cv.md + cvagent.md runbooks: record the tile-icon pack rule
-    (`git.png` not `mdi-*`) so the next tile doesn't trip the eval assertion.
+(`git.png` not `mdi-*`) so the next tile doesn't trip the eval assertion.
 40. Data-ownership doc: tq-agent-pool reads the whole projects tree and spawns crush
-    sessions — its IO/CPU footprint belongs in the ownership map.
+sessions — its IO/CPU footprint belongs in the ownership map.
 41. ROADMAP: the tq pool's "headless agents per repo" workload is a new first-class
-    consumer of the box; capacity planning (QLC vs hot-tier staging of scanned
-    repos) is unowned.
+consumer of the box; capacity planning (QLC vs hot-tier staging of scanned
+repos) is unowned.
 
 **Verification debt from this session:**
 42. Verify the daemon actually committed the nixpkgs pin (f9a75f41) — it was
-    uncommitted when I last checked; a blanket re-lock would re-float it otherwise.
+uncommitted when I last checked; a blanket re-lock would re-float it otherwise.
 43. Verify cv-server actually serves on the new generation (smoke had CV browser
-    renders PASS — confirm post-storm, incl. the relogin/probe units' next triggers).
+renders PASS — confirm post-storm, incl. the relogin/probe units' next triggers).
 44. Re-check Health Hub /readyz after the fleet heals (its 503 was a gated remote).
 45. Confirm the pq/invoices/timesheets backup timers fired or are correctly scheduled
-    (their backup-dir oneshots restarted via the converger loop today).
+(their backup-dir oneshots restarted via the converger loop today).
 46. Re-verify the PAP_ICONS_DIR realize path now that git.png is in the tile set
-    (the §16 gate failed earlier only because the drv was never realized; the
-    toplevel build now covers it — confirm).
+(the §16 gate failed earlier only because the drv was never realized; the
+toplevel build now covers it — confirm).
 47. Sweep for other `mdi-*` icon values across the integration registry (the eval
-    gate only fired on cvagent; a pre-sweep is cheaper than the next eval failure).
+gate only fired on cvagent; a pre-sweep is cheaper than the next eval failure).
 48. Offsite Borg: confirm the tripwire check passes after 7 (or exempt it with the
-    documented justification if the exec-bit is intentional).
+documented justification if the exec-bit is intentional).
 49. Post-mortem the 12:05 deploy's 5172s duration: how much was gate-wait vs build vs
-    activation — feeds the calm-gate design question (10).
+activation — feeds the calm-gate design question (10).
 50. After the storm: one full `nix flake check --no-build --all-systems` for the
-    darwin-side confirmation the reverted graph didn't break macOS eval.
+darwin-side confirmation the reverted graph didn't break macOS eval.
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

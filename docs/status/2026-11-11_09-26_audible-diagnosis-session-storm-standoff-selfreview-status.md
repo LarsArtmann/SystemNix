@@ -9,11 +9,11 @@
 
 ## The failure chain THIS session diagnosed (01:0x–01:4x, independent of the 01-13 session)
 
-| Window (Nov 10) | Symptom | Cause | Fix commit | Landed |
-|---|---|---|---|---|
-| 12:23 → 19:01 (×4) | `status=226/NAMESPACE` — `Failed to set up mount namespacing: /mnt/pool/services/audible: No such file or directory` | dirs unit `ReadWritePaths` pointed at the leaf it itself creates (systemd namespace setup precedes ExecStartPre) | `3d92a2ac4` 19:35 — parent `/mnt/pool/services` | gen 998 |
-| 23:43 → Nov 11 (×2) | `chown: changing ownership of '…/library': Operation not permitted` | `harden{}`'s empty `CapabilityBoundingSet` strips `CAP_CHOWN` from root inside the namespace | `54faa31e1` 00:50 — `CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE` | gen 999 (07:46) |
-| **gen 998 (built 00:43)** | carried the 226 fix but **empty** bounding set — built 7 min BEFORE `54faa31e1` landed | deploy raced the fix authoring | redeploy | 07:46 |
+| Window (Nov 10)           | Symptom                                                                                                              | Cause                                                                                                            | Fix commit                                                  | Landed          |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------- |
+| 12:23 → 19:01 (×4)        | `status=226/NAMESPACE` — `Failed to set up mount namespacing: /mnt/pool/services/audible: No such file or directory` | dirs unit `ReadWritePaths` pointed at the leaf it itself creates (systemd namespace setup precedes ExecStartPre) | `3d92a2ac4` 19:35 — parent `/mnt/pool/services`             | gen 998         |
+| 23:43 → Nov 11 (×2)       | `chown: changing ownership of '…/library': Operation not permitted`                                                  | `harden{}`'s empty `CapabilityBoundingSet` strips `CAP_CHOWN` from root inside the namespace                     | `54faa31e1` 00:50 — `CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE` | gen 999 (07:46) |
+| **gen 998 (built 00:43)** | carried the 226 fix but **empty** bounding set — built 7 min BEFORE `54faa31e1` landed                               | deploy raced the fix authoring                                                                                   | redeploy                                                    | 07:46           |
 
 Evidence read fresh this session: journalctl for both units since 05:00; `grep CapabilityBoundingSet /run/current-system/…/audible-sync-dirs.service` → empty at gen 998, full set at gen 999; commit timeline `git log -1` on both fixes vs `ls -la system-99*-link` mtimes; `harden{}`/`mkPoolDirUnit` precedent at `lib/default.nix:93` (the caps set is exactly the proven `mkPoolDirUnit` invariant — the module hand-rolled its unit instead of using the lib function, which is how the bug escaped).
 
@@ -65,6 +65,7 @@ Evidence read fresh this session: journalctl for both units since 05:00; `grep C
 ## f) NEXT — grouped, deduplicated against the six rows the close-out session already harvested (authority rule, is-failed sweep, deploy pre-flight, float-ceremony gating, forgejo row, crm pin-lift follow)
 
 **Decision-gated (owner):**
+
 1. **Seed timing** — start the first audible seed NOW (48h timeout, occupies the pool through the weekend) or let Sunday 05:00 fire it. § g.1.
 2. **google-sync + pim-sync GCP console trip** — one sitting: People API client (pim-sync) + Drive API client (google-sync), both "In production"; then 3× `rclone authorize "drive"`; sops pastes for `google-sync.yaml` (`type = drive` in ALL three remotes) and pim-sync values; Stalwart DAV account on pbx; 4 pim-sync consents.
 3. **Ratify the force-authority rule** the close-out session queued (three overrides now exist; policy still doesn't). § g.2.
@@ -106,8 +107,8 @@ Evidence read fresh this session: journalctl for both units since 05:00; `grep C
 
 ## Harvest record (self-harvest obligation, done at authoring time 09:26+)
 
-- **harvest.1** → `TODO_LIST.md` + `docs/todo/services.md`: *Fix owner-facing audible auth filename (`~/.audible/auth.json` → actual quickstart output `audible.json`) in runbook go-live step 2 + module config-check echo.* `[ready]`
-- **harvest.2** → `TODO_LIST.md` + `docs/todo/services.md`: *Refactor `audible-sync-dirs` onto `mkPoolDirUnit` (caps invariant single-sourced).* `[ready]`
-- **harvest.3** → `.crush/skills/sops-secret-management/SKILL.md` Common Mistakes: *inspect decrypted VALUES via `sops -d --extract '["key"]'`, never raw-line grep+jq (YAML quoting pollutes the line).* (skill file edit, in-repo)
-- **harvest.4** → `TODO_LIST.md` + `docs/todo/services.md`: *Attribute audible-sync-dirs re-fire mechanism (12:23 + 18:00 runs match no gen link; 08:47:26 instance same question).* `[ready]`
+- **harvest.1** → `TODO_LIST.md` + `docs/todo/services.md`: _Fix owner-facing audible auth filename (`~/.audible/auth.json` → actual quickstart output `audible.json`) in runbook go-live step 2 + module config-check echo._ `[ready]`
+- **harvest.2** → `TODO_LIST.md` + `docs/todo/services.md`: _Refactor `audible-sync-dirs` onto `mkPoolDirUnit` (caps invariant single-sourced)._ `[ready]`
+- **harvest.3** → `.crush/skills/sops-secret-management/SKILL.md` Common Mistakes: _inspect decrypted VALUES via `sops -d --extract '["key"]'`, never raw-line grep+jq (YAML quoting pollutes the line)._ (skill file edit, in-repo)
+- **harvest.4** → `TODO_LIST.md` + `docs/todo/services.md`: _Attribute audible-sync-dirs re-fire mechanism (12:23 + 18:00 runs match no gen link; 08:47:26 instance same question)._ `[ready]`
 - **Deliberately NOT harvested:** § f.1–3 (owner-gated decisions — they live in § g of this report and the existing blocked:user rows); § f.13–20 (already queued by the close-out session — re-adding would duplicate); § f.21–22 (closed/moot, record-only). Re-harvesting the six landed rows would violate the no-drift rule in reverse.

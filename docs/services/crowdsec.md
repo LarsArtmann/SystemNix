@@ -7,10 +7,10 @@
 
 ## What runs
 
-| Unit                                  | Shape                                                            | Notes                                                                                         |
-| ------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `crowdsec.service`                    | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/data/crowdsec.db`, WAL — see the 2026-11-07 incident below)                            |
-| `crowdsec-update-hub.{service,timer}` | daily oneshot                                                    | **OFF** (`autoUpdateService` default false) — hub updates happen at every agent start instead |
+| Unit                                  | Shape                                                            | Notes                                                                                                 |
+| ------------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `crowdsec.service`                    | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/data/crowdsec.db`, WAL — see the 2026-11-07 incident below) |
+| `crowdsec-update-hub.{service,timer}` | daily oneshot                                                    | **OFF** (`autoUpdateService` default false) — hub updates happen at every agent start instead         |
 
 Every start runs (in order): `crowdsec-wait-dns` (our gate, 180s budget) → `crowdsec-setup`
 (unconditional `cscli hub update` + hub installs + `machine add --auto` — nixpkgs
@@ -31,11 +31,12 @@ found` (401 ×2 → fatal → restart) from Nov 6 12:04 until the heal; the move
 
 **Live heal (2026-11-07 04:2x, sudo):** migrated the 64MB `state/crowdsec.db`
 (machine `evo-x2` + bouncer `geometrikks` rows intact, 0 alerts/0 decisions)
-+ all parser data files + GeoLite2 into `data/`; quarantined the fresh junk
-DB as `/var/lib/crowdsec/data/.quarantine-fresh-{db,shm,wal}`; restarted.
-**Evidence:** login `200` ×N, `Loaded 59 scenarios`, 0 tail errors, counts
-`.prom` 0644 with all 4 metrics + `bouncer_geometrikks_registered 1`,
-metrics `:6061` HTTP 200, caddy access logs mode `640`.
+
+- all parser data files + GeoLite2 into `data/`; quarantined the fresh junk
+  DB as `/var/lib/crowdsec/data/.quarantine-fresh-{db,shm,wal}`; restarted.
+  **Evidence:** login `200` ×N, `Loaded 59 scenarios`, 0 tail errors, counts
+  `.prom` 0644 with all 4 metrics + `bouncer_geometrikks_registered 1`,
+  metrics `:6061` HTTP 200, caddy access logs mode `640`.
 
 **Layout truth (pinned in-tree since 2026-11-07):** `db_path`/`data_dir`/
 `hub_dir`/`index_path` are pinned explicitly in `crowdsec.nix` — no future
@@ -45,7 +46,6 @@ install symlinks (Oct-14 layout) resolve into `state/hub` — deleting it
 re-drops the engine to "Loaded 0 scenarios" (live-proven 04:27); the next
 hub item reinstall converges them onto `data/hub`, after which `state/`
 becomes trashable residue.
-
 
 ## Data sources (acquisitions)
 

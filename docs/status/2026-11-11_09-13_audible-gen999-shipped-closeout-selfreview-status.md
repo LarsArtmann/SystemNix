@@ -4,11 +4,13 @@
 **Session:** continuation of the audible-dirs fix arc (report `2026-11-11_01-13_audible-dirs-two-layer-226-eperm-fix-storm-deploy-status.md` + its §h close-out); this report covers what happened after that close-out was written, and answers the owner's three questions directly.
 
 **Owner's opener answered in one line each:**
+
 - **Forgot:** the deploy's own lock-float step invalidates a pre-float eval probe (deploy #5 burned on exactly that), and to re-check MY OWN deploy's process tree after rc — it lingered ~53 min and blocked a foreign session's 08:26 deploy attempt.
 - **Could have done better:** written the paperless-gpt eval-proof claim only AFTER the eval returned (I wrote it first, got lucky), gated the poll loop on float-ceremony quiescence instead of toplevel-eval green, and attributed the 08:47:26 dirs re-fire instead of waving it off as "harmless".
 - **Can still improve:** smoke batteries need an automatic persistent-vs-self-healed re-probe pass; the pressure-gate authority rule still doesn't exist; tq-agent-pool's cgroup escape is an un-audited unit-shape class.
 
 **Scope of this report — VERIFIED here (fresh commands, this session):**
+
 - gen anchor: `readlink /run/current-system` == `system-999-link` == `y4nrx9n6…` (read back 07:5x and re-read 08:5x after the 08:26 foreign refusal log surfaced).
 - Live unit content: `grep CapabilityBoundingSet\|ReadWritePaths /etc/systemd/system/audible-sync-dirs.service` → both fixes present.
 - Dirs unit runs: `journalctl -u audible-sync-dirs.service --since "2026-11-11 07:30"` → "Finished" at 07:46:40 + 08:47:26, zero errors.
@@ -21,6 +23,7 @@
 - Commits: `git show --stat` on `2637e8719` (report §h, 23 insertions) and `ba2909528` (4 queue-row lines); final `git status --short` empty.
 
 **Scope — NOT verified here (named gaps):**
+
 - Gatus live UI / SigNoz dashboards: not probed (eval gates green in #6's battery is the only Gatus evidence; audible has no HTTP surface).
 - The three persistent foreign failures' ROOT CAUSES: journal tails read, no deeper investigation (foreign-owned; not started).
 - tq-agent-pool swap state after 08:56: not re-probed (it was mid auto-restart at last check).
@@ -71,7 +74,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-*(radical honesty; this session's own misses first — the earlier arc's five are recorded in the 01:13 report §d and are NOT re-litigated here)*
+_(radical honesty; this session's own misses first — the earlier arc's five are recorded in the 01:13 report §d and are NOT re-litigated here)_
 
 1. **I wrote a proof claim BEFORE its proof existed.** §h of the 01:13 report was appended while the paperless-gpt eval (background shell 056) was still running; the "GREEN" line entered the report ~2 minutes before the eval returned `{"enabled":true,…}`. It happened to be true and the captured output now backs it — but the sequencing is the exact "assert WHICH question your evidence answers" violation class. Severity: low (self-caught within the session, evidence captured). Workaround: none needed post-hoc; the rule is behavioral.
 2. **My deploy #6 process tree lingered and blocked a foreign session.** The 08:26 deploy log shows holder PID 3216162 (started 07:33 — my deploy) ALIVE at 52:45 elapsed; the foreign session's attempt died code=13 on the flock. I never checked my own deploy's FULL process tree after rc=3 — the "wait for the FULL process tree, not one PID" discipline (2026-10-23) was applied by me to OTHERS' deploys, not mine. Severity: medium (blocked a peer session ~10 min of attempt cycles; flock auto-releases on death). Root cause: unknown — either nh lingers post-smoke or a detached child held the lock; not traced.
@@ -93,7 +96,7 @@
 
 ## f) NEXT — up to 50 things to get done
 
-*(ranked by impact; NEW = born from this session, queued = row already exists in TODO_LIST/docs/todo — HARVEST: the four NEW pipeline items are appended to `docs/todo/pipeline.md` at authoring time per the standing self-harvest rule; the rest are already-queued, owner-gated, or roadmap-class with reasons recorded)*
+_(ranked by impact; NEW = born from this session, queued = row already exists in TODO_LIST/docs/todo — HARVEST: the four NEW pipeline items are appended to `docs/todo/pipeline.md` at authoring time per the standing self-harvest rule; the rest are already-queued, owner-gated, or roadmap-class with reasons recorded)_
 
 1. **Owner: pick seed timing — start `audible-sync.service` now vs Sunday 05:00** — Critical / S / Feature (owner-gated; unblocks the last audible legs).
 2. **After seed: journal three-phase check + `last_success` freshness row appears in backup-coordination** — Critical / M / Verification (seed-gated).
@@ -126,7 +129,7 @@
 29. **jq-in-direnv + midnight-trap recurrence check in next docs-health VERIFY pass** — Low / S / Documentation (roadmap 37).
 30. **Re-audit remaining sibling dirs units' runbook wording against the parent-RWP shape** (generalization of 17) — Low / S / Documentation (NEW, follows from §e.6).
 
-*(deliberately NOT harvested into queue files: items 1, 2, 14 are owner-gated asks already carried in §g and the existing go-live row; items 3-9, 13 are NEW and the four pipeline-shaped ones — 6, 7, 8, 11-adjacent — are appended below; items 15-20, 26-27 already have queue rows; items 21-25, 28-29 are roadmap-class per the TODO-system split.)*
+_(deliberately NOT harvested into queue files: items 1, 2, 14 are owner-gated asks already carried in §g and the existing go-live row; items 3-9, 13 are NEW and the four pipeline-shaped ones — 6, 7, 8, 11-adjacent — are appended below; items 15-20, 26-27 already have queue rows; items 21-25, 28-29 are roadmap-class per the TODO-system split.)_
 
 ## g) Questions I can NOT figure out myself
 

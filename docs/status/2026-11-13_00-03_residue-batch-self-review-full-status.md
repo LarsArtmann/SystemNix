@@ -6,15 +6,15 @@
 
 ## §0 Verdict table
 
-| Item | Verdict | Evidence |
-| ---- | ------- | -------- |
-| R3.3 batch v2 | **LIVE — 538/538 OK + 1 dry-run = 539 corrections** | batch log; sqlite count 539; rehydration +538 exactly; fold-demoted `ready`; dashboard renders corrections live (200 + markers) |
-| R4 held queue | **CLOSED** | 20/20 self-addressed released + relay-sent; queue 0 |
-| R5 verdicts collector | **LANDED, NOT DEPLOYED** (00:03 live check: unit absent — no natural deploy carried it yet) | eval green ×2 (mine + sibling's full pre-commit flake check); rowed [blocked:deploy] |
-| R6 dashboard | **VERIFIED LIVE** | authenticated 200 + "Misrouted correction" on cv@`76f8e41`; parity ratchets green in a worktree at the deployed rev |
-| R8 closeout | **DONE** | both plans EXECUTED tombstones; CHANGELOG; report; harvest rows |
-| R1 re-probe | **550 — G-RESEND STILL OPEN** | 23:18 probe bounced; 20/20-sent mails were larsartmann.cloud (MAIL FROM proof), NOT artmann.tech |
-| All landings | **VERIFIED at HEAD `e6a0a7f7d`** | per-file git grep (module, scripts, SC2034 fix, annotations, tombstones, CHANGELOG, report, runbooks, rows) |
+| Item                  | Verdict                                                                                     | Evidence                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| R3.3 batch v2         | **LIVE — 538/538 OK + 1 dry-run = 539 corrections**                                         | batch log; sqlite count 539; rehydration +538 exactly; fold-demoted `ready`; dashboard renders corrections live (200 + markers) |
+| R4 held queue         | **CLOSED**                                                                                  | 20/20 self-addressed released + relay-sent; queue 0                                                                             |
+| R5 verdicts collector | **LANDED, NOT DEPLOYED** (00:03 live check: unit absent — no natural deploy carried it yet) | eval green ×2 (mine + sibling's full pre-commit flake check); rowed [blocked:deploy]                                            |
+| R6 dashboard          | **VERIFIED LIVE**                                                                           | authenticated 200 + "Misrouted correction" on cv@`76f8e41`; parity ratchets green in a worktree at the deployed rev             |
+| R8 closeout           | **DONE**                                                                                    | both plans EXECUTED tombstones; CHANGELOG; report; harvest rows                                                                 |
+| R1 re-probe           | **550 — G-RESEND STILL OPEN**                                                               | 23:18 probe bounced; 20/20-sent mails were larsartmann.cloud (MAIL FROM proof), NOT artmann.tech                                |
+| All landings          | **VERIFIED at HEAD `e6a0a7f7d`**                                                            | per-file git grep (module, scripts, SC2034 fix, annotations, tombstones, CHANGELOG, report, runbooks, rows)                     |
 
 ## a) FULLY DONE
 

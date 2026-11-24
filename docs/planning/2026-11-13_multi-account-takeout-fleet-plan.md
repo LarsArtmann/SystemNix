@@ -6,11 +6,11 @@ Registry: [`scripts/takeout-accounts.tsv`](../../scripts/takeout-accounts.tsv).
 
 ## 1. Scope and the two per-account modes
 
-| Account | Mode | Export | State (2026-11-13) |
-| --- | --- | --- | --- |
-| `racedriver8k` | **retire** | 880 GB / 23 parts, one-shot | owner browser clicks outstanding; expires 2026-11-18 03:13 |
+| Account            | Mode                 | Export                                    | State (2026-11-13)                                                                          |
+| ------------------ | -------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `racedriver8k`     | **retire**           | 880 GB / 23 parts, one-shot               | owner browser clicks outstanding; expires 2026-11-18 03:13                                  |
 | `lars@helpless.ai` | **keep** (recurring) | 22 GB / 7 parts on disk, `unzip -t` clean | expected part list unknown → owner saves the exports page (parts.tsv/products.tsv), then G2 |
-| further accounts | TBD | owner reports ~3 TB total | names + modes must be added to the registry (owner decision §7) |
+| further accounts   | TBD                  | owner reports ~3 TB total                 | names + modes must be added to the registry (owner decision §7)                             |
 
 - **retire** — one full export, verify, ingest into self-hosted services, keep the zips
   **forever** as the immutable raw archive, account deleted by the owner last (the keeper
@@ -23,32 +23,32 @@ Registry: [`scripts/takeout-accounts.tsv`](../../scripts/takeout-accounts.tsv).
 completeness and account-scoped auth; its costs are full re-downloads and a browser-only
 wall. For accounts the owner KEEPS, the cheapest correct path is the live one:
 
-| Content | keep-mode source (preferred) | retire-mode source |
-| --- | --- | --- |
-| Drive (files) | **`google-sync` rclone live mirror** (already built, `docs/services/google-sync.md`) → OpenCloud + drive-paperless — incremental, preserves mtimes, no rart wall, no re-download | Takeout one-shot (D1=B for racedriver8k) |
-| Photos | **Takeout** (`immich-go` handles checksum dedup; the Photos API cannot read the full library) | Takeout one-shot |
-| Mail | **InboxClean / IMAP** (existing OAuth grants) → cold archive or mail host, Message-ID dedup | Takeout mbox → cold archive |
-| Everything else (Activity, Chrome, Calendar, Contacts, Keep, Maps, …) | Takeout 2-monthly (small, cold archive) | Takeout one-shot (cold archive) |
+| Content                                                               | keep-mode source (preferred)                                                                                                                                                     | retire-mode source                       |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Drive (files)                                                         | **`google-sync` rclone live mirror** (already built, `docs/services/google-sync.md`) → OpenCloud + drive-paperless — incremental, preserves mtimes, no rart wall, no re-download | Takeout one-shot (D1=B for racedriver8k) |
+| Photos                                                                | **Takeout** (`immich-go` handles checksum dedup; the Photos API cannot read the full library)                                                                                    | Takeout one-shot                         |
+| Mail                                                                  | **InboxClean / IMAP** (existing OAuth grants) → cold archive or mail host, Message-ID dedup                                                                                      | Takeout mbox → cold archive              |
+| Everything else (Activity, Chrome, Calendar, Contacts, Keep, Maps, …) | Takeout 2-monthly (small, cold archive)                                                                                                                                          | Takeout one-shot (cold archive)          |
 
 Consequence: a keep-mode cycle normally downloads only Photos + the small products — not
 the whole Drive tree. `google-sync` go-live is the existing `[blocked:user]` OAuth row; it
-is a *fleet* prerequisite for keep accounts, not just a Paperless nicety.
+is a _fleet_ prerequisite for keep accounts, not just a Paperless nicety.
 
 ## 2. The pipeline — per account, per export/cycle
 
 Same gates as the baseline plan; G2.5 is new and is what makes the fleet scale.
 
-| Gate | What | Command / criterion |
-| --- | --- | --- |
-| G0 | request / schedule the export | owner in browser (takeout.google.com); retire = export once, keep = "Export every 2 months for 1 year" |
-| G1 | download to pool | owner browser only (**rart re-auth wall** — no scripted client ever passes; proven 2026-11-11); browser download dir = `<staging>/zips`; part files land with Google names. Then `bash scripts/takeout-intake.sh --account <a>` installs the saved exports page whatever the browser named it, and `takeout-download.sh <staging> ingest-html` turns it into exact `parts.tsv`/`urls.txt` (glob intake closes the 2026-11-11 magic-filename failure) |
-| G2 | completeness + integrity | `bash scripts/takeout-verify.sh <staging>` — parts.tsv sizes, `unzip -t`, product coverage (products.tsv), inventory + SHA256SUMS. NOTHING is ingested or deleted before green |
-| **G2.5** | **dedup index + import plan** | `bash scripts/takeout-dedup.sh index --from-extract <staging>/extracted --account <a> --cycle <date>` then `plan …` — emits `new-files.txt`, buckets, unchanged/vanished/dup reports |
-| G3 | Photos → Immich | `bash scripts/takeout-ingest-photos.sh <staging>` (immich-go on the zips; server-side checksum dedup makes re-runs and cross-account overlap safe) |
-| G4 | Drive tree → OpenCloud | extract ONLY the needed members (`unzip -q -o <staging>/zips/*.zip 'Takeout/Drive/*' -d <staging>/extracted`; cold products are never extracted) → rclone WebDAV (vendor=owncloud) using `dedup/new-files.txt` as `--files-from` (cycle 1: the whole tree) |
-| G5 | Docs → Paperless | drive-paperless over the extract; byte-identical rejection is server-side |
-| G6 | **reconciliation** | `bash scripts/takeout-dedup.sh balance --staging <s> --account <a> --cycle <c>`: every EXTRACTED product must match the zips file-for-file and byte-for-byte (COLD products pass by design; any MISMATCH blocks G4/G5 and all deletion). Destination confirmations join the identity: `immich-go` uploaded+duplicate counts, `rclone check` clean, Paperless ingest counts; write the balance into the per-account verification report |
-| G7 | retention / close | retire: 7-day soak + **deletion-readiness gate (§4b — future only; deletion is NOT planned, owner 2026-11-13)** → data-ownership flip, secrets shred, account deletion only when the owner schedules it. keep: trash cycles older than N only after the NEXT cycle's G6 is green (never the previous cycle straight after its own import) |
+| Gate     | What                          | Command / criterion                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G0       | request / schedule the export | owner in browser (takeout.google.com); retire = export once, keep = "Export every 2 months for 1 year"                                                                                                                                                                                                                                                                                                                                               |
+| G1       | download to pool              | owner browser only (**rart re-auth wall** — no scripted client ever passes; proven 2026-11-11); browser download dir = `<staging>/zips`; part files land with Google names. Then `bash scripts/takeout-intake.sh --account <a>` installs the saved exports page whatever the browser named it, and `takeout-download.sh <staging> ingest-html` turns it into exact `parts.tsv`/`urls.txt` (glob intake closes the 2026-11-11 magic-filename failure) |
+| G2       | completeness + integrity      | `bash scripts/takeout-verify.sh <staging>` — parts.tsv sizes, `unzip -t`, product coverage (products.tsv), inventory + SHA256SUMS. NOTHING is ingested or deleted before green                                                                                                                                                                                                                                                                       |
+| **G2.5** | **dedup index + import plan** | `bash scripts/takeout-dedup.sh index --from-extract <staging>/extracted --account <a> --cycle <date>` then `plan …` — emits `new-files.txt`, buckets, unchanged/vanished/dup reports                                                                                                                                                                                                                                                                 |
+| G3       | Photos → Immich               | `bash scripts/takeout-ingest-photos.sh <staging>` (immich-go on the zips; server-side checksum dedup makes re-runs and cross-account overlap safe)                                                                                                                                                                                                                                                                                                   |
+| G4       | Drive tree → OpenCloud        | extract ONLY the needed members (`unzip -q -o <staging>/zips/*.zip 'Takeout/Drive/*' -d <staging>/extracted`; cold products are never extracted) → rclone WebDAV (vendor=owncloud) using `dedup/new-files.txt` as `--files-from` (cycle 1: the whole tree)                                                                                                                                                                                           |
+| G5       | Docs → Paperless              | drive-paperless over the extract; byte-identical rejection is server-side                                                                                                                                                                                                                                                                                                                                                                            |
+| G6       | **reconciliation**            | `bash scripts/takeout-dedup.sh balance --staging <s> --account <a> --cycle <c>`: every EXTRACTED product must match the zips file-for-file and byte-for-byte (COLD products pass by design; any MISMATCH blocks G4/G5 and all deletion). Destination confirmations join the identity: `immich-go` uploaded+duplicate counts, `rclone check` clean, Paperless ingest counts; write the balance into the per-account verification report               |
+| G7       | retention / close             | retire: 7-day soak + **deletion-readiness gate (§4b — future only; deletion is NOT planned, owner 2026-11-13)** → data-ownership flip, secrets shred, account deletion only when the owner schedules it. keep: trash cycles older than N only after the NEXT cycle's G6 is green (never the previous cycle straight after its own import)                                                                                                            |
 
 Staging layout per export dir (already the convention): `zips/ logs/ extracted/ dedup/
 parts.tsv urls.txt products.tsv OWNER-STEPS.md`. The dedup **ledger is global**:
@@ -73,12 +73,12 @@ ours, via the content-identity ledger (`scripts/takeout-dedup.sh`, selftested):
 
 Per-destination dedup:
 
-| Destination | Dedup mechanism | Notes |
-| --- | --- | --- |
-| Immich | server-side checksum | re-importing cycle N's photos costs transfer, never duplicates; pre-filter with `dedup/photos.txt` when it matters |
-| Paperless | byte-identical rejection server-side | ledger pre-filter additionally saves OCR/AI consumption |
-| OpenCloud | **none server-side** → ledger-gated | `rclone --files-from dedup/new-files.txt`; same path + changed hash = new version |
-| pool archive | zips | retire: forever; keep: newest 2 cycles |
+| Destination  | Dedup mechanism                      | Notes                                                                                                              |
+| ------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| Immich       | server-side checksum                 | re-importing cycle N's photos costs transfer, never duplicates; pre-filter with `dedup/photos.txt` when it matters |
+| Paperless    | byte-identical rejection server-side | ledger pre-filter additionally saves OCR/AI consumption                                                            |
+| OpenCloud    | **none server-side** → ledger-gated  | `rclone --files-from dedup/new-files.txt`; same path + changed hash = new version                                  |
+| pool archive | zips                                 | retire: forever; keep: newest 2 cycles                                                                             |
 
 Ledger internals: TSV `ALGO HASH SIZE ACCOUNT CYCLE RELPATH`, append-only, merge-deduped;
 hasher prefers `b3sum` (blake3, GB/s), falls back to `sha256sum` — the fast path is
@@ -88,13 +88,13 @@ they never enter the ledger by design.
 
 **Scale-out hooks (trigger before the fleet outgrows them):**
 
-- *Photos re-scan cost.* immich-go re-scans the full Photos set every cycle. Cheap at 18 GB;
+- _Photos re-scan cost._ immich-go re-scans the full Photos set every cycle. Cheap at 18 GB;
   when a keep account's Photos exceed ~100 GB, add zip-member hashing (`index --from-zips`,
   streaming `unzip -p` per member) so `dedup/photos.txt` can feed an extract-only-new flow.
-- *Mail.* Each cycle's mbox is a full snapshot; once Mail moves to IMAP (source matrix) the
+- _Mail._ Each cycle's mbox is a full snapshot; once Mail moves to IMAP (source matrix) the
   snapshot path disappears. If mbox cycles persist, add `Message-ID` dedup before the third
   cycle.
-- *Cross-account physical dedup.* Ledger dups are reported, never collapsed at import (paths
+- _Cross-account physical dedup._ Ledger dups are reported, never collapsed at import (paths
   are data). If the pool tightens, schedule `duperemove` (BTRFS extent dedup, structure-safe)
   after each retire import instead of skipping content — the 15×-avoidance answer that keeps
   every path.
@@ -137,7 +137,7 @@ against losing the pool.
 2. an explicit owner-signed risk acceptance in the status report: single-site, single-pool,
    no offsite copy — with the reclaim date decided.
 
-Until then the account stays alive: it *is* the third copy. This is the cheapest insurance
+Until then the account stays alive: it _is_ the third copy. This is the cheapest insurance
 available and costs nothing but keeping the account.
 
 Consequence for today's work: the 7-day export expiry is **not** a data-loss risk — if the
@@ -194,8 +194,8 @@ NEXT cycle's G6 is green (registry `retain` column, `trash`, never `rm`). When D
 1. **Name the remaining accounts** (~3 TB total) and their modes (retire vs keep) so the
    registry can hold them; per-account Drive size drives the §4 capacity check.
 2. **Deletion readiness (§4b) — future, non-blocking.** Owner directive 2026-11-13: no
-deletions anytime soon; revisit when one is scheduled (offsite Borg go-live vs signed
-single-site acceptance).
+   deletions anytime soon; revisit when one is scheduled (offsite Borg go-live vs signed
+   single-site acceptance).
 3. **Keep-mode sources** — **ADOPTED as pipeline default 2026-11-16 (agent dispatch,
    owner may veto):** the §1 source matrix stands — Drive via `google-sync` (its OAuth
    go-live row), Mail via IMAP/InboxClean, Takeout for Photos + small products. Rationale:

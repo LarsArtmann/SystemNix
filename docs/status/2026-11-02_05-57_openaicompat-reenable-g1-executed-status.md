@@ -67,19 +67,20 @@ Radical honesty, this segment + its direct inheritance:
 Harvest discipline: items 1–7 are DIRECT follow-ups of this session — **harvested now** (TODO_LIST.md + domain libraries, tags noted). Items 8–30 are specific but not session-direct: ROUTE at next HARVEST (ROADMAP/library by domain). The 50-budget is deliberately unfilled at 30 — no padding; vague fillers die in HARVEST anyway. Format: task — Impact/Effort/Category.
 
 **Direct follow-ups (harvested):**
+
 1. Land the deploy via watcher (or owner-forced per g2) — the wave carries: cv-agent timer + CV_AGENT_API_KEY, openaicompat re-enable, parallel session's opencloud 9100→9500 bind-race fix + HM fix, hub 8-remote federation, journal-serve module. — Critical / S / Deploy
-2. Post-switch cv close-out: CV runbook marker → DEPLOYED+gen, verifier §g read-back, anchor discipline, hub badge recount (expect 45→43), `POST /api/agent/pass` 200 probe, document the ephemeral `~/.cache/cv-deploy/*.sh` helpers — Critical / S / Verify *(harvested: queue + services.md, `[blocked:deploy]`)*
-3. CHANGELOG entry for the cv AI wave at switch time (agent-brain + openaicompat, with generation) — Medium / S / Documentation *(harvested: queue + services.md, `[blocked:deploy]`)*
-4. sops SKILL.md secret-files table: add the cv.yaml row (`cv_agent_api_key`, `cv_openaicompat_api_key`) — Medium / S / Documentation *(harvested: queue, `[ready]`)*
-5. Retire watcher (3155131) + verifier (3973325) PIDs once the switch + close-out land — Medium / S / Cleanup *(deliberately NOT harvested: session-local state, dies with the session; recorded here per the self-harvest exception rule)*
-6. `[watch]` /mnt/buildcache dead-mount warnings — re-probe `test -w /mnt/buildcache` + mount unit state when PSI normalizes — High / S / Bug *(harvested: stability.md, `[watch]`)*
-7. After the switch: annotate THIS report + the 05-05 §h addendum with the generation number (point-in-time snapshots get appendix updates, never rewrites) — Low / S / Documentation *(part of item 2's close-out surface; no separate row)*
+2. Post-switch cv close-out: CV runbook marker → DEPLOYED+gen, verifier §g read-back, anchor discipline, hub badge recount (expect 45→43), `POST /api/agent/pass` 200 probe, document the ephemeral `~/.cache/cv-deploy/*.sh` helpers — Critical / S / Verify _(harvested: queue + services.md, `[blocked:deploy]`)_
+3. CHANGELOG entry for the cv AI wave at switch time (agent-brain + openaicompat, with generation) — Medium / S / Documentation _(harvested: queue + services.md, `[blocked:deploy]`)_
+4. sops SKILL.md secret-files table: add the cv.yaml row (`cv_agent_api_key`, `cv_openaicompat_api_key`) — Medium / S / Documentation _(harvested: queue, `[ready]`)_
+5. Retire watcher (3155131) + verifier (3973325) PIDs once the switch + close-out land — Medium / S / Cleanup _(deliberately NOT harvested: session-local state, dies with the session; recorded here per the self-harvest exception rule)_
+6. `[watch]` /mnt/buildcache dead-mount warnings — re-probe `test -w /mnt/buildcache` + mount unit state when PSI normalizes — High / S / Bug _(harvested: stability.md, `[watch]`)_
+7. After the switch: annotate THIS report + the 05-05 §h addendum with the generation number (point-in-time snapshots get appendix updates, never rewrites) — Low / S / Documentation _(part of item 2's close-out surface; no separate row)_
 
 **Specific, route at next HARVEST:**
 8. Confirm no periodic CV code path burns synthetic tokens: grep ChatCompletion callers (HealthCheck is test-proven network-free; ConnectivityCheck is user-triggered only — verify nothing else schedules it) — High / S / Bug
 9. Synthetic rate-limit sanity: CV defaults (chat 300 rpm, tts/stt 100 rpm) are Groq-shaped; check the synthetic plan's actual limits before chat gets real traffic — Medium / S / Quality
 10. Synthetic key consumer inventory (now 3: crush-daily, file-and-image-renamer, CV) — list all three in the key-rotation runbook — Medium / S / Documentation
-11. Voice disposition decision (owner §g3): permanently-off → remove flag rationale comment; later → `[decision]` row for a voice-capable provider — Medium / S / Feature *(gated on owner answer)*
+11. Voice disposition decision (owner §g3): permanently-off → remove flag rationale comment; later → `[decision]` row for a voice-capable provider — Medium / S / Feature _(gated on owner answer)_
 12. Verify the §16 crush-daily.nix:52 eval error from the 05:0x abort is really gone (my GREEN toplevel eval strongly implies yes — one explicit `nix eval` on that surface closes it) — Low / S / Verify
 13. Post-switch: verify the parallel session's opencloud fix live (bind on 9500, health green) — High / S / Verify (their surface; coordinate, don't co-verify silently)
 14. Post-switch: verify hub federation live (8 speakers green on health.home.lan, rediscover sweep ran) — High / S / Verify (same coordination rule)
@@ -98,7 +99,7 @@ Harvest discipline: items 1–7 are DIRECT follow-ups of this session — **harv
 27. The three aborted-deploy attempts (05:0x) left `~/.cache` proof logs (float-proof-20261102-043225); reference them from the close-out so the abort narrative has evidence paths — Low / S / Documentation
 28. When the deploy lands: open new terminal (session-discipline rule) + run `nix run .#pre-reboot-check` ONLY if a reboot is planned (no reboot is) — Low / S / Process
 29. Next session touching CV secrets: the sops SKILL.md table + `sops-copy-key.sh` are the blessed path; keep crush-daily as the key source of truth (owner-designated) — Low / S / Process (no action, recorded)
-30. If g2 = force: use `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` per the established pattern, AFTER a quiescence heat-check (clean tree + no eval-relevant mtime <5 min) — the 2026-10-25 race pattern — High / S / Deploy *(gated on g2)*
+30. If g2 = force: use `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` per the established pattern, AFTER a quiescence heat-check (clean tree + no eval-relevant mtime <5 min) — the 2026-10-25 race pattern — High / S / Deploy _(gated on g2)_
 
 ## g) Three questions I cannot figure out myself
 

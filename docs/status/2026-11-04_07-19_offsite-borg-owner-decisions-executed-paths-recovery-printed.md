@@ -28,6 +28,6 @@ Deploy + anchor, §13/§16 gates, unit/timer/secret-render verification, seed ru
 - No NEW rows needed — this session only RESOLVED existing ones (seed-cut decision row, passphrase recovery row ×2 surfaces, :58 blocker narrowing, runbook step-1 tick). All edits verified by `check-todo-system.sh` (structure clean; the 179 unharvested-§f WARNs are pre-existing repo drift, untouched).
 - Deliberately NOT harvested: watcher liveness watch (session orchestration); paper-sheet physical storage confirmation (owner act, conversational).
 
-*Every owner-gated input is now closed. The only thing between here and the first offsite archive is PSI drain.*
+_Every owner-gated input is now closed. The only thing between here and the first offsite archive is PSI drain._
 
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** no f)/NEXT heading — Not-started paragraph used: DONE N1 · already-tracked N2-N7 N9 N10 · N8/N11 merged into 06-25 rows

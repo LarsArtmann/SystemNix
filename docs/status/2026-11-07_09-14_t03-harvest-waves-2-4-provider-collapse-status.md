@@ -37,12 +37,12 @@ Session: continuation of the SUPERB backlog masterplan (v5) T03 harvest lane + h
 
 ## e) Numbers
 
-| Wave | Batch | Reports | Items triaged | New rows | Gate before→after |
-|------|-------|---------|---------------|----------|-------------------|
-| 2 | b03 | 15 | ~270 | 41 | 159→144 |
-| 3 | b04 | 15 | ~355 | 27 | 144→129 |
-| 4 | b05 | 15 | 565 | 194 | 129→115 |
-| (predecessor) | b00-02 | 44 | — | ~250 | 203→159 |
+| Wave          | Batch  | Reports | Items triaged | New rows | Gate before→after |
+| ------------- | ------ | ------- | ------------- | -------- | ----------------- |
+| 2             | b03    | 15      | ~270          | 41       | 159→144           |
+| 3             | b04    | 15      | ~355          | 27       | 144→129           |
+| 4             | b05    | 15      | 565           | 194      | 129→115           |
+| (predecessor) | b00-02 | 44      | —             | ~250     | 203→159           |
 
 Remaining: 115 unharvested (b06–b13 sliced ~15 each + new tail). Queue ready-rows grew by ~260 mirrored one-liners this session.
 

@@ -4,22 +4,22 @@
 
 **Scope line — what this arc VERIFIED (command/artifact), and what it did NOT:**
 
-| Verified | How |
-| --- | --- |
-| The daemon's real Wise-credential path is `/run/secrets/rendered/bank-sync-env` (`bank-sync:bank-sync` 0400), loaded via `EnvironmentFile` — NOT the runbook's `/run/secrets/bank-sync-env`, which does not exist | `rg` on the deployed gen-997 unit (`3yhv8kp…/etc/systemd/system/bank-sync.service:21-22`) + live `ls -la /run/secrets/rendered/` |
-| `bank_sync_sca_approval_pending` = **1** — the Wise approval is still genuinely required | full `bank_sync_sca*` gauge scrape ×3 (21:2x, 23:5x, 00:4x), script `~/.cache/systemnix-probe/banksync-sca-state.sh` |
-| The 19:44-evening "SCA challenge no longer surfaces in counters" claim was a probe blind spot (grep `bank_sync_sync*` cannot match `bank_sync_sca_*`) | the corrected claim is committed with the evidence inline (`af1707d07`) |
-| The gate-FP fix works both directions | `bash scripts/check-todo-system.sh --selftest` → `SELFTEST OK … possessive-exempt`, rc=0 (bare "tonight" still fails; possessive "tonight's races" passes) |
-| `systems/` eval-relevance entry landed in HEAD | `git show HEAD:scripts/lib/eval-relevant-paths.sh` line 32 (daemon sweep `2ce82515e` carried the working-tree fix) |
-| All five of tonight's commits landed gate-clean | `4f31a0004` (gate FP fix), `af1707d07` (runbook path + report correction), `645032159`, `632cfb1e3`, `6e79583b3` (earlier arc) |
+| Verified                                                                                                                                                                                                          | How                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The daemon's real Wise-credential path is `/run/secrets/rendered/bank-sync-env` (`bank-sync:bank-sync` 0400), loaded via `EnvironmentFile` — NOT the runbook's `/run/secrets/bank-sync-env`, which does not exist | `rg` on the deployed gen-997 unit (`3yhv8kp…/etc/systemd/system/bank-sync.service:21-22`) + live `ls -la /run/secrets/rendered/`                           |
+| `bank_sync_sca_approval_pending` = **1** — the Wise approval is still genuinely required                                                                                                                          | full `bank_sync_sca*` gauge scrape ×3 (21:2x, 23:5x, 00:4x), script `~/.cache/systemnix-probe/banksync-sca-state.sh`                                       |
+| The 19:44-evening "SCA challenge no longer surfaces in counters" claim was a probe blind spot (grep `bank_sync_sync*` cannot match `bank_sync_sca_*`)                                                             | the corrected claim is committed with the evidence inline (`af1707d07`)                                                                                    |
+| The gate-FP fix works both directions                                                                                                                                                                             | `bash scripts/check-todo-system.sh --selftest` → `SELFTEST OK … possessive-exempt`, rc=0 (bare "tonight" still fails; possessive "tonight's races" passes) |
+| `systems/` eval-relevance entry landed in HEAD                                                                                                                                                                    | `git show HEAD:scripts/lib/eval-relevant-paths.sh` line 32 (daemon sweep `2ce82515e` carried the working-tree fix)                                         |
+| All five of tonight's commits landed gate-clean                                                                                                                                                                   | `4f31a0004` (gate FP fix), `af1707d07` (runbook path + report correction), `645032159`, `632cfb1e3`, `6e79583b3` (earlier arc)                             |
 
-| NOT verified | Why |
-| --- | --- |
-| No deploy has happened | agent shells cannot switch (sudo dead); `e4c785e5e` (backup CAP fix) + the overlay lift still ride gen-997's successor — **03:29 is ~2h40m away** |
-| The SCA ceremony itself | owner-intrinsic: the Wise key is 0400 bank-sync-owned, sudo is dead in agent shells, and the OTP arrives on the owner's phone into a hidden TTY prompt (or the dashboard UI) — procedure handed off, not executed |
-| The `challenges_total 420 → 520` jump (~3.5 h) | observed, not investigated — out of scope per the report directive; queued as a watch item |
-| Whether `challenges_total` is restart-reset or lifetime-cumulative | the runbook documents `errors_total` restart-cumulative but is silent on `challenges_total`; 520 now vs "618 cumulative" on 09-30 suggests reset-and-reclimb, unproven |
-| Post-approval gauge flip | the ceremony has not run yet |
+| NOT verified                                                       | Why                                                                                                                                                                                                               |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No deploy has happened                                             | agent shells cannot switch (sudo dead); `e4c785e5e` (backup CAP fix) + the overlay lift still ride gen-997's successor — **03:29 is ~2h40m away**                                                                 |
+| The SCA ceremony itself                                            | owner-intrinsic: the Wise key is 0400 bank-sync-owned, sudo is dead in agent shells, and the OTP arrives on the owner's phone into a hidden TTY prompt (or the dashboard UI) — procedure handed off, not executed |
+| The `challenges_total 420 → 520` jump (~3.5 h)                     | observed, not investigated — out of scope per the report directive; queued as a watch item                                                                                                                        |
+| Whether `challenges_total` is restart-reset or lifetime-cumulative | the runbook documents `errors_total` restart-cumulative but is silent on `challenges_total`; 520 now vs "618 cumulative" on 09-30 suggests reset-and-reclimb, unproven                                            |
+| Post-approval gauge flip                                           | the ceremony has not run yet                                                                                                                                                                                      |
 
 ---
 
@@ -50,7 +50,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. **I shipped a wrong owner-facing conclusion: "Bank-Sync recovered / the SCA challenge no longer surfaces in counters."** The probe grepped `bank_sync_sync*` — a pattern that structurally cannot match `bank_sync_sca_approval_pending`, which has been 1 all evening. The owner-facing §g answer ("likely moot") built on it. Two repo rules violated at once: *a "verified" label must cover every fact asserted*, and *assert WHICH question your evidence answers*. The owner's own failed `sca approve` — not my verification — surfaced it. Corrected inline in the 19-44 report + this report; the lesson cost is real: partial-scope probes presented as state claims.
+1. **I shipped a wrong owner-facing conclusion: "Bank-Sync recovered / the SCA challenge no longer surfaces in counters."** The probe grepped `bank_sync_sync*` — a pattern that structurally cannot match `bank_sync_sca_approval_pending`, which has been 1 all evening. The owner-facing §g answer ("likely moot") built on it. Two repo rules violated at once: _a "verified" label must cover every fact asserted_, and _assert WHICH question your evidence answers_. The owner's own failed `sca approve` — not my verification — surfaced it. Corrected inline in the 19-44 report + this report; the lesson cost is real: partial-scope probes presented as state claims.
 2. **I fixed the gate-FP class at strike three instead of strike one.** The first "tonight's" FP froze all commits ~21:2x; the sibling fixed it AT THE CALL SITE (re-dating their row) — the doctrine says fix the SCANNER — and the class predictably recurred at ~22:4x and ~23:3x, freezing the tree twice more before I patched the scanner. Two additional tree-wide freezes were avoidable.
 3. **I nearly filed a false finding into a permanent report** — the HM-mirror "split-brain" from a view that truncated mid-comment. Caught only because the report-writing pass re-opened the file past the truncation. A ghost finding in `docs/status/` would have sent a future session chasing a nonexistent bug.
 4. **Commit serialization churn: four blocked attempts across the evening** (two index.lock races — one retried blind before checking for a live holder; three gate-FP freezes). Individually small, collectively ~40 minutes of wall-clock; the holder-check-first habit existed in doctrine and was applied late.
@@ -68,6 +68,7 @@
 ## f) NEXT (up to 50 — session-scoped; supersedes ordering of the 21-11 list, which remains the backlog)
 
 **Time-critical (before 03:29 tonight):**
+
 1. **Deploy** — `e4c785e5e` (backup CAP fix) + the overlay lift must switch before the first backup fire or it repeats the green-but-empty write. Owner/sudo-gated; `nix run .#deploy`.
 2. After deploy: re-verify anchor discipline (`readlink /run/current-system` == newest `system-N-link`) per the deploy-anchor procedure.
 3. AM: verify first scheduled backup firings (journalctl + artifacts + quick_check) — queued row, now doubly gated on the deploy.

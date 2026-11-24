@@ -42,9 +42,9 @@
 
 ## f) ITEMS TO HARVEST (self-harvested into TODO_LIST + domain libraries at authoring time)
 
-1. *(from §d.5/§e.1)* **Live boot-0 storm triage decision** — when agent work pauses, run the io-PSI attribution probe set (docs/agents/stability.md, S-0035 codified) against the live window; if a session-owned writer is named, route to containment per doctrine. → harvested to TODO_LIST + stability.md.
-2. *(from §e.3)* **Premise-freshness sweep of stability forensics rows** — every row whose method depends on journal/CH/wtmp data older than the current retention floors (journal Oct 29, CH Oct 4, wtmp Nov 1) needs a stale-premise check before its sprint fires. → harvested to TODO_LIST + stability.md.
-3. *(from §d.6)* **Post-deploy verification owed for S-0006**: DMS bar pill reads "N keys" in primary color (not "locked"/"0 keys"), and `sg keys -c 'ls /run/secrets/ | wc -l'` returns the rendered count for lars. → harvested to TODO_LIST + security.md (deploy-followup lane).
+1. _(from §d.5/§e.1)_ **Live boot-0 storm triage decision** — when agent work pauses, run the io-PSI attribution probe set (docs/agents/stability.md, S-0035 codified) against the live window; if a session-owned writer is named, route to containment per doctrine. → harvested to TODO_LIST + stability.md.
+2. _(from §e.3)_ **Premise-freshness sweep of stability forensics rows** — every row whose method depends on journal/CH/wtmp data older than the current retention floors (journal Oct 29, CH Oct 4, wtmp Nov 1) needs a stale-premise check before its sprint fires. → harvested to TODO_LIST + stability.md.
+3. _(from §d.6)_ **Post-deploy verification owed for S-0006**: DMS bar pill reads "N keys" in primary color (not "locked"/"0 keys"), and `sg keys -c 'ls /run/secrets/ | wc -l'` returns the rendered count for lars. → harvested to TODO_LIST + security.md (deploy-followup lane).
 
 ## g) QUESTIONS FOR THE OWNER (cannot figure out myself — the session is PAUSED here)
 

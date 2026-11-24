@@ -69,15 +69,15 @@ freeze-precursor gate doctrine.
 
 1. **Deploy** — attempted 22:18, refused at the entry pressure gate
    (exit 12 after 3s; log `2026-11-05_22-18-28.log`): io PSI avg10 55.7%
-   + disk busy 95%, sda/sdb ~101%, top stalled cgroups all user-scope
-   (ghostty/Chromium — stall victims). Storm attributed to `/mnt/buildcache`
-   (sdb1): the parallel session's 22:11 commits moved GOCACHE/GOMODCACHE/
-   GOLANGCI_LINT_CACHE off the USB buildcache; the migration reads hammered
-   sdb at ~100% for ~90 min (avg300 peaked 70.7%). Polled on 5–10 min
-   cadence; at 23:51 avg10 49.8 and falling. NOT forced
-   (DEPLOY_FORCE_PRESSURE=1 exists; using it during a real storm is the
-   documented freeze-precursor class — both 2026-08-22 freezes had builds
-   as contributing load).
+   - disk busy 95%, sda/sdb ~101%, top stalled cgroups all user-scope
+     (ghostty/Chromium — stall victims). Storm attributed to `/mnt/buildcache`
+     (sdb1): the parallel session's 22:11 commits moved GOCACHE/GOMODCACHE/
+     GOLANGCI_LINT_CACHE off the USB buildcache; the migration reads hammered
+     sdb at ~100% for ~90 min (avg300 peaked 70.7%). Polled on 5–10 min
+     cadence; at 23:51 avg10 49.8 and falling. NOT forced
+     (DEPLOY_FORCE_PRESSURE=1 exists; using it during a real storm is the
+     documented freeze-precursor class — both 2026-08-22 freezes had builds
+     as contributing load).
 2. **Live verification** — blocked on the deploy (plan is ready, see §f):
    version, rc markers, rc-load harness, anchor check, and a real yolo probe.
 

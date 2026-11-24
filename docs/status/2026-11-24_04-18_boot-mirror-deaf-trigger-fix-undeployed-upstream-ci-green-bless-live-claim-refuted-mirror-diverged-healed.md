@@ -74,11 +74,11 @@ file was renamed with `git mv` and rewritten; `d40de46a4` holds the first draft.
      That is exactly the 11-19 signature (hash `c96e0a72` absent from the 00:11:33 counters, a
      fresh `+3` written 15:45:00). gen-1015's old file is gone, so the analogy is proven on
      gen-1024, not on gen-1015 itself.
-   Consequence for the code: the converge-not-drop fix stays CORRECT as a property of the module (a
-   mirror holding the blessed plain name while the managed ESP holds the counting twin), but that
-   state is not reachable through systemd-bless-boot on this box and was never observed live. Four
-   comment sites on origin master say "live 2026-11-19, evo-x2" (module header ~21-26, in-script
-   comment ~99-105, VM test header ~11-15, VM step-2b comment ~185-186). Correction is f1.
+     Consequence for the code: the converge-not-drop fix stays CORRECT as a property of the module (a
+     mirror holding the blessed plain name while the managed ESP holds the counting twin), but that
+     state is not reachable through systemd-bless-boot on this box and was never observed live. Four
+     comment sites on origin master say "live 2026-11-19, evo-x2" (module header ~21-26, in-script
+     comment ~99-105, VM test header ~11-15, VM step-2b comment ~185-186). Correction is f1.
 3. **Live hazard found and healed.** In each of the last three boots bless-boot landed on `/boot`
    about an hour after boot and the mirror stayed diverged until an explicit restart: boot -2 bless
    21:51:26 → restart 23:36:18 (1 h 45 min), boot -1 bless 06:55:02 → restart 19:22:41 (12 h 27
@@ -216,22 +216,22 @@ file was renamed with `git mv` and rewritten; `d40de46a4` holds the first draft.
 
 ## Live state at report time (2026-11-24 04:16:56 CET, boot 0 `27ec3ede`, up since 11-23 21:13:15)
 
-| Reading | Value | Note |
-| --- | --- | --- |
-| load | 26.00 / 17.63 / 13.62 | my reboot-gate run was in flight |
-| io PSI some | 62.10 / 62.25 / 63.51 | 51-72 % at all six probes this run |
-| cpu PSI some (04:06) | 0.55 / 0.46 / 2.59 | CPU calm, IO not |
-| k10temp Tctl | 98.5 °C | 98.75 / 61.6 / 95.1 / 98.5 across the run |
-| disks | `/` 94 % (48 G free), `/nix` 74 % (231 G free) | root was 95 % on 11-22 |
-| anchor | `/run/current-system` = gen-1027 `19sgcfq2` = `system-1027-link` = booted cmdline | consistent |
-| boot-mirror-sync.service | `active/exited`, RemainAfterExit=yes, Result=success | fix NOT deployed |
-| boot-mirror-sync.path | `active/running` | deaf |
-| systemd-bless-boot.service | `active/exited`, Result=success | marked good 11-23 22:13:34 |
-| sync starts this boot | 2: boot-time 21:13:28 → 21:14:55 OK; my restart 04:15:51 → 04:15:52 OK | mirror identical to /boot |
-| ESP entries | 50 on each, identical; plain: `a13ccc9d` (11-05), `18104d07` (11-15, gen-1010), `66d7ef03` (11-23 05:04:48, gen-1026), `43aa9c44` (11-23 19:22:26, gen-1027); the rest `+3` | |
-| failed units | 9: audiblesync-backup, btrfs-verify-pool-backups, forgejo-github-sync, inboxclean-sync, media-atlas-poll-embeddings, service-health-check, 3 × `systemd-coredump@…` (UID 0) | counted, not triaged |
-| IO writers | only `crush` (0.9 MB/s) among processes my user can read | UNPRIVILEGED probe: root and other-user writers are invisible, "no writer" is NOT evidence |
-| boots | -3 `69ee350d` 11-22 19:53:18 → 20:48:35; -2 `3aa71817` 11-22 20:51:11 → 11-23 05:53:51; -1 `a95832c5` 11-23 05:54:49 → 21:12:17; 0 `27ec3ede` since 21:13:15 | causes of the three cuts not verified; only #59 (19:52:29) has an autopsy |
+| Reading                    | Value                                                                                                                                                                       | Note                                                                                       |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| load                       | 26.00 / 17.63 / 13.62                                                                                                                                                       | my reboot-gate run was in flight                                                           |
+| io PSI some                | 62.10 / 62.25 / 63.51                                                                                                                                                       | 51-72 % at all six probes this run                                                         |
+| cpu PSI some (04:06)       | 0.55 / 0.46 / 2.59                                                                                                                                                          | CPU calm, IO not                                                                           |
+| k10temp Tctl               | 98.5 °C                                                                                                                                                                     | 98.75 / 61.6 / 95.1 / 98.5 across the run                                                  |
+| disks                      | `/` 94 % (48 G free), `/nix` 74 % (231 G free)                                                                                                                              | root was 95 % on 11-22                                                                     |
+| anchor                     | `/run/current-system` = gen-1027 `19sgcfq2` = `system-1027-link` = booted cmdline                                                                                           | consistent                                                                                 |
+| boot-mirror-sync.service   | `active/exited`, RemainAfterExit=yes, Result=success                                                                                                                        | fix NOT deployed                                                                           |
+| boot-mirror-sync.path      | `active/running`                                                                                                                                                            | deaf                                                                                       |
+| systemd-bless-boot.service | `active/exited`, Result=success                                                                                                                                             | marked good 11-23 22:13:34                                                                 |
+| sync starts this boot      | 2: boot-time 21:13:28 → 21:14:55 OK; my restart 04:15:51 → 04:15:52 OK                                                                                                      | mirror identical to /boot                                                                  |
+| ESP entries                | 50 on each, identical; plain: `a13ccc9d` (11-05), `18104d07` (11-15, gen-1010), `66d7ef03` (11-23 05:04:48, gen-1026), `43aa9c44` (11-23 19:22:26, gen-1027); the rest `+3` |                                                                                            |
+| failed units               | 9: audiblesync-backup, btrfs-verify-pool-backups, forgejo-github-sync, inboxclean-sync, media-atlas-poll-embeddings, service-health-check, 3 × `systemd-coredump@…` (UID 0) | counted, not triaged                                                                       |
+| IO writers                 | only `crush` (0.9 MB/s) among processes my user can read                                                                                                                    | UNPRIVILEGED probe: root and other-user writers are invisible, "no writer" is NOT evidence |
+| boots                      | -3 `69ee350d` 11-22 19:53:18 → 20:48:35; -2 `3aa71817` 11-22 20:51:11 → 11-23 05:53:51; -1 `a95832c5` 11-23 05:54:49 → 21:12:17; 0 `27ec3ede` since 21:13:15                | causes of the three cuts not verified; only #59 (19:52:29) has an autopsy                  |
 
 **Repos.** SystemNix: `master` 16 ahead of origin (`ea96bcca2`), other sessions committing; the
 working tree carries modified old status docs that are not mine plus the pre-existing

@@ -17,7 +17,7 @@ into the evo-x2 browser — gets the same full backup + self-hosted integration.
 header-only parts.tsv/urls.txt — manifest fills from the owner's DOM save once the export is requested and
 prepared). Same gates G1–G7, same rart owner-browser flow. Sequencing: request the #2 export first
 (~5 min owner action), then do the racedriver8k 23 clicks while #2 prepares — the 2026-11-18 deadline
- outranks export-prep wait time.
+outranks export-prep wait time.
 
 **Fleet plan (2026-11-13):** multi-account retirement + 2-monthly incremental backup (further accounts,
 ~3 TB total) is specified in
@@ -34,29 +34,29 @@ Export facts (from the Takeout summary page, paste 2026-11-11):
 
 ## Verified live state (2026-11-11 probes)
 
-| Fact | Evidence |
-| --- | --- |
-| `/mnt/pool` = 2×16 TB BTRFS RAID1, **11 TB free** | `df -h /mnt/pool` |
-| Pool `archive/` is root-owned (agent cannot mkdir; owner runs one `sudo install`) | `test -w` probe 2026-11-11 |
-| Immich LIVE, media on `/mnt/pool/services/immich` (btrbk-snapshotted), port 2283, API v3 checksum-dedup | `docs/services/immich.md` |
-| OpenCloud pilot LIVE (production line 7.2.4), state `/mnt/pool/services/opencloud` (posix + xattrs), WebDAV at `cloud.home.lan` | `docs/services/opencloud.md` |
-| Paperless LIVE, `dataDir=/mnt/pool/services/paperless`, DRF API upload + duplicate rejection | `docs/services/paperless.md` |
-| `services.google-sync` (rclone Drive→pool mirror, mtimes preserved, 30d deletion grace) + `services.drive-paperless` (hourly doc→Paperless / image→Immich routing, batched 200/run) — BOTH DORMANT, go-live = owner OAuth sequence | `docs/services/google-sync.md` |
-| `immich-go` 0.32.0 in nixpkgs; `upload from-google-photos` eats Takeout **zips directly**, `--sync-albums` (albums from album folders), partner/archived included, `--dry-run` available — CLI verified live 2026-11-11 | `nix shell nixpkgs#immich-go` |
-| Photos Library API is CLOSED to third-party originals (since 2025-03-31) — Takeout is the ONLY photos path | `docs/status/archived/2026-08-18_00-40_*` (verified research) |
-| This pipeline IS the "two Google accounts' export/Takeout escape hatch" P0 deliverable from the contacts/calendar doctrine | `docs/status/2026-10-29_21-43_*` §c.10 |
+| Fact                                                                                                                                                                                                                               | Evidence                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `/mnt/pool` = 2×16 TB BTRFS RAID1, **11 TB free**                                                                                                                                                                                  | `df -h /mnt/pool`                                             |
+| Pool `archive/` is root-owned (agent cannot mkdir; owner runs one `sudo install`)                                                                                                                                                  | `test -w` probe 2026-11-11                                    |
+| Immich LIVE, media on `/mnt/pool/services/immich` (btrbk-snapshotted), port 2283, API v3 checksum-dedup                                                                                                                            | `docs/services/immich.md`                                     |
+| OpenCloud pilot LIVE (production line 7.2.4), state `/mnt/pool/services/opencloud` (posix + xattrs), WebDAV at `cloud.home.lan`                                                                                                    | `docs/services/opencloud.md`                                  |
+| Paperless LIVE, `dataDir=/mnt/pool/services/paperless`, DRF API upload + duplicate rejection                                                                                                                                       | `docs/services/paperless.md`                                  |
+| `services.google-sync` (rclone Drive→pool mirror, mtimes preserved, 30d deletion grace) + `services.drive-paperless` (hourly doc→Paperless / image→Immich routing, batched 200/run) — BOTH DORMANT, go-live = owner OAuth sequence | `docs/services/google-sync.md`                                |
+| `immich-go` 0.32.0 in nixpkgs; `upload from-google-photos` eats Takeout **zips directly**, `--sync-albums` (albums from album folders), partner/archived included, `--dry-run` available — CLI verified live 2026-11-11            | `nix shell nixpkgs#immich-go`                                 |
+| Photos Library API is CLOSED to third-party originals (since 2025-03-31) — Takeout is the ONLY photos path                                                                                                                         | `docs/status/archived/2026-08-18_00-40_*` (verified research) |
+| This pipeline IS the "two Google accounts' export/Takeout escape hatch" P0 deliverable from the contacts/calendar doctrine                                                                                                         | `docs/status/2026-10-29_21-43_*` §c.10                        |
 
 ## Routing (what goes where)
 
-| Takeout product | Destination | Mechanism | Metadata fidelity |
-| --- | --- | --- | --- |
-| Google Photos (336 GB) | **Immich** | `immich-go upload from-google-photos` directly on the zips | Albums (`--sync-albums`), descriptions, GPS, timestamps from JSON sidecars; `--include-unmatched` REQUIRED (modern Takeouts ship no sidecar for unedited photos — skipping unmatched would be mass data loss) |
-| Drive (543 GB) | **OpenCloud** + pool archive | **D1 = B (owner, 2026-11-11):** Takeout extract → WebDAV (rclone, vendor=owncloud) into OpenCloud; the rclone live-mirror is the queued ROADMAP fidelity upgrade | B's known losses on record (mtimes, shared-with-me); zip entries carry original timestamps where Google provides them |
-| Drive documents (pdf/office/txt/eml/…) | **Paperless** | `drive-paperless` pipeline over the canonical Drive tree (the D1-B extract) — account-named correspondents, per-remote tags, batched, journal-idempotent; **D4 = ALL docs (owner)** | designed semantics; byte-identical dedup server-side |
-| Drive raster images | **Immich** | same pipeline with `ingestImages = true` (extension routing, `fileCreatedAt/fileModifiedAt` from Drive mtime) | needs the `drive_paperless_immich_api_key` sops go-live (sub-checklist in google-sync.md) |
-| Mail (1.74 GB mbox) | pool archive (cold) | keep as archive | successor: mail-host import is a separate decision (mesh proposal), NOT this pipeline |
-| Contacts (vCard) / Calendar (ICS) / Keep / Tasks / Maps / Fit / everything else | pool archive (cold) | keep as archive; `takeout-verify.sh` proves completeness | successor: D1-mesh PIM import (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) consumes these on decision |
-| All 23 zips (880 GB) | **kept forever** (default) as the immutable raw archive on `/mnt/pool/archive` | — | the "escape hatch" cold copy; deletion is a later owner decision |
+| Takeout product                                                                 | Destination                                                                    | Mechanism                                                                                                                                                                           | Metadata fidelity                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Photos (336 GB)                                                          | **Immich**                                                                     | `immich-go upload from-google-photos` directly on the zips                                                                                                                          | Albums (`--sync-albums`), descriptions, GPS, timestamps from JSON sidecars; `--include-unmatched` REQUIRED (modern Takeouts ship no sidecar for unedited photos — skipping unmatched would be mass data loss) |
+| Drive (543 GB)                                                                  | **OpenCloud** + pool archive                                                   | **D1 = B (owner, 2026-11-11):** Takeout extract → WebDAV (rclone, vendor=owncloud) into OpenCloud; the rclone live-mirror is the queued ROADMAP fidelity upgrade                    | B's known losses on record (mtimes, shared-with-me); zip entries carry original timestamps where Google provides them                                                                                         |
+| Drive documents (pdf/office/txt/eml/…)                                          | **Paperless**                                                                  | `drive-paperless` pipeline over the canonical Drive tree (the D1-B extract) — account-named correspondents, per-remote tags, batched, journal-idempotent; **D4 = ALL docs (owner)** | designed semantics; byte-identical dedup server-side                                                                                                                                                          |
+| Drive raster images                                                             | **Immich**                                                                     | same pipeline with `ingestImages = true` (extension routing, `fileCreatedAt/fileModifiedAt` from Drive mtime)                                                                       | needs the `drive_paperless_immich_api_key` sops go-live (sub-checklist in google-sync.md)                                                                                                                     |
+| Mail (1.74 GB mbox)                                                             | pool archive (cold)                                                            | keep as archive                                                                                                                                                                     | successor: mail-host import is a separate decision (mesh proposal), NOT this pipeline                                                                                                                         |
+| Contacts (vCard) / Calendar (ICS) / Keep / Tasks / Maps / Fit / everything else | pool archive (cold)                                                            | keep as archive; `takeout-verify.sh` proves completeness                                                                                                                            | successor: D1-mesh PIM import (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) consumes these on decision                                                                              |
+| All 23 zips (880 GB)                                                            | **kept forever** (default) as the immutable raw archive on `/mnt/pool/archive` | —                                                                                                                                                                                   | the "escape hatch" cold copy; deletion is a later owner decision                                                                                                                                              |
 
 **Duplication is by design — and capped at one raw copy + one working copy per service.** Peak pool need ≈ 880
 (zips) + ~880 (extract staging, D1-B only, deleted again after G4+G5) + ~336 (Immich) + ~543 (OpenCloud) ≈
@@ -96,6 +96,7 @@ sudo install -d -o lars -g users -m 700 /mnt/pool/archive/google-takeout/racedri
 ```
 
 Owner, logged in as racedriver8k on takeout.google.com → manage-archives page:
+
 1. `Ctrl+S` → save the page as `links.html` INTO the staging dir above.
 2. Export `cookies.txt` (Netscape format) for takeout.google.com with a LOCAL-ONLY
    browser cookie exporter, drop it in the same dir.
@@ -107,6 +108,7 @@ bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2
 ```
 
 **Intake log (2026-11-11, agent; latest state LAST):**
+
 - **14:48** Links arrived as a page PASTE (not Ctrl+S): reconstructed `links.html` from the 23
   `data-download-uri`/`data-size`/`data-filename` triplets → `ingest-html` → `urls.txt` + `parts.tsv` EXACT
   (23/23, sum 944,513,645,689 B = 879.65 GiB, matches the page; 0600). Cookies arrived as `cookies.json`
@@ -169,6 +171,7 @@ bash scripts/takeout-verify.sh /mnt/pool/archive/google-takeout/racedriver8k-202
 ```
 
 Gate G2 (ALL must pass before ANY deletion anywhere):
+
 - every zip `unzip -t` clean (CRC over all 880 GB);
 - product coverage matrix: all 39 expected-present products found in the zip listings (fuzzy name match); 29 expected-absent recorded; extras WARN;
 - `inventory.tsv` per product: file count + bytes (the numbers every later gate reconciles against);

@@ -12,11 +12,11 @@
 
 The aarch64 `probe-transitions` red had THREE independent causes stacked (each proven from CI logs, not guessed):
 
-| # | Failure (CI run) | Root cause | Fix |
-| - | ---------------- | ---------- | --- |
-| 1 | `degradedVisible:false` while `phase:"degraded"` in one state write (ade9779 run) | chained var/computed bindings read STALE inside change handlers and mid-`emitState` cascade | `7949237` (prior session): recompute from raw counters (`rawDownLegs()`) — now an AGENTS hard rule |
-| 2 | `banner state=shown reason=link failures=2/2` never found in qs-link.log (7949237 run) | **scenario contamination**: the link-cue scenario reused the main sequence's `control-net` (`tcp fail/dns fail` on disk), so a fresh instance went offline via tcp+dns BEFORE link reached 2/2 — the exact assert was structurally unreachable on slow runners | reset `control-net` at scenario launch; remaining exact counts audited to deterministic positions only |
-| 3 | `state.since must clear on recovery` with an EMPTY state file, **on x86_64** (9febffc run) | the state write was a plain truncate-then-write — a reader between truncate and write sees an EMPTY file (write tear); separately, the spawned write can lag the journal line | atomic tmp+mv rename in `emitState` (production fix — waybar polls hit the same window) + `assert_state_jq` polling helper for the three single-read `.since` asserts |
+| # | Failure (CI run)                                                                           | Root cause                                                                                                                                                                                                                                                     | Fix                                                                                                                                                                   |
+| - | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `degradedVisible:false` while `phase:"degraded"` in one state write (ade9779 run)          | chained var/computed bindings read STALE inside change handlers and mid-`emitState` cascade                                                                                                                                                                    | `7949237` (prior session): recompute from raw counters (`rawDownLegs()`) — now an AGENTS hard rule                                                                    |
+| 2 | `banner state=shown reason=link failures=2/2` never found in qs-link.log (7949237 run)     | **scenario contamination**: the link-cue scenario reused the main sequence's `control-net` (`tcp fail/dns fail` on disk), so a fresh instance went offline via tcp+dns BEFORE link reached 2/2 — the exact assert was structurally unreachable on slow runners | reset `control-net` at scenario launch; remaining exact counts audited to deterministic positions only                                                                |
+| 3 | `state.since must clear on recovery` with an EMPTY state file, **on x86_64** (9febffc run) | the state write was a plain truncate-then-write — a reader between truncate and write sees an EMPTY file (write tear); separately, the spawned write can lag the journal line                                                                                  | atomic tmp+mv rename in `emitState` (production fix — waybar polls hit the same window) + `assert_state_jq` polling helper for the three single-read `.since` asserts |
 
 Verification discipline that made this cheap: local **emulated aarch64** (`nix build .#checks.aarch64-linux.probe-transitions` on the binfmt host) before every push — the exact CI surface — so the fix landed green on the first CI run.
 
@@ -36,18 +36,18 @@ Verification discipline that made this cheap: local **emulated aarch64** (`nix b
 
 ## e. Live verification battery (gen 995)
 
-| Check | Result |
-| ----- | ------ |
-| Journal tokens | new tokens flowing (`leg down/ok leg=…`, `banner phase=… legs=…`) from first probe post-activation |
-| Phase ladder under a real outage | the switch's own dnsblockd restart: offline (all legs) → alarmed ONCE → ledgered ONCE → degraded (icmp,dns) → correct per the ladder contract |
-| False-OFFLINE collapse | 206/8 h → 1/2 h (the 1 = genuine) |
-| Ledger | exactly one entry (`durationSec:8, reasons:[dns,net,tcp], probeFailures:150`), `since` cleared on recovery — the sandboxed `%h/.local/state` hole's FIRST live append (closes the upstream live-proof row's ledger leg) |
-| Atomic state writes | state file reads clean post-deploy; the tear class is CI-covered (§b#3) |
-| Unit restart | ExecMainPID 6750 → 2721433 at activation; restartTriggers did their job |
-| dns leg | down on 55121b2 (PATH phantom) — fixed by a5673f7, deploy in flight at authoring time (§g) |
-| Sound | the 02:31:48 show cue fired; audibility unconfirmed (no ears, pw-play stderr not in journal) — honest 🟡 in FEATURES |
-| niri layer | namespace `systemnix:offline-banner` unchanged by the bump (wrapper untouched); layer check rides the post-deploy smoke of the a5673f7 switch |
-| Deep-night caveat | 0 icmp flaps 02:30→04:5x — the ladder's verdict under the real evening flap window is still owed (upstream TODO row) |
+| Check                            | Result                                                                                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Journal tokens                   | new tokens flowing (`leg down/ok leg=…`, `banner phase=… legs=…`) from first probe post-activation                                                                                                                      |
+| Phase ladder under a real outage | the switch's own dnsblockd restart: offline (all legs) → alarmed ONCE → ledgered ONCE → degraded (icmp,dns) → correct per the ladder contract                                                                           |
+| False-OFFLINE collapse           | 206/8 h → 1/2 h (the 1 = genuine)                                                                                                                                                                                       |
+| Ledger                           | exactly one entry (`durationSec:8, reasons:[dns,net,tcp], probeFailures:150`), `since` cleared on recovery — the sandboxed `%h/.local/state` hole's FIRST live append (closes the upstream live-proof row's ledger leg) |
+| Atomic state writes              | state file reads clean post-deploy; the tear class is CI-covered (§b#3)                                                                                                                                                 |
+| Unit restart                     | ExecMainPID 6750 → 2721433 at activation; restartTriggers did their job                                                                                                                                                 |
+| dns leg                          | down on 55121b2 (PATH phantom) — fixed by a5673f7, deploy in flight at authoring time (§g)                                                                                                                              |
+| Sound                            | the 02:31:48 show cue fired; audibility unconfirmed (no ears, pw-play stderr not in journal) — honest 🟡 in FEATURES                                                                                                    |
+| niri layer                       | namespace `systemnix:offline-banner` unchanged by the bump (wrapper untouched); layer check rides the post-deploy smoke of the a5673f7 switch                                                                           |
+| Deep-night caveat                | 0 icmp flaps 02:30→04:5x — the ladder's verdict under the real evening flap window is still owed (upstream TODO row)                                                                                                    |
 
 ## f) Harvest (all landed this session)
 

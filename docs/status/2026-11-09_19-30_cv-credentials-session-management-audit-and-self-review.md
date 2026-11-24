@@ -2,20 +2,20 @@
 title: CV credentials & session management — implementation close-out + critical audit
 date: 2026-11-09 19:30
 head: d440ac9e8 (this session's commits: aeb919bbf feat, d440ac9e8 report)
-generation: gen-992 (deployed 2026-11-09 12:0x, anchored on the built system path)
-supersedes_scope_of: docs/status/2026-11-09_19-17_cv-credential-storage-relogin-loop-status.md
-author: Crush session (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)
+  generation: gen-992 (deployed 2026-11-09 12:0x, anchored on the built system path)
+  supersedes_scope_of: docs/status/2026-11-09_19-17_cv-credential-storage-relogin-loop-status.md
+  author: Crush session (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)
 ---
 
 # CV credentials & session management — status update #2 (implementation + audit)
 
-**Why a second report:** the first one (19:17) closed the *implementation*. The
+**Why a second report:** the first one (19:17) closed the _implementation_. The
 owner then asked a sharper question — **"Does CV have superb credentials and
 session management?"** — which forced a critical audit of the CV repo's own
 credential/session code rather than of my new unit. This report covers both, and
 it grades the audit itself as harshly as the subject (§d).
 
-**Bottom line:** the *design* is genuinely strong; the *live operation* is not
+**Bottom line:** the _design_ is genuinely strong; the _live operation_ is not
 superb and is currently **inert**. Two counts make that concrete and neither is
 opinion: the sealed credentials store holds **zero** credentials
 (`meta_stream_log` = 0 events, verified 2026-11-09), and the operator's portal
@@ -30,11 +30,11 @@ sessions are **weeks dead** (`freelancermap` `lastLoginAt` 2026-09-14,
 
 Three storage tiers, documented and deployed:
 
-| Tier | Holds | Reader |
-| --- | --- | --- |
-| sops-nix (`cv*.yaml` → `cv-env`, 0400 `cv:cv`) | machine secrets **+ the store master key** | systemd injects env; process never opens the file |
+| Tier                                                  | Holds                                                          | Reader                                             |
+| ----------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| sops-nix (`cv*.yaml` → `cv-env`, 0400 `cv:cv`)        | machine secrets **+ the store master key**                     | systemd injects env; process never opens the file  |
 | sealed `go-credentials-store` (AES-GCM, 0700 `cv:cv`) | human logins (`password`) + captured sessions (`session_blob`) | only a process holding `CREDENTIALS_MASTER_KEY_V1` |
-| session files (0600 `data/accounts/<p>/state.json`) | Playwright storageState | CV CLI, A.Team cookie chain |
+| session files (0600 `data/accounts/<p>/state.json`)   | Playwright storageState                                        | CV CLI, A.Team cookie chain                        |
 
 New `cv-relogin.timer/.service` (`services.cv-server.relogin`): Monday 09:11,
 runs `cv profile relogin --platform <id> --headless` as `cv` from `/var/lib/cv`,
@@ -72,17 +72,17 @@ followed graph).
 
 Delivered as a scorecard, with first-hand probes:
 
-| Dimension | Grade | Basis (verified) |
-| --- | --- | --- |
-| Secret storage architecture | 9/10 | fail-closed tri-state, env-wins-over-file precedence, 0600-enforced key file, atomic decrypt (`internal/credentials/store.go`) |
-| Secret *handling* discipline | 9/10 | credentials reach the browser only via child-process env; the generator takes no secret inputs; pinned by `relogin_script_test.go`; typed errors + 503-with-hint degradation |
-| Live operation | 4/10 | store 0 events; 2 portal sessions stale for weeks |
-| Seeding / write path | 5/10 | admin UI is the only writer (SDK create/rotate are `internal/`); needs a passkey session or `CV_API_KEY` |
-| Session lifecycle | 4/10 | calendar-driven weekly timer; no expiry-driven refresh; ateam has no `auth_marker` so the probe skips it |
-| Single source of truth | 3/10 | three session homes (sealed blob, cv-run file, lars-run checkout file) |
-| Test coverage (upstream) | 8/10 | 12 credential/relogin/cookie tests in the baseline list + e2e/admin contract suites |
-| Honesty / UX | 9/10 | docs name their own gaps; errors teach the fix |
-| **Regression pin for MY new unit** | **0/10** | no VM test, no eval guard (rowed) |
+| Dimension                          | Grade    | Basis (verified)                                                                                                                                                             |
+| ---------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secret storage architecture        | 9/10     | fail-closed tri-state, env-wins-over-file precedence, 0600-enforced key file, atomic decrypt (`internal/credentials/store.go`)                                               |
+| Secret _handling_ discipline       | 9/10     | credentials reach the browser only via child-process env; the generator takes no secret inputs; pinned by `relogin_script_test.go`; typed errors + 503-with-hint degradation |
+| Live operation                     | 4/10     | store 0 events; 2 portal sessions stale for weeks                                                                                                                            |
+| Seeding / write path               | 5/10     | admin UI is the only writer (SDK create/rotate are `internal/`); needs a passkey session or `CV_API_KEY`                                                                     |
+| Session lifecycle                  | 4/10     | calendar-driven weekly timer; no expiry-driven refresh; ateam has no `auth_marker` so the probe skips it                                                                     |
+| Single source of truth             | 3/10     | three session homes (sealed blob, cv-run file, lars-run checkout file)                                                                                                       |
+| Test coverage (upstream)           | 8/10     | 12 credential/relogin/cookie tests in the baseline list + e2e/admin contract suites                                                                                          |
+| Honesty / UX                       | 9/10     | docs name their own gaps; errors teach the fix                                                                                                                               |
+| **Regression pin for MY new unit** | **0/10** | no VM test, no eval guard (rowed)                                                                                                                                            |
 
 Evidence probed for the audit: store event counts, `data/accounts/accounts.json`
 freshness verdicts, `auth_marker` presence across 28 platform specs (present in 5:
@@ -171,7 +171,7 @@ general (any JS-driven unit) and lives only in `cv.nix` comments.
 
 Not my breakage: a blanket update moved 24 root inputs, its proof never passed,
 two float-register ceremonies regenerated → proved red → reverted, and the host
-sat undeployable all day. What *is* mine: I unilaterally reverted the whole lock
+sat undeployable all day. What _is_ mine: I unilaterally reverted the whole lock
 to the registry-matching graph. It is the doctrine's documented branch and it
 restored exactly the gen-991 graph — but it also rolled back 23 other inputs
 (including `cv` `ff70e6a → da7f3cbc`). If that float's author is still active,
@@ -190,8 +190,8 @@ build load, and I had three questions available and did not ask.
 "Architecture 9/10, operation 4/10" reads like measurement but is a rubric I
 invented mid-answer, with no cross-service baseline and no weights. And the
 8/10 test-coverage grade came from a committed inventory file, not from running
-anything. The *observations* (0 events, stale sessions, missing auth_marker) are
-solid; the *numbers* are rhetoric.
+anything. The _observations_ (0 events, stale sessions, missing auth_marker) are
+solid; the _numbers_ are rhetoric.
 
 ### d.4 Three wasted builds, one wasted revert
 
@@ -383,11 +383,11 @@ test+visibility row (`[ready]`).
 
 **Harvested now** (so the audit's sharpest items are not prose):
 
-| Item | Where |
-| --- | --- |
-| Expiry-driven relogin instead of a fixed Monday tick (§f.2) | `[ready]` in `docs/todo/services.md` + `TODO_LIST.md` |
-| `auth_marker` for `ateam` so the probe stops skipping it (§a.4/§c.2) | `[ready]` in both |
-| Scope `CREDENTIALS_MASTER_KEY_V1` out of `cv-agent`'s env (§c.3) | `[ready]` in both |
+| Item                                                                 | Where                                                 |
+| -------------------------------------------------------------------- | ----------------------------------------------------- |
+| Expiry-driven relogin instead of a fixed Monday tick (§f.2)          | `[ready]` in `docs/todo/services.md` + `TODO_LIST.md` |
+| `auth_marker` for `ateam` so the probe stops skipping it (§a.4/§c.2) | `[ready]` in both                                     |
+| Scope `CREDENTIALS_MASTER_KEY_V1` out of `cv-agent`'s env (§c.3)     | `[ready]` in both                                     |
 
 **Deliberately not harvested:** §f.1 is a premise check that must run before
 §f.2 dispatches (embedded in that row's source pointer); §f.6–§f.12 belong to the

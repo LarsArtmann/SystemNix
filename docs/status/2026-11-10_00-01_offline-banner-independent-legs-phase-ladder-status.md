@@ -8,7 +8,7 @@
 
 ## 0. TL;DR
 
-- **Root cause (diagnosed, live-verified):** the ISP gateway path polices *new-flow* ICMP — single pings to 9.9.9.9 (and even the LAN gateway) drop ~30–50 % with the full 3 s timeout while dense single-flow bursts pass 100 % and TCP/DNS are instant. The banner's old single-leg probe honestly reported those losses as OFFLINE → the "down for 15 s" cycle every few seconds over a perfectly usable network.
+- **Root cause (diagnosed, live-verified):** the ISP gateway path polices _new-flow_ ICMP — single pings to 9.9.9.9 (and even the LAN gateway) drop ~30–50 % with the full 3 s timeout while dense single-flow bursts pass 100 % and TCP/DNS are instant. The banner's old single-leg probe honestly reported those losses as OFFLINE → the "down for 15 s" cycle every few seconds over a perfectly usable network.
 - **Fix (built, all 9 flake checks green):** upstream `offline-banner` commit `432fbaa` — four independently-debounced legs (link / icmp / tcp / dns) + a phase ladder (online / degraded / offline). Degraded = slim info-blue strip naming the down legs, no sound, no ledger, auto-fades after `degradedDwellSeconds`. All legacy surfaces additive.
 - **Deploy state: NOT deployed.** Rides: owner push of `offline-banner` master (ahead 1) → SystemNix input bump (`flake.nix` rev + `flake/expected-locks.nix` pin) → deploy.
 
@@ -95,6 +95,7 @@
 ## f) NEXT (up to 50, ordered by impact; owner/blocking state marked)
 
 **Deploy chain (blocks the actual fix going live):**
+
 1. Push `offline-banner` master `[blocked:owner]` — unblocks everything below.
 2. Bump the SystemNix input rev + `flake/expected-locks.nix` pin, then `nix flake check --no-build` `[ready after 1]`.
 3. Deploy evo-x2 (`nix run .#deploy`) at a quiescent moment `[ready after 2]`.
@@ -149,7 +150,7 @@
 44. Reduce `wait_degraded_visible`/dwell coupling flake surface on slow CI (dwell 4000 vs poll budget) `[watch]`.
 45. Consider `tcpProbePort=443` fallback chain (53 then 443) `[decision]`.
 46. Consider per-leg timeout option (currently shares `probeTimeoutSeconds`) `[decision]`.
-47. README comparison table row: "Says *which* leg is down" — add it `[ready]`.
+47. README comparison table row: "Says _which_ leg is down" — add it `[ready]`.
 48. FEATURES: mark the four-leg row's live-evidence as pending until the SystemNix deploy `[ready after push]`.
 49. Sweep for other consumers of the banner state file in SystemNix (any script keying on `active`) before the bump lands `[ready]`.
 50. After 2+ green deployed days: close the `[watch]` monitoring row with the evening-window evidence `[watch]`.
@@ -159,7 +160,7 @@
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
 1. **Deployment posture:** do you want me to prepare the SystemNix input bump + expected-locks pin NOW as a staged, ready-to-deploy tree (eval-verified against a local path override of the unpushed rev), so it is one `git push` + `nix run .#deploy` for you — or does the push land first and I do the bump after?
-2. **Degraded-strip visibility preference:** default dwell is 15 s then fades. Do you want it *sticky while degraded* (`degradedDwellSeconds = 0`) on evo-x2 — you clearly disliked flashing, but a permanently-visible info strip is a different tradeoff — or is 15 s-and-fade (with the waybar `degraded:` widget as the persistent trail) the right default for you?
+2. **Degraded-strip visibility preference:** default dwell is 15 s then fades. Do you want it _sticky while degraded_ (`degradedDwellSeconds = 0`) on evo-x2 — you clearly disliked flashing, but a permanently-visible info strip is a different tradeoff — or is 15 s-and-fade (with the waybar `degraded:` widget as the persistent trail) the right default for you?
 3. **Commit sanctioning:** the session consolidated daemon-swept heuristic commits twice (soft-reset + amend-forward, per the daemon-race policy) and committed docs rows without an explicit "commit" from you. Is that reading of the policy sanctioned as standing behavior in both repos, or do you want consolidation to wait for an explicit go-ahead?
 
 ---

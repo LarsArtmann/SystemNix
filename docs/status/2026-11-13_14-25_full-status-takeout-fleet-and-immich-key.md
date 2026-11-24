@@ -6,19 +6,19 @@ were swept by the auto-commit daemon) · host `evo-x2`
 Scope of this report: everything done this session (Google account retirement,
 account 1 of N + `lars@helpless.ai` backup), the live numbers, every gate with
 its true state, and the **unfinished** Immich-API-key rework from the final
-turn. It deliberately separates *verified* from *written but unproven*.
+turn. It deliberately separates _verified_ from _written but unproven_.
 
 ---
 
 ## 0. What the owner asked, and what exists
 
-| Ask | State |
-| --- | --- |
-| Get `racedriver8k`'s 880 GB / 23-part Takeout out of Google | **0/23 downloaded.** Owner-side browser click is the only path (re-auth wall proven). Not data loss: the account stays alive. |
-| Back up `lars@helpless.ai` into self-hosted services | **Partial:** 7 parts / 22 GB downloaded and CRC-clean; Drive extracted + indexed; **nothing imported yet** (Photos→Immich, Drive→OpenCloud, docs→Paperless all blocked). |
-| Plan superb imports + dedup across ~3 TB | **Plan exists, tooling exists, first real run done.** No import has happened. |
-| 2-monthly incremental semi-manual export/backup rhythm | Planned (fleet plan §5), not yet exercised. |
-| Extract-first; deletion not for a long time | Honored: deletion gate is `[watch]`, extraction is the active objective. |
+| Ask                                                         | State                                                                                                                                                                    |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Get `racedriver8k`'s 880 GB / 23-part Takeout out of Google | **0/23 downloaded.** Owner-side browser click is the only path (re-auth wall proven). Not data loss: the account stays alive.                                            |
+| Back up `lars@helpless.ai` into self-hosted services        | **Partial:** 7 parts / 22 GB downloaded and CRC-clean; Drive extracted + indexed; **nothing imported yet** (Photos→Immich, Drive→OpenCloud, docs→Paperless all blocked). |
+| Plan superb imports + dedup across ~3 TB                    | **Plan exists, tooling exists, first real run done.** No import has happened.                                                                                            |
+| 2-monthly incremental semi-manual export/backup rhythm      | Planned (fleet plan §5), not yet exercised.                                                                                                                              |
+| Extract-first; deletion not for a long time                 | Honored: deletion gate is `[watch]`, extraction is the active objective.                                                                                                 |
 
 **Nothing has been ingested into Immich, OpenCloud, or Paperless. Nothing has
 been deleted anywhere. The raw zips are the only complete copy of the
@@ -42,17 +42,17 @@ Destinations listening: Immich `127.0.0.1:2283`, OpenCloud `127.0.0.1:9500`
 
 ## 2. Gates G0–G7 — true state
 
-| Gate | What it means | State |
-| --- | --- | --- |
-| **G0** | account registry | Done: `scripts/takeout-accounts.tsv` (racedriver8k retire/baseline, lars@helpless.ai keep/2 cycles). |
-| **G1** | complete zip set per account | `racedriver8k` **0/23**; `lars@helpless.ai` **7 parts present, completeness UNPROVEN** (no exports-page save = no authoritative part list). |
-| **G2** | integrity + inventory | racedriver8k: n/a. helpless.ai: CRC clean, but `takeout-verify.sh` **must not be run as-is** — it seeds the embedded racedriver8k product manifest (trap still live, `scripts/takeout-verify.sh:151-156`). |
-| **G2.5** | dedup/ledger | **Green for helpless.ai Drive**: 1,300 rows indexed; `plan` → 1,300 NEW (243 photos / 1,057 other); `balance` → **BALANCED** (1,528,919,192 B); `report` → 80 duplicate-content sets, 91,235,063 redundant bytes inside Drive. |
-| **G3** | Photos → Immich | **Blocked**: needs a key (see §4) + a real extraction of `Takeout/Google Photos`. Untested against Immich. |
-| **G4** | Drive → OpenCloud | **Blocked**: no OpenCloud app password, `rclone` not on PATH. Extraction done (1,300 files). |
-| **G5** | docs → Paperless | **Blocked**: not started; needs the `other.txt` rating pass first. |
-| **G6** | reconciliation after ingest | Tooling green (`balance`), nothing to reconcile yet. |
-| **G7** | capacity | Rule recorded: `free ≥ 1.2×extract + 500 GB` before any bulk extract. 11 TB free today. |
+| Gate     | What it means                | State                                                                                                                                                                                                                          |
+| -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **G0**   | account registry             | Done: `scripts/takeout-accounts.tsv` (racedriver8k retire/baseline, lars@helpless.ai keep/2 cycles).                                                                                                                           |
+| **G1**   | complete zip set per account | `racedriver8k` **0/23**; `lars@helpless.ai` **7 parts present, completeness UNPROVEN** (no exports-page save = no authoritative part list).                                                                                    |
+| **G2**   | integrity + inventory        | racedriver8k: n/a. helpless.ai: CRC clean, but `takeout-verify.sh` **must not be run as-is** — it seeds the embedded racedriver8k product manifest (trap still live, `scripts/takeout-verify.sh:151-156`).                     |
+| **G2.5** | dedup/ledger                 | **Green for helpless.ai Drive**: 1,300 rows indexed; `plan` → 1,300 NEW (243 photos / 1,057 other); `balance` → **BALANCED** (1,528,919,192 B); `report` → 80 duplicate-content sets, 91,235,063 redundant bytes inside Drive. |
+| **G3**   | Photos → Immich              | **Blocked**: needs a key (see §4) + a real extraction of `Takeout/Google Photos`. Untested against Immich.                                                                                                                     |
+| **G4**   | Drive → OpenCloud            | **Blocked**: no OpenCloud app password, `rclone` not on PATH. Extraction done (1,300 files).                                                                                                                                   |
+| **G5**   | docs → Paperless             | **Blocked**: not started; needs the `other.txt` rating pass first.                                                                                                                                                             |
+| **G6**   | reconciliation after ingest  | Tooling green (`balance`), nothing to reconcile yet.                                                                                                                                                                           |
+| **G7**   | capacity                     | Rule recorded: `free ≥ 1.2×extract + 500 GB` before any bulk extract. 11 TB free today.                                                                                                                                        |
 
 ---
 
@@ -148,14 +148,14 @@ is then revocable by deleting one file and restarting one unit.
 
 ## 6. Blocked, and on whom
 
-| Blocker | Owner action | Why it cannot be agent-side |
-| --- | --- | --- |
-| racedriver8k 23 parts | Switch browser to `racedriver8k`, set download dir, open `<staging>/download-all.html`, click 23 links | Google's re-auth wall rejects every non-browser client (proven) |
-| helpless.ai part list | Save the exports page (Ctrl+S) while logged in | Page is behind the same wall |
-| Immich key (G3) | **Nothing** — after §4 is finished, the converger mints it | Only the module work is missing |
-| OpenCloud app password (G4) | Create it in OpenCloud, hand it over via sops or a 0600 file | Account action |
-| Paperless (G5) | Decide doc selection from `other.txt` | Requires judgment |
-| Accounts 3–N | Name them + mode (retire/keep) + cadence | Unknown to me |
+| Blocker                     | Owner action                                                                                           | Why it cannot be agent-side                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| racedriver8k 23 parts       | Switch browser to `racedriver8k`, set download dir, open `<staging>/download-all.html`, click 23 links | Google's re-auth wall rejects every non-browser client (proven) |
+| helpless.ai part list       | Save the exports page (Ctrl+S) while logged in                                                         | Page is behind the same wall                                    |
+| Immich key (G3)             | **Nothing** — after §4 is finished, the converger mints it                                             | Only the module work is missing                                 |
+| OpenCloud app password (G4) | Create it in OpenCloud, hand it over via sops or a 0600 file                                           | Account action                                                  |
+| Paperless (G5)              | Decide doc selection from `other.txt`                                                                  | Requires judgment                                               |
+| Accounts 3–N                | Name them + mode (retire/keep) + cadence                                                               | Unknown to me                                                   |
 
 ---
 

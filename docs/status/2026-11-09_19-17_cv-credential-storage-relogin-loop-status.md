@@ -31,18 +31,18 @@ most in need of owner awareness (see §d.1 and §g.2).
 
 ### a.1 Research: what already existed, what was missing
 
-| Probe | Result |
-| --- | --- |
-| `journalctl -u cv-server` (2026-11-08 17:57) | `credentials store booted activeKeyID=v1 keys=1` — the sops master key resolves, the store boots fail-closed |
-| prod store read model (`sudo sqlite3 … credentials.db?mode=ro`) | `meta_stream_log` **0**, `meta_planned_credentials_by_platform` **0 rows** — nothing sealed yet |
-| dev store (`~/projects/CV/data/credentials-store`) | 5 events / 2 `session_blob` rows (freelancermap, gun.io) from the M25 ledger import |
-| deployed specs (`/var/lib/cv/data/freelance-platforms/*.yaml`) | `ateam`, `freelancermap`, `gun.io` all carry `login_url` + `session_cookie` |
-| server-side A.Team consumer | **none** (`ResolveCookie` has no server caller) — the cookie is a CLI concern, which shaped the design |
-| store public write API | **absent** (`domain.NewCreateCredential`/`DecideRotate` are `internal/`) — seeding is admin-UI-only, hence human-only |
+| Probe                                                           | Result                                                                                                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `journalctl -u cv-server` (2026-11-08 17:57)                    | `credentials store booted activeKeyID=v1 keys=1` — the sops master key resolves, the store boots fail-closed          |
+| prod store read model (`sudo sqlite3 … credentials.db?mode=ro`) | `meta_stream_log` **0**, `meta_planned_credentials_by_platform` **0 rows** — nothing sealed yet                       |
+| dev store (`~/projects/CV/data/credentials-store`)              | 5 events / 2 `session_blob` rows (freelancermap, gun.io) from the M25 ledger import                                   |
+| deployed specs (`/var/lib/cv/data/freelance-platforms/*.yaml`)  | `ateam`, `freelancermap`, `gun.io` all carry `login_url` + `session_cookie`                                           |
+| server-side A.Team consumer                                     | **none** (`ResolveCookie` has no server caller) — the cookie is a CLI concern, which shaped the design                |
+| store public write API                                          | **absent** (`domain.NewCreateCredential`/`DecideRotate` are `internal/`) — seeding is admin-UI-only, hence human-only |
 
 ### a.2 The architecture (now the runbook's §Credential storage)
 
-Three tiers, chosen by *who generates* and *who rotates*:
+Three tiers, chosen by _who generates_ and _who rotates_:
 
 1. **sops-nix** — machine secrets (`CV_API_KEY`, LLM keys, Stalwart mailbox
    password, evaluation citizenships) **and the store master key**
@@ -55,7 +55,7 @@ Three tiers, chosen by *who generates* and *who rotates*:
    CV CLI and the A.Team cookie chain already read.
 
 Rejected alternative, stated explicitly in the runbook: putting portal
-passwords in sops too. They are *user* credentials consumed by a browser flow,
+passwords in sops too. They are _user_ credentials consumed by a browser flow,
 not a process environment that `ps`, journald and pool backups can read.
 
 ### a.3 Implementation (all in `aeb919bbf`)
@@ -98,12 +98,12 @@ not a process environment that `ps`, journald and pool backups can read.
 
 ### a.4 Verification — four independent legs
 
-| Leg | Evidence |
-| --- | --- |
-| Static | `nix flake check --no-build --all-systems` → `all checks passed!` (rc=0); pre-commit hook later re-ran the same eval and passed |
-| Runtime deps, real user | bun 1.4.4 honours `NODE_PATH`; nixpkgs playwright-core 1.64.1 + system chromium launched headless **as `cv`** from `/var/lib/cv` |
-| Sandbox fidelity | transient `systemd-run` unit with the unit's exact hardening (PrivateTmp, ProtectSystem=full, ProtectHome, RestrictNamespaces, empty CapabilityBoundingSet, MemoryMax=3G) → chromium launch `status=0/SUCCESS`, peak **860.7M** (proof that the 512M harden default would have throttled it) |
-| Branch logic | unseeded run as `cv` → 3 WARNs, exit 0. Seeded branch simulated with a scratch store copy + one injected `kind=password` row → gate passes, script generated into `data/relogin-scripts/`, credential resolution attempted, typed `ErrNoStoredLogin`, wrapper FAILED line, exit 1 |
+| Leg                     | Evidence                                                                                                                                                                                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static                  | `nix flake check --no-build --all-systems` → `all checks passed!` (rc=0); pre-commit hook later re-ran the same eval and passed                                                                                                                                                              |
+| Runtime deps, real user | bun 1.4.4 honours `NODE_PATH`; nixpkgs playwright-core 1.64.1 + system chromium launched headless **as `cv`** from `/var/lib/cv`                                                                                                                                                             |
+| Sandbox fidelity        | transient `systemd-run` unit with the unit's exact hardening (PrivateTmp, ProtectSystem=full, ProtectHome, RestrictNamespaces, empty CapabilityBoundingSet, MemoryMax=3G) → chromium launch `status=0/SUCCESS`, peak **860.7M** (proof that the 512M harden default would have throttled it) |
+| Branch logic            | unseeded run as `cv` → 3 WARNs, exit 0. Seeded branch simulated with a scratch store copy + one injected `kind=password` row → gate passes, script generated into `data/relogin-scripts/`, credential resolution attempted, typed `ErrNoStoredLogin`, wrapper FAILED line, exit 1            |
 
 ### a.5 Live proof (gen-992)
 
@@ -145,13 +145,13 @@ not a process environment that `ps`, journald and pool backups can read.
 
 ### b.1 Seeding the first credential (blocked on a human, by design)
 
-The store is empty, so nothing logs in yet. That is *correct* (agents must not
+The store is empty, so nothing logs in yet. That is _correct_ (agents must not
 handle passwords; the admin UI is the only write path) but it means the feature
 is "installed, inert". One Pocket-ID session at
 `https://cv.home.lan/admin/credentials/` flips it — and no deploy is needed
 afterwards.
 
-### b.2 Failure-path proof in the *real* unit
+### b.2 Failure-path proof in the _real_ unit
 
 I proved the seeded branch only through the root + scratch-store simulation. The
 unit's own seeded branch (as `cv`, against the prod store) is unproven until the
@@ -186,7 +186,7 @@ with no checkout is a general pattern (any JS-driven unit). It lives only in
 1. Eval guard + VM test for `cv-relogin` (unit shape, seed-gate fixture store,
    playwright/chromium presence). `tests/test-cv.nix` was not extended.
 2. Visibility for the "unseeded / skipped" state (system-health metric or a Gatus
-   check) — the repo's mail-relay precedent makes pending owner acts *visible*,
+   check) — the repo's mail-relay precedent makes pending owner acts _visible_,
    not journal-only.
 3. Scoping `CREDENTIALS_MASTER_KEY_V1` out of `cv-agent`'s environment (the
    sops template feeds both units; cv-agent never needs the key). Noted in CV's
@@ -213,7 +213,7 @@ and its proof never passed; two later float-register ceremonies (one of them
 mine) each regenerated the registry, proved red, and reverted it, leaving the
 host undeployable all day — and no session flagged it.
 
-What *is* mine: I unilaterally reverted the whole lock to the registry-matching
+What _is_ mine: I unilaterally reverted the whole lock to the registry-matching
 graph. It is the doctrine's documented branch, it restores exactly the graph
 gen-991 was running, and it unblocked every deploy — but it also rolled back 23
 other inputs that someone may have intended (including `cv`
@@ -238,7 +238,7 @@ I built the toplevel three times before I understood the eval gate's placement
 (`nix flake check` evaluates `checks`, not host configs, so my early green check
 proved nothing about the drift). Then I spent a full revert + proof cycle on
 `hermes-agent` alone, which removed one red leg and none of the others. Reading
-`lib/lock-float-audit.nix` and `scripts/float-register.sh` *first* — they are
+`lib/lock-float-audit.nix` and `scripts/float-register.sh` _first_ — they are
 short — would have collapsed all of that into one `float-register` run + one
 lock restore.
 
@@ -273,7 +273,7 @@ amend, not a history rewrite.
    "a verification that cannot fail again was not a verification".
 4. **The visibility half of the design.** I made the pending owner act silent
    (WARN + skip). The repo's pattern for exactly this situation (mail-relay) is
-   a *visible* pending signal. I chose calm over visible and did not even row it.
+   a _visible_ pending signal. I chose calm over visible and did not even row it.
 5. **The operator identity split.** I documented it but did not decide it; the
    consequence is that the operator's own weekly timers still get no automatic
    relogin.
@@ -292,7 +292,7 @@ amend, not a history rewrite.
    the "irreversible-ish call worth a question" case; I had 3 questions available.
 4. **Design the visibility first.** A seed gate that only logs is a gate for
    nobody.
-5. **Commit once, deliberately.** I should have authored my commit *before*
+5. **Commit once, deliberately.** I should have authored my commit _before_
    touching anything else after the deploy, not after the daemon had swept twice.
 
 ### e.3 What could I still improve (ranked by leverage)?
@@ -451,13 +451,13 @@ amend, not a history rewrite.
 Landed at authoring time (commit `aeb919bbf`), so this report adds no backlog
 drift:
 
-| Item | Where |
-| --- | --- |
+| Item                                                            | Where                                          |
+| --------------------------------------------------------------- | ---------------------------------------------- |
 | Close "verify cv-credentials-store provisioned live" (evidence) | `TODO_LIST.md` + `docs/todo/services.md` `[x]` |
-| Seed the sealed store (ateam/freelancermap/gun.io) | `[blocked:user]` in both |
-| First relogin success proof | `[watch]` in both |
-| Operator-side store access (0700 split) | `[decision]` in both |
-| Store public write API + CV-side doc staleness | `docs/todo/upstream.md` + queue |
+| Seed the sealed store (ateam/freelancermap/gun.io)              | `[blocked:user]` in both                       |
+| First relogin success proof                                     | `[watch]` in both                              |
+| Operator-side store access (0700 split)                         | `[decision]` in both                           |
+| Store public write API + CV-side doc staleness                  | `docs/todo/upstream.md` + queue                |
 
 Deliberately **not** harvested here (recorded, not rowed): §f.7–§f.13 (visibility
 details), §f.14–§f.20 (robustness), §f.21–§f.27 (security follow-ups) and
@@ -469,8 +469,8 @@ already visible in the deploy smoke baseline.
 
 **Harvested while writing this report** (so §c.1–§c.2 are not left as prose):
 
-| Item | Where |
-| --- | --- |
+| Item                                                                                                      | Where                                                 |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | Pin the login loop: VM-test leg, spec/playwright eval checks, visible "stored logins" signal (§f.1–§f.13) | `[ready]` in `docs/todo/services.md` + `TODO_LIST.md` |
 
 ---

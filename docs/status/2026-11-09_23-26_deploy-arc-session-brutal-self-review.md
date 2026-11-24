@@ -133,8 +133,8 @@ Companion artifact: `docs/status/2026-11-09_21-50_deploy-arc-phantom-fixes-statu
    (the class my bash fix closed — systemd-shape audit doesn't see PATH).
 9. Probe-liveness: emit a per-probe run counter from system-health so the
    silent-rc=127 class shows up as a metric, not a constant.
-10. §10 lint: extend the bare-pat detector to ` 0*` value forms, not just
-    ` 1*`.
+10. §10 lint: extend the bare-pat detector to `0*` value forms, not just
+    `1*`.
 11. Session debt: `nix flake check --no-build` + pre-commit legs standalone
     on the swept edits.
 12. Confirm the anchor-alert resolved (one grep).

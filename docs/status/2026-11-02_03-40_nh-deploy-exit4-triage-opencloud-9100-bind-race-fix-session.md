@@ -69,14 +69,14 @@ Three of the four failing units are root-caused with two fixed live (HM clobber,
 
 ## f) Top things to get done next (ranked; harvest decision inline)
 
-*Direct follow-ups of THIS session (self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time per the TODO system rule — items 1-4):*
+_Direct follow-ups of THIS session (self-harvested into TODO_LIST.md + docs/todo/services.md at authoring time per the TODO system rule — items 1-4):_
 
 1. **Deploy the opencloud fix + full post-deploy verify** (anchor re-verify → opencloud active + 9500 proxy/9100 web listeners → cloud.home.lan raw-HTTPS probe → gatus check green → `nix run .#pre-reboot-check`) — fire `nix run .#deploy` when PSI < 20% or owner-override `DEPLOY_FORCE_PRESSURE=1`. **QUEUED [ready] → TODO_LIST.md + services.md.**
 2. **Soak the HM fleet timers** — after site-monitor's first hourly tick and one fleet-review manual `StartUnit`, assert clean exits + `SITE_MONITOR_PING_URL` dead-man decision. **QUEUED [watch] → services.md.**
 3. **Investigate the nh `os switch` → `stc test` profile trap** (nh 4.4.2 semantics vs flag interaction) and add a mechanical anchor check or fix the invocation. **QUEUED [ready] → TODO_LIST.md + services.md.**
 4. **Verify the `notify-failure@<unit>.service.service` double-suffix** against the template definition. **QUEUED [watch] → services.md.**
 
-*Proposals/brainstorm — deliberately NOT harvested (ROADMAP fuel, owner-pick; recorded here per the self-harvest rule):*
+_Proposals/brainstorm — deliberately NOT harvested (ROADMAP fuel, owner-pick; recorded here per the self-harvest rule):_
 
 5. Run `pre-reboot-check` standalone NOW (it audits the anchored zwjf state; don't wait for the deploy).
 6. Post-deploy: run `scripts/post-deploy-check.sh` (first proper deploy since the owner's direct-nh bypass skipped it).
@@ -105,7 +105,7 @@ Three of the four failing units are root-caused with two fixed live (HM clobber,
 29. After the bank-sync owner decision: verify the imported CSV converges (import re-run green) and close the notify-failure leg.
 30. ROADMAP: "deploy-when-calm" queue app (systemd timer: fire deploy when PSI < threshold for N min) — automation candidate for storm nights.
 
-*(30 items — the 50-cap is headroom, not a target; items 5-30 are proposals except where marked queued.)*
+_(30 items — the 50-cap is headroom, not a target; items 5-30 are proposals except where marked queued.)_
 
 ## g) Questions I can NOT figure out myself
 
@@ -115,4 +115,4 @@ Three of the four failing units are root-caused with two fixed live (HM clobber,
 
 ---
 
-*Self-harvest executed at authoring time: items f1/f3 queued `[ready]` (TODO_LIST.md + services.md), f2/f4 queued `[watch]` (services.md), items f5-f30 recorded as deliberately-not-harvested (proposals/owner-gated/other-session-owned).*
+_Self-harvest executed at authoring time: items f1/f3 queued `[ready]` (TODO_LIST.md + services.md), f2/f4 queued `[watch]` (services.md), items f5-f30 recorded as deliberately-not-harvested (proposals/owner-gated/other-session-owned)._

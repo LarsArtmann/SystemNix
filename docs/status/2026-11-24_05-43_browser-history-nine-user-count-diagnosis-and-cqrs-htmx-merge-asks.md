@@ -74,7 +74,7 @@ Disposition note (TODO-system rule): the report's DIRECT follow-ups are harveste
 
 1. **[owner]** Decide delete-now vs wait-for-merge for the 8 zombie rows (they hold 0 credentials / 0 TOTP / 0 rows, so delete is loss-free for this group).
 2. **[owner]** Take a fresh pool backup immediately before any delete, and record its name in the report.
-3. Fresh `browser-history-db-*.sqlite` copy → run `merge-duplicate-users -db … ` **dry run** and record its group/row counts against the 8 known ids.
+3. Fresh `browser-history-db-*.sqlite` copy → run `merge-duplicate-users -db …` **dry run** and record its group/row counts against the 8 known ids.
 4. **[owner]** Delete the 8 through `/admin/users` (each delete dispatches a real `user-deleted` event).
 5. Re-baseline `browser_history_users 9` → `1` in `modules/nixos/services/browser-history.nix:858` in the SAME change as the delete.
 6. Post-op: `browser_history_users 1`, `/health` answers, login resolves to `01M000JA6…`, dashboard renders 6,932 visits, `scripts/mutation-smoke.sh` green.

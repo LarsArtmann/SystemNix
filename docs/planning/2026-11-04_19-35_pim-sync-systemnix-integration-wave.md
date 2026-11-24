@@ -112,9 +112,9 @@ is owner-gated and needs the IO-quiet protocol.
 ## Flip ladder (owner-gated, after this wave deploys)
 
 1. 🧑 GCP OAuth client secret (In production publishing mode — the InboxClean 7-day-token lesson)
-   + Stalwart DAV creds (PIMSYNC_DAV_USER/PASS) + per-account browser consent tokens.
-   Path contract: pim-sync `docs/oauth-setup.md`. sops declarations land ONLY together with the
-   values (sops-key-audit throws on declared-but-missing keys).
+   - Stalwart DAV creds (PIMSYNC_DAV_USER/PASS) + per-account browser consent tokens.
+     Path contract: pim-sync `docs/oauth-setup.md`. sops declarations land ONLY together with the
+     values (sops-key-audit throws on declared-but-missing keys).
 2. agent: `enable = true`, `live = false` (dry-run timer), `tokenSeedDir` wired → deploy → first
    dry-run journal review 🧑 (the 7.5 owner gate from the Stalwart-single-truth plan).
 3. 🧑 GO → agent: `live = true` + `maxChanges` cap + `metricsFile` + Gatus freshness check on
@@ -128,5 +128,5 @@ is owner-gated and needs the IO-quiet protocol.
   inside pim-sync, (c) the owner gates above. This plan clears (a)+(b) as a quiescence-gated
   execution; (c) stays with the owner.
 - pim-sync app state: docs/status/2026-10-29_23-55_pim-sync-bidirectional-contacts-complete-status.md
-  + ~/projects/pim-sync docs/status/README.md (T17–T27.5 delivered; remainder owner-gated).
+  - ~/projects/pim-sync docs/status/README.md (T17–T27.5 delivered; remainder owner-gated).
 - Forgejo-canonical provisioning (mirrors pending the same unblock): docs/status/2026-11-04_19-14_forgejo-canonical-repos-provisioned-fine-tune-pim-sync.md

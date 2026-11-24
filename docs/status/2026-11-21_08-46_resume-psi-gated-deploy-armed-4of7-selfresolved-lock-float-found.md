@@ -7,15 +7,15 @@
 
 ## Live State at Writing (08:46)
 
-| Surface | State |
-| --- | --- |
-| HEAD | `5f6af89d4` (daemon lock-float sweep on `6c0c2bbd2`); tree clean |
-| Deployed | gen-1020 anchored (`zfrqkk7567…` == newest `system-1020-link`, verified by NUMBER) |
-| paperless-gpt | `failed` — the `14ec73b28` fix is IN HEAD but undeployed |
-| paperless-web | 771 DisallowedHost lines 07:00→07:39 (~20/min, unchanged) |
-| HEAD eval | rc=0 at 07:37 (drv `4pf2krm26…` ≠ live deriver `2a30w93h1h…` → real deploy needed); **stale for the 08:19 lock float** — the watcher's gate C re-evals at fire time |
-| Armed actor | EXACTLY ONE: my orchestrator (shell 05B, pid 1925330); rival-sequencer sweep clean |
-| io PSI | peak avg60 some 96.1 (08:14) → 35.9 (08:44) → 42.4 (08:46, oscillating); gate = <30 some & <20 full twice, 60s apart |
+| Surface       | State                                                                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HEAD          | `5f6af89d4` (daemon lock-float sweep on `6c0c2bbd2`); tree clean                                                                                                    |
+| Deployed      | gen-1020 anchored (`zfrqkk7567…` == newest `system-1020-link`, verified by NUMBER)                                                                                  |
+| paperless-gpt | `failed` — the `14ec73b28` fix is IN HEAD but undeployed                                                                                                            |
+| paperless-web | 771 DisallowedHost lines 07:00→07:39 (~20/min, unchanged)                                                                                                           |
+| HEAD eval     | rc=0 at 07:37 (drv `4pf2krm26…` ≠ live deriver `2a30w93h1h…` → real deploy needed); **stale for the 08:19 lock float** — the watcher's gate C re-evals at fire time |
+| Armed actor   | EXACTLY ONE: my orchestrator (shell 05B, pid 1925330); rival-sequencer sweep clean                                                                                  |
+| io PSI        | peak avg60 some 96.1 (08:14) → 35.9 (08:44) → 42.4 (08:46, oscillating); gate = <30 some & <20 full twice, 60s apart                                                |
 
 **The handoff blockers: ALL FOUR self-resolved by the parallel session's `6c0c2bbd2` wave (03:55–03:57).** The status report commit, the staged `flake.nix` tense-refresh (grep-verified at `flake.nix:38` + `:1480`, credited in the commit message), the darwin selftest fix (`fceb43b8e` — linux-only gate keeping the attr as a named no-op, same pattern as prom-tmp-janitor-selftest; both .nix-touching commits LANDED, so the hook's full `--all-systems` walk passed green), and the summit-planner service itself.
 
@@ -70,6 +70,7 @@
 ## f) Up to 50 Things To Get Done Next
 
 **Post-deploy chain (agent-ready, this session's continuation):**
+
 1. Fire verification: orchestrator log + `--log` + newest `/var/log/systemnix-deploys/*.log` tail (rc-classified outcome).
 2. Anchor by NUMBER: `readlink /run/current-system` == newest `system-N-link` (never mtime) — the exit-14 UNANCHORED class check.
 3. paperless-gpt → `active`; failed-state cleared.

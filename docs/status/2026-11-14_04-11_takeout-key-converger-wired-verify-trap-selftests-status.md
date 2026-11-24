@@ -29,22 +29,22 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 
 ## a) FULLY DONE (with evidence)
 
-| # | Item | Where | Proof |
-| --- | --- | --- | --- |
-| 1 | Ingest consumer repointed off `<staging>/immich-api-key` onto the converger env file (`TAKEOUT_IMMICH_ENV`, default `/var/lib/immich-api-keys/takeout-import.env`), `IMMICH_API_KEY` env override wins, 0400 asserted, error text names the converger + the rotation command, URL from the env file with manifest port only as fallback, "full-access key, delete after migration" comment deleted | `scripts/takeout-ingest-photos.sh` (`adee6f18c`) | 5 functional fixture legs run against a stub `immich-go`: (a) no key → converger+rotation die text, (b) 0644 file → rejected, (c) 0400 file → `-server http://127.0.0.1:2283 -api-key TOK`, (d) env key without a file → manifest fallback URL, (e) env key winning over a present file. `shellcheck -x` clean, `bash -n` clean |
-| 2 | K5.1–K5.5 verification | plan §"K5 — verification" annotated DONE | `ExecStart` = `…-immich-api-key-provision/bin/immich-api-key-provision`; timer `OnCalendar=daily`; permissions SQL = exactly the 16 declared strings, **no `asset.delete`** |
-| 3 | Negative leg (unit must not exist for zero keys) — **and the false-positive it first produced is root-caused** | eval probe with `lib.mkForce {}` | `{"zeroKeys":{},"zeroSvc":false,"zeroTmr":false}` (a bare `apiKeys = {}` merges as *identity* into `attrsOf`, so the first probe lied `true`) |
-| 4 | Full eval gate green | `nix flake check --no-build` | `all checks passed!` (aarch64-darwin omitted, as designed) |
-| 5 | Foreign eval break repaired — `checks.x86_64-linux.paperless` was the sole red leg | `tests/default.nix` (`921931fc7`) | a parallel session shrank `tests/test-paperless.nix`'s lambda to `{ inputs }` (03:14) but left the caller passing `pkgs`; one-line caller fix, then `nix eval …checks.x86_64-linux.paperless.drvPath` → `…-vm-test-run-paperless.drv` |
-| 6 | **G2 manifest trap fixed** — no more silent inheritance of the racedriver8k 68-product manifest by another account's staging root. Expectation set now SELF-DERIVED from the zip listings with a loud WARN (+ report line "Expectation source: … UNPROVEN"); the embedded manifest survives only as `--manifest racedriver8k` opt-in | `scripts/takeout-verify.sh` (`d516d2c26`, `7f6c5179d`) | selftest 6/6: `happy`, `crc`, `coverage`, `missing-part`, **`manifest-leak`** (no foreign rows + WARN + report marker), **`manifest-optin`** (explicit opt-in still seeds and still fails a foreign fixture) |
-| 7 | `takeout-browser-rename.sh` gained a real `--selftest` | same script (`f8032a4fe`) | 7 legs: dry-run moves nothing, clean promote (bytes+mode 600), **same-size CRC corruption** caught + marker dropped, size mismatch not moved, leftover reported, CRC-marker persistence (no re-read of a known-bad 50 GB part every 5 min) |
-| 8 | `takeout-dedup.sh` hardening | same script (`30655eaa1` + this session's tail) | `index` heartbeat every 250 files; `plan` byte totals (`new/unchanged/dup` bytes into `totals.tsv` + SUMMARY); `balance --summary` (one aggregate line) and `--preflight` (`PREFLIGHT: PASS/FAIL` for import scripts); selftest now **21 legs** |
-| 9 | **Two real bugs found by the new legs** | `cmd_balance` | (a) `FNR == NR` is true on the first ledger record when the zip listing is EMPTY → the ledger was promoted to the "zip side" and an empty staging root printed `BALANCED`; replaced with `FILENAME == ARGV[1]`. (b) zero products was never a failure mode → now exit 2 with `NO ZIP CONTENT` |
-| 10 | Live probe of the new gate (read-only) | pool | helpless.ai: `products: 44 (1 OK, 43 COLD, 0 SKIPPED, 0 MISMATCH) — zip 7495 files / 27,372,322,572 bytes, indexed 1,528,919,192 bytes` → `PREFLIGHT: PASS`, rc 0. racedriver8k (0 parts): `products: 0 … PREFLIGHT: FAIL — no Takeout/* members found`, rc 2 (the old code would have said BALANCED) |
-| 11 | CI wiring | `flake/parts/checks/selftests.nix` (`f8032a4fe`) | new `checks.x86_64-linux.takeout-selftests` (hermetic: `HOME`/`XDG_CACHE_HOME` under `$TMPDIR`, shebangs rewritten because `/usr/bin/env` is absent in the sandbox); built green: `nix build .#checks.x86_64-linux.takeout-selftests` → `/nix/store/1s0xw4lp…-takeout-selftests` with all 41 legs PASS |
-| 12 | Runbook: API-key lifecycle documented | `docs/services/immich.md` (`921931fc7`) | new bullets: declaration surface, direct `api_key` insert over peer-auth postgres, file-first reconcile states, rotation = `rm` + `systemctl restart`, revoke-is-resurrected-by-design, daily timer + deploy-loop convergence, `bytea` schema guard, the `takeout-import` consumer and the no-`asset.delete` rule, and the drive-paperless legacy note |
-| 13 | TODO library corrected (3 rows) | `docs/todo/services.md` (`921931fc7` + `0976c68eb`) | row 106: staging-key prerequisite → resolved-by-converger + pre-flight command; row 126: owner create-key + sops-paste legs marked superseded; row 626: rewritten as "migrate drive-paperless onto the shared option" with the 3 concrete steps |
-| 14 | Stale plan annotated (both directions) | `docs/planning/2026-11-11_09-30_…pipeline.md` (`921931fc7`) + the 2026-11-13 plan (`d516d2c26`) | old plan's "FULL-access key at `<staging>/immich-api-key`" + "shred the API key with the cookies" replaced by the converger reality; new plan's "half-landed converger" line replaced with the COMPLETE chain, K3 + K5 annotated with evidence |
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                                               | Where                                                                                           | Proof                                                                                                                                                                                                                                                                                                                                                  |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1  | Ingest consumer repointed off `<staging>/immich-api-key` onto the converger env file (`TAKEOUT_IMMICH_ENV`, default `/var/lib/immich-api-keys/takeout-import.env`), `IMMICH_API_KEY` env override wins, 0400 asserted, error text names the converger + the rotation command, URL from the env file with manifest port only as fallback, "full-access key, delete after migration" comment deleted | `scripts/takeout-ingest-photos.sh` (`adee6f18c`)                                                | 5 functional fixture legs run against a stub `immich-go`: (a) no key → converger+rotation die text, (b) 0644 file → rejected, (c) 0400 file → `-server http://127.0.0.1:2283 -api-key TOK`, (d) env key without a file → manifest fallback URL, (e) env key winning over a present file. `shellcheck -x` clean, `bash -n` clean                        |
+| 2  | K5.1–K5.5 verification                                                                                                                                                                                                                                                                                                                                                                             | plan §"K5 — verification" annotated DONE                                                        | `ExecStart` = `…-immich-api-key-provision/bin/immich-api-key-provision`; timer `OnCalendar=daily`; permissions SQL = exactly the 16 declared strings, **no `asset.delete`**                                                                                                                                                                            |
+| 3  | Negative leg (unit must not exist for zero keys) — **and the false-positive it first produced is root-caused**                                                                                                                                                                                                                                                                                     | eval probe with `lib.mkForce {}`                                                                | `{"zeroKeys":{},"zeroSvc":false,"zeroTmr":false}` (a bare `apiKeys = {}` merges as _identity_ into `attrsOf`, so the first probe lied `true`)                                                                                                                                                                                                          |
+| 4  | Full eval gate green                                                                                                                                                                                                                                                                                                                                                                               | `nix flake check --no-build`                                                                    | `all checks passed!` (aarch64-darwin omitted, as designed)                                                                                                                                                                                                                                                                                             |
+| 5  | Foreign eval break repaired — `checks.x86_64-linux.paperless` was the sole red leg                                                                                                                                                                                                                                                                                                                 | `tests/default.nix` (`921931fc7`)                                                               | a parallel session shrank `tests/test-paperless.nix`'s lambda to `{ inputs }` (03:14) but left the caller passing `pkgs`; one-line caller fix, then `nix eval …checks.x86_64-linux.paperless.drvPath` → `…-vm-test-run-paperless.drv`                                                                                                                  |
+| 6  | **G2 manifest trap fixed** — no more silent inheritance of the racedriver8k 68-product manifest by another account's staging root. Expectation set now SELF-DERIVED from the zip listings with a loud WARN (+ report line "Expectation source: … UNPROVEN"); the embedded manifest survives only as `--manifest racedriver8k` opt-in                                                               | `scripts/takeout-verify.sh` (`d516d2c26`, `7f6c5179d`)                                          | selftest 6/6: `happy`, `crc`, `coverage`, `missing-part`, **`manifest-leak`** (no foreign rows + WARN + report marker), **`manifest-optin`** (explicit opt-in still seeds and still fails a foreign fixture)                                                                                                                                           |
+| 7  | `takeout-browser-rename.sh` gained a real `--selftest`                                                                                                                                                                                                                                                                                                                                             | same script (`f8032a4fe`)                                                                       | 7 legs: dry-run moves nothing, clean promote (bytes+mode 600), **same-size CRC corruption** caught + marker dropped, size mismatch not moved, leftover reported, CRC-marker persistence (no re-read of a known-bad 50 GB part every 5 min)                                                                                                             |
+| 8  | `takeout-dedup.sh` hardening                                                                                                                                                                                                                                                                                                                                                                       | same script (`30655eaa1` + this session's tail)                                                 | `index` heartbeat every 250 files; `plan` byte totals (`new/unchanged/dup` bytes into `totals.tsv` + SUMMARY); `balance --summary` (one aggregate line) and `--preflight` (`PREFLIGHT: PASS/FAIL` for import scripts); selftest now **21 legs**                                                                                                        |
+| 9  | **Two real bugs found by the new legs**                                                                                                                                                                                                                                                                                                                                                            | `cmd_balance`                                                                                   | (a) `FNR == NR` is true on the first ledger record when the zip listing is EMPTY → the ledger was promoted to the "zip side" and an empty staging root printed `BALANCED`; replaced with `FILENAME == ARGV[1]`. (b) zero products was never a failure mode → now exit 2 with `NO ZIP CONTENT`                                                          |
+| 10 | Live probe of the new gate (read-only)                                                                                                                                                                                                                                                                                                                                                             | pool                                                                                            | helpless.ai: `products: 44 (1 OK, 43 COLD, 0 SKIPPED, 0 MISMATCH) — zip 7495 files / 27,372,322,572 bytes, indexed 1,528,919,192 bytes` → `PREFLIGHT: PASS`, rc 0. racedriver8k (0 parts): `products: 0 … PREFLIGHT: FAIL — no Takeout/* members found`, rc 2 (the old code would have said BALANCED)                                                  |
+| 11 | CI wiring                                                                                                                                                                                                                                                                                                                                                                                          | `flake/parts/checks/selftests.nix` (`f8032a4fe`)                                                | new `checks.x86_64-linux.takeout-selftests` (hermetic: `HOME`/`XDG_CACHE_HOME` under `$TMPDIR`, shebangs rewritten because `/usr/bin/env` is absent in the sandbox); built green: `nix build .#checks.x86_64-linux.takeout-selftests` → `/nix/store/1s0xw4lp…-takeout-selftests` with all 41 legs PASS                                                 |
+| 12 | Runbook: API-key lifecycle documented                                                                                                                                                                                                                                                                                                                                                              | `docs/services/immich.md` (`921931fc7`)                                                         | new bullets: declaration surface, direct `api_key` insert over peer-auth postgres, file-first reconcile states, rotation = `rm` + `systemctl restart`, revoke-is-resurrected-by-design, daily timer + deploy-loop convergence, `bytea` schema guard, the `takeout-import` consumer and the no-`asset.delete` rule, and the drive-paperless legacy note |
+| 13 | TODO library corrected (3 rows)                                                                                                                                                                                                                                                                                                                                                                    | `docs/todo/services.md` (`921931fc7` + `0976c68eb`)                                             | row 106: staging-key prerequisite → resolved-by-converger + pre-flight command; row 126: owner create-key + sops-paste legs marked superseded; row 626: rewritten as "migrate drive-paperless onto the shared option" with the 3 concrete steps                                                                                                        |
+| 14 | Stale plan annotated (both directions)                                                                                                                                                                                                                                                                                                                                                             | `docs/planning/2026-11-11_09-30_…pipeline.md` (`921931fc7`) + the 2026-11-13 plan (`d516d2c26`) | old plan's "FULL-access key at `<staging>/immich-api-key`" + "shred the API key with the cookies" replaced by the converger reality; new plan's "half-landed converger" line replaced with the COMPLETE chain, K3 + K5 annotated with evidence                                                                                                         |
 
 ---
 
@@ -110,18 +110,18 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 1. **The negative probe lied first.** `services.immich.apiKeys = {}` in an
    `extendModules` module merges as the identity element of `attrsOf`, so the
    unit still existed and the probe printed `zeroSvc=true`. I only caught it
-   because the unit *should* have been absent. Fix: `lib.mkForce {}`.
+   because the unit _should_ have been absent. Fix: `lib.mkForce {}`.
    Lesson: an options merge is not an assignment; a "negative" probe must
    override, not merge.
 2. **A selftest leg's assertion was wrong, not the code.** `manifest-leak`
    grepped `Takeout/Drive` in `verification-report.md`, but the report's
    inventory strips the `Takeout/` prefix — false FAIL. Replaced with the
    report's own "completeness … UNPROVEN" marker. Lesson: assert on the
-   artifact's *stated* contract, not on a string you assume it carries.
+   artifact's _stated_ contract, not on a string you assume it carries.
 3. **I documented a state I had not produced.** The dedup header I wrote
    claimed "RELPATH is stored WITHOUT the `Takeout/` prefix (normalized
    2026-11-14)" while the live ledger still has the prefix. Corrected during
-   *this report* (the one dirty file). Lesson: a schema claim in a header is a
+   _this report_ (the one dirty file). Lesson: a schema claim in a header is a
    testable assertion; write it as "pending" until the data moves.
 4. **A nonsense check expression.** First draft of the rename self-test
    compared `part-01.zip`'s size against itself. Rewritten before it ran, but
@@ -146,7 +146,7 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
   → `400 lars:users`; `psql -At -c "select name,array_length(permissions,1) from api_key"`
   → `takeout-import (nix-managed)|16`; then the ingest preflight.
 - **Make "converger must be in `deploy.sh`" negatively proven.** Is there a
-  leg that *fails* when a `*-provision` oneshot is dropped from the loop?
+  leg that _fails_ when a `*-provision` oneshot is dropped from the loop?
   `deploy-restart-audit` claims the class; a fixture leg would make it real.
 - **Per-account manifests instead of one hardcoded account.** `--manifest
   racedriver8k` should become `--manifest <path>` (or `accounts/<name>.tsv`),
@@ -169,6 +169,7 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 ## f) WHAT WE SHOULD GET DONE NEXT (ordered, ≤50)
 
 **Immediate (unblocked, mine):**
+
 1. Final `nix flake check --no-build` after the last edits; commit the header fix.
 2. Push the 3 unpushed commits (or split mine out first by pathspec).
 3. Write the CHANGELOG entry for this arc (converger consumer + verify trap + 41 legs).
@@ -188,27 +189,27 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 14. Delete the `drive_paperless_immich_api_key` sops option + scaffold + placeholder legs.
 15. Post-deploy probe: add a converger leg to `scripts/post-deploy-check.sh`.
 16. Consider a textfile/SigNoz signal for "key minted this deploy" (or at least
-    a journal marker greppable in the post-deploy battery).
+a journal marker greppable in the post-deploy battery).
 
 **Verify/quality:**
 17. Replace `--manifest racedriver8k` with a per-account manifest path.
-    **DONE 2026-11-17:** `--manifest <file>` takes a per-account products.tsv
-    path (`scripts/takeout-manifests/`, header-validated; racedriver8k is the
-    first resident); the bare literal no longer resolves to anything.
-18. Add a verify leg proving a *partial* products.tsv (some rows, wrong sizes) still fails.
-    **DONE 2026-11-17:** `partial-manifest` leg — some correct rows + one
-    wrong-size row must FAIL via the size-band gate AND the
-    no-matching-expected-product extras gate.
+**DONE 2026-11-17:** `--manifest <file>` takes a per-account products.tsv
+path (`scripts/takeout-manifests/`, header-validated; racedriver8k is the
+first resident); the bare literal no longer resolves to anything.
+18. Add a verify leg proving a _partial_ products.tsv (some rows, wrong sizes) still fails.
+**DONE 2026-11-17:** `partial-manifest` leg — some correct rows + one
+wrong-size row must FAIL via the size-band gate AND the
+no-matching-expected-product extras gate.
 19. `takeout-verify.sh --no-hash` path has no selftest leg — add one.
-    **DONE 2026-11-17:** `no-hash` leg — `--no-hash` stays GREEN and writes
-    no SHA256SUMS. Verify battery 9→11 legs; CI leg-count floor raised to 11;
-    `nix build .#checks.x86_64-linux.takeout-selftests` green (78 legs total
-    across the battery floors, re-verified independently after the status
-    battery landed alongside).
+**DONE 2026-11-17:** `no-hash` leg — `--no-hash` stays GREEN and writes
+no SHA256SUMS. Verify battery 9→11 legs; CI leg-count floor raised to 11;
+`nix build .#checks.x86_64-linux.takeout-selftests` green (78 legs total
+across the battery floors, re-verified independently after the status
+battery landed alongside).
 20. Check `size_band` on real ranges from the racedriver8k parts.tsv (LESS1MB, GB forms).
-    **HARVESTED 2026-11-17** into TODO_LIST/docs/todo (queue commit
-    8a79b83e2: "size_band real-range check ... still load-bearing now that
-    the product-size gate enforces manifest rows against zip bytes").
+**HARVESTED 2026-11-17** into TODO_LIST/docs/todo (queue commit
+8a79b83e2: "size_band real-range check ... still load-bearing now that
+the product-size gate enforces manifest rows against zip bytes").
 21. Add `--selftest` counts to `docs/agents/*` or a README so a future session knows the battery exists.
 22. Re-run the `takeout-verify.sh --selftest` after the next edit to `norm`/`size_band`.
 
@@ -226,7 +227,7 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 
 **Observability/hygiene:**
 33. `balance --preflight` into the deploy/post-deploy battery (it is the gate
-    that says "nothing to import yet" honestly).
+that says "nothing to import yet" honestly).
 34. A `takeout status` one-liner (parts N/M, ledger rows, balance verdict) for the owner.
 35. Document the 4 selftest batteries in the fleet plan §CI section.
 36. Prune the plan's completed rows into a short "EXECUTED" block when the arc closes.
@@ -244,7 +245,7 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
    check out?
 2. **Ledger schema: prefix-free or prefix-kept?** The evidence cuts both
    ways — `plan`'s `new-files.txt` is consumed by `rclone --files-from`
-   *relative to the extract root*, which currently requires the `Takeout/`
+   _relative to the extract root_, which currently requires the `Takeout/`
    prefix; `balance` already strips it. Migrating to prefix-free means
    `plan` must re-add the prefix on output (or rclone must run from a
    different root). Which invariant do you want the ledger to carry?

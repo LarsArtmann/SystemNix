@@ -8,10 +8,10 @@ Owner saved the manage-archives DOM as `Google Takeout.html` (17:37, 1.46 MB): a
 
 ## b) Even a FRESH rapt does not authorize non-browser clients (all RED)
 
-| Client | Result |
-| --- | --- |
-| curl + full Google-only jar + fresh rapt | 302→`accounts.google.com` login HTML |
-| curl + SAPISIDHASH Authorization (computed exactly as Google JS: `SHA1(SAPISID origin ts)`), Origin/Referer, Chrome UA | RED (1.19 MB login page) |
+| Client                                                                                                                                                                                                                                                                            | Result                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| curl + full Google-only jar + fresh rapt                                                                                                                                                                                                                                          | 302→`accounts.google.com` login HTML           |
+| curl + SAPISIDHASH Authorization (computed exactly as Google JS: `SHA1(SAPISID origin ts)`), Origin/Referer, Chrome UA                                                                                                                                                            | RED (1.19 MB login page)                       |
 | headless chromium (playwright + nixpkgs chromium 157) + jar, cookies VERIFIED applied (21 visible for takeout.google.com — the earlier "bot-challenge" theory also had a host-only-domain cookie-loader bug, fixed, outcome unchanged) + real-Chrome UA, direct-to-URL navigation | RED (`accounts.google.com`, no download event) |
 
 Conclusion: the takeout download is bound to the real browser environment (TLS/JS/device signals) beyond anything cookies+headers can reproduce. Same jar renders takeout pages authed in curl — the gate is specific to the download action.

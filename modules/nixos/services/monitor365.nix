@@ -1505,8 +1505,7 @@
           # real logo from the Nix store, with no runtime dependency.
           # The attribute name IS the served file name (and what the tile's
           # `icon` references), so it must keep the image extension.
-          services.papdashboard.extraIcons."monitor365.svg" =
-            ../../../assets/monitor365-logo.svg;
+          services.papdashboard.extraIcons."monitor365.svg" = ../../../assets/monitor365-logo.svg;
         })
       ];
     };

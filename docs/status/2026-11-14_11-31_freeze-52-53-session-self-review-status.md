@@ -53,6 +53,7 @@ Boot 0 `abaf0f51` survived 2 h (no freeze #54 yet) but is in the **deepest band 
 ## f) Next things (grouped; Q = already queued today, N = new, O = needs owner)
 
 **Right now, before the next cut (load 1064):**
+
 1. (N) Copy the 44 `/var/tmp/io-psi-forensics-20261114T*` bundles to `~/.cache/systemnix-forensics/` (or /var/lib) — 2 minutes, saves the only boot-0 death-window evidence.
 2. (O) Decide: hard-stop the session/deploy fleet at the thermal ceiling vs keep gating (load 1064 at 98 °C is the #49 terminal band).
 3. (N) Re-probe storm drain at T+4h; if trips/h holds ≥20, escalate (the table's record bands are 20–22).

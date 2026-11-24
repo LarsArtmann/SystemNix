@@ -31,7 +31,7 @@
 ## b) PARTIALLY DONE
 
 1. **The flip itself** — everything wired, nothing enabled. `enable` stays false; the ladder's remaining steps are owner-gated (GCP client, pbx DAV account, 4 browser consents) then agent (ingest → flip → deploy → dry-run journal review → GO → live + metricsFile).
-2. **Deployment state** — all session work is committed TREE state; the running generation does not contain the scaffold. Inert by design (everything sits behind `mkIf cfg.enable`), so no deploy is *required* until the flip — but "deployed" would be false if claimed.
+2. **Deployment state** — all session work is committed TREE state; the running generation does not contain the scaffold. Inert by design (everything sits behind `mkIf cfg.enable`), so no deploy is _required_ until the flip — but "deployed" would be false if claimed.
 3. **Google-family unblocking** — pointed out that google-sync + audible-sync + pim-sync share the owner's GCP/OAuth console work (one console session could unblock all three); no ladder work started on the other two.
 4. **Token-ingest mechanics** — the runbook documents the consent flow and says the agent ingests token JSONs into sops "via runtime-variable expansion, never inline", but the actual multi-line-JSON `sops --set` quoting pattern is UNREHEARSED (see d.5/e.1).
 5. **CRM-side contacts story** — diagnosed that Kith gets contacts only via the Stalwart→Kith projection spoke (separate `[ready]` row, services.md:947); not started, correctly out of scope until the hub is live.
@@ -68,6 +68,7 @@
 ## f) Up to 50 things we should get done next
 
 **pim-sync continuation (direct follow-ups of THIS session — items 1-4 harvested to TODO_LIST.md + docs/todo/services.md at authoring time):**
+
 1. 🧑 Owner: GCP project `pim-sync-prod` + People API + Desktop OAuth client + publishing **In production** (`~/projects/pim-sync/docs/oauth-setup.md` §2)
 2. [ready→harvested] Rehearse the token-ingest command on a synthetic multi-line JSON fixture before real consents (d.1/e.1)
 3. [ready→harvested] Execute the rendered `pim-sync-config-check` once against fixtures; add a file-existence guard producing the checklist for missing sops files (d.6)
@@ -141,4 +142,4 @@
 
 ---
 
-*Report self-harvested: §f items 2/3/4/8 landed in TODO_LIST.md + docs/todo/services.md at authoring time; all other §f groups carry explicit not-harvested reasons above.*
+_Report self-harvested: §f items 2/3/4/8 landed in TODO_LIST.md + docs/todo/services.md at authoring time; all other §f groups carry explicit not-harvested reasons above._

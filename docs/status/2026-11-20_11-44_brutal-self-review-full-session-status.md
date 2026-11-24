@@ -78,4 +78,4 @@
 
 ---
 
-*Evidence: companion report (all work + verification ledger); this review's own finds: fmt-gap (nix fmt -- <3 files> → 1 changed, pre-existing hunk), self-harvest gap (closed 7e79c638f), session journal sequence preserved in the companion's §d.*
+_Evidence: companion report (all work + verification ledger); this review's own finds: fmt-gap (nix fmt -- <3 files> → 1 changed, pre-existing hunk), self-harvest gap (closed 7e79c638f), session journal sequence preserved in the companion's §d._

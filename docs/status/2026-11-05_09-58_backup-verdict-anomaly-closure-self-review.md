@@ -9,12 +9,12 @@
 
 **Verified fresh:**
 
-| Claim | Evidence |
-| --- | --- |
-| Storm decaying but guard still tripping | avg10 33 % / avg60 39 % (avg300 48 % = the night's history); trip age 109 s at 09:55 |
-| Held fleet still held (1 h 18 m into the gate's refuse) | busctl: llama-embeddings `inactive`, nsfw-classifier `inactive` |
-| Backup matrix: 22/26 green, `offsite-borg` ever_succeeded=0, `signoz` 30 h stale, `data` deliberate tripwire | `backups.prom` live (the collector is the prom-truth per doctrine); yesterday's three real breakages now green (monitor365-pool healed by the 03:16 boot's tmpfiles run, media-atlas since its first-ever dump, dnsblockd marker live) |
-| No existing row owns the SIGNOZ BACKUP staleness (42 "signoz" mentions in monitoring.md are all discordsync's rules, not the backup job) | targeted rg across monitoring.md + services.md |
+| Claim                                                                                                                                    | Evidence                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storm decaying but guard still tripping                                                                                                  | avg10 33 % / avg60 39 % (avg300 48 % = the night's history); trip age 109 s at 09:55                                                                                                                                                   |
+| Held fleet still held (1 h 18 m into the gate's refuse)                                                                                  | busctl: llama-embeddings `inactive`, nsfw-classifier `inactive`                                                                                                                                                                        |
+| Backup matrix: 22/26 green, `offsite-borg` ever_succeeded=0, `signoz` 30 h stale, `data` deliberate tripwire                             | `backups.prom` live (the collector is the prom-truth per doctrine); yesterday's three real breakages now green (monitor365-pool healed by the 03:16 boot's tmpfiles run, media-atlas since its first-ever dump, dnsblockd marker live) |
+| No existing row owns the SIGNOZ BACKUP staleness (42 "signoz" mentions in monitoring.md are all discordsync's rules, not the backup job) | targeted rg across monitoring.md + services.md                                                                                                                                                                                         |
 
 **NOT verified:** where exactly the 465 GB was written (the state-dir probe came back permission/absent-empty — the "explain" answer stayed mechanism-level, never got the dir/device fact); whether the 26 freshness checks actually delivered their first Discord alerts for today's three reds (predicted yesterday, never observed); whether anything downstream is degrading against the held endpoints.
 
@@ -41,11 +41,11 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Pattern | Fix |
-| --- | --- |
+| Pattern                          | Fix                                                                                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | Anomaly naming ≠ anomaly closing | Every red named in a user answer gets a row-or-existing-row-reference IN THE SAME breath; the answer is not done until the anomaly has an owner |
-| Interrupted investigations | When a probe fails mid-answer, either finish it or say explicitly "location unverified" in the answer — silence reads as complete |
-| Prediction without observation | Yesterday's report PREDICTED 4 initial freshness alerts on deploy; nobody has checked. Predictions deserve a watch item or they were decoration |
+| Interrupted investigations       | When a probe fails mid-answer, either finish it or say explicitly "location unverified" in the answer — silence reads as complete               |
+| Prediction without observation   | Yesterday's report PREDICTED 4 initial freshness alerts on deploy; nobody has checked. Predictions deserve a watch item or they were decoration |
 
 ## f) NEXT (up to 50; ✘ = existing row)
 
@@ -61,10 +61,10 @@
 
 1. **Held fleet — now 1 h 20 m down and the storm is decaying (avg10 33 %): re-admit this boot, or let it ride to the next calm boot?** Re-admit = `sudo systemctl restart post-crash-calm-gate` (it re-waits; admits only under 40 % avg10 with trips aged 60 min — trips are still ~2 min apart, so a re-admit attempt NOW would likely just wait another hour) — or a plain reboot now that gen 983 is anchored gets the same result with a clean boot. Your call on timing; functionally you're losing embeddings search + nsfw verdicts until one of them happens.
 2. **Do you want offsite-borg go-live treated as THIS WEEK's top reliability item?** Everything else green is in-chassis; the never-succeeded offsite layer is the single remaining catastrophic-loss exposure I can name, and its arc has been "pending" since yesterday.
-3. *(held — the two standing questions from 09:48 on cooling-floor timing and exit-3 urgency remain open; not re-asked to keep this set at the genuinely new ones.)*
+3. _(held — the two standing questions from 09:48 on cooling-floor timing and exit-3 urgency remain open; not re-asked to keep this set at the genuinely new ones.)_
 
 ---
 
 **Self-harvest compliance:** §f 1–2 landed as one queue row + monitoring.md library row at authoring time; §f 3–5 owned by existing rows (referenced); §f 6 recorded here (session-local, one command when next touched); §f 7 owner-gated.
 
-*Then wait for instructions.*
+_Then wait for instructions._

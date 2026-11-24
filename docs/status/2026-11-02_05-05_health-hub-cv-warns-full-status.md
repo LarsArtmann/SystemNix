@@ -112,19 +112,21 @@
 
 ---
 
-*Watched state: watcher PID 3155131 + verifier PID 3973325 alive; anchor unchanged; next automated output = verifier §g appended to `2026-11-02_04-20_health-hub-cv-warns-fix-session.md` after the switch.*
+_Watched state: watcher PID 3155131 + verifier PID 3973325 alive; anchor unchanged; next automated output = verifier §g appended to `2026-11-02_04-20_health-hub-cv-warns-fix-session.md` after the switch._
 
 ## h) Addendum 05:30 — owner answered g1; the re-enable landed
 
 **Owner answer (g1):** chat model = `syn:large:text`, confirmed. g2 (force vs wait) and g3 (Turso/graphrag) remain UNANSWERED — deploy still rides the watcher only, decision rows stay parked.
 
 **Verification done pre-edit:**
+
 - `synthetic.new` probe (status-only, `~/.cache/cv-deploy/probe-synthetic.sh`, key never displayed): `GET /openai/v1/models` HTTP 200 — `syn:large:text` present in the fleet list; `POST /chat/completions` (`syn:large:text`, max_tokens=5) HTTP 200. Key source: crush-daily.yaml `synthetic_api_key`, 36 chars.
 - Env binding: `bindSpecialEnvVars` (CV `internal/config/config_load.go:39`) accepts BOTH `OPENAICOMPAT_API_KEY` and `CV_OPENAICOMPAT_API_KEY` → `openaicompat.api_key`; canonical = unprefixed (matches llmsetup). The tracked-comment "Set via OPENAICOMPAT_API_KEY" is not a special case — both names bind.
 - Defaults (CV `internal/config/enums.go:149`): `tts.enabled`/`stt.enabled`/`chat.enabled` flags all exist; chat.enabled defaults false; validation requires chat.model when chat.enabled.
 - Health-check scope (CV `chat/openaicompat/chat.go:136`): `HealthCheck` is wiring-only — enabled+keyed returns nil, ZERO network calls (test-enforced). Enabled+keyed adds NO new warn row; disabled TTS/STT likewise.
 
 **Landed: SystemNix `a8f1c82f6`** ("Enable CV openaicompat chat on Synthetic with wired API key"):
+
 - `cv.nix`: `openaicompat = { enabled = true; base_url = "https://api.synthetic.new/openai/v1"; chat = { enabled = true; model = "syn:large:text"; }; tts.enabled = false; stt.enabled = false; }` (voice off: Groq-shaped defaults unusable on Synthetic; owner answered model only — voice-off is the engineering consequence, reversible).
 - `sops.nix`: `cv_openaicompat_api_key` in the cv.yaml mkSecrets list + `OPENAICOMPAT_API_KEY` placeholder in the cv-env template (restartUnits already cover cv-server + cv-agent).
 - `platforms/nixos/secrets/cv.yaml`: `cv_openaicompat_api_key` copied from crush-daily.yaml `synthetic_api_key` via `scripts/sops-copy-key.sh`, round-trip verified (value never displayed).

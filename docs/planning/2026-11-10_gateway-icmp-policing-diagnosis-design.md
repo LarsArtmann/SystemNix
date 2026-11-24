@@ -18,11 +18,13 @@ Single ICMP echo probes to external hosts (9.9.9.9) drop ~30-50 % during evening
 ## Capture plan (one evening window, ~30 min, two concurrent legs)
 
 **Leg A — evo-x2 (no privileged setup needed beyond sudo for tcpdump):**
+
 1. `tcpdump -ni eno1 -w /mnt/hot/icmp-capture.pcap 'icmp and host 9.9.9.9'` (or the probeHost du jour) running continuously.
 2. Drive the probe pattern the banner actually uses: a script alternating 5 s single pings (the banner cadence) with 60 s idle gaps and periodic 50-burst streams, for ~20 min.
 3. Simultaneously record: `ethtool -S eno1` snapshot before/after, `ip -s link show eno1` (RX errors/drops), conntrack presence of the icmp pseudo-flow, and the gateway-reachability echo series to 192.168.1.1 (is the LAN side clean while WAN probes drop?).
 
 **Leg B — mirror port (owner-dependent, strongest discriminator):**
+
 - Mirror the switch port facing the gateway (or the gateway's LAN port) to a capture host: `tcpdump -ni <mirror-if> -w mirror.pcap icmp`.
 - If the mirror shows the echo REQUEST leaving for loss instances but no REPLY → loss is upstream of evo-x2 (H1 verdict narrows to gateway-vs-ISP via Leg B position: mirrored at the evo-x2 access port, a missing reply means the gateway or beyond; mirrored at the gateway's WAN side — if the owner can — gateway vs ISP separates cleanly).
 - If the mirror shows request AND reply but eno1 missed them → H3 (local RX drop).

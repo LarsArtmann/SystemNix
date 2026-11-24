@@ -17,7 +17,7 @@
 5. **niri-wrapped.nix: focus ring & background → colorScheme.palette** — `background-color`, `focus-ring.active/inactive/urgent` now use `colors.base00/base0D/base03/base08`. (`c988746`-era changes, committed)
 6. **home.nix: kitty visual_bell_color → colorScheme.palette** — Was `#89b4fa`, now `#${colors.base0D}`. (`c988746`-era)
 7. **home.nix: dunst urgency colors → colorScheme.palette** — All 3 urgency levels (low/normal/critical) now use `colors.baseXX` for background, foreground, frame_color, highlight. (`c988746`-era)
-8. **waybar.nix: media script $class uninitialized** — When playing (not paused), `$class` as unset, producing JSON with empty class. Added` lass=""` initialization before the paused check.
+8. **waybar.nix: media script $class uninitialized** — When playing (not paused), `$class`as unset, producing JSON with empty class. Added` lass=""` initialization before the paused check.
 9. **niri-wrapped.nix: notification jq filter consistency** — Removed redundant `${pkgs.jq}/bin/jq` and `${pkgs.rofi}/bin/rofi` (both are in system PATH from base.nix).
 10. **minecraft.nix: missing IPv6 localhost firewall rule** — Only IPv4 `127.0.0.1` was allowed; added matching `::1` rule. (`6a26205`)
 

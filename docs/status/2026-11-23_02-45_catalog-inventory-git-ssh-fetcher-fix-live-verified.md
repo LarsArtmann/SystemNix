@@ -15,48 +15,48 @@ The owner's `nh os switch` failed at activation on 2026-11-22 20:55: `catalog-in
 
 Fix landed in three daemon-swept commits (`c0dfab05d`, `13c3b93fb`, `31f1872c2`), verified twice offline (unit-env emulation **and** a transient systemd unit carrying the real hardening) and then **verified LIVE**: the 01:52:30 run on the gen-1026 toplevel finished green at 01:53:21 and rewrote the hub's `inventory.json` (95 services / 86 deployments / 10 zero-deploy, hub auto-commit `e153bec`).
 
-What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile generation and no boot entry** (the activation that landed it was a raw `nh os switch`, which never completed its profile step) — a reboot today falls back to `qf6wf9az`, i.e. the *broken* catalog unit. Repair is one cached `nix build --profile` + `switch-to-configuration boot` away; it was deliberately not run because the owner said "WAIT HERE".
+What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile generation and no boot entry** (the activation that landed it was a raw `nh os switch`, which never completed its profile step) — a reboot today falls back to `qf6wf9az`, i.e. the _broken_ catalog unit. Repair is one cached `nix build --profile` + `switch-to-configuration boot` away; it was deliberately not run because the owner said "WAIT HERE".
 
 ---
 
 ## Timeline (all times CET, 2026-11-22 → 23)
 
-| Time | Event |
-| --- | --- |
-| 20:51 | box booted (gen-1024 `pwwl6n6…` = booted AND anchored generation) |
-| 20:55:40–42 | owner's `nh os switch . -v --keep-going`: the `Persistent` hourly timer's catch-up run fires mid-activation, dies on the missing `git`; `switching … failed (status 4)`; nh: "the new generation will not be added to the bootloader" |
-| ~21:00 | this session: journal + module triage; reproduction in the unit's own PATH proves cause 1; `+git` proves cause 2 (`cannot run ssh`) |
-| ~21:05 | probe: `ControlMaster auto` with an unbindable ControlPath exits 255; `-o ControlMaster=no` authenticates (cause 3) |
-| ~21:1x | paths fix (`c0dfab05d`), env-var-in-list fix (`13c3b93fb`), then the quoting fix that moves it to the `environment` option (`31f1872c2`) after a `systemd-run` probe says "Invalid environment block" (cause 4) |
-| 21:15 | first quiescence watcher fires; deploy refuses `rc=12` (sdc 101% busy — rust-cache builds from parallel sessions) |
-| 21:16–23:05 | 10-attempt retry loop, **every** attempt refused by the IO-pressure entry gate |
-| 23:36 | **anchor repair for the 20:55 casualty**: `nix build --profile …/system` → `system-1025`, `switch-to-configuration boot` (entry `nixos-42219e3e…+3` is the loader `preferred`), `boot-mirror-sync` restarted (50 entries, 403M mirrored), `pre-reboot-check` 18 pass / 4 warn / **1 fail (known deaf boot-mirror path trigger)** |
-| 23:39 | calm-window watcher armed (fires only when PSI < 20%, ≤4 h) |
-| ~23:44 | owner asked (3 options) → answered **FORCE** |
-| 00:48:31 | deploy attempt → refused again at the pressure gate |
-| 00:49:32 | unit run fails **again** — the live unit still predates the fix (no git): proves the on-disk unit file, not luck, is the variable |
-| 01:1x–01:5x | parallel work lands gen-1026 (`f5jnwk4z`) live via a raw `nh os switch` (documented in `docs/status/2026-11-23_02-20_…`); profile step never completes |
-| 01:52:30–01:53:21 | **unit run GREEN**: evo-x2 → rpi3-dns → darwin → `wrote …/inventory.json (content changed; 95 services, 86 deployments, 10 zero-deploy)` |
-| 02:09:43 | a parallel session independently verdicts the profile UNANCHORED |
-| 02:45 | this report; calm-window watcher **disarmed** per "WAIT HERE"; no deploy fired |
+| Time              | Event                                                                                                                                                                                                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 20:51             | box booted (gen-1024 `pwwl6n6…` = booted AND anchored generation)                                                                                                                                                                                                                                                                |
+| 20:55:40–42       | owner's `nh os switch . -v --keep-going`: the `Persistent` hourly timer's catch-up run fires mid-activation, dies on the missing `git`; `switching … failed (status 4)`; nh: "the new generation will not be added to the bootloader"                                                                                            |
+| ~21:00            | this session: journal + module triage; reproduction in the unit's own PATH proves cause 1; `+git` proves cause 2 (`cannot run ssh`)                                                                                                                                                                                              |
+| ~21:05            | probe: `ControlMaster auto` with an unbindable ControlPath exits 255; `-o ControlMaster=no` authenticates (cause 3)                                                                                                                                                                                                              |
+| ~21:1x            | paths fix (`c0dfab05d`), env-var-in-list fix (`13c3b93fb`), then the quoting fix that moves it to the `environment` option (`31f1872c2`) after a `systemd-run` probe says "Invalid environment block" (cause 4)                                                                                                                  |
+| 21:15             | first quiescence watcher fires; deploy refuses `rc=12` (sdc 101% busy — rust-cache builds from parallel sessions)                                                                                                                                                                                                                |
+| 21:16–23:05       | 10-attempt retry loop, **every** attempt refused by the IO-pressure entry gate                                                                                                                                                                                                                                                   |
+| 23:36             | **anchor repair for the 20:55 casualty**: `nix build --profile …/system` → `system-1025`, `switch-to-configuration boot` (entry `nixos-42219e3e…+3` is the loader `preferred`), `boot-mirror-sync` restarted (50 entries, 403M mirrored), `pre-reboot-check` 18 pass / 4 warn / **1 fail (known deaf boot-mirror path trigger)** |
+| 23:39             | calm-window watcher armed (fires only when PSI < 20%, ≤4 h)                                                                                                                                                                                                                                                                      |
+| ~23:44            | owner asked (3 options) → answered **FORCE**                                                                                                                                                                                                                                                                                     |
+| 00:48:31          | deploy attempt → refused again at the pressure gate                                                                                                                                                                                                                                                                              |
+| 00:49:32          | unit run fails **again** — the live unit still predates the fix (no git): proves the on-disk unit file, not luck, is the variable                                                                                                                                                                                                |
+| 01:1x–01:5x       | parallel work lands gen-1026 (`f5jnwk4z`) live via a raw `nh os switch` (documented in `docs/status/2026-11-23_02-20_…`); profile step never completes                                                                                                                                                                           |
+| 01:52:30–01:53:21 | **unit run GREEN**: evo-x2 → rpi3-dns → darwin → `wrote …/inventory.json (content changed; 95 services, 86 deployments, 10 zero-deploy)`                                                                                                                                                                                         |
+| 02:09:43          | a parallel session independently verdicts the profile UNANCHORED                                                                                                                                                                                                                                                                 |
+| 02:45             | this report; calm-window watcher **disarmed** per "WAIT HERE"; no deploy fired                                                                                                                                                                                                                                                   |
 
 ---
 
 ## Evidence chain (what was actually run)
 
-| # | Probe | Result |
-| --- | --- | --- |
-| 1 | `nix eval …services.integration` with **exactly** the unit's declared `path`, cold `XDG_CACHE_HOME` | reproduced the incident: `error: executing "git": No such file or directory` |
-| 2 | same, `+ pkgs.git` | `error: cannot run ssh: No such file or directory` → `Failed to fetch git repository 'ssh://git@github.com/LarsArtmann/audiblesync'` |
-| 3 | `git ls-remote` with `git+openssh` on PATH, `SSH_AUTH_SOCK` unset | 4 refs listed → the key needs no agent |
-| 4 | `ssh -o ControlMaster=auto -o ControlPath=<unwritable>/…` | `unix_listener: cannot bind … Permission denied`, **rc=255** (the read-only-home trap) |
-| 5 | `ssh -o ControlMaster=no -o BatchMode=yes -T git@github.com` | `Hi LarsArtmann!`, rc=1 (GitHub shell refusal) → multiplexing safely off |
-| 6 | `GIT_SSH_COMMAND=definitely-not-a-real-ssh nix flake metadata git+ssh://…` | `cannot run definitely-not-a-real-ssh` → nix passes the var through |
-| 7 | `systemd-run --property='Environment=K=/p/ssh -o ControlMaster=no'` | `Failed to start transient service unit: Invalid environment block` |
-| 8 | same value emitted via the NixOS `environment` attrset (quoted render) | parses; value preserved verbatim |
-| 9 | full exporter under the unit's declared PATH + env, cold fetcher cache | all 3 hosts, 95 / 86 / 10 |
-| 10 | full exporter inside a transient systemd unit with the unit's REAL sandbox (ProtectHome=read-only + ReadWritePaths carve-out, ProtectSystem=full, PrivateTmp, empty `CapabilityBoundingSet`, NNP, RestrictNamespaces, MemoryMax=4G) | all 3 hosts, 95 / 86 / 10 |
-| 11 | live journal | 00:49:32 old unit **fails**; 01:52:30→01:53:21 new unit **green**, hub `e153bec` (inventory.json 5+/5-) |
+| #  | Probe                                                                                                                                                                                                                               | Result                                                                                                                               |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 1  | `nix eval …services.integration` with **exactly** the unit's declared `path`, cold `XDG_CACHE_HOME`                                                                                                                                 | reproduced the incident: `error: executing "git": No such file or directory`                                                         |
+| 2  | same, `+ pkgs.git`                                                                                                                                                                                                                  | `error: cannot run ssh: No such file or directory` → `Failed to fetch git repository 'ssh://git@github.com/LarsArtmann/audiblesync'` |
+| 3  | `git ls-remote` with `git+openssh` on PATH, `SSH_AUTH_SOCK` unset                                                                                                                                                                   | 4 refs listed → the key needs no agent                                                                                               |
+| 4  | `ssh -o ControlMaster=auto -o ControlPath=<unwritable>/…`                                                                                                                                                                           | `unix_listener: cannot bind … Permission denied`, **rc=255** (the read-only-home trap)                                               |
+| 5  | `ssh -o ControlMaster=no -o BatchMode=yes -T git@github.com`                                                                                                                                                                        | `Hi LarsArtmann!`, rc=1 (GitHub shell refusal) → multiplexing safely off                                                             |
+| 6  | `GIT_SSH_COMMAND=definitely-not-a-real-ssh nix flake metadata git+ssh://…`                                                                                                                                                          | `cannot run definitely-not-a-real-ssh` → nix passes the var through                                                                  |
+| 7  | `systemd-run --property='Environment=K=/p/ssh -o ControlMaster=no'`                                                                                                                                                                 | `Failed to start transient service unit: Invalid environment block`                                                                  |
+| 8  | same value emitted via the NixOS `environment` attrset (quoted render)                                                                                                                                                              | parses; value preserved verbatim                                                                                                     |
+| 9  | full exporter under the unit's declared PATH + env, cold fetcher cache                                                                                                                                                              | all 3 hosts, 95 / 86 / 10                                                                                                            |
+| 10 | full exporter inside a transient systemd unit with the unit's REAL sandbox (ProtectHome=read-only + ReadWritePaths carve-out, ProtectSystem=full, PrivateTmp, empty `CapabilityBoundingSet`, NNP, RestrictNamespaces, MemoryMax=4G) | all 3 hosts, 95 / 86 / 10                                                                                                            |
+| 11 | live journal                                                                                                                                                                                                                        | 00:49:32 old unit **fails**; 01:52:30→01:53:21 new unit **green**, hub `e153bec` (inventory.json 5+/5-)                              |
 
 ---
 
@@ -91,7 +91,7 @@ What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile genera
 1. The forced (or normal) deploy of the fixed tree + profile anchor repair for `f5jnwk4z`.
 2. Post-repair `nix run .#pre-reboot-check` (the previous run still reports the boot chain blocked on the known deaf boot-mirror path trigger).
 3. A class-level gate for "unit PATH must contain every tool the unit's scripts invoke" (this unit has now been bitten by `bash`, then `python3`, then `git`+`ssh`).
-4. Any review of the inventory *content* delta (95/86/10 vs what was committed before) — the pipeline rewrote and the hub auto-committed it without a human reading the diff.
+4. Any review of the inventory _content_ delta (95/86/10 vs what was committed before) — the pipeline rewrote and the hub auto-committed it without a human reading the diff.
 5. Nothing was pushed (correct: agents never push), but the hub's regenerated `inventory.json` is unpushed, so catalog.home.lan still renders the old data until the owner pushes.
 
 ## §d TOTALLY FUCKED UP (mine, in this session)
@@ -121,6 +121,7 @@ What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile genera
 ## f) NEXT (up to 50, this session's scope and directly-noticed adjacent work)
 
 **Anchor / deploy**
+
 1. Repair the `f5jnwk4z` anchor (`nix build --profile` + `switch-to-configuration boot`) — cheapest possible fix for today's reboot hazard.
 2. Re-run `boot-mirror-sync` after that gen-install (the path trigger is deaf).
 3. Re-run `nix run .#pre-reboot-check` and record the verdict.
@@ -184,7 +185,7 @@ What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile genera
 49. Consider making `CATALOG_INVENTORY_REQUIRE_ALL_HOSTS` failures distinguishable in the exit code (1 = eval failed, 2 = shrink, …) so `OnFailure` text can say which.
 50. Consider a once-a-day "did every eval-timer succeed since boot" census row (the existing "never-succeeded unit" idea, widened to "never-ran-green-since-deploy").
 
-> **§f harvest note (deliberate):** items 1–10 depend on the owner's pending WAIT/GO instruction and items 11–18 would touch files a parallel session currently has staged (`docs/todo/services.md`, `lib/ports.nix`, `flake/parts/checks/fixtures-forgejo.nix`). Harvest was therefore deferred *by decision*, not forgotten: the next session should move 11–18 and 25–37 into `docs/todo/{services,pipeline,stability,monitoring}.md` and the queue one-liners for the ready ones.
+> **§f harvest note (deliberate):** items 1–10 depend on the owner's pending WAIT/GO instruction and items 11–18 would touch files a parallel session currently has staged (`docs/todo/services.md`, `lib/ports.nix`, `flake/parts/checks/fixtures-forgejo.nix`). Harvest was therefore deferred _by decision_, not forgotten: the next session should move 11–18 and 25–37 into `docs/todo/{services,pipeline,stability,monitoring}.md` and the queue one-liners for the ready ones.
 
 ## §g Three questions I cannot answer myself
 
@@ -196,13 +197,13 @@ What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile genera
 
 ## Repo surfaces touched
 
-| Surface | Change |
-| --- | --- |
-| `modules/nixos/services/catalog-inventory-sync.nix` | `pkgs.git` + `pkgs.openssh` on `path`; `environment.GIT_SSH_COMMAND` (quoted render) with both traps documented in place |
-| `docs/services/architecture-catalog.md` | new "Inventory-sync tool requirements" operations bullet |
-| `CHANGELOG.md` | entry "catalog-inventory-sync eval revived …" (failure chain, sandbox proof, anchor repair) |
-| `docs/todo/services.md` | python3 row `[x] DONE` (live proof); new `[blocked:deploy]` fetcher-fix row; new `[decision]` activation-coupling row |
-| commits (daemon-swept) | `c0dfab05d` (paths), `13c3b93fb` (env var), `31f1872c2` (quoted-render fix + rationale), `dec442e9e` (runbook + todo), `1399a0f88`/`207a05eae` (CHANGELOG + todo) |
+| Surface                                             | Change                                                                                                                                                            |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/catalog-inventory-sync.nix` | `pkgs.git` + `pkgs.openssh` on `path`; `environment.GIT_SSH_COMMAND` (quoted render) with both traps documented in place                                          |
+| `docs/services/architecture-catalog.md`             | new "Inventory-sync tool requirements" operations bullet                                                                                                          |
+| `CHANGELOG.md`                                      | entry "catalog-inventory-sync eval revived …" (failure chain, sandbox proof, anchor repair)                                                                       |
+| `docs/todo/services.md`                             | python3 row `[x] DONE` (live proof); new `[blocked:deploy]` fetcher-fix row; new `[decision]` activation-coupling row                                             |
+| commits (daemon-swept)                              | `c0dfab05d` (paths), `13c3b93fb` (env var), `31f1872c2` (quoted-render fix + rationale), `dec442e9e` (runbook + todo), `1399a0f88`/`207a05eae` (CHANGELOG + todo) |
 
 ## Evidence artifacts
 

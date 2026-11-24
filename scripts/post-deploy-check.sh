@@ -865,41 +865,41 @@ if $paperless_enabled; then
   if [ -n "$POOL_DOWN_REASON" ]; then
     pool_bound_skip "Paperless stack (login/tika/gotenberg)"
   else
-  # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
-  # provider form + the JS auto-submit (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a
-  # CLIENT-SIDE redirect - paperless's template auto-submits the first
-  # provider form; there is no 302) and NO password input
-  # (PAPERLESS_DISABLE_REGULAR_LOGIN). Both flags ride in the
-  # paperless-oidc-setup env file, so a password form appearing = bridge
-  # degraded = auto-break-glass serving. Every branch reports explicitly -
-  # a silently-skipped check is a phantom green. --retry tolerates the
-  # post-switch gunicorn restart window; keep curl semantics (python urllib
-  # auto-follows redirects).
-  if paperless_body=$(curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null); then
-    paperless_sso_ok=true
-    grep -q "oidc/pocket-id" <<<"$paperless_body" || paperless_sso_ok=false
-    grep -q "getElementById" <<<"$paperless_body" || paperless_sso_ok=false
-    grep -q 'type="password"' <<<"$paperless_body" && paperless_sso_ok=false
-    if $paperless_sso_ok; then
-      report_pass "Paperless - SSO-only login (Pocket ID auto-submit, no password form)"
-    elif grep -q 'type="password"' <<<"$paperless_body"; then
-      report_fail "Paperless - PASSWORD FORM is serving: the SSO env file did not reach the unit (bridge degraded or flags missing) - journalctl -u paperless-oidc-setup"
+    # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
+    # provider form + the JS auto-submit (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a
+    # CLIENT-SIDE redirect - paperless's template auto-submits the first
+    # provider form; there is no 302) and NO password input
+    # (PAPERLESS_DISABLE_REGULAR_LOGIN). Both flags ride in the
+    # paperless-oidc-setup env file, so a password form appearing = bridge
+    # degraded = auto-break-glass serving. Every branch reports explicitly -
+    # a silently-skipped check is a phantom green. --retry tolerates the
+    # post-switch gunicorn restart window; keep curl semantics (python urllib
+    # auto-follows redirects).
+    if paperless_body=$(curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors "http://127.0.0.1:2892/accounts/login/?next=/" 2>/dev/null); then
+      paperless_sso_ok=true
+      grep -q "oidc/pocket-id" <<<"$paperless_body" || paperless_sso_ok=false
+      grep -q "getElementById" <<<"$paperless_body" || paperless_sso_ok=false
+      grep -q 'type="password"' <<<"$paperless_body" && paperless_sso_ok=false
+      if $paperless_sso_ok; then
+        report_pass "Paperless - SSO-only login (Pocket ID auto-submit, no password form)"
+      elif grep -q 'type="password"' <<<"$paperless_body"; then
+        report_fail "Paperless - PASSWORD FORM is serving: the SSO env file did not reach the unit (bridge degraded or flags missing) - journalctl -u paperless-oidc-setup"
+      else
+        report_fail "Paperless - login page lacks the Pocket ID auto-submit flow (provider form or redirect script missing) - journalctl -u paperless-oidc-setup and paperless-scheduler"
+      fi
     else
-      report_fail "Paperless - login page lacks the Pocket ID auto-submit flow (provider form or redirect script missing) - journalctl -u paperless-oidc-setup and paperless-scheduler"
+      report_fail "Paperless - :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
     fi
-  else
-    report_fail "Paperless - :2892 unreachable (journalctl -u 'paperless-*' -n 30)"
-  fi
-  if systemctl is-active tika.service >/dev/null 2>&1; then
-    report_pass "Paperless - Tika OCR sidecar active"
-  else
-    report_fail "Paperless - tika.service NOT active (attachment OCR dead)"
-  fi
-  if curl -s --compressed --max-time 10 "http://127.0.0.1:3199/health" 2>/dev/null | grep -q .; then
-    report_pass "Paperless - Gotenberg health endpoint answers"
-  else
-    report_fail "Paperless - :3199/health unreachable (Office conversion dead)"
-  fi
+    if systemctl is-active tika.service >/dev/null 2>&1; then
+      report_pass "Paperless - Tika OCR sidecar active"
+    else
+      report_fail "Paperless - tika.service NOT active (attachment OCR dead)"
+    fi
+    if curl -s --compressed --max-time 10 "http://127.0.0.1:3199/health" 2>/dev/null | grep -q .; then
+      report_pass "Paperless - Gotenberg health endpoint answers"
+    else
+      report_fail "Paperless - :3199/health unreachable (Office conversion dead)"
+    fi
   fi
 else
   report_skip "Paperless - service disabled (units absent from systemd)"

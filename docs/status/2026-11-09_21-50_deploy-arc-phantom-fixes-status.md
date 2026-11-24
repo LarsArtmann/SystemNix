@@ -116,10 +116,10 @@ re-waits while the phantom persists.
 
 ## g) Harvest ledger
 
-| Item | Where |
-| --- | --- |
-| calm-gate/psi-wait-gate device-truth crosscheck (§f.1) | TODO_LIST.md + docs/todo/stability.md `[ready]` |
-| §f.2-§f.4 | recorded here; §f.2 is owner-action (inboxclean runbook owns it), §f.4 duplicates the 19:17 session's f.46 row — deliberately not double-rowed |
+| Item                                                   | Where                                                                                                                                          |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| calm-gate/psi-wait-gate device-truth crosscheck (§f.1) | TODO_LIST.md + docs/todo/stability.md `[ready]`                                                                                                |
+| §f.2-§f.4                                              | recorded here; §f.2 is owner-action (inboxclean runbook owns it), §f.4 duplicates the 19:17 session's f.46 row — deliberately not double-rowed |
 
 Not harvested (deliberately): the two fixes (phantom-green anchors, bash probe
 path) are DONE in this session, not queue work.

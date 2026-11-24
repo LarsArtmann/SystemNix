@@ -35,7 +35,7 @@ Verified against the pim-sync source at the locked rev; the review is
 - **One book per source.** A full Google listing quarantines every book card
   absent from it, explicitly including foreign and hand-made cards
   (`internal/contactsin/quarantine.go:45`). Never merge two sources into one
-  book, and never share a book across accounts: `--book` applies to *every*
+  book, and never share a book across accounts: `--book` applies to _every_
   account in one invocation (`cmd/pim-sync/account.go:169-172`).
 - **The cap is live even in dry-run, and defaults to 50.** A first run against
   a fresh book projects more creates than the cap and aborts with exit 3

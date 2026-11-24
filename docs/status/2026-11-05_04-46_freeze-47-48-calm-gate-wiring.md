@@ -10,20 +10,20 @@
 
 **Verified with fresh commands:**
 
-| Claim | Evidence |
-| --- | --- |
-| #47/#48 mechanism = hardware watchdog (family C) | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired` in boots `30b6b4cb` and `5819f35d` kernel logs |
-| Census #47 `91b4a3a2` (7h57m): 133 trips / 279 ENTERs / 0 OOM | `crash-triage.sh --boots 3` |
-| Census #48 `30b6b4cb` (8m03s): 3 trips / 5 ENTERs / 0 OOM | same |
-| #48 boot-storm measured at T+120 s: SIX GB-scale cold readers | guard's own forensic bundle `/var/tmp/io-psi-forensics-20261105T020742Z/` (trigger zone6-trip): flm-real 12.0 G, llama-server(vlm-cap) 9.7 G, monitor365 7.5 G, llama-embeddings 6.2 G, dnsblockd 5.4 G, nsfw 3.9 G; flm-real D-state 102 s, btrfs flush kworker 114 s |
-| flm-real crash-loop pre-#47 | coredumpctl: SIGABRT 02:50:56 (core missing) + 02:55:10 (782.5 M present), fastflowlm-1.0.2, all threads in gomp barrier wait |
-| llama-embeddings re-arm (the never-run #46 §c.5 check) | measured 6.2 G cumulative read at T+120 s of boot `30b6b4cb` — answered by measurement, on a different boot than asked |
-| Live cvagent still carries the WRONG 20-min timeout | busctl `TimeoutStartUSec = 1200000000`; next fire 05:53 (Persistent catch-up ruled out — NextElapse is tomorrow's slot); the 90-min fix sits in tree undeployed |
-| The two 2026-10-17 gate packages were store-only ghosts | `psi-wait-gate` (built for "socket-activated units (fastflowlm, llama-vlm backends)" per its own header) + `post-crash-calm-gate` (built for "post-crash resumable readers" per freeze-6 rule (a)): zero consumers in modules/platforms/systems, `post-crash-calm-gate` missing even from the overlay |
-| The wiring (this session) evals green | toplevel drvPath eval OK; rendered asserts: llama-embeddings/nsfw-classifier `requires` carries the gate, gate `TimeoutStartSec=65min`, fastflowlm ExecStartPre = portGuard THEN psi-wait-gate, llama-vlm-cap ExecStartPre = psi-wait-gate, `TimeoutStartSec=25min` |
-| Gate selftests green | `checks.x86_64-linux.post-crash-calm-gate-selftest` + `psi-wait-gate-selftest` built (runCommand = executed) OK |
-| Evidence pulled before vacuum (0.2 G headroom) | `docs/status/tasks/2026-11-05_02-52_boot-{30b6b4cb,91b4a3a2}-evidence-pull.md` |
-| Toplevel closure PREBUILT (rc=0) | background `nix build … --no-link` completed; the switch is cheap |
+| Claim                                                         | Evidence                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #47/#48 mechanism = hardware watchdog (family C)              | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired` in boots `30b6b4cb` and `5819f35d` kernel logs                                                                                                                                                                  |
+| Census #47 `91b4a3a2` (7h57m): 133 trips / 279 ENTERs / 0 OOM | `crash-triage.sh --boots 3`                                                                                                                                                                                                                                                                           |
+| Census #48 `30b6b4cb` (8m03s): 3 trips / 5 ENTERs / 0 OOM     | same                                                                                                                                                                                                                                                                                                  |
+| #48 boot-storm measured at T+120 s: SIX GB-scale cold readers | guard's own forensic bundle `/var/tmp/io-psi-forensics-20261105T020742Z/` (trigger zone6-trip): flm-real 12.0 G, llama-server(vlm-cap) 9.7 G, monitor365 7.5 G, llama-embeddings 6.2 G, dnsblockd 5.4 G, nsfw 3.9 G; flm-real D-state 102 s, btrfs flush kworker 114 s                                |
+| flm-real crash-loop pre-#47                                   | coredumpctl: SIGABRT 02:50:56 (core missing) + 02:55:10 (782.5 M present), fastflowlm-1.0.2, all threads in gomp barrier wait                                                                                                                                                                         |
+| llama-embeddings re-arm (the never-run #46 §c.5 check)        | measured 6.2 G cumulative read at T+120 s of boot `30b6b4cb` — answered by measurement, on a different boot than asked                                                                                                                                                                                |
+| Live cvagent still carries the WRONG 20-min timeout           | busctl `TimeoutStartUSec = 1200000000`; next fire 05:53 (Persistent catch-up ruled out — NextElapse is tomorrow's slot); the 90-min fix sits in tree undeployed                                                                                                                                       |
+| The two 2026-10-17 gate packages were store-only ghosts       | `psi-wait-gate` (built for "socket-activated units (fastflowlm, llama-vlm backends)" per its own header) + `post-crash-calm-gate` (built for "post-crash resumable readers" per freeze-6 rule (a)): zero consumers in modules/platforms/systems, `post-crash-calm-gate` missing even from the overlay |
+| The wiring (this session) evals green                         | toplevel drvPath eval OK; rendered asserts: llama-embeddings/nsfw-classifier `requires` carries the gate, gate `TimeoutStartSec=65min`, fastflowlm ExecStartPre = portGuard THEN psi-wait-gate, llama-vlm-cap ExecStartPre = psi-wait-gate, `TimeoutStartSec=25min`                                   |
+| Gate selftests green                                          | `checks.x86_64-linux.post-crash-calm-gate-selftest` + `psi-wait-gate-selftest` built (runCommand = executed) OK                                                                                                                                                                                       |
+| Evidence pulled before vacuum (0.2 G headroom)                | `docs/status/tasks/2026-11-05_02-52_boot-{30b6b4cb,91b4a3a2}-evidence-pull.md`                                                                                                                                                                                                                        |
+| Toplevel closure PREBUILT (rc=0)                              | background `nix build … --no-link` completed; the switch is cheap                                                                                                                                                                                                                                     |
 
 **NOT verified here:**
 
@@ -64,11 +64,11 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Pattern | Impact | Fix |
-| --- | --- | --- |
-| Store-only ghosts | ~15 crashes with the fix already built | "built" ≠ "wired": every new pkgs/ helper needs its consumer in the SAME change or an explicit queue row saying what's pending (the selftest proved the gate worked while the box died without it) |
-| Recovery boots start everything at once | #48 died in 8 min | LANCHED: barrier + per-backend waits; next: dnsblockd/monitor365 staggering rows |
-| Trip census greps are cheap, attribution bundles are gold | this triage took 3 min once the bundle was found | the guard's bundle capture already triggers on zone6 — nothing to change, just READ them first (this session did) |
+| Pattern                                                   | Impact                                           | Fix                                                                                                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Store-only ghosts                                         | ~15 crashes with the fix already built           | "built" ≠ "wired": every new pkgs/ helper needs its consumer in the SAME change or an explicit queue row saying what's pending (the selftest proved the gate worked while the box died without it) |
+| Recovery boots start everything at once                   | #48 died in 8 min                                | LANCHED: barrier + per-backend waits; next: dnsblockd/monitor365 staggering rows                                                                                                                   |
+| Trip census greps are cheap, attribution bundles are gold | this triage took 3 min once the bundle was found | the guard's bundle capture already triggers on zone6 — nothing to change, just READ them first (this session did)                                                                                  |
 
 ## f) NEXT
 

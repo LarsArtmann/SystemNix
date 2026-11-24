@@ -8,12 +8,14 @@
 ## Self-review (what did I forget / what could have been better)
 
 **What I forgot / left undone:**
+
 - The **companion `'system' has been renamed` warning** (25×/check) sat right next to the stalwart warning in every cluster and I left it unattributed. The same throw-probe overlay (`system = builtins.throw`) would have named it in one more ~4-min eval. Deferred, not done.
 - I did **not challenge the premise** that SystemNix should carry the nix-email wrapper at all — the user's framing ("stalwart should only run on pbx-artmann") hints the wrapper might be dead weight (dmarc-monitor is disabled, the mail VPS target is unbuilt). Removal would kill the warning class instantly. That's an owner call; I queued it as a question instead of raising it mid-investigation.
 - The **per-config warning breakdown** was incomplete when I first quoted numbers ("7+ pairs") and corrected only after the surface-attribution pass (final: 1× evo-x2 + 23× checks for stalwart; 1× + 24× for the system rename; **zfs-vm and rpi3-dns are clean** — they don't import the auto-discovered module set). Should have done the attribution pass before quoting any count.
 - I initially trusted `tests/test-nix-email.nix`'s header ("the stalwart/parsedmarc nixpkgs modules evaluate") as ground truth — it's **stale** (upstream vendors its stalwart module; nixpkgs' `services.stalwart` module never enters that eval). The header misdirection cost me the first (wrong) hypothesis. Corrected-in-queue now.
 
 **Process mistakes (honest):**
+
 - **Third strike of the `rg -rn` trap** — typed the replace-flag form again; the hook blocked it. Documented in AGENTS.md since 2026-10-23; my fingers haven't learned it.
 - **zsh-ism in mvdan/sh** — `(...N)` glob qualifier failed ("word list can only contain words"). Platform is mvdan/sh, not zsh.
 - **nix flake metadata API fight** — 3 wasted calls probing the JSON schema (`KeyError: 'inputs'`) for the nixpkgs store path before abandoning it for GitHub API reads. Could have gone straight to `gh api` at the lock rev (which I had from flake.lock in one python3 call).
@@ -65,35 +67,36 @@
 ## f) Next tasks (session-scoped; harvest status marked)
 
 **Harvested this report (rows landed before writing):**
-1. Upstream nix-email fix: gate `migration.nix:377` assertion block on the migrate option's own enable/disable — *[already-rowed: TODO_LIST:1797 + services.md:692]*
-2. After upstream lands: float SystemNix `nix-email` lock, re-run `nix flake check`, assert zero stalwart warns — *[same row's dispatch scope]*
-3. Verify pbx-artmann stays clean post-fix (mail-server enabled → vendored 1.0 should win) — *[same row]*
-4. **Attribute the remaining `pkgs.system` renamed warning** (throw-probe overlay on `system`) — *[NEW row: TODO_LIST + services.md]*
-5. **Correct test-nix-email.nix's stale header claim** (upstream vendors the module) — *[NEW row: TODO_LIST + pipeline.md]*
-6. **Document the extendModules throw-probe recipe** in `docs/agents/nix-flakes.md` (getFlake + `--impure` mechanics, ~4-min cost) — *[NEW row: TODO_LIST + pipeline.md]*
+
+1. Upstream nix-email fix: gate `migration.nix:377` assertion block on the migrate option's own enable/disable — _[already-rowed: TODO_LIST:1797 + services.md:692]_
+2. After upstream lands: float SystemNix `nix-email` lock, re-run `nix flake check`, assert zero stalwart warns — _[same row's dispatch scope]_
+3. Verify pbx-artmann stays clean post-fix (mail-server enabled → vendored 1.0 should win) — _[same row]_
+4. **Attribute the remaining `pkgs.system` renamed warning** (throw-probe overlay on `system`) — _[NEW row: TODO_LIST + services.md]_
+5. **Correct test-nix-email.nix's stale header claim** (upstream vendors the module) — _[NEW row: TODO_LIST + pipeline.md]_
+6. **Document the extendModules throw-probe recipe** in `docs/agents/nix-flakes.md` (getFlake + `--impure` mechanics, ~4-min cost) — _[NEW row: TODO_LIST + pipeline.md]_
 
 **Deliberately not harvested (recorded reasons):**
-7. Runbook warning-state note in `docs/services/nix-email.md` — *[folds into row 1's dispatch; same-commit runbook rule applies when the fix lands]*
-8. Per-check-config breakdown of the 23 checks-side stalwart warns — *[verification detail of row 2's battery, not a standalone ask]*
-9. Verify zfs-vm/rpi3-dns truly don't import discoveredModules (they're warning-clean; confirm the import shape) — *[one grep inside row 4's probe session]*
-10. Zero-warning eval budget (capture-once fc.err warn census with a ratchet-style max, like `.docs-gates.json audit_max`) — *[idea stage; owner policy call — see §g Q3]*
-11. Nightly CI eval-warning census workflow (fail on NEW warning patterns) — *[same idea cluster as 10]*
-12. Toplevel-eval probe check: extendModules + grep for known standing warnings in CI — *[heavier variant of 11]*
-13. `diskoConfigurations` "unknown flake output" warning (fc.err:12) — hygiene, pre-existing — *[unrelated to this session's fix path; noted for the next nix-hygiene pass]*
-14. `zfs.latestCompatibleLinuxPackages` deprecation on zfs-vm — explicit kernel pin per the warning text — *[pre-existing, unrelated]*
-15. `services.cv-server: settings.graphrag.store_dsn` warning (fc.err:32) — pre-existing — *[out of scope; unrelated domain]*
-16. catalog paperless subdomain warning (fc.err:41/293) — pre-existing — *[out of scope]*
-17. caddy ghost-entries: 36 subdomains (fc.err:330) incl. the retired-nsfw question — the 2026-11-19 report already carries this — *[already covered elsewhere; not re-rowed]*
-18. Upstream dedupe candidate: nix-email vendors `stalwart_1_0` via callPackage while nixpkgs ships `stalwart_1` — *[upstream-repo hygiene, note for the nix-email maintainer loop]*
-19. `stalwart-mail → stalwart` rename alias (aliases.nix:2615) — in-tree consumers: none (grep-verified today) — *[closed: verified-none, no row needed]*
-20. Audit other evo-x2-riding input modules with `mkPackageOption` package defaults that can hit warned aliases (same class as stalwart; the storage-collector pin is the pattern) — *[candidate for row 4's probe session]*
-21. Test-nix-email disabled-case toplevel probe (a fragment-eval contract can't catch assertion-time forces; a toplevel-class probe would have caught migration.nix:377 locally) — *[candidate idea; cost/benefit vs VM tests unclear — needs design, see §g]*
-22. Generalize probe-stalwart.nix into a parameterized script (`--host`, `--attr`) if the recipe becomes routine — *[only after row 6 lands]*
-23. `NIX_ABORT_ON_WARN=1` attribution variant — rejected today (the pin-audit `trace:` fires first and aborts); only viable with a trace-silencing pre-pass — *[noted so nobody retries it blind]*
-24. Consider whether the checks-side 23× duplication (each VM-test eval re-forcing the alias) argues for a shared eval cache or fewer toplevel-importing tests — *[design question, bigger than this fix]*
-25. After the upstream fix: close the 2026-10-29 task's original row (`docs/status/tasks/2026-10-29_03-17_…` §c/§f.7 citation) with a done-at verdict — *[mechanical close-out at fix time]*
+7. Runbook warning-state note in `docs/services/nix-email.md` — _[folds into row 1's dispatch; same-commit runbook rule applies when the fix lands]_
+8. Per-check-config breakdown of the 23 checks-side stalwart warns — _[verification detail of row 2's battery, not a standalone ask]_
+9. Verify zfs-vm/rpi3-dns truly don't import discoveredModules (they're warning-clean; confirm the import shape) — _[one grep inside row 4's probe session]_
+10. Zero-warning eval budget (capture-once fc.err warn census with a ratchet-style max, like `.docs-gates.json audit_max`) — _[idea stage; owner policy call — see §g Q3]_
+11. Nightly CI eval-warning census workflow (fail on NEW warning patterns) — _[same idea cluster as 10]_
+12. Toplevel-eval probe check: extendModules + grep for known standing warnings in CI — _[heavier variant of 11]_
+13. `diskoConfigurations` "unknown flake output" warning (fc.err:12) — hygiene, pre-existing — _[unrelated to this session's fix path; noted for the next nix-hygiene pass]_
+14. `zfs.latestCompatibleLinuxPackages` deprecation on zfs-vm — explicit kernel pin per the warning text — _[pre-existing, unrelated]_
+15. `services.cv-server: settings.graphrag.store_dsn` warning (fc.err:32) — pre-existing — _[out of scope; unrelated domain]_
+16. catalog paperless subdomain warning (fc.err:41/293) — pre-existing — _[out of scope]_
+17. caddy ghost-entries: 36 subdomains (fc.err:330) incl. the retired-nsfw question — the 2026-11-19 report already carries this — _[already covered elsewhere; not re-rowed]_
+18. Upstream dedupe candidate: nix-email vendors `stalwart_1_0` via callPackage while nixpkgs ships `stalwart_1` — _[upstream-repo hygiene, note for the nix-email maintainer loop]_
+19. `stalwart-mail → stalwart` rename alias (aliases.nix:2615) — in-tree consumers: none (grep-verified today) — _[closed: verified-none, no row needed]_
+20. Audit other evo-x2-riding input modules with `mkPackageOption` package defaults that can hit warned aliases (same class as stalwart; the storage-collector pin is the pattern) — _[candidate for row 4's probe session]_
+21. Test-nix-email disabled-case toplevel probe (a fragment-eval contract can't catch assertion-time forces; a toplevel-class probe would have caught migration.nix:377 locally) — _[candidate idea; cost/benefit vs VM tests unclear — needs design, see §g]_
+22. Generalize probe-stalwart.nix into a parameterized script (`--host`, `--attr`) if the recipe becomes routine — _[only after row 6 lands]_
+23. `NIX_ABORT_ON_WARN=1` attribution variant — rejected today (the pin-audit `trace:` fires first and aborts); only viable with a trace-silencing pre-pass — _[noted so nobody retries it blind]_
+24. Consider whether the checks-side 23× duplication (each VM-test eval re-forcing the alias) argues for a shared eval cache or fewer toplevel-importing tests — _[design question, bigger than this fix]_
+25. After the upstream fix: close the 2026-10-29 task's original row (`docs/status/tasks/2026-10-29_03-17_…` §c/§f.7 citation) with a done-at verdict — _[mechanical close-out at fix time]_
 
-*(25 items; the honest count. Padding to 50 would be fabrication — the rest of the fleet's work lives in TODO_LIST.md already.)*
+_(25 items; the honest count. Padding to 50 would be fabrication — the rest of the fleet's work lives in TODO_LIST.md already.)_
 
 ## g) Questions I cannot answer myself
 

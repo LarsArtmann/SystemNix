@@ -136,6 +136,7 @@ live systemd/busctl/journal/cgroup/HTTP probes. No other research.
 ## f) UP TO 50 THINGS TO GET DONE NEXT (new = harvested this session into TODO_LIST + services.md; existing = already queued, cited not duplicated)
 
 **New this session (harvested, commit pending below):**
+
 1. [new→services.md] Verify gen-1013 anchor equality (`readlink /run/current-system` == newest
    `system-N-link`) + run `scripts/post-deploy-check.sh` once the 13:52 wave drains; block any
    reboot until then.
@@ -153,20 +154,20 @@ live systemd/busctl/journal/cgroup/HTTP probes. No other research.
 
 **Existing — cv/cvagent service rows (cited, already queued):**
 6. Seed freelancermap + gun.io in the sealed store (services.md:1081, blocked:user — owner act;
-   Monday probe will keep failing exit 3 until then).
+Monday probe will keep failing exit 3 until then).
 7. First cv-relogin success proof after seeding (services.md:1082, watch).
 8. cvagent dashboard read-model cache + settable startup latch (upstream.md, c4cd41538 — the
-   session's main find).
+session's main find).
 9. cvagent serve unit git-on-PATH (upstream.md, c4cd41538).
 10. cv-server real-readiness assertion (ExecStartPost wait-for-port / Type=notify) — TODAY
-    re-proved the need: unit "active" for 15 min with :8098 unbound (services.md:638).
+re-proved the need: unit "active" for 15 min with :8098 unbound (services.md:638).
 11. cv↔crm boot-sync storm upstream legs: bind-before-sync + StreamMarker leak
-    (services.md:637; today's storm-window sync is another datapoint).
+(services.md:637; today's storm-window sync is another datapoint).
 12. CV render smoke IO-pressure-aware gate (services.md:267 — the /de/cv false-FAIL under io PSI
-    55% class; today's storm is the same shape).
+55% class; today's storm is the same shape).
 13. CV browser render smoke clean-window rerun (services.md:363, watch).
 14. CRM dedupe ~10,489 duplicates (services.md:295, blocked:deploy — sequences after the
-    checkpoint fix).
+checkpoint fix).
 15. crm-server API token off ExecStart argv (services.md:296, bundles with CV rev bump).
 16. CV analytics DB: provision or accept the permanent warn (services.md:640, decision).
 17. CV graphrag: enable or accept the warn (services.md:641, decision).
@@ -176,19 +177,19 @@ live systemd/busctl/journal/cgroup/HTTP probes. No other research.
 21. cvagent module VM YAML-parse assertion (TODO_LIST 693).
 22. cvagent MaxCommitSample config-tunable upstream (upstream.md:252).
 23. cvagent/cv-agent z.ai direct-traffic ai-meter visibility gap (runbook; routing row in
-    pipeline.md).
+pipeline.md).
 24. stability.md:46 by-phone read-storm premise — the /health half is answered (this report);
-    the 30 s io-delta measurement half remains open.
+the 30 s io-delta measurement half remains open.
 25. cvagent post-restart throttle counters after 24 h at the 1G cap (row 393's cadence; today's
-    post-restart baseline: high=40772/16 min, max=0 — recorded here as the re-read).
+post-restart baseline: high=40772/16 min, max=0 — recorded here as the re-read).
 
 **Environment-level observations worth follow-up elsewhere (not CV-queued here):**
 26. The 2 Hz /health federation poll journals one INFO line per poll per remote — journal-volume
-    question adjacent to monitoring.md:190's fetch-load row.
+question adjacent to monitoring.md:190's fetch-load row.
 27. `sdc` 102.7% util in today's deploy entry-gate dump — ties storage.md:217's saturation-job
-    identification row (device naming by-id).
+identification row (device naming by-id).
 28. Memory-emergency-guard fired twice at 14:10 during the wave — worked as designed; freeze-risk
-    context for any NEXT deploy decision today (the calm gate is still refusing at 14:21+).
+context for any NEXT deploy decision today (the calm gate is still refusing at 14:21+).
 
 **(Stopped at 28 honest items — the instruction allows up to 50; padding to 50 with invented
 work would violate the one-ask/real-work discipline. Every item above is real and

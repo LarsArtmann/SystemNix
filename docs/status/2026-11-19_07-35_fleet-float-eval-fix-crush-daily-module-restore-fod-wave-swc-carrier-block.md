@@ -96,4 +96,4 @@
 
 ---
 
-*Session evidence: `~/.cache/lockfloat/keepgoing-1119{,b}.log`, `~/.cache/paperless-swc-test/` (host repro + cachecheck.py + build logs), upstream commits crush-daily `b16bdd2`, Code-To-CV-Agent `e36772c`, mr-sync `50604d4`, PapDashboard `ab83cc7`. Harvest deferred: session mid-flight; §f.10–§f.15 land in TODO_LIST/domain files at close-out.*
+_Session evidence: `~/.cache/lockfloat/keepgoing-1119{,b}.log`, `~/.cache/paperless-swc-test/` (host repro + cachecheck.py + build logs), upstream commits crush-daily `b16bdd2`, Code-To-CV-Agent `e36772c`, mr-sync `50604d4`, PapDashboard `ab83cc7`. Harvest deferred: session mid-flight; §f.10–§f.15 land in TODO_LIST/domain files at close-out._

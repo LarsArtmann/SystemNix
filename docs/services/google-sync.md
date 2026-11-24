@@ -35,4 +35,4 @@
 ### Immich go-live sub-checklist (only if `ingestImages` is wanted)
 
 1. (SUPERSEDED 2026-11-14 — no manual key) the key is machine-minted with scope **asset.read + asset.upload + user.read** (`user.read` is required by the preflight's `/api/users/me` probe — e2e VM test 2026-11-22); nothing to create
-3. Set `services.drive-paperless.ingestImages = true;` and deploy — the run preflights the key against `/api/users/me` and fails loudly with the scope hint if wrong
+2. Set `services.drive-paperless.ingestImages = true;` and deploy — the run preflights the key against `/api/users/me` and fails loudly with the scope hint if wrong

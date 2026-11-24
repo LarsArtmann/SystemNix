@@ -8,7 +8,8 @@ platforms, email, AND telephone?
 **Method:** two read-only code audits (decisionmodel/Jev via subagent over the CV repo;
 LLM surfaces via subagent) + first-hand live-state probes (cv-server/cv-scan/cv-agent/
 cvagent journals 7–30d, deployed-unit inspection, sops template wiring, flake.lock revs)
-+ production-config cross-check (SystemNix cv.nix settings vs CV DI wiring).
+
+- production-config cross-check (SystemNix cv.nix settings vs CV DI wiring).
 
 ## §b Findings
 
@@ -39,12 +40,12 @@ cvagent journals 7–30d, deployed-unit inspection, sops template wiring, flake.
 
 Live in production (journal-verified):
 
-| Surface | Provider/Model | State |
-| --- | --- | --- |
-| Agent brain (`cv-agent.timer` daily 04:41 → POST /api/agent/pass) | z.ai glm-5.3-flash via CV_AGENT_API_KEY (sops cv_agent_api_key, 2026-11-02) | LIVE — passes complete with findings=5; lessons=0 (distill threshold 10 not reached); 2026-11-08 04:41 pass FAILED on the z.ai 5h usage quota |
-| Public-site chat | Synthetic syn:large:text via OPENAICOMPAT_API_KEY (2026-11-02) | LIVE (chat.enabled in cv.nix; TTS/STT deliberately off) |
-| cvagent code→CV-facts extraction | z.ai glm-5.3-flash, 600 AI-facts/day cap | Configured; deployed unit BROKEN since ≥2026-11-07 (`awk: command not found`, exit 127 daily) — upstream fix (Code-To-CV-Agent 1664d48 + 6ff68d3) is LOCKED in SystemNix flake.lock but NOT deployed (deployed system still runs the pre-delegation cvagent.service) |
-| CRM mirror (Kith) | n/a | LIVE (opportunities created 2026-11-07) |
+| Surface                                                           | Provider/Model                                                              | State                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent brain (`cv-agent.timer` daily 04:41 → POST /api/agent/pass) | z.ai glm-5.3-flash via CV_AGENT_API_KEY (sops cv_agent_api_key, 2026-11-02) | LIVE — passes complete with findings=5; lessons=0 (distill threshold 10 not reached); 2026-11-08 04:41 pass FAILED on the z.ai 5h usage quota                                                                                                                        |
+| Public-site chat                                                  | Synthetic syn:large:text via OPENAICOMPAT_API_KEY (2026-11-02)              | LIVE (chat.enabled in cv.nix; TTS/STT deliberately off)                                                                                                                                                                                                              |
+| cvagent code→CV-facts extraction                                  | z.ai glm-5.3-flash, 600 AI-facts/day cap                                    | Configured; deployed unit BROKEN since ≥2026-11-07 (`awk: command not found`, exit 127 daily) — upstream fix (Code-To-CV-Agent 1664d48 + 6ff68d3) is LOCKED in SystemNix flake.lock but NOT deployed (deployed system still runs the pre-delegation cvagent.service) |
+| CRM mirror (Kith)                                                 | n/a                                                                         | LIVE (opportunities created 2026-11-07)                                                                                                                                                                                                                              |
 
 NOT live in the autonomous funnel (config-verified):
 
@@ -62,11 +63,11 @@ NOT live in the autonomous funnel (config-verified):
 
 ### §b.3 End-goal channel scorecard (the question's core)
 
-| Channel | Discovery | Application | Verdict |
-| --- | --- | --- | --- |
-| Native platforms | LIVE: 19 portals scanned every 6h (cv-scan ticks all 200 OK, verified 48h journal); gun.io weekly check was DEAD ≥21 days (transient user timer vanished) — re-registered this session 17:28, fires 21:00 today | A.Team mission path EXISTS in code (browser automation, review-gated submissions) but `missions` scanning is disabled by default and the 30d journal shows **zero mission submissions**; credentials store sealed 2026-11-06 but no relogin/apply traffic since | **Discovery works; native APPLY effectively unused** |
-| Email | Reply inbox configured (Stalwart mailbox enabled-but-inert until password staged — owner-gated) | SMTP transport live (local relay → Resend, gate Q2 flipped 2026-10-17, send_on_approve=true, max 5/pass, 7d age cap) — but the retained 30d journal shows **9 completed auto-apply passes, EVERY one sent=0**, and ~30 approvals all granted 2026-10-25 19:20-19:27 now permanently over the 7d age cap (each pass WARNs and skips). Corroboration: the 2026-10-27 owner ruling comments the reply_to cutover is "free while zero real sends carry it" — **zero production application emails have ever been sent** | **Transport live, funnel output = 0; bottleneck is the human approval gate (silent since 2026-10-25)** |
-| Telephone | none | none — voice handlers were deleted upstream as a non-goal (~2,700 LOC, CV ROADMAP.md:144 "not enough value for a CV generator"); TTS/STT off in prod; no telephony stack anywhere in SystemNix | **Channel does not exist; also not represented as planned work anywhere** |
+| Channel          | Discovery                                                                                                                                                                                                       | Application                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Verdict                                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Native platforms | LIVE: 19 portals scanned every 6h (cv-scan ticks all 200 OK, verified 48h journal); gun.io weekly check was DEAD ≥21 days (transient user timer vanished) — re-registered this session 17:28, fires 21:00 today | A.Team mission path EXISTS in code (browser automation, review-gated submissions) but `missions` scanning is disabled by default and the 30d journal shows **zero mission submissions**; credentials store sealed 2026-11-06 but no relogin/apply traffic since                                                                                                                                                                                                                                                     | **Discovery works; native APPLY effectively unused**                                                   |
+| Email            | Reply inbox configured (Stalwart mailbox enabled-but-inert until password staged — owner-gated)                                                                                                                 | SMTP transport live (local relay → Resend, gate Q2 flipped 2026-10-17, send_on_approve=true, max 5/pass, 7d age cap) — but the retained 30d journal shows **9 completed auto-apply passes, EVERY one sent=0**, and ~30 approvals all granted 2026-10-25 19:20-19:27 now permanently over the 7d age cap (each pass WARNs and skips). Corroboration: the 2026-10-27 owner ruling comments the reply_to cutover is "free while zero real sends carry it" — **zero production application emails have ever been sent** | **Transport live, funnel output = 0; bottleneck is the human approval gate (silent since 2026-10-25)** |
+| Telephone        | none                                                                                                                                                                                                            | none — voice handlers were deleted upstream as a non-goal (~2,700 LOC, CV ROADMAP.md:144 "not enough value for a CV generator"); TTS/STT off in prod; no telephony stack anywhere in SystemNix                                                                                                                                                                                                                                                                                                                      | **Channel does not exist; also not represented as planned work anywhere**                              |
 
 ### §b.4 Ops context
 
@@ -134,7 +135,7 @@ locked cvagent fix; (4) decide telephone: plan it or retire it from the goal sta
 1. → TODO_LIST `[decision]` "Funnel send-path LLM keys" + docs/todo/services.md — §b.2.
 2. → TODO_LIST `[decision]` "Stale approval queue / zero sends" + docs/todo/services.md — §b.3.
 3. → TODO_LIST `[ready]` "Durable gun.io weekly check (system timer + absence alerting)"
-   + docs/todo/services.md — §b.3/§c.
+   - docs/todo/services.md — §b.3/§c.
 4. NOT re-harvested (existing rows cover them): cvagent gawk-fix deploy (rows 1810/1813),
    z.ai rate-limit tax (TODO_LIST 675), cv-server SIGSEGV upstream fix (docs/todo/upstream.md),
    ai-meter routing for GLM traffic (TODO_LIST 1829), Jev question-design debt + jev.go

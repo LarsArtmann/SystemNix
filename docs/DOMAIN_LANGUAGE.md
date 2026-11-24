@@ -18,13 +18,13 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 
 ## DNS
 
-| Term                | Definition                                                                                                                                |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **dnsblockd**       | Custom Go DNS resolver replacing Unbound. Embeds sdns: DNSSEC, DoT, DoH, caching, local zones, blocklists                                 |
-| **sdns**            | Stubby-derived DNS stub resolver library. dnsblockd wraps it with Go bindings                                                             |
-| **Blocklist**       | A curated list of domains to block (ads, trackers, malware). ~4M+ entries across 23 lists (realized mapping 4,296,867 domains, verified 2026-10-01)                                                |
-| **Local zone**      | DNS entries for `*.home.lan` — resolved locally by dnsblockd, not forwarded upstream                                                      |
-| **Local subdomain** | An explicitly listed hostname in `dnsLocal.localSubdomains`. Required because dnsblockd's sdns resolver does NOT support wildcard records |
+| Term                | Definition                                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **dnsblockd**       | Custom Go DNS resolver replacing Unbound. Embeds sdns: DNSSEC, DoT, DoH, caching, local zones, blocklists                                           |
+| **sdns**            | Stubby-derived DNS stub resolver library. dnsblockd wraps it with Go bindings                                                                       |
+| **Blocklist**       | A curated list of domains to block (ads, trackers, malware). ~4M+ entries across 23 lists (realized mapping 4,296,867 domains, verified 2026-10-01) |
+| **Local zone**      | DNS entries for `*.home.lan` — resolved locally by dnsblockd, not forwarded upstream                                                                |
+| **Local subdomain** | An explicitly listed hostname in `dnsLocal.localSubdomains`. Required because dnsblockd's sdns resolver does NOT support wildcard records           |
 
 ## SSO / Authentication
 
@@ -49,14 +49,14 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 
 ## Storage
 
-| Term          | Definition                                                                                                               |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **BTRFS**     | Copy-on-Write filesystem used on evo-x2. Root (`@`) and data (`/data`) are separate partitions                           |
-| **btrbk**     | Automated BTRFS snapshot tool. Daily snapshots at 23:00, 14-day + 4-week retention                                       |
-| **Subvolume** | BTRFS named subdivision. `@` is root, `/data` is toplevel (subvolid=5)                                                   |
-| **Scrub**     | BTRFS integrity check that verifies checksums across all data/metadata. Monthly via `autoScrub`                          |
+| Term          | Definition                                                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **BTRFS**     | Copy-on-Write filesystem used on evo-x2. Root (`@`) and data (`/data`) are separate partitions                                     |
+| **btrbk**     | Automated BTRFS snapshot tool. Daily snapshots at 23:00, 14-day + 4-week retention                                                 |
+| **Subvolume** | BTRFS named subdivision. `@` is root, `/data` is toplevel (subvolid=5)                                                             |
+| **Scrub**     | BTRFS integrity check that verifies checksums across all data/metadata. Monthly via `autoScrub`                                    |
 | **ZRAM swap** | Compressed swap in RAM (62 GiB, `/dev/zram0`; live `/proc/swaps` 2026-11-14 — was ~16 GiB in early docs). Replaces disk-based swap |
-| **GPUActive** | TTM buffer objects consuming system RAM. The #1 memory consumer on Strix Halo (51+ GiB). Only visible in `/proc/meminfo` |
+| **GPUActive** | TTM buffer objects consuming system RAM. The #1 memory consumer on Strix Halo (51+ GiB). Only visible in `/proc/meminfo`           |
 
 ## Desktop
 

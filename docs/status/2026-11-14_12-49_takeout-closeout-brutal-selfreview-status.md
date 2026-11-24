@@ -26,20 +26,20 @@ reports, deliberately untouched).
 
 ## a) FULLY DONE (this session, 11:31 → 12:48)
 
-| # | Item | Where | Proof |
-| --- | --- | --- | --- |
-| 1 | Todo list reconciled with the briefing; kept current through all 9 steps | todos tool | 9/9 completed |
-| 2 | `takeout-extract` battery wired into `checks.x86_64-linux.takeout-selftests` | `flake/parts/checks/selftests.nix` (rode daemon commit `35af87fdc` with a foreign flake.lock float) | derivation built green; 50 legs (6/21/7/7/9) |
-| 3 | Per-battery leg-count assertion — a silently deleted/renamed leg or changed marker idiom fails the build; stale comment block (dedup 16/rename 6 → 21/7) fixed in the same edit | same file | green build + doctored-log mismatch test fired |
-| 4 | `deployrestart` negative-test group: dropping `immich-api-key-provision` from deploy.sh's provisioner loop provably throws `deploy-restart-audit` (mutation renames ALL occurrences incl. comments — `hasInfix` would phantom-green on a surviving comment); comment-append immunity control | `scripts/negative-test-lints.sh` (`e97b282f7`, pathspec commit, real message) | 2/2 PASS via `CASES=deployrestart` |
-| 5 | CHANGELOG whole-arc entry (converger consumer, G2 trap, 2 balance bugs, 41→50 legs, extract tool + live dry-run numbers, negative group, the queued zip-name gap) | `CHANGELOG.md` (rode daemon `d5cad2541`) | newest entry, Keep-a-Changelog style |
-| 6 | Rows 442/443 ticked on BOTH surfaces (queue + `docs/todo/services.md`) with close-out evidence | `f1850e4ff` (amend-repaired after the daemon raced the pathspec commit; contents verified exclusively mine) | hook gate green |
-| 7 | 7 new queue rows + 6 library rows harvested from the 04-11 §f11-19/33-34 + this arc: converger consolidation (discordsync+media-atlas), drive-paperless onto `apiKeys`, post-deploy battery (converger acceptance + `balance --preflight`), verify hardening trio, `status` one-liner, ingest-photos CI legs, zip-name divergence | queue rows rode daemon `90ff6f269`; AGENTS.md + report note in `2f26efade` | `check-todo-system.sh` OK standalone |
-| 8 | Row 490 supersede clause added to the QUEUE copy (the library copy already had it from the 04:11 session — the drift is closed) | TODO_LIST.md | both surfaces now carry the machine-minted supersession |
-| 9 | Plan DONE blocks: X1 (detailed, evidence-linked) + V1/V2/C1/C2 (previously-executed 04:11 work, now recorded) | the 2026-11-13 fleet plan | 4 blocks appended |
-| 10 | AGENTS.md Eval-time row: deploy-restart-audit now annotated "negative-tested `deployrestart` group 2026-11-14" (matches the bridge-exit-contract idiom) | AGENTS.md | `2f26efade` |
-| 11 | Harvest note appended to the 10:16 report (what was executed, what landed as rows, no deliberately-unharvested remainder) | same report | `2f26efade` |
-| 12 | Final whole-flake gate green; everything pushed | `all checks passed!`; origin advanced to `f7ce7f352`, 0 ahead | log + post-push fetch |
+| #  | Item                                                                                                                                                                                                                                                                                                                              | Where                                                                                                       | Proof                                                   |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 1  | Todo list reconciled with the briefing; kept current through all 9 steps                                                                                                                                                                                                                                                          | todos tool                                                                                                  | 9/9 completed                                           |
+| 2  | `takeout-extract` battery wired into `checks.x86_64-linux.takeout-selftests`                                                                                                                                                                                                                                                      | `flake/parts/checks/selftests.nix` (rode daemon commit `35af87fdc` with a foreign flake.lock float)         | derivation built green; 50 legs (6/21/7/7/9)            |
+| 3  | Per-battery leg-count assertion — a silently deleted/renamed leg or changed marker idiom fails the build; stale comment block (dedup 16/rename 6 → 21/7) fixed in the same edit                                                                                                                                                   | same file                                                                                                   | green build + doctored-log mismatch test fired          |
+| 4  | `deployrestart` negative-test group: dropping `immich-api-key-provision` from deploy.sh's provisioner loop provably throws `deploy-restart-audit` (mutation renames ALL occurrences incl. comments — `hasInfix` would phantom-green on a surviving comment); comment-append immunity control                                      | `scripts/negative-test-lints.sh` (`e97b282f7`, pathspec commit, real message)                               | 2/2 PASS via `CASES=deployrestart`                      |
+| 5  | CHANGELOG whole-arc entry (converger consumer, G2 trap, 2 balance bugs, 41→50 legs, extract tool + live dry-run numbers, negative group, the queued zip-name gap)                                                                                                                                                                 | `CHANGELOG.md` (rode daemon `d5cad2541`)                                                                    | newest entry, Keep-a-Changelog style                    |
+| 6  | Rows 442/443 ticked on BOTH surfaces (queue + `docs/todo/services.md`) with close-out evidence                                                                                                                                                                                                                                    | `f1850e4ff` (amend-repaired after the daemon raced the pathspec commit; contents verified exclusively mine) | hook gate green                                         |
+| 7  | 7 new queue rows + 6 library rows harvested from the 04-11 §f11-19/33-34 + this arc: converger consolidation (discordsync+media-atlas), drive-paperless onto `apiKeys`, post-deploy battery (converger acceptance + `balance --preflight`), verify hardening trio, `status` one-liner, ingest-photos CI legs, zip-name divergence | queue rows rode daemon `90ff6f269`; AGENTS.md + report note in `2f26efade`                                  | `check-todo-system.sh` OK standalone                    |
+| 8  | Row 490 supersede clause added to the QUEUE copy (the library copy already had it from the 04:11 session — the drift is closed)                                                                                                                                                                                                   | TODO_LIST.md                                                                                                | both surfaces now carry the machine-minted supersession |
+| 9  | Plan DONE blocks: X1 (detailed, evidence-linked) + V1/V2/C1/C2 (previously-executed 04:11 work, now recorded)                                                                                                                                                                                                                     | the 2026-11-13 fleet plan                                                                                   | 4 blocks appended                                       |
+| 10 | AGENTS.md Eval-time row: deploy-restart-audit now annotated "negative-tested `deployrestart` group 2026-11-14" (matches the bridge-exit-contract idiom)                                                                                                                                                                           | AGENTS.md                                                                                                   | `2f26efade`                                             |
+| 11 | Harvest note appended to the 10:16 report (what was executed, what landed as rows, no deliberately-unharvested remainder)                                                                                                                                                                                                         | same report                                                                                                 | `2f26efade`                                             |
+| 12 | Final whole-flake gate green; everything pushed                                                                                                                                                                                                                                                                                   | `all checks passed!`; origin advanced to `f7ce7f352`, 0 ahead                                               | log + post-push fetch                                   |
 
 ## b) PARTIALLY DONE
 
@@ -142,13 +142,13 @@ reports, deliberately untouched).
 
 ## f) WHAT WE SHOULD GET DONE NEXT (from this session's run; items 1-8 already landed as queue rows this session — listed for completeness, not re-harvest)
 
-1. *(landed as row)* Converger consolidation: discordsync + media-atlas onto `services.immich.apiKeys`.
-2. *(landed as row)* drive-paperless onto the shared converger (3-step recipe in the library row).
-3. *(landed as row)* Post-deploy battery: converger acceptance leg + `balance --preflight`.
-4. *(landed as row)* Verify hardening trio (per-account manifest path, partial-manifest leg, `--no-hash` leg).
-5. *(landed as row)* `takeout status` one-liner.
-6. *(landed as row)* ingest-photos fixture legs into `takeout-selftests` (50 → 55).
-7. *(landed as row)* Zip-name divergence fix (name-tolerant verify OR rename-at-intake doctrine).
+1. _(landed as row)_ Converger consolidation: discordsync + media-atlas onto `services.immich.apiKeys`.
+2. _(landed as row)_ drive-paperless onto the shared converger (3-step recipe in the library row).
+3. _(landed as row)_ Post-deploy battery: converger acceptance leg + `balance --preflight`.
+4. _(landed as row)_ Verify hardening trio (per-account manifest path, partial-manifest leg, `--no-hash` leg).
+5. _(landed as row)_ `takeout status` one-liner.
+6. _(landed as row)_ ingest-photos fixture legs into `takeout-selftests` (50 → 55).
+7. _(landed as row)_ Zip-name divergence fix (name-tolerant verify OR rename-at-intake doctrine).
 8. Rename-loop generic wrapper (pre-existing row, unchanged).
 9. **Verify CI green on the pushed tip `f7ce7f352`+** (the §d3 correction's follow-through; `gh run list` once it finishes).
 10. **Deploy** (owner window) + the 3-probe converger acceptance (env file 0400; `takeout-import (nix-managed)|16` row; ingest preflight) — everything above this line is inert until this lands.
@@ -157,9 +157,9 @@ reports, deliberately untouched).
 13. Account #2 identity/mode/cadence (owner); racedriver8k browser download 0/23 (owner, export re-requestable).
 14. helpless.ai exports-page save → intake → verify (G2, needs item 7's name fix first).
 15. Then the G1-G5 chain per the plan (ingest dry-run, reconcile 5,282 media, real import, 3-album spot check, OpenCloud rclone leg, drive-paperless rated subset).
-16. *(observed)* The parallel session editing `scripts/post-deploy-check.sh` at 12:48 — if it is implementing the converger acceptance leg (item 3's row), the row should be ticked by THAT session, not re-dispatched.
-17. *(observed, cheap)* One-line invocation-context note in the takeout scripts' headers (absolute-path/derivation expectation) — closes §e5.
-18. *(baseline, other sessions)* The 53-report unharvested §f backlog — worth one dedicated harvest pass someday, not urgent (default gate passes).
+16. _(observed)_ The parallel session editing `scripts/post-deploy-check.sh` at 12:48 — if it is implementing the converger acceptance leg (item 3's row), the row should be ticked by THAT session, not re-dispatched.
+17. _(observed, cheap)_ One-line invocation-context note in the takeout scripts' headers (absolute-path/derivation expectation) — closes §e5.
+18. _(baseline, other sessions)_ The 53-report unharvested §f backlog — worth one dedicated harvest pass someday, not urgent (default gate passes).
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (3)
 

@@ -24,7 +24,7 @@
 ## b) PARTIALLY DONE
 
 1. **§f.12 harvest (3 rows).** 1 executed (backup verify) + 2 queued — but the report's §f.13–15 improvement ideas (calm-gate×activation doc in `docs/agents/stability.md`, deploy.sh "already in flight?" pre-flight, calm-gate wait telemetry) were classified as menu items, not harvested. Defensible, but a stricter reading of the self-harvest doctrine would have queued them too.
-2. **Post-deploy FAIL triage.** Identified and reported, not triaged — and one of them (cvagent /health 503) I *knew* had an existing queued fix path: the upstream.md row I myself read this session says the dashboard read-model cache fix landed upstream 2026-11-17 and "site side picks it up at the next upstream rev float". I still surfaced it as an open question instead of connecting it. Sloppy.
+2. **Post-deploy FAIL triage.** Identified and reported, not triaged — and one of them (cvagent /health 503) I _knew_ had an existing queued fix path: the upstream.md row I myself read this session says the dashboard read-model cache fix landed upstream 2026-11-17 and "site side picks it up at the next upstream rev float". I still surfaced it as an open question instead of connecting it. Sloppy.
 3. **timesheets `/api/events` SSE re-verification.** The 11-15 plan (§f.5) included "still streams" — this session verified `/`, `/health`, `/version`, 404s but NOT the SSE stream (needs a timeout-bounded read). `/health` covers the aggregate, so risk is low, but the planned check was skipped, not done.
 4. **Upstream CI state.** Checked: timesheets shows only green Dependabot/graph runs (no red signal); invoices' Root Inventory Guard is red on master (2026-11-17). Folded into the harvest row — but the actual gate-clearing work is untouched (queued).
 5. **Live gen vs lock.** The live gen runs `935a044d`/`e90e7a1`; the lock already points two floats further (descendants, content unreviewed by me). Fine while nothing else needs a deploy, but the drift is real and rides the next deploy unexamined.
@@ -64,6 +64,7 @@ Nothing user-facing is broken. The honest dishonor roll, worst first:
 ## f) UP TO 50 THINGS TO DO NEXT (session-scoped, ordered)
 
 **P0 — needs your answer first**
+
 1. Storm verdict (§g.1): triage tq-agent-pool 310% CPU + the memory-throttle counters as an incident, or accept as background load.
 2. timesheets `/` intent (§g.2): keep redirect vs build the cqrs-htmx landing page.
 3. Deploy cadence (§g.3): spend a deploy to pick up the two descendant floats (`4c4512b`, `5c32b1ad`), or hold for the next feature wave.

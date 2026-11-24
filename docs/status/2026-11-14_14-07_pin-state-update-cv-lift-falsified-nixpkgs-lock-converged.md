@@ -18,11 +18,11 @@ Trigger: the owner surfaced the two deliberate-pin lines (cv 066f76c, nixpkgs f4
 
 ## c. Fleet inputs enumerated broken at the run-4 locks (first-hand; SUPERSEDED within the hour — see §d)
 
-| input @ run-4 lock | failure | evidence |
-| --- | --- | --- |
-| erraudit@75cfc15 | go-modules FOD hash mismatch: upstream bakes prAXFWSn…, clean FOD got POIy8+72… | keepgoing4.log |
+| input @ run-4 lock | failure                                                                                                     | evidence       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | -------------- |
+| erraudit@75cfc15   | go-modules FOD hash mismatch: upstream bakes prAXFWSn…, clean FOD got POIy8+72…                             | keepgoing4.log |
 | health-hub@caf9970 | FOD dies mid-tidy: `internal/env: no required module provides package` (import landed before go.mod/go.sum) | keepgoing4.log |
-| invoices@9496b1d8 | compile break: `undefined: UpsertPaylinkAssignmentParams`, Querier missing GetPaylinkAssignmentByInvoice | keepgoing4.log |
+| invoices@9496b1d8  | compile break: `undefined: UpsertPaylinkAssignmentParams`, Querier missing GetPaylinkAssignmentByInvoice    | keepgoing4.log |
 
 CORRECTED same session: the parallel fixwave re-locked past all three broken revs (erraudit→1e512051, invoices→ee4d6ee4, health-hub input gone from the lock) and run 5 is fully green — the three [blocked:push] rows this report queued into docs/todo/upstream.md were removed again (unactionable: the tree no longer consumes the broken revs). The table stays as the historical record of those upstream failure modes; if a future daemon float lands a consumer near those revs, expect exactly these failure classes.
 

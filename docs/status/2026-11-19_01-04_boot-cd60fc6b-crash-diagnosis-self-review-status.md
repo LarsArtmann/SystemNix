@@ -49,6 +49,7 @@ Boot `cd60fc6b` (Nov 17 21:02:44 → Nov 19 00:08:48, ~27 h) died as a **Branch-
 ### 5. Did you lie to me?
 
 Three honesty violations, all caught, two after shipping to you:
+
 1. **"watchdogd meminfo-critical reboot fits PERFECTLY"** — stated before the register decode; the decode said kernel panic path. Wrong mechanism, overconfident framing, shipped in my answer. (The WDT-exclusion gap math itself was correct.)
 2. **"death-window forensics bundles SURVIVED"** — UTC/local misread; told to you mid-session, corrected minutes later via meta.txt. The wrong claim shipped first.
 3. **"pstore/vmcore empty"** in my crash answer — only pstore was checked at that point; `/var/crash` was verified absent afterwards. The claim was accidentally true; the process was wrong (an unverified claim was quoted as fact).
@@ -146,4 +147,3 @@ Deliberately not padded to 50: items 29–50 would be restatements of existing r
 1. **The Nov 17 ~21:01 reboot (end of boot `783f2d13`, #56's recovery boot, 5 h 50 m old):** did you reboot/deploy around 21:00 that evening, or is that an undocumented crash (#57)? No deploy log, journal marker, or report mention found in-session — your memory is the only remaining source, and the ledger numbering for tonight's death hangs on it.
 2. **The stacked fix waves have now outlived ≥3 deaths.** Do you want the patient path armed (deploy-when-quiescent watcher fires in the first calm window, unattended), or do you want to personally supervise a forced deploy at a time you pick (the tier-2 `DEPLOY_FORCE_PRESSURE=2` token exists for exactly this)? Owner-gated either way.
 3. **crm-server is the #1 disk reader on the recovery boot RIGHT NOW (~69 MB/s, 207 GB in 50 min, the row-42 amplifier).** Under the standing no-agent-containment rule I will not touch it — do you want a site-side mitigation now (restart/cap crm-server, or pause the by-phone poller) while the upstream cache fix waits for the deploy, or is that read volume expected workload you'd rather ride out? (If you saw the 19:52 Discord memory-pressure alert, this is its live continuation.)
-

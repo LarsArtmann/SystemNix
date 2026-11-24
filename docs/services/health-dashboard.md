@@ -50,15 +50,15 @@ SEVEN remotes — every go-health speaker on the host, found by sweeping ALL
 `Accept: application/json` (a go-health document = status
 pass/warn/fail/off AND a `checks` object):
 
-| Remote | Port/Path | Notes |
-| ------ | --------- | ----- |
-| `cv` | 8098 `/health` | first remote (2026-09-19) |
-| `discordsync` | 8085 `/health` | its `/readyz` is a custom OTel document — `/health` is the go-health one |
-| `renamer` | 8086 `/health` | file-and-image-renamer main daemon |
-| `renamer-watcher` | 8089 `/health` | the watcher's own healthd (port split 2026-10-29) |
-| `tq` | 8100 `/health` | go-taskqueue serve dashboard |
-| `pma` | 9420 `/readyz` | no `/health`; `/healthz` is a liveness-only empty-checks stub |
-| `dnsblockd` | 9090 `/readyz` | the STATS port serves the canonical go-health document (blocklist-sources/database/dns checks), not just Prometheus |
+| Remote            | Port/Path      | Notes                                                                                                               |
+| ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `cv`              | 8098 `/health` | first remote (2026-09-19)                                                                                           |
+| `discordsync`     | 8085 `/health` | its `/readyz` is a custom OTel document — `/health` is the go-health one                                            |
+| `renamer`         | 8086 `/health` | file-and-image-renamer main daemon                                                                                  |
+| `renamer-watcher` | 8089 `/health` | the watcher's own healthd (port split 2026-10-29)                                                                   |
+| `tq`              | 8100 `/health` | go-taskqueue serve dashboard                                                                                        |
+| `pma`             | 9420 `/readyz` | no `/health`; `/healthz` is a liveness-only empty-checks stub                                                       |
+| `dnsblockd`       | 9090 `/readyz` | the STATS port serves the canonical go-health document (blocklist-sources/database/dns checks), not just Prometheus |
 
 EXCLUDED (2026-11-19, down-by-design): `nsfw` (8104 `/health`) — the
 classifier is disabled on this host by owner decree, and federating a

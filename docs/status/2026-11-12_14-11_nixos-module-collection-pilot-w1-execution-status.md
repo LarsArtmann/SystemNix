@@ -62,6 +62,7 @@
 ## f) NEXT — up to 50, ordered (waves per plan §2/§3)
 
 **W1b tail (do first):**
+
 1. Prove script content-identity: `nix store cat` (or text diff repo copies) of baseline vs collection `watch.sh` builds — closes the last inferred link in the parity proof.
 2. Run SystemNix delegated VM test: `nix build .#checks.x86_64-linux.wifi-failover.test` (5 scenarios through the delegation wrapper incl. the gateway FEED).
 3. Full audit sweep post-delegation: `nix flake check --no-build` (systemd-shape, io-tier-coverage expects `wifi-failover` at audit line 161 — unit name unchanged, expect green; stray-unit; script-port after (4)).

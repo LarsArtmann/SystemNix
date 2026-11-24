@@ -25,22 +25,22 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| 15-question storage decision Q&A executed in 3 importance-ranked batches (reclaims/backup → design/layout → ops/tooling), every answer captured | owner selections in this report §f + queue rows |
-| Important-data spot-check on `~/.cache` BEFORE any purge (owner-required constraint) | found Kernovia `.db`s (glac-fleet), `legacy.duckdb` (m365fix), `pipeline.sqlite` (cv-go/tmp), run logs (ds-gate/ec-hub) → 4 dirs excluded | <!-- format:allow -->
-| Purge wave 1: 5 pure-GOCACHE dirs deleted (vra-gocache, cmdguard-gocache, go-build-{baseline,gobilanz,bf}) | df 4.24 GB freed at first sample, 84%→83% |
-| btrbk excludes decision queued: /data/ai + SteamLibrary + gcs-staging never to the pool (owner directive: NEVER backup re-downloadable AI models) | storage.md + TODO_LIST `[ready]` rows |
-| ClickHouse relocation rows RETIRED on both surfaces (owner directive: ClickHouse stays on QLC) | storage.md row 156 + TODO_LIST row stamped |
-| crush/ reclassified IMPORTANT DATA (feeds crush-daily) — dedicated session + hourly/3h restic-pattern incremental queued (NOT btrbk; hot-subvol doctrine) | storage.md crush row UPDATE |
-| /data redesign scoped: FULL design doc, latency-first constraint | decision row UPDATE |
-| SSD-merge decision queued: owner leans merge (~440G), gated on bench-disk IO tests; rust-cache-btrfs rationale documented | `[decision]` row |
-| Phase F shadow reclaim AUTO-GO queued at burn-in end | `[watch]` row |
-| storage-collector ledger capability queued — corrected mid-flight from "new project" to "extend the EXISTING deployed collector" (prerequisite rows folded) | `[ready]` rows both surfaces |
-| Samsung-as-root feasibility queued as watch (owner goal; preservation explicitly declined; PSI-baseline watch = the crash-hypothesis test) | `[watch]` row |
-| ollama stale row stamped: tree ALREADY reclaimed before today (absent at probe) | storage.md pinning-table row |
-| gcs-staging evidence rows closed on queue + library (2 subtrees, 98,718 files, newest 2026-10-01) | TODO_LIST row ticked |
-| All edits landed; queue structure green after every wave | checker output ×3 |
+| Item                                                                                                                                                        | Evidence                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 15-question storage decision Q&A executed in 3 importance-ranked batches (reclaims/backup → design/layout → ops/tooling), every answer captured             | owner selections in this report §f + queue rows                                                                                           |
+| Important-data spot-check on `~/.cache` BEFORE any purge (owner-required constraint)                                                                        | found Kernovia `.db`s (glac-fleet), `legacy.duckdb` (m365fix), `pipeline.sqlite` (cv-go/tmp), run logs (ds-gate/ec-hub) → 4 dirs excluded |
+| Purge wave 1: 5 pure-GOCACHE dirs deleted (vra-gocache, cmdguard-gocache, go-build-{baseline,gobilanz,bf})                                                  | df 4.24 GB freed at first sample, 84%→83%                                                                                                 |
+| btrbk excludes decision queued: /data/ai + SteamLibrary + gcs-staging never to the pool (owner directive: NEVER backup re-downloadable AI models)           | storage.md + TODO_LIST `[ready]` rows                                                                                                     |
+| ClickHouse relocation rows RETIRED on both surfaces (owner directive: ClickHouse stays on QLC)                                                              | storage.md row 156 + TODO_LIST row stamped                                                                                                |
+| crush/ reclassified IMPORTANT DATA (feeds crush-daily) — dedicated session + hourly/3h restic-pattern incremental queued (NOT btrbk; hot-subvol doctrine)   | storage.md crush row UPDATE                                                                                                               |
+| /data redesign scoped: FULL design doc, latency-first constraint                                                                                            | decision row UPDATE                                                                                                                       |
+| SSD-merge decision queued: owner leans merge (~440G), gated on bench-disk IO tests; rust-cache-btrfs rationale documented                                   | `[decision]` row                                                                                                                          |
+| Phase F shadow reclaim AUTO-GO queued at burn-in end                                                                                                        | `[watch]` row                                                                                                                             |
+| storage-collector ledger capability queued — corrected mid-flight from "new project" to "extend the EXISTING deployed collector" (prerequisite rows folded) | `[ready]` rows both surfaces                                                                                                              |
+| Samsung-as-root feasibility queued as watch (owner goal; preservation explicitly declined; PSI-baseline watch = the crash-hypothesis test)                  | `[watch]` row                                                                                                                             |
+| ollama stale row stamped: tree ALREADY reclaimed before today (absent at probe)                                                                             | storage.md pinning-table row                                                                                                              |
+| gcs-staging evidence rows closed on queue + library (2 subtrees, 98,718 files, newest 2026-10-01)                                                           | TODO_LIST row ticked                                                                                                                      |
+| All edits landed; queue structure green after every wave                                                                                                    | checker output ×3                                                                                                                         |
 
 ## b) PARTIALLY DONE
 
@@ -88,11 +88,12 @@
 ## f) Up to 50 things to get done next (ranked; routing-tagged)
 
 **Owner-gated, ready on your word:**
-1. Triage the 4 excluded cache dirs (glac-fleet Kernovia DBs 25G / m365fix legacy.duckdb 22G / cv-go 19G incl. pipeline.sqlite / ds-gate+ec-hub 8G) — delete/archive/keep each. Impact: High, Effort: S. *(owner verdict)*
-2. Paste the `/var/lib` du output → completes the root ledger (monitor365-server ~39G visibility). Impact: Medium, Effort: S. *(awaiting you)*
-3. Confirm gcs-staging merge landed in paperless → trash 24G. Impact: Medium, Effort: S. *(owner confirm)*
-4. Run the docker root inventory (command offered) → Twenty-DB verdict → reclaim ~10G. Impact: Medium, Effort: S. *(root-only)*
-5. Phase F auto-go executes at burn-in end (~Nov 4-5) — ~137G QLC shadow reclaim per runbook. Impact: Critical, Effort: M. *(queued, time-gated)*
+
+1. Triage the 4 excluded cache dirs (glac-fleet Kernovia DBs 25G / m365fix legacy.duckdb 22G / cv-go 19G incl. pipeline.sqlite / ds-gate+ec-hub 8G) — delete/archive/keep each. Impact: High, Effort: S. _(owner verdict)_
+2. Paste the `/var/lib` du output → completes the root ledger (monitor365-server ~39G visibility). Impact: Medium, Effort: S. _(awaiting you)_
+3. Confirm gcs-staging merge landed in paperless → trash 24G. Impact: Medium, Effort: S. _(owner confirm)_
+4. Run the docker root inventory (command offered) → Twenty-DB verdict → reclaim ~10G. Impact: Medium, Effort: S. _(root-only)_
+5. Phase F auto-go executes at burn-in end (~Nov 4-5) — ~137G QLC shadow reclaim per runbook. Impact: Critical, Effort: M. _(queued, time-gated)_
 
 **Queued implementation (agent-actionable `[ready]`):**
 6. Implement btrbk excludes (/data/ai + SteamLibrary + gcs-staging) + verify leg. Impact: High, Effort: M.

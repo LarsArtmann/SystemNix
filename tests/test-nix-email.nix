@@ -171,9 +171,7 @@ let
           # that here (the 2026-11-15 owner flip made 1.0.3 the default;
           # `address` stays for a consumer-pinned 0.16 line).
           relayAddressKey =
-            if lib.versionAtLeast relayCfg.services.stalwart.package.version "1.0"
-            then "host"
-            else "address";
+            if lib.versionAtLeast relayCfg.services.stalwart.package.version "1.0" then "host" else "address";
         in
         relay.${relayAddressKey} == "smtp.resend.com"
         && relay.authUsername == "resend"

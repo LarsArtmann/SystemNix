@@ -65,35 +65,35 @@
 
 ## f) NEXT TASKS (ranked by impact; feeds docs-health HARVEST; up to 50 — fewer-but-specific beats padded)
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | Deploy SystemNix in an IO-quiet window (unblocked as of this session; deploy script self-runs float-register — expect instant no-op) | Critical | S | Feature |
-| 2 | Post-deploy: verify phase-5 push mirrors on fine-tune/pim-sync (`push_mirrors` populated + one `sync_on_commit` observed landing on each GitHub twin) | Critical | S | Quality |
-| 3 | Harden `scripts/float-register.sh` daemon-race fallback: `git diff --quiet --cached` leg so staged-but-uncommitted registry is NOT accepted as "committed" (b2/d-adjacent defect found this session) | High | S | Bug |
-| 4 | Make doc-counts collect-then-throw: report ALL stale anchors in one failure (currently first stale anchor masks the rest — I had to check 4 manually) | High | S | Quality |
-| 5 | Run `.#checks.x86_64-linux.features-drift` (+ `features-drift-selftest`) after my FEATURES.md edit — verify the other FEATURES consumer isn't broken by the re-stamp | High | S | Quality |
-| 6 | Verify-or-correct the 19:14 #22 retirement: confirm `forgejo-scripts-fixture` actually consumes `fixtures-forgejo.nix` / covers gogenfilter-style flip services; else run the right check | High | S | Quality |
-| 7 | Cross-link the wave plan doc + TODO tombstone to the rc=0 proof log (`~/.cache/lockfloat/float-proof-20261104-202212.log`) as the recorded satisfaction of the "FOD probe REQUIRED" leg | High | S | Documentation |
-| 8 | Track or disposition the caddy `llama` ghost-subdomain warning (verify whether a tracking row exists; add `registryBlindSubdomains` entry, DNS row, or remove — owner intent unknown) | High | S | Cleanup |
-| 9 | ZFS policy decision on zfs-vm: pin kernel per `latestCompatibleLinuxPackages` deprecation advice + flip `forceImportRoot=false` deliberately (data-loss-adjacent default; needs owner) | High | S | Decision |
-| 10 | Identify the rpi3-dns eval-warning source (sops `SYNTHETIC_API_KEY` placeholder fragment) and disposition: expected-on-eval-only vs real drift | High | S | Quality |
-| 11 | Read + then update SystemNix AGENTS.md: record "host-config toplevel eval is the only surface that forces the float/lock audits; attrNames/app evals prove nothing about gates" + this session's other lessons | High | S | Documentation |
-| 12 | Investigate `tasks.db.readmodel.db.fold-lock` (untracked, first survey): owning process, stale or live, dispose or ignore-document | Medium | S | Cleanup |
-| 13 | pim-sync owner ladder: sops values (OAuth In-production + DAV creds) → dry-run timer review → live flip + metricsFile + freshness check (wave plan) | High | M | Feature |
-| 14 | Post-flip: re-verify gatus endpoint count + doc-counts (the freshness check may add endpoints — the exact class doc-counts guards) | Medium | S | Quality |
-| 15 | Post-flip: confirm the pim-sync integration entry (subdomain=null) survives the tile-coverage assertion and renders correctly in the PapDashboard services tab | Medium | S | Quality |
-| 16 | Run full `nix flake check` in a maintenance window; reconcile what the targeted battery missed | Medium | M | Quality |
-| 17 | Run `buildflow` once in SystemNix and reconcile its nix tools against the flake's own 170-check system; document the split or fold it (buildflow skill: covered repo → buildflow is the canonical gate; I ran raw nix all session) | Medium | M | Process |
-| 18 | Add a "restamp runbook" for doc-counts (procedure currently lives only in README chronicle prose + gate comments): the 4 anchors, the re-derive commands, the convention | Medium | S | Documentation |
-| 19 | Annotate the 19:14 report: mark f#1 resolved (by `1d5a549a2` + this session's pim-sync registration), f#22 superseded by f6 above | Low | S | Documentation |
-| 20 | Mixed-deploy-unit prevention: daemon bundled my re-stamps with the executor's module+runbook into `3b28493b5` (19:14 d3 class again) — decide policy: accept heuristic bundling or pre-commit-based separation | Medium | M | Process |
-| 21 | Sweep 19:14 report's §f rows that this session unblocked or obsoleted (its HARVEST will otherwise re-import stale items) | Low | S | Documentation |
-| 22 | Check `float-roots-20261104-202212.md` says "(no root signatures — proof green)" and reference it from f7's cross-link (attribution rule from the script header) | Low | S | Documentation |
-| 23 | Consider a `docs/status/README.md` index entry linking today's three reports (19:14, 20:29, 20:41) as one narrative — the pim-sync provisioning story now spans all of them | Low | S | Documentation |
-| 24 | Evaluate whether the doc-counts README chronicle (one enormous paragraph) should be extracted to a dedicated counts-history file (docs-health owns the call) | Low | M | Documentation |
-| 25 | Backfill catalog entries or record the catalog-warning as accepted-until-dns-local-deletion — already tracked T-0265/T-0519; only action is choosing the lane | Low | S | Decision |
+| #  | Task                                                                                                                                                                                                                               | Impact   | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Deploy SystemNix in an IO-quiet window (unblocked as of this session; deploy script self-runs float-register — expect instant no-op)                                                                                               | Critical | S      | Feature       |
+| 2  | Post-deploy: verify phase-5 push mirrors on fine-tune/pim-sync (`push_mirrors` populated + one `sync_on_commit` observed landing on each GitHub twin)                                                                              | Critical | S      | Quality       |
+| 3  | Harden `scripts/float-register.sh` daemon-race fallback: `git diff --quiet --cached` leg so staged-but-uncommitted registry is NOT accepted as "committed" (b2/d-adjacent defect found this session)                               | High     | S      | Bug           |
+| 4  | Make doc-counts collect-then-throw: report ALL stale anchors in one failure (currently first stale anchor masks the rest — I had to check 4 manually)                                                                              | High     | S      | Quality       |
+| 5  | Run `.#checks.x86_64-linux.features-drift` (+ `features-drift-selftest`) after my FEATURES.md edit — verify the other FEATURES consumer isn't broken by the re-stamp                                                               | High     | S      | Quality       |
+| 6  | Verify-or-correct the 19:14 #22 retirement: confirm `forgejo-scripts-fixture` actually consumes `fixtures-forgejo.nix` / covers gogenfilter-style flip services; else run the right check                                          | High     | S      | Quality       |
+| 7  | Cross-link the wave plan doc + TODO tombstone to the rc=0 proof log (`~/.cache/lockfloat/float-proof-20261104-202212.log`) as the recorded satisfaction of the "FOD probe REQUIRED" leg                                            | High     | S      | Documentation |
+| 8  | Track or disposition the caddy `llama` ghost-subdomain warning (verify whether a tracking row exists; add `registryBlindSubdomains` entry, DNS row, or remove — owner intent unknown)                                              | High     | S      | Cleanup       |
+| 9  | ZFS policy decision on zfs-vm: pin kernel per `latestCompatibleLinuxPackages` deprecation advice + flip `forceImportRoot=false` deliberately (data-loss-adjacent default; needs owner)                                             | High     | S      | Decision      |
+| 10 | Identify the rpi3-dns eval-warning source (sops `SYNTHETIC_API_KEY` placeholder fragment) and disposition: expected-on-eval-only vs real drift                                                                                     | High     | S      | Quality       |
+| 11 | Read + then update SystemNix AGENTS.md: record "host-config toplevel eval is the only surface that forces the float/lock audits; attrNames/app evals prove nothing about gates" + this session's other lessons                     | High     | S      | Documentation |
+| 12 | Investigate `tasks.db.readmodel.db.fold-lock` (untracked, first survey): owning process, stale or live, dispose or ignore-document                                                                                                 | Medium   | S      | Cleanup       |
+| 13 | pim-sync owner ladder: sops values (OAuth In-production + DAV creds) → dry-run timer review → live flip + metricsFile + freshness check (wave plan)                                                                                | High     | M      | Feature       |
+| 14 | Post-flip: re-verify gatus endpoint count + doc-counts (the freshness check may add endpoints — the exact class doc-counts guards)                                                                                                 | Medium   | S      | Quality       |
+| 15 | Post-flip: confirm the pim-sync integration entry (subdomain=null) survives the tile-coverage assertion and renders correctly in the PapDashboard services tab                                                                     | Medium   | S      | Quality       |
+| 16 | Run full `nix flake check` in a maintenance window; reconcile what the targeted battery missed                                                                                                                                     | Medium   | M      | Quality       |
+| 17 | Run `buildflow` once in SystemNix and reconcile its nix tools against the flake's own 170-check system; document the split or fold it (buildflow skill: covered repo → buildflow is the canonical gate; I ran raw nix all session) | Medium   | M      | Process       |
+| 18 | Add a "restamp runbook" for doc-counts (procedure currently lives only in README chronicle prose + gate comments): the 4 anchors, the re-derive commands, the convention                                                           | Medium   | S      | Documentation |
+| 19 | Annotate the 19:14 report: mark f#1 resolved (by `1d5a549a2` + this session's pim-sync registration), f#22 superseded by f6 above                                                                                                  | Low      | S      | Documentation |
+| 20 | Mixed-deploy-unit prevention: daemon bundled my re-stamps with the executor's module+runbook into `3b28493b5` (19:14 d3 class again) — decide policy: accept heuristic bundling or pre-commit-based separation                     | Medium   | M      | Process       |
+| 21 | Sweep 19:14 report's §f rows that this session unblocked or obsoleted (its HARVEST will otherwise re-import stale items)                                                                                                           | Low      | S      | Documentation |
+| 22 | Check `float-roots-20261104-202212.md` says "(no root signatures — proof green)" and reference it from f7's cross-link (attribution rule from the script header)                                                                   | Low      | S      | Documentation |
+| 23 | Consider a `docs/status/README.md` index entry linking today's three reports (19:14, 20:29, 20:41) as one narrative — the pim-sync provisioning story now spans all of them                                                        | Low      | S      | Documentation |
+| 24 | Evaluate whether the doc-counts README chronicle (one enormous paragraph) should be extracted to a dedicated counts-history file (docs-health owns the call)                                                                       | Low      | M      | Documentation |
+| 25 | Backfill catalog entries or record the catalog-warning as accepted-until-dns-local-deletion — already tracked T-0265/T-0519; only action is choosing the lane                                                                      | Low      | S      | Decision      |
 
-*(25 items — stops where this session's observations end; the rest would be re-importing other sessions' backlogs, which this report was told not to do.)*
+_(25 items — stops where this session's observations end; the rest would be re-importing other sessions' backlogs, which this report was told not to do.)_
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER (3)
 
@@ -103,6 +103,6 @@
 
 ---
 
-*Report per `status-report` + `brutal-self-review` skills (self-review folded into d/e per session request). Scope restricted to this session's run per instruction. No commit performed — the auto-commit daemon sweeps this file. THEN WAIT FOR INSTRUCTIONS.*
+_Report per `status-report` + `brutal-self-review` skills (self-review folded into d/e per session request). Scope restricted to this session's run per instruction. No commit performed — the auto-commit daemon sweeps this file. THEN WAIT FOR INSTRUCTIONS._
 
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.6 · already-tracked f.8 f.12-15 f.25 · OBSOLETE f.19 f.21 · NEW rowed: 12 rows (merged f.5+16+21-13 §f.11+22, f.7+22) → pipeline 9, upstream 1, storage 1, security 1

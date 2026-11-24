@@ -26,7 +26,7 @@ The browser error was the third and deepest layer of a three-layer outage (9200 
 7. **pre-reboot-check §12 resurrected** (`793bf3abb`): it had NEVER executed — the `ls -t` SC2012 info finding failed the app's shellcheck build leg since it shipped 2026-10-17 (dead code nobody noticed), and behind that wall `prev_boot_monotonic`'s `grep -m1 | head` pipeline SIGPIPEd journalctl under `pipefail` (exit 141). Fixed pipe-free (journal drained to a variable, pure awk); first live run: **18 passed / 4 warns / 0 failed, auto-rollback armed**.
 8. **bank-sync half of the 03:40 bundle verified live**: `TimeoutStartUSec=15min` probed on the running unit (landed in the same generation).
 9. **Queue/library hygiene:** the 03:40 deploy row + the stale 10-27 9200→9100 row ticked with evidence; the port-premise drift rows (services.md:671 + TODO_LIST one-liner) corrected to the 03:40-proven mechanism (`PROXY_HTTP_ADDR` honored; `NATS_PORT` + web's compiled-in 9100 not); ONE new row queued (gatus WebFinger body-pat premise) with its one-liner — queue and library edited together, per the no-drift rule.
-10. **TODO-gate multi-leg finding documented** in the EXISTING pipeline.md backlog row (no duplicate row): the gate doesn't only fail on 163 unharvested §f reports — it also fails on ~15 DRIFT legs (wrong-link / no-library-entry, several dating to 2026-09) and 2 time-gated `[ready]` rows without ` — BLOCKED:` markers. This blocked my first commit attempt on pre-existing state.
+10. **TODO-gate multi-leg finding documented** in the EXISTING pipeline.md backlog row (no duplicate row): the gate doesn't only fail on 163 unharvested §f reports — it also fails on ~15 DRIFT legs (wrong-link / no-library-entry, several dating to 2026-09) and 2 time-gated `[ready]` rows without `— BLOCKED:` markers. This blocked my first commit attempt on pre-existing state.
 11. **13:05 status report written and committed** (`d949a3c64`) with self-harvested follow-ups.
 
 ## b) PARTIALLY DONE
@@ -73,6 +73,7 @@ The browser error was the third and deepest layer of a three-layer outage (9200 
 ## f) Up to 50 things to get done next (owner-pick; NOT harvested to the queue yet — awaiting your instructions per the wait directive)
 
 **This session's direct residues (small, mine):**
+
 1. Verify deploy.sh's 12:11 run completed (exit code + post-deploy-check §17/§19 results) — close the b.1 unknown; kill the possibly-wedged job shell.
 2. Annotate runbook trap #9 in place (SUPERSEDED: mechanism + port both stale; see d.9).
 3. Update TODO_LIST.md:1714's opencloud leg ("deploying this session" → deployed gen 970).

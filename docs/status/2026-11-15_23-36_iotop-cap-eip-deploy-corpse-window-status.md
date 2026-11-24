@@ -1,8 +1,9 @@
 # Status: iotop `cap_net_admin+eip` — deployed through 9 gate/flock refusals; corpse-window remediation; self-review
 
-**Session scope:** one user ask — *"Make sure the startup iotop gets its cap_netadmin+eip capabilities!"* — executed end-to-end on evo-x2 (config → eval → deploy → live caps → process-cap proof), plus the deploy-blocking incident it uncovered (a GC-deleted-binary monitor corpse window) and its remediation. Work window ≈16:50–19:11; live re-probe for this report at 23:36.
+**Session scope:** one user ask — _"Make sure the startup iotop gets its cap_netadmin+eip capabilities!"_ — executed end-to-end on evo-x2 (config → eval → deploy → live caps → process-cap proof), plus the deploy-blocking incident it uncovered (a GC-deleted-binary monitor corpse window) and its remediation. Work window ≈16:50–19:11; live re-probe for this report at 23:36.
 
 **VERIFIED (command → artifact):**
+
 - Config renders: `nix eval --json .#nixosConfigurations.evo-x2.config.security.wrappers.iotop-c` → `{"capabilities":"cap_net_admin+eip", …,"permissions":"u+rx,g+x,o+x"}` (~/.cache/iotop-cap/eval.json)
 - Deploy landed: `/var/log/systemnix-deploys/2026-11-15_18-02-18.log` → `deploy exited code=0 … after 4132s`; pre-deploy battery **143 passed, 0 failed**; post-deploy smoke **170 PASS / 5 FAIL (all match the pre-existing smoke-fail baseline — advisory) / 16 WARN / 2 STORM-SUSPECT**
 - Anchor: `readlink /run/current-system` == newest `system-1015-link` (2026-10-14 discipline; re-verified still true at 23:36)
@@ -12,6 +13,7 @@
 - Gate forensics: 5 refusal logs read (`2026-11-15_16-59-02`, watcher log, `17-45-04` foreign, my two patient-loop fires); pidstat + per-device io_ticks + per-scope io.pressure crosschecks at 5 moments
 
 **NOT VERIFIED (and why):**
+
 - The **2 STORM-SUSPECT** smoke checks — downgraded because io PSI avg60 was 48.5% at smoke time; the box never went calm before session end (PSI still ~30% at 23:36). Queued for a calm-window re-run (harvested, §f.1).
 - The **5 baseline FAILs** — matched the pre-existing smoke-fail baseline; not triaged beyond baseline-match (out of scope).
 - **Which 2 checks were STORM-SUSPECT** — seen only in the summary counter; not itemized into the report. Gap.
@@ -25,22 +27,22 @@
 
 ## Session timeline (all times 2026-11-15)
 
-| Time | Event |
-| --- | --- |
-| ~16:5x | Read config (security-hardening.nix wrapper `+ep`, niri autostart `iotop-c -aoP`), read nixpkgs wrapper builder (ambient-raise C wrapper, `cap_setpcap` plumbing), live probe: wrapper live with `=ep`, running iotop-c healthy |
-| ~16:5x | Edited `+ep`→`+eip` (security-hardening.nix:38) + doc sync (docs/agents/desktop.md:92); scoped `nix fmt` clean; eval render verified |
-| 16:59 | Deploy attempt 1 → **rc=12**, entry gate: REAL storm (PSI 38%, nvme1n1 95.7%) — driver: `crm-server` reading **186 MB/s** (pidstat) |
-| 17:00–17:18 | Armed `deploy-when-quiescent.sh --fire`; watched it wait out a parallel session's `flake.lock` float + `base.nix` edit (daemon-swept by 17:14), 4 stable polls, green-eval, fired 17:18 → **rc=12 in 4s** — storm still live |
-| 17:20 | Corpse kill #1: iotop-c pid 3575792 — **exe readlink EMPTY = GC-DELETED store binary**, 100%-stalled scope member; functional probe passes post-change config absence (wrapper not yet redeployed — this was the OLD +ep wrapper, still working) |
-| 17:21–17:45 | Patient PSI loop (avg10<20 ×2): fired 17:45 → **rc=13** — flock held by a FOREIGN deploy (started same second) |
-| 17:45–17:56 | Foreign deploy (parallel session): passed entry gate, ran the full battery (143/0), died **rc=12 after 714s** at the post-battery pressure gate (REAL burst, nvme1n1 78.3%) — still naming the corpse scope `ghostty-3575046` at 100% |
-| 17:57 | Corpse kill #2: the ghostty window 3575046 + its stuck `sh` (3575714) — both dead, scope gone; user-scope stalls cleared. NOTE: the title=iotop window (3574895) had already closed itself when its corpse child died in kill #1 |
-| 18:00 | Patient loop fires again → **rc=12** — NEW scope named: `ghostty-3574898` (the LIVE btop monitor) at 61–73% |
-| 18:01 | Phantom verification: ALL devices ≤4.9% busy, one transient D-state `go` (CV session build), btop running a VALID store binary (not a corpse) → matches the 2026-11-08 owner-endorsed precedent exactly |
-| 18:02 | **`DEPLOY_FORCE_PRESSURE=1` → rc=0, gen-1015** (4132s; smoke 170/5-baseline/2-STORM-SUSPECT); wrapper re-rendered at 18:03 with `=eip` |
-| 18:19–18:33 | The parallel session bounced **4× rc=13** off my deploy's flock — sequencing held, zero tree interference |
-| 19:1x | Full verification battery: anchor OK, getcap eip, functional probe, process-cap proof (python Popen after two shell-probe failures), failed-units scan (3 then) |
-| 23:36 | Re-probe for this report: gen-1015 still current, caps still eip; failed-unit set EVOLVED (inboxclean-sync recovered; **btrbk-root failed in the 23:00 window**, service-health-check new); PSI ~30%; `flake.lock` dirty again (parallel float); **a parallel deploy is IN FLIGHT** (23:34:27 log, no exit line yet) |
+| Time        | Event                                                                                                                                                                                                                                                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~16:5x      | Read config (security-hardening.nix wrapper `+ep`, niri autostart `iotop-c -aoP`), read nixpkgs wrapper builder (ambient-raise C wrapper, `cap_setpcap` plumbing), live probe: wrapper live with `=ep`, running iotop-c healthy                                                                                      |
+| ~16:5x      | Edited `+ep`→`+eip` (security-hardening.nix:38) + doc sync (docs/agents/desktop.md:92); scoped `nix fmt` clean; eval render verified                                                                                                                                                                                 |
+| 16:59       | Deploy attempt 1 → **rc=12**, entry gate: REAL storm (PSI 38%, nvme1n1 95.7%) — driver: `crm-server` reading **186 MB/s** (pidstat)                                                                                                                                                                                  |
+| 17:00–17:18 | Armed `deploy-when-quiescent.sh --fire`; watched it wait out a parallel session's `flake.lock` float + `base.nix` edit (daemon-swept by 17:14), 4 stable polls, green-eval, fired 17:18 → **rc=12 in 4s** — storm still live                                                                                         |
+| 17:20       | Corpse kill #1: iotop-c pid 3575792 — **exe readlink EMPTY = GC-DELETED store binary**, 100%-stalled scope member; functional probe passes post-change config absence (wrapper not yet redeployed — this was the OLD +ep wrapper, still working)                                                                     |
+| 17:21–17:45 | Patient PSI loop (avg10<20 ×2): fired 17:45 → **rc=13** — flock held by a FOREIGN deploy (started same second)                                                                                                                                                                                                       |
+| 17:45–17:56 | Foreign deploy (parallel session): passed entry gate, ran the full battery (143/0), died **rc=12 after 714s** at the post-battery pressure gate (REAL burst, nvme1n1 78.3%) — still naming the corpse scope `ghostty-3575046` at 100%                                                                                |
+| 17:57       | Corpse kill #2: the ghostty window 3575046 + its stuck `sh` (3575714) — both dead, scope gone; user-scope stalls cleared. NOTE: the title=iotop window (3574895) had already closed itself when its corpse child died in kill #1                                                                                     |
+| 18:00       | Patient loop fires again → **rc=12** — NEW scope named: `ghostty-3574898` (the LIVE btop monitor) at 61–73%                                                                                                                                                                                                          |
+| 18:01       | Phantom verification: ALL devices ≤4.9% busy, one transient D-state `go` (CV session build), btop running a VALID store binary (not a corpse) → matches the 2026-11-08 owner-endorsed precedent exactly                                                                                                              |
+| 18:02       | **`DEPLOY_FORCE_PRESSURE=1` → rc=0, gen-1015** (4132s; smoke 170/5-baseline/2-STORM-SUSPECT); wrapper re-rendered at 18:03 with `=eip`                                                                                                                                                                               |
+| 18:19–18:33 | The parallel session bounced **4× rc=13** off my deploy's flock — sequencing held, zero tree interference                                                                                                                                                                                                            |
+| 19:1x       | Full verification battery: anchor OK, getcap eip, functional probe, process-cap proof (python Popen after two shell-probe failures), failed-units scan (3 then)                                                                                                                                                      |
+| 23:36       | Re-probe for this report: gen-1015 still current, caps still eip; failed-unit set EVOLVED (inboxclean-sync recovered; **btrbk-root failed in the 23:00 window**, service-health-check new); PSI ~30%; `flake.lock` dirty again (parallel float); **a parallel deploy is IN FLIGHT** (23:34:27 log, no exit line yet) |
 
 **Deploy-attempt ledger for the saga: 9 attempts / 1 wave landed.** Mine: rc=12, rc=12, rc=13, rc=12, rc=0. Foreign: rc=12 (714s), rc=13 ×4. (Plus the owner-side 15:34 deploy that landed gen-1014 cleanly at 16:50, pre-saga.)
 

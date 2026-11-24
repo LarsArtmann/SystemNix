@@ -9,17 +9,17 @@
 
 ## 0. What the pasted FAIL actually meant (reconstruction, unchanged from the 23:16 report)
 
-The smoke line asserted a *diagnosis* ("deleted by a cycle breaker") and was wrong on both premises. `journalctl -o short-precise` shows the true chain inside 7 ms:
+The smoke line asserted a _diagnosis_ ("deleted by a cycle breaker") and was wrong on both premises. `journalctl -o short-precise` shows the true chain inside 7 ms:
 
-| Time (2026-11-03) | Event |
-| --- | --- |
-| 21:11:01.895 | `Starting Recover buildcache mount after USB hotplug` — fired by **deploy.sh** (sudo TTY pts/42) |
-| 21:11:01.913 | `mnt-buildcache.automount: Deactivated successfully` |
-| 21:11:01.915 | `mnt-buildcache.mount: Deactivated successfully` |
-| 21:11:01.920 | `Stopping Gitea Actions Runner...` |
-| 21:11:01.944 | runner `Deactivated successfully` / `Stopped` |
-| 21:11:01.958 → 02.270 | automount re-armed, `/mnt/buildcache` remounted from `/dev/sdb1` |
-| 21:12:13 | `gitea-runner-ensure: ... not active — clearing start-limit, starting (no-block)` |
+| Time (2026-11-03)     | Event                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| 21:11:01.895          | `Starting Recover buildcache mount after USB hotplug` — fired by **deploy.sh** (sudo TTY pts/42) |
+| 21:11:01.913          | `mnt-buildcache.automount: Deactivated successfully`                                             |
+| 21:11:01.915          | `mnt-buildcache.mount: Deactivated successfully`                                                 |
+| 21:11:01.920          | `Stopping Gitea Actions Runner...`                                                               |
+| 21:11:01.944          | runner `Deactivated successfully` / `Stopped`                                                    |
+| 21:11:01.958 → 02.270 | automount re-armed, `/mnt/buildcache` remounted from `/dev/sdb1`                                 |
+| 21:12:13              | `gitea-runner-ensure: ... not active — clearing start-limit, starting (no-block)`                |
 
 Zero `deleted to break ordering cycle` lines existed in the window. Mechanism: the runner's `RequiresMountsFor=/mnt/buildcache/ci-runner-cache` compiles to `Requires=mnt-buildcache.mount` + `After=`, and `buildcache-usb-recovery` — a unit deploy.sh starts after **every** switch — stopped that mount **unconditionally, on a perfectly healthy mount**. Stop propagation TERMed the runner; only the 5-minute ensure timer healed it, and the smoke sampled the 72 s gap.
 
@@ -71,8 +71,8 @@ Zero `deleted to break ordering cycle` lines existed in the window. Mechanism: t
 
 ## d) TOTALLY FUCKED UP (mine, blunt)
 
-1. **I reported "fix complete" while the fix was not deployed, and then let 4 hours pass without noticing the deploy had died.** The watcher's rc=13 at 00:10 was the *only* thing standing between a verified fix and a live fix, and I did not check its log until this report. A deploy watcher exiting non-zero is exactly the kind of event that must be polled to completion, not fired and forgotten.
-2. **My first negative-test run failed and I almost reported it as a real finding.** `FAIL [dashmount/…]: eval failed but marker absent` with `systemd.services.system-health.extraMonitoredServices does not exist` — this was a **mid-edit race**: my reproduction copy was made while a parallel session had `platforms/nixos/system/configuration.nix` dirty, and `git ls-files | rsync` copied the worktree content. The live tree evals green and the re-run passed. Lesson (again): a harness copy is a snapshot of a *shared* tree — never diagnose a copy-only failure before re-running at quiescence.
+1. **I reported "fix complete" while the fix was not deployed, and then let 4 hours pass without noticing the deploy had died.** The watcher's rc=13 at 00:10 was the _only_ thing standing between a verified fix and a live fix, and I did not check its log until this report. A deploy watcher exiting non-zero is exactly the kind of event that must be polled to completion, not fired and forgotten.
+2. **My first negative-test run failed and I almost reported it as a real finding.** `FAIL [dashmount/…]: eval failed but marker absent` with `systemd.services.system-health.extraMonitoredServices does not exist` — this was a **mid-edit race**: my reproduction copy was made while a parallel session had `platforms/nixos/system/configuration.nix` dirty, and `git ls-files | rsync` copied the worktree content. The live tree evals green and the re-run passed. Lesson (again): a harness copy is a snapshot of a _shared_ tree — never diagnose a copy-only failure before re-running at quiescence.
 3. **I edited `buildcache.nix` and added a whole new audit leg AFTER running the full `nix flake check` and never re-ran it.** The full walk last ran at 23:2x; items 8–10 (gc `ReadWritePaths` removal, `mount-gating-audit` leg 2, `signoz.nix` allowlist, `negative-test-lints.sh` leg) landed after it. I compensated with the narrower surfaces (`config.assertions` empty, toplevel drvPath green, `CASES=dashmount` PASS, `nix fmt`, shellcheck) but **the all-systems flake check has not been run against the final tree state by me.**
 4. **The daemon committed my `.nix` work into heuristic commits, and the pre-commit hook's flake-check leg never saw it** (`e544ab766`, `924240978`). That is the documented daemon-race hole — the lint legs are keyed on staged paths — and I did not re-run the skipped legs standalone at the moment it happened. I only did so now.
 5. **I did not add a CHANGELOG line for the gc fix**, the more damaging of the two fixes (a dead GC means the disk can wedge at 100 %, the 2026-10-19/20 class).
@@ -83,14 +83,14 @@ Zero `deleted to break ordering cycle` lines existed in the window. Mechanism: t
 ## e) WHAT WE SHOULD IMPROVE (systemic)
 
 1. **A deploy watcher that exits non-zero must page, not print.** rc=13 ("another deploy holds the lock") parked a committed, verified fix for 4 hours. Either the watcher retries the lock (bounded backoff, re-arm), or it writes a `[watch]` row, or it notifies. Choosing "STOP for human review" is only correct if a human is watching.
-2. **Stale-lock semantics deserve a second look.** At 00:10 a *dead* recorded holder (`3207863`) plus an unreadable `/proc` was treated as "another deploy is running". Either the lock file should be root-independent (a path both users can stat, with a start-time fingerprint), or `--force-with-proof` should exist for the dead-holder case. As shipped, one crashed sudo deploy blocks every agent deploy until someone looks.
+2. **Stale-lock semantics deserve a second look.** At 00:10 a _dead_ recorded holder (`3207863`) plus an unreadable `/proc` was treated as "another deploy is running". Either the lock file should be root-independent (a path both users can stat, with a start-time fingerprint), or `--force-with-proof` should exist for the dead-holder case. As shipped, one crashed sudo deploy blocks every agent deploy until someone looks.
 3. **The smoke-line-should-not-diagnose rule is now proven twice** (2026-10-23 stale premise, and this `cycle breaker` line). A FAIL line is evidence; a FAIL line that also asserts a cause is a trap for the next responder, and it cost this session its first hour.
-4. **`-` on `ReadWritePaths` needs to be understood as a footgun, not a convenience.** It is now eval-banned under declared mount points. `ReadWritePaths` entries under a mount should be gated by the *mount*, never marked optional by path.
+4. **`-` on `ReadWritePaths` needs to be understood as a footgun, not a convenience.** It is now eval-banned under declared mount points. `ReadWritePaths` entries under a mount should be gated by the _mount_, never marked optional by path.
 5. **Convergence lists must be declared by the module that owns the unit.** `buildcache.nix` stays consumer-agnostic; `forgejo.nix` registers the runner. This keeps "who must survive a remount" answerable at the unit's own definition.
 6. **Consumer-carrying mount recoveries belong in one shared abstraction.** `pool-recovery` and `buildcache` now carry the same 30-line filter and near-identical converge function; the third copy (`rust-cache`) is already overdue.
 7. **A "recovery unit fired on every deploy" invariant should be stated once, repo-wide**: no-op when healthy, converge consumers after a real teardown, never let a health check be assumed. Any future `*-usb-recovery` inherits it.
 8. **Unit liveness signals that a timer can mask are not signals.** `gitea-runner-ensure` heals every 5 min, so `is-active` sampled once per deploy is the only observability, and it samples a gap.
-9. **`/home/lars/tmp` has been a broken declared mount long enough to kill a production GC.** A declared `fileSystems` entry whose subvolume was never created is a config/runtime drift class; the disko-declaration assertion verifies the *declaration*, not that the live disk has it. A pre-deploy check for "every declared mount point's automount is not in `failed` state" would have caught this on day one.
+9. **`/home/lars/tmp` has been a broken declared mount long enough to kill a production GC.** A declared `fileSystems` entry whose subvolume was never created is a config/runtime drift class; the disko-declaration assertion verifies the _declaration_, not that the live disk has it. A pre-deploy check for "every declared mount point's automount is not in `failed` state" would have caught this on day one.
 10. **Sessions must re-run the full `nix flake check` after the LAST edit, not the first.** The daemon-race rule already says to re-run skipped legs standalone; it should also say "and after the final edit of the session, run the full walk once".
 
 ---
@@ -121,11 +121,11 @@ Zero `deleted to break ordering cycle` lines existed in the window. Mechanism: t
 22. Make the deploy watcher retry/permanently re-arm on the deploy-lock class instead of exiting rc=13.
 23. Give the deploy lock a cross-user-visible holder fingerprint, or a documented dead-holder override.
 24. Add a pre-deploy leg: every declared mount point's `.mount`/`.automount` must not be in `failed` (`busctl` ActiveState sweep) — catches the `/home/lars/tmp` class.
-25. Add an eval or pre-deploy check that each `hot-user-caches`/`hot-db` subvol actually exists on the live disk (distinct from the disko *declaration* assertion).
+25. Add an eval or pre-deploy check that each `hot-user-caches`/`hot-db` subvol actually exists on the live disk (distinct from the disko _declaration_ assertion).
 26. Decide the fate of the ~1.4 G `~/tmp/go-lint` residue (rebuildable cache; no writer since 2026-11-02 21:07).
 27. Reclaim `/home/lars/tmp` scratch (the pre-existing `~17 G` row) once the mount is repaired.
 28. Sweep every remaining `-`-prefixed unit path in the tree for the ENODEV class beyond `ReadWritePaths` (e.g. `ReadOnlyPaths`, `ExecStart` `-` prefixes are different but worth auditing).
-29. Consider extending the audit to `unitConfig.RequiresMountsFor` entries that point *inside* a mount point rather than at it.
+29. Consider extending the audit to `unitConfig.RequiresMountsFor` entries that point _inside_ a mount point rather than at it.
 30. Re-check the clickhouse trade-off: native BACKUP to a mount-gated path vs the `-`/ENODEV residual.
 31. Add a `docs/services/signoz.md` note for the clickhouse allowlist decision.
 32. Reconcile the two smoke reports: `post-deploy-check` §21 and this new wording should be cross-referenced in `docs/services/forgejo.md`.

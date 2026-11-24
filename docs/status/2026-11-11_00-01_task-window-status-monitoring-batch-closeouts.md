@@ -56,6 +56,7 @@ All four fix tickets delivered their findings' letter:
 ## f) UP TO 50 NEXT THINGS (deduped; the top items are already queued — listed for the priority picture)
 
 Already queued (verified present; do NOT re-dispatch):
+
 1. Post-deploy verify leg for both new checks + the guard (TODO_LIST:374) — **now unblocked**, gen-997 carries everything.
 2. Value-less-emission class gate (A1, TODO_LIST:3416).
 3. SigNoz absence retro (A2, TODO_LIST:3417).

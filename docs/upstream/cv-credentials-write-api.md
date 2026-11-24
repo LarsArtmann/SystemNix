@@ -69,16 +69,16 @@ Output shape (human table; `--json` = the same fields):
 {
   "storeActive": true,
   "storeDir": "/var/lib/cv/data/credentials-store",
-  "keySource": "env",                     // env | state-file | none
+  "keySource": "env", // env | state-file | none
   "platforms": [
     {
       "platform": "ateam",
-      "kinds": ["password"],              // kinds present
-      "sessionBlobAge": null,             // ISO duration or null
+      "kinds": ["password"], // kinds present
+      "sessionBlobAge": null, // ISO duration or null
       "lastRotatedAt": "2026-11-02T18:31:00+01:00"
     }
   ],
-  "readModelEvents": 2                    // meta_stream_log count
+  "readModelEvents": 2 // meta_stream_log count
 }
 ```
 

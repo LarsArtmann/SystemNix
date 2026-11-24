@@ -113,6 +113,7 @@ The prod boot on the real 123k-row journal is the strongest possible validation 
 ## f) NEXT (prioritized, from this session's wake)
 
 P0 — directly open from this wave:
+
 1. Post-deploy verification pass: post-deploy-check.sh full battery at the 8e170d05 generation;
    confirm gatus bank-sync checks green + no restart-loop residue.
 2. Upstream CI green check: invoices e5ea1549, CV 4ae2d928b+e85a847d3 (incl. the 8 tq commits),
@@ -129,21 +130,21 @@ P1 — this session's deliberate deferrals:
 8. buildflow: file the nix-fmt staged-only roundtrip bug (2 live bypasses).
 9. CV boot-rehydration SIGSEGV fix (nil-guard + chunked rehydration) — the standing upstream cure.
 10. CV per-dep pin lockstep audit (g-c-s was the found one; check cqrs-htmx/go-aichat/go-daemon pins
-    vs go.mod — the Same-rev-pin contract, repo-wide).
+vs go.mod — the Same-rev-pin contract, repo-wide).
 11. Add the "re-lock after hash re-bake" sequencing rule to docs/agents/go-ecosystem.md.
 12. Next lock wave watch: all four inputs now float — daemon sweeps move them; a §11 pass after the
-    next wave is the standing tripwire.
+next wave is the standing tripwire.
 
 P2 — observed in passing, worth rows:
 13. Storm source (session-26 cargo/sccache on the DAS) — attribution probe pattern worked; consider
-    a standing "name the storm source before cursing PSI" step in the stability docs.
+a standing "name the storm source before cursing PSI" step in the stability docs.
 14. Agent-cache-on-QLC blessed path writeup (e-6).
 15. bank-sync `error_templates.go` remedy text still names migrate-journal for the key-basis class —
-    now largely moot (fix ships) but the remedy text was proven WRONG twice for that class; a
-    wording fix upstream is cheap honesty.
+now largely moot (fix ships) but the remedy text was proven WRONG twice for that class; a
+wording fix upstream is cheap honesty.
 16. TODO row 3636 (fresh-clone go-list vs ls-files for go-health-dashboard) — still valid, cheap.
 17. The 2026-11-14_19-45 report's §f "not harvested" buildflow item now has TWO bypasses — third
-    recurrence converts it to a filed issue (standing rule).
+recurrence converts it to a filed issue (standing rule).
 
 (18–50: intentionally not padded — the 17 above are the real wake; filler items would be noise.)
 

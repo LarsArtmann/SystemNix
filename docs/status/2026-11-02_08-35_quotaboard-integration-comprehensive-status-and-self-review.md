@@ -66,6 +66,7 @@
 ## f) NEXT TASKS (prioritized, ~50; harvest into the queue/library happens per-item at dispatch, most live in the quotaboard repo)
 
 **Deploy gate (unblocks 4+ items):**
+
 1. Deploy when PSI calm; run `/tmp/qb-post-deploy-verify.sh`; `systemctl --user start quotaboard`; restart dms; confirm `quotaboard [loaded]`, journal clean, barConfigs IPC, then anchor the generation.
 2. Verify phase 5 attached the Forgejo→GitHub push mirror (8h + sync_on_commit) and first sync landed.
 3. Confirm health-dashboard's daily rediscover sweep auto-federates :8791 (appkit go-health) — expected but unverified.

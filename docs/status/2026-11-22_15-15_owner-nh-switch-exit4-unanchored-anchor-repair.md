@@ -30,8 +30,8 @@ incident), deploy logs (07:41 + 08:11 both entry-refused code=12), live anchor/P
 - The collector exits 1 on any incomplete sweep ("partial file published, exiting non-zero") — deliberate
   fail-visible design, but it makes an unrelated timer unit able to VETO an activation.
 - Same partial sweeps flipped gatus "PapDashboard Ingest" RED at 14:12/14:30 (ingest freshness metric stale
-  + brief connection-refused) — self-healed once clean sweeps resumed 14:55; 8088 listener answering, gatus
-  "Failed to send" count 0 since 15:00, papdashboard serving 200s throughout the tail.
+  - brief connection-refused) — self-healed once clean sweeps resumed 14:55; 8088 listener answering, gatus
+    "Failed to send" count 0 since 15:00, papdashboard serving 200s throughout the tail.
 
 ## c) Repair (executed + verified)
 

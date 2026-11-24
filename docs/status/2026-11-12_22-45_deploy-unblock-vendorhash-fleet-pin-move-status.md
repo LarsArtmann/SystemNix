@@ -5,6 +5,7 @@
 ## Scope line — what this report VERIFIED vs what it did NOT
 
 **VERIFIED (command / artifact, fresh at report time):**
+
 - Toplevel build GREEN under the full fixed tree: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` → zero failures (`~/.cache/toplevel-proof-20261112-fixwave4.log`).
 - Deploy LANDED + ANCHORED: `readlink /run/current-system` == `readlink /nix/var/nix/profiles/system-1004-link` == `qy2wimc5…f4a03c0` (checked 21:57 + 22:41).
 - Live unit sweep 22:41 via `busctl get-property … ActiveState`: bank-sync, discordsync, journal-serve, cvagent, monitor365-server, signoz, signoz-collector, timesheets, mr-sync-dashboard, projects-management-automation, forgejo, gatus, caddy — ALL `active`.
@@ -14,6 +15,7 @@
 - IO storm trend: `/proc/pressure/io` 21:52 avg10 47.7% → 22:41 avg10 23.8% (calming, avg300 still 49).
 
 **NOT verified (and why):**
+
 - monitor365-ui `inactive`, llama-chat `inactive`, bank-sync-canary `inactive`, journal-import `inactive` — did NOT determine designed-inactive (oneshot/socket/timer) vs failed; their deploy battery showed no failure for them and Gatus covers the long-runners, but I did not prove the design intent.
 - taskwarrior3 HM binary + trunk — build-green only; no runtime probe (user-package, no service).
 - Upstream CI for my timesheets push (4db9566) — NOT checked (queued row).
@@ -107,6 +109,7 @@ Nothing in the FINAL state is fucked: the system is up, anchored, core services 
 Harvest bookkeeping: items 1-4 + 8-11 were ALREADY queued this session (pair-edited, gate-verified); items 5-7 were QUEUED at report authoring; the rest carry an explicit disposition (deliberate non-harvest reasons: ROADMAP-class, foreign-repo, live-watch, folded-into-existing-row, or fix-on-sight).
 
 **SystemNix queue (actionable, owned here):**
+
 1. Deploy the `ch0mwdskv` drift in a PSI-calm window (gawk fix rides it) — QUEUED (services.md).
 2. signoz-provision jq parse triage vs first live d00471c build — QUEUED (services.md).
 3. forgejo-github-sync exit-1-with-green-steps triage — QUEUED (services.md).

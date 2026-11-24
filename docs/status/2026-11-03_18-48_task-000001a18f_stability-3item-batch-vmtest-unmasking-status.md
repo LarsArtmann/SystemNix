@@ -4,11 +4,11 @@ _Session: 2026-11-02 → 2026-11-03 (this report written 2026-11-03 18:48 CET). 
 
 ## Task batch (queue order)
 
-| # | Item | State | Commit chain |
-|---|------|-------|--------------|
+| # | Item                                                                              | State                                                                                         | Commit chain                                                                                                                                                          |
+| - | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | Extend guard ioPause cgroupPatterns (monitor365-server.service + app.slice/run-*) | **Landed + ticked (by parallel session); VM-test green proof still in-flight (this session)** | `d0e202255` (patterns + env seam), `d625a9109` (§9d no-match→match VM-test leg), `bcf0ef477` (my 6a-lb epoch-fix, daemon-swept), `43cc8ec10` (row ticks, footer-less) |
-| 2 | Annotate SUPERB plan §g.3 with freeze-#38 mapping verdict | **DONE — footer commit landed by this session** | `d255cf6b7` (Task-Queue-ID footer, both surfaces ticked) |
-| 3 | Fix crash-triage trips metric (count IO-PAUSE trips) | **Landed + ticked (by parallel session); live-verified by this session** | grep alternation at `scripts/crash-triage.sh:96` + fixtures (pre-landed 2026-10-31, `3012a21d3` era), ticks in `43cc8ec10` (footer-less) |
+| 2 | Annotate SUPERB plan §g.3 with freeze-#38 mapping verdict                         | **DONE — footer commit landed by this session**                                               | `d255cf6b7` (Task-Queue-ID footer, both surfaces ticked)                                                                                                              |
+| 3 | Fix crash-triage trips metric (count IO-PAUSE trips)                              | **Landed + ticked (by parallel session); live-verified by this session**                      | grep alternation at `scripts/crash-triage.sh:96` + fixtures (pre-landed 2026-10-31, `3012a21d3` era), ticks in `43cc8ec10` (footer-less)                              |
 
 ## a) FULLY DONE
 
@@ -55,6 +55,7 @@ _Session: 2026-11-02 → 2026-11-03 (this report written 2026-11-03 18:48 CET). 
 ## f) Up to 50 things to get done next (this batch first, then observed debt)
 
 **Batch-critical (this task ID):**
+
 1. Read rerun #3 verdict (`~/.cache/vmtest-guard4.log`) — is 6b-cap "restore #2" green now?
 2. If red: root-cause the restore-#2 refusal via the guard's restore-gate chain (`sacrifice_socket_active`/`last_trip_age`/mem/psi/io/episode gates, `restore_capped` early-set), fix, rerun to green.
 3. If green: attach VM-test-green proof to item 1's two tick narratives (real evidence update, not churn) → footer commit for item 1.
@@ -84,7 +85,7 @@ _Session: 2026-11-02 → 2026-11-03 (this report written 2026-11-03 18:48 CET). 
 23. Fix wrong-link row: `2026-09-25_10-18_task-…07d42` lives in storage.md (gate output).
 24. Fix wrong-link row: `2026-10-09_21-11_vendorhash-wave5` lives in monitoring.md (gate output).
 25. Add missing library entries for ~15 no-entry rows sighted in gate output (forgejo domains flip, geometrikks RSS, audit-textfile class C, memcg walk-state race, eventcatalog, architecture-catalog VM test, crush-daily gap, CI shellcheck/lib, lock-dedup deferred battery, codify daemon-race policy, footer verification, tq claim/lease markers, pre-commit store-warmth heal, reject flag-shaped filenames, amend-aware hook legs, docs-only skip persistence…).
-26. Time-gated `[ready]` rows without BLOCKED marker (gen-968 re-arm sweep, llama-chat restart storm-gating) — mark ` — BLOCKED:` or schedule.
+26. Time-gated `[ready]` rows without BLOCKED marker (gen-968 re-arm sweep, llama-chat restart storm-gating) — mark `— BLOCKED:` or schedule.
 27. Make the gate's early-harvest class detection match the owner's intent (warn vs block).
 
 **CI / pipeline:**

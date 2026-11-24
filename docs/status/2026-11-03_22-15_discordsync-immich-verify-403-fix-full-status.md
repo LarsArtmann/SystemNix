@@ -8,24 +8,24 @@
 
 The WARN was a **genuine daily failure wearing a check bug as a disguise**, twice over:
 
-1. **Real failure:** the unit's first-ever daily tick (2026-11-03 00:43; timer went live Nov 2 22:09 per journal) **failed HTTP 403** — Immich rejected a *valid, correctly-scoped* key because the verify script probed `/api/users/me`, which requires `user.read` the least-privilege key deliberately does not carry (live-proven: `{"message":"Missing required permission: user.read"}`).
-2. **Masking bug:** every recent deploy exits 4 (12-13 pre-existing failed units), so `deploy.sh`'s exit-4 branch ran the **global `reset-failed`** — clearing `Result` to `success` *without re-running the verify* — which made the later `is-failed`-gated restart leg dead code and left the check reading `Result=success` against a stale failure journal line.
+1. **Real failure:** the unit's first-ever daily tick (2026-11-03 00:43; timer went live Nov 2 22:09 per journal) **failed HTTP 403** — Immich rejected a _valid, correctly-scoped_ key because the verify script probed `/api/users/me`, which requires `user.read` the least-privilege key deliberately does not carry (live-proven: `{"message":"Missing required permission: user.read"}`).
+2. **Masking bug:** every recent deploy exits 4 (12-13 pre-existing failed units), so `deploy.sh`'s exit-4 branch ran the **global `reset-failed`** — clearing `Result` to `success` _without re-running the verify_ — which made the later `is-failed`-gated restart leg dead code and left the check reading `Result=success` against a stale failure journal line.
 
 Fix landed in three layers + docs; deploy **handed off** (tree not quiescent). Until it lands, the Nov 4 ~00:39 tick still runs the old script (one more 403 page expected).
 
 ## Timeline (evidence-anchored)
 
-| When | What |
-| --- | --- |
-| 21:2x | Pre-read: post-deploy-check.sh:1455-1480 leg, discordsync.nix verify unit (OnFailure inherit, oneshot no-RemainAfterExit), docs/services/discordsync.md runbook, 10-25/10-26 status reports |
-| 21:2x | Live journal: only run in 12 days = Nov 3 00:43 **FAIL 403**; live busctl: `inactive/dead`, `Result=success`, no journal lines after the failure → reset-without-rerun aliased state |
-| 21:3x | sudo-journal attribution: global `reset-failed` ran 15:57, 16:01, 18:47, 21:01 today (exit-4 deploys); deploy.sh:627 (global reset, exit-4 branch) vs deploy.sh:845 (dead is-failed gate) |
-| 21:4x | Endpoint probe harness (self-elevating throwaway): `/api/users/me` → 403 `Missing required permission: user.read`; `bulk-upload-check` iterative shape discovery: `checksums[]` → 400, `assets[{checksum}]` → 400, `assets[{id}]` → 400, **`assets[{id,checksum}]` → 200** `{"results":[{"id":"verify-probe","action":"accept"}]}` |
-| 21:4x | Confirmed DiscordSync's Go client (`internal/immichclient`) already sends the new `assets:[{id,checksum}]` shape — only the SystemNix verify script was stale |
-| 21:46 | Fixes landed (daemon batch `930984561`): discordsync.nix endpoint swap; deploy.sh pre-reset failed-set capture + membership gates on BOTH legs (db-heal + verify); post-deploy-check script-line-first classification; runbook update |
+| When  | What                                                                                                                                                                                                                                                                                                                                                                  |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 21:2x | Pre-read: post-deploy-check.sh:1455-1480 leg, discordsync.nix verify unit (OnFailure inherit, oneshot no-RemainAfterExit), docs/services/discordsync.md runbook, 10-25/10-26 status reports                                                                                                                                                                           |
+| 21:2x | Live journal: only run in 12 days = Nov 3 00:43 **FAIL 403**; live busctl: `inactive/dead`, `Result=success`, no journal lines after the failure → reset-without-rerun aliased state                                                                                                                                                                                  |
+| 21:3x | sudo-journal attribution: global `reset-failed` ran 15:57, 16:01, 18:47, 21:01 today (exit-4 deploys); deploy.sh:627 (global reset, exit-4 branch) vs deploy.sh:845 (dead is-failed gate)                                                                                                                                                                             |
+| 21:4x | Endpoint probe harness (self-elevating throwaway): `/api/users/me` → 403 `Missing required permission: user.read`; `bulk-upload-check` iterative shape discovery: `checksums[]` → 400, `assets[{checksum}]` → 400, `assets[{id}]` → 400, **`assets[{id,checksum}]` → 200** `{"results":[{"id":"verify-probe","action":"accept"}]}`                                    |
+| 21:4x | Confirmed DiscordSync's Go client (`internal/immichclient`) already sends the new `assets:[{id,checksum}]` shape — only the SystemNix verify script was stale                                                                                                                                                                                                         |
+| 21:46 | Fixes landed (daemon batch `930984561`): discordsync.nix endpoint swap; deploy.sh pre-reset failed-set capture + membership gates on BOTH legs (db-heal + verify); post-deploy-check script-line-first classification; runbook update                                                                                                                                 |
 | 21:5x | Verification: bash -n OK; shellcheck CLEAN (`nix develop -c shellcheck scripts/deploy.sh scripts/post-deploy-check.sh`); `nix fmt --` 0 changed; evo-x2 toplevel eval green; `.#checks.x86_64-linux.discordsync-immich-shape` green; live classification harness reproduced the exact aliased state → now correctly reports **FAIL "last verification FAILED (403)"** |
-| 22:0x | Queue hygiene: shellcheck TODO row ticked (TODO_LIST + pipeline.md, both in HEAD); deploy row queued (TODO_LIST + services.md, both in HEAD); tmp harnesses trashed (probe script had been swept into commit `798a921ef` — deletion rode `9f0bf8e9e`) |
-| 22:1x | Quiescence check FAILED (parallel session mtimes 3-5 min fresh) → deploy NOT run; 400-contract-drift branch added to the verify script (fmt clean, eval OK); 2026-10-26 report item 26 thread annotated RESOLVED inline |
+| 22:0x | Queue hygiene: shellcheck TODO row ticked (TODO_LIST + pipeline.md, both in HEAD); deploy row queued (TODO_LIST + services.md, both in HEAD); tmp harnesses trashed (probe script had been swept into commit `798a921ef` — deletion rode `9f0bf8e9e`)                                                                                                                 |
+| 22:1x | Quiescence check FAILED (parallel session mtimes 3-5 min fresh) → deploy NOT run; 400-contract-drift branch added to the verify script (fmt clean, eval OK); 2026-10-26 report item 26 thread annotated RESOLVED inline                                                                                                                                               |
 
 ## a) FULLY DONE
 
@@ -73,6 +73,7 @@ Nothing system-level broke — no deploy ran, no unit regressed, eval stayed gre
 ## f) NEXT THINGS (up to 50; [N] = surfaced new by this session, [Q] = already queued/seen this session, no new research)
 
 **This session's direct line:**
+
 1. [N/Q] Deploy evo-x2 landing the 403 fix + one `systemctl start discordsync-immich-verify.service` convergence + expect "verified (bulk-upload-check)" PASS — QUEUED (TODO_LIST + services.md).
 2. [N] Confirm the Nov 4 ~00:39 tick (old script, pre-deploy) or the post-deploy tick goes green; if a 403 page arrives AFTER the fix deploy, the fix is not live — check `readlink /nix/store/…-discordsync-immich-verify` generation.
 3. [N] Verify the OnFailure → Discord alert leg delivered on the 00:43 failure (alert unit journal + owner's Discord; §g Q2).
@@ -139,4 +140,4 @@ nix build --no-link .#checks.x86_64-linux.discordsync-immich-shape
 nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath
 ```
 
-*Arte in Aeternum — report authored 2026-11-03 22:15 CET; waiting for owner instructions on §g.*
+_Arte in Aeternum — report authored 2026-11-03 22:15 CET; waiting for owner instructions on §g._

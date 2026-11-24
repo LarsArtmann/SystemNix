@@ -20,9 +20,9 @@ committed charge stays at KB–MB scale (prod victims: anon-rss ≤1 MB).
 
 ## Repro numbers
 
-| pid | process | VmSize |
-|-----|---------|--------|
-| 274545 | browser (main) | 55.65 GiB |
+| pid                                        | process                | VmSize                                               |
+| ------------------------------------------ | ---------------------- | ---------------------------------------------------- |
+| 274545                                     | browser (main)         | 55.65 GiB                                            |
 | 280360 / 280655 / 280799 / 280845 / 286516 | `--type=renderer` (×5) | **1,518,601,000–1,520,574,764 kB (1.414–1.415 TiB)** |
 
 Prod kill lines (boot `b0d70d73`, Oct 28 10:15): chromium 1,518,605,956 kB /
@@ -31,12 +31,12 @@ within 0.01%**. Same reservation layout, present at t≈0, no run time needed.
 
 ## Renderer map composition (pid 280360, PROT_NONE `---p` totals)
 
-| region | size |
-|--------|------|
-| `0x709c00034000-0x71e000000000` | **1296 GiB** (V8 sandbox + guards) |
-| `0x708800000000-0x709800000000` | 64 GiB |
+| region                                                                                                | size                               |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `0x709c00034000-0x71e000000000`                                                                       | **1296 GiB** (V8 sandbox + guards) |
+| `0x708800000000-0x709800000000`                                                                       | 64 GiB                             |
 | `0x247c025c0000-…` / `0x2589659e000-…` / `0x36200024c000-…` / `0x362403454000-…` / `0x709801940000-…` | 5 × ~16 GiB (PartitionAlloc pools) |
-| `0x10000-0x100100000` | 4 GiB |
+| `0x10000-0x100100000`                                                                                 | 4 GiB                              |
 
 Total anonymous reservation ≈ 1447.2 GiB = the full VmSize delta over the browser
 process. Committed pages at sample time: VmRSS 10–60 MB per renderer.

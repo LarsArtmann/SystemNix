@@ -4,20 +4,20 @@
 
 ## a. Result
 
-| Input | Was | Now | Upstream fix |
-|---|---|---|---|
-| library-policy | pin 7fc0983 | **tip 088aaf2, floating** | regen landed upstream (probe green, no fix needed) |
-| journal | pin 4a63e7f | **tip 0663476, floating** | regen landed upstream (probe green) |
-| golangci-lint-auto-configure | pin 28340f6 | **tip 41e6ed1, floating** | regen landed upstream (probe green) |
-| inboxclean | (floated) | tip e9d55c92 | lifted earlier today by the parallel session; tip re-probed green |
-| crm | pin f32f4c0 | **pin rolled to f2d1726** (deliberate policy pin kept) | probe green at tip; live session active in checkout |
-| overview | pin 67b2fac9 | **tip f90c9a73, floating** | dedup/v4 publicDeps wiring (635f832d) + templ-cli pin v0.3.1070→v0.3.1100 + stale app.css rebuilt + vendorHash paste |
-| project-dependency-graph | pin 8335670e | **tip 05e5b1ae, floating** | cmdguard/v5 deps-map wiring + vendorHash paste (6b80811f) |
-| discordsync | pin ea6c444c | **tip 79e622ab, floating** | the big one — see §b |
-| file-and-image-renamer | pin 973dd383 | **pin STAYS** | tip 5a319ea6 still fails (committed vendor/ carries pre-regen templ-components); live session mid-migration in that checkout (cmdguard v4→v5) — vendor refresh not safe to land concurrently. Row + flake comment updated with corrected diagnosis |
-| qmd | tag v2.8.3 | **unchanged** | already the latest upstream tag |
-| paperless-gpt-src | tag v0.31.0 | **unchanged** | already the latest upstream tag |
-| nixpkgs-llama-rag | rev 0968519 | **unchanged** | external; llama.cpp 0.4.x spin regression still open upstream |
+| Input                        | Was          | Now                                                    | Upstream fix                                                                                                                                                                                                                                       |
+| ---------------------------- | ------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| library-policy               | pin 7fc0983  | **tip 088aaf2, floating**                              | regen landed upstream (probe green, no fix needed)                                                                                                                                                                                                 |
+| journal                      | pin 4a63e7f  | **tip 0663476, floating**                              | regen landed upstream (probe green)                                                                                                                                                                                                                |
+| golangci-lint-auto-configure | pin 28340f6  | **tip 41e6ed1, floating**                              | regen landed upstream (probe green)                                                                                                                                                                                                                |
+| inboxclean                   | (floated)    | tip e9d55c92                                           | lifted earlier today by the parallel session; tip re-probed green                                                                                                                                                                                  |
+| crm                          | pin f32f4c0  | **pin rolled to f2d1726** (deliberate policy pin kept) | probe green at tip; live session active in checkout                                                                                                                                                                                                |
+| overview                     | pin 67b2fac9 | **tip f90c9a73, floating**                             | dedup/v4 publicDeps wiring (635f832d) + templ-cli pin v0.3.1070→v0.3.1100 + stale app.css rebuilt + vendorHash paste                                                                                                                               |
+| project-dependency-graph     | pin 8335670e | **tip 05e5b1ae, floating**                             | cmdguard/v5 deps-map wiring + vendorHash paste (6b80811f)                                                                                                                                                                                          |
+| discordsync                  | pin ea6c444c | **tip 79e622ab, floating**                             | the big one — see §b                                                                                                                                                                                                                               |
+| file-and-image-renamer       | pin 973dd383 | **pin STAYS**                                          | tip 5a319ea6 still fails (committed vendor/ carries pre-regen templ-components); live session mid-migration in that checkout (cmdguard v4→v5) — vendor refresh not safe to land concurrently. Row + flake comment updated with corrected diagnosis |
+| qmd                          | tag v2.8.3   | **unchanged**                                          | already the latest upstream tag                                                                                                                                                                                                                    |
+| paperless-gpt-src            | tag v0.31.0  | **unchanged**                                          | already the latest upstream tag                                                                                                                                                                                                                    |
+| nixpkgs-llama-rag            | rev 0968519  | **unchanged**                                          | external; llama.cpp 0.4.x spin regression still open upstream                                                                                                                                                                                      |
 
 ## b. discordsync (the deep fix)
 
@@ -40,7 +40,7 @@ Tests: full suite green (build, bot, web after golden refresh for templ-componen
 
 ## d. Gotchas hit (all pre-documented, all cost time anyway)
 
-1. **jq file-arg trap, THIRD form — silent wrong data**: a file-arg `jq` call returned *plausible data from SystemNix's own flake.lock* instead of the targeted repo's, sending ~30 min of lock forensics down a phantom path. Only a grep cross-check exposed it. Datapoint added to the AGENTS.md jq bullet; lock forensics now via python3 json.
+1. **jq file-arg trap, THIRD form — silent wrong data**: a file-arg `jq` call returned _plausible data from SystemNix's own flake.lock_ instead of the targeted repo's, sending ~30 min of lock forensics down a phantom path. Only a grep cross-check exposed it. Datapoint added to the AGENTS.md jq bullet; lock forensics now via python3 json.
 2. **Dirty-tree vendorHash measurement**: the discordsync hash measured on the dirty tree failed at the pushed rev (`KPrm4O9w…` vs `g1lj5XRU…`). Remote-at-pushed-rev is the only trustworthy measurement context.
 3. **`go test -update ./pkg`**: the flag must come AFTER the package list; before it, Go parses `-update` as a package pattern ("no Go files in .").
 4. **attic outage** (`cache.home.lan` unresolvable most of the session): probes/blocks need `--option substituters https://cache.nixos.org`; overview's css-drift gate needed the same pin added upstream to not read a LAN-cache outage as a gate failure.

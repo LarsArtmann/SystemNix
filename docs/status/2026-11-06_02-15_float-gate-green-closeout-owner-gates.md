@@ -6,20 +6,20 @@ Session: resume instance 2 of tombstone `crush-glm53-resume-2244` (00:40–02:1x
 
 - **Proof #8 GREEN (rc=0)**, full toplevel `--keep-going`: `~/.cache/lockfloat/float-proof-20261106-015*.log`; **#9 and #10 exited `no drift`** — registry == lock, pair committed (daemon-swept + verified; tree clean at `f1a898dd5`).
 - Ten proof cycles tonight (`-000533` → `-015*`). Every root fixed at its class:
-  | root class | fix | state |
-  |---|---|---|
-  | 22-tool vendorHash wave | shims at measured revs (lars-packages + 8 module surfaces) | committed |
-  | monitor365 preparedSrc EACCES | upstream chmod fix `164e159a4` PUSHED; sibling lifted lock to it same night | green in #4+ |
-  | emeet-pixyd | upstream already baked the got hash at `ac1acac2` (lock moved); stale WONlox overlay shim DROPPED | green |
-  | overview | upstream fix `67b2fac9` PUSHED (vendorHash.nix), lock moved | green |
-  | bank-sync / visionreviewd | NEW overrideAttrs surfaces (HM+module, module) | green |
-  | buildflow / go-taskqueue | source-broken (templ regen / tidy-less dep) → pinned back `2d6bbee` / `bfbfde6a`; upstream rows queued | green |
-  | art-dupl(+src) / branching-flow | re-pinned to registry-proven `308d8d75` / `d17cb1ae` | green |
-  | dnsblockd | last-green rev GONE from origin (history rewrite) → overlay shim at `cb116e5` (ZjETTvO+) | green |
-  | cqrs-lint | shim `6mUToa7K` @ root input `0b7aee4` (three independent FOD measurements) | green |
-  | crm / inboxclean | **templ-runtime mismatch class** (go-cqrs-lite catalog v4.12.0 + cqrs-htmx published `*_templ.go` vs consumers' templ pins — compile-broken, NOT hash-fixable) → pinned back `900bf55f` / `5c52f31` + reverted shims to their proven pairs | green |
-  | visionreviewd test flake | `doCheck = false` (identical drv passed `-012906`, failed `-014324`) | green |
-  | infra-follows audit | 3-level follows added (cvagent → go-humanize-linter → go-nix-helpers → treefmt-nix) after the sibling's cvagent→b9f0acf relock regrew a deep copy | green |
+  | root class                      | fix                                                                                                                                                                                                                                        | state        |
+  | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+  | 22-tool vendorHash wave         | shims at measured revs (lars-packages + 8 module surfaces)                                                                                                                                                                                 | committed    |
+  | monitor365 preparedSrc EACCES   | upstream chmod fix `164e159a4` PUSHED; sibling lifted lock to it same night                                                                                                                                                                | green in #4+ |
+  | emeet-pixyd                     | upstream already baked the got hash at `ac1acac2` (lock moved); stale WONlox overlay shim DROPPED                                                                                                                                          | green        |
+  | overview                        | upstream fix `67b2fac9` PUSHED (vendorHash.nix), lock moved                                                                                                                                                                                | green        |
+  | bank-sync / visionreviewd       | NEW overrideAttrs surfaces (HM+module, module)                                                                                                                                                                                             | green        |
+  | buildflow / go-taskqueue        | source-broken (templ regen / tidy-less dep) → pinned back `2d6bbee` / `bfbfde6a`; upstream rows queued                                                                                                                                     | green        |
+  | art-dupl(+src) / branching-flow | re-pinned to registry-proven `308d8d75` / `d17cb1ae`                                                                                                                                                                                       | green        |
+  | dnsblockd                       | last-green rev GONE from origin (history rewrite) → overlay shim at `cb116e5` (ZjETTvO+)                                                                                                                                                   | green        |
+  | cqrs-lint                       | shim `6mUToa7K` @ root input `0b7aee4` (three independent FOD measurements)                                                                                                                                                                | green        |
+  | crm / inboxclean                | **templ-runtime mismatch class** (go-cqrs-lite catalog v4.12.0 + cqrs-htmx published `*_templ.go` vs consumers' templ pins — compile-broken, NOT hash-fixable) → pinned back `900bf55f` / `5c52f31` + reverted shims to their proven pairs | green        |
+  | visionreviewd test flake        | `doCheck = false` (identical drv passed `-012906`, failed `-014324`)                                                                                                                                                                       | green        |
+  | infra-follows audit             | 3-level follows added (cvagent → go-humanize-linter → go-nix-helpers → treefmt-nix) after the sibling's cvagent→b9f0acf relock regrew a deep copy                                                                                          | green        |
 
 ## §b T9/T10/T14/T22 (parallel legs)
 

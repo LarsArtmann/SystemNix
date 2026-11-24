@@ -5,13 +5,13 @@
 Window: 5 completed tasks spanning 2026-11-10 → 2026-11-14, verdict task `000001a1d8cbc3ff68f9d852788500000000`.
 Tasks covered:
 
-| # | Task | Subject | Evidence |
-|---|------|---------|----------|
-| 1 | `…c14f087910…` | Review-finding fix: time_series_v2 library-row tick drift | closeout docs/status/tasks/2026-11-10_01-44_task-000001a1c14f087910352e55c18500000000.md, commit `377a242f7` |
-| 2 | `…c14f087b6ab…` | Review-finding fix: gatus endpoint-count drift (283/284/285) | closeout docs/status/tasks/2026-11-10_02-23_task-000001a1c14f087b6ab9efa0bed500000000.md, commit `64c124592` |
-| 3 | `…c7a258eff…` | Verify adb mDNS listener on 0.0.0.0:5353 is intentional | TODO_LIST.md:383 ticked `[x]` — "VERIFIED INTENTIONAL 2026-11-11 (live fork-server for webphone-android; documented at the android-tools package site, ADB_MDNS=0 off-switch)" |
-| 4 | `…d23e580d67…` | Fix the two NEW undersized budgets (cvagent 1.38M throttle events, forgejo 95%-of-high graze) | closeout docs/status/tasks/2026-11-13_17-18_task-000001a1d23e580d6791e931f37e00000000.md, code in daemon commit `d7963ea17` (content = exactly the 2 files, verified per report) |
-| 5 | `…d5d871644a…` | ai-stack 5-item batch (pid churn, restart backoff, re-embed design, demand profile, write attribution) | closeout docs/status/tasks/2026-11-14_07-04_task-000001a1d5d871644a2dac5d586a00000000.md, commits `42fb02c17`/`fd42bde67`/`070eb35cf`/`889ee2b84`/`754320dce` |
+| # | Task            | Subject                                                                                                | Evidence                                                                                                                                                                         |
+| - | --------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `…c14f087910…`  | Review-finding fix: time_series_v2 library-row tick drift                                              | closeout docs/status/tasks/2026-11-10_01-44_task-000001a1c14f087910352e55c18500000000.md, commit `377a242f7`                                                                     |
+| 2 | `…c14f087b6ab…` | Review-finding fix: gatus endpoint-count drift (283/284/285)                                           | closeout docs/status/tasks/2026-11-10_02-23_task-000001a1c14f087b6ab9efa0bed500000000.md, commit `64c124592`                                                                     |
+| 3 | `…c7a258eff…`   | Verify adb mDNS listener on 0.0.0.0:5353 is intentional                                                | TODO_LIST.md:383 ticked `[x]` — "VERIFIED INTENTIONAL 2026-11-11 (live fork-server for webphone-android; documented at the android-tools package site, ADB_MDNS=0 off-switch)"   |
+| 4 | `…d23e580d67…`  | Fix the two NEW undersized budgets (cvagent 1.38M throttle events, forgejo 95%-of-high graze)          | closeout docs/status/tasks/2026-11-13_17-18_task-000001a1d23e580d6791e931f37e00000000.md, code in daemon commit `d7963ea17` (content = exactly the 2 files, verified per report) |
+| 5 | `…d5d871644a…`  | ai-stack 5-item batch (pid churn, restart backoff, re-embed design, demand profile, write attribution) | closeout docs/status/tasks/2026-11-14_07-04_task-000001a1d5d871644a2dac5d586a00000000.md, commits `42fb02c17`/`fd42bde67`/`070eb35cf`/`889ee2b84`/`754320dce`                    |
 
 Verification method: the four closeout reports read in full; the ticked TODO_LIST rows (390, 383, 413, 414, 3565, 3584–3594) grep-verified live at HEAD `4f1dff9e9`; window commits confirmed via `git log --since 2026-11-09`. The two reviewer-finding tasks (1, 2) both report first-attempt single-commit fixes with footer-verified trailers and pre-commit batteries green — accepted as verified per their own command-level evidence tables.
 

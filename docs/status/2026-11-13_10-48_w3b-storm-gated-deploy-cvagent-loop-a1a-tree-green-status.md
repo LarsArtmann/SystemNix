@@ -49,7 +49,7 @@ A1b (mount-gating 163, memory-watermark 142, dynamic-user 88, capability-grant 1
 
 ## f) NEXT (ordered)
 
-1. Diagnose the 5 red shape-test legs (re-read the EXTENDED `tests/test-systemd-shape-audit.nix`; likely fixture/option interaction through the layer). 
+1. Diagnose the 5 red shape-test legs (re-read the EXTENDED `tests/test-systemd-shape-audit.nix`; likely fixture/option interaction through the layer).
 2. Run full SystemNix `nix flake check --no-build --all-systems` (A1c sweep for A1a).
 3. Deploy at the watcher's window → anchor by generation NUMBER (`ls /nix/var/nix/profiles | sort -V | tail -1` vs `readlink /run/current-system`) → smoke (`journalctl -u crush-hot-db-migrate --since <deploy> -p warning`, timer NEXT armed, `systemctl cat crush-hot-db-migrate | grep -i capability` → CAP_SYS_PTRACE).
 4. Post-deploy: cvagent serve restarts with new unit config — watch its IO (if the loop re-enters, it needs the upstream fix; consider stop + upstream issue).

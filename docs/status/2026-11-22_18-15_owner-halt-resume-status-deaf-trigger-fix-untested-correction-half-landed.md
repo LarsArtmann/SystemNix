@@ -8,27 +8,27 @@ WHOLE TODO LIST", halted 18:15 on "FULL STATUS UPDATE, THEN WAIT".
 
 **State stamp (18:15:23 CET, every value live-probed):**
 
-| What | Value |
-| --- | --- |
-| Anchor | `/run/current-system` = `4b1h1ymh…` = `system-1023-link` (unchanged; newest deploy log still 08:11) |
-| Boot | same boot `e5cad2ec…`, up since 2026-11-19 00:09:50 (~89 h) |
-| Box | load **43.98** / 34.80 / 34.82; io PSI some **34.0 / 30.4 / 39.2 %**; **k10temp 98.75 °C, acpitz 97.0 °C**; **9 failed units** |
-| SystemNix | HEAD `50079d9d7`, tree clean, **15 ahead / 0 behind** origin/master (`119bfe8fb`) |
-| nixos-modules | HEAD `3ab8d22` = **4 local heuristic daemon commits, unpushed** (upstream tip `c0e4198`); SystemNix lock still pins `a221220` |
-| Upstream diff vs `c0e4198` | 6 files, +227/−28 — **zero tests run** |
-| Deploys / pushes / builds | none by this segment |
+| What                       | Value                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Anchor                     | `/run/current-system` = `4b1h1ymh…` = `system-1023-link` (unchanged; newest deploy log still 08:11)                            |
+| Boot                       | same boot `e5cad2ec…`, up since 2026-11-19 00:09:50 (~89 h)                                                                    |
+| Box                        | load **43.98** / 34.80 / 34.82; io PSI some **34.0 / 30.4 / 39.2 %**; **k10temp 98.75 °C, acpitz 97.0 °C**; **9 failed units** |
+| SystemNix                  | HEAD `50079d9d7`, tree clean, **15 ahead / 0 behind** origin/master (`119bfe8fb`)                                              |
+| nixos-modules              | HEAD `3ab8d22` = **4 local heuristic daemon commits, unpushed** (upstream tip `c0e4198`); SystemNix lock still pins `a221220`  |
+| Upstream diff vs `c0e4198` | 6 files, +227/−28 — **zero tests run**                                                                                         |
+| Deploys / pushes / builds  | none by this segment                                                                                                           |
 
 ---
 
 ## TL;DR
 
-| Question | Answer |
-| --- | --- |
-| Is the P0 correction (wrong "missed ×2 / 13 h stale" story) landed? | **Half.** AGENTS.md + systemd.md corrected and committed (`e49279f5f`), storage row corrected (rode daemon `cd145269e`). **TODO_LIST queue row NOT corrected** (my edit failed and I never retried), **15-15 report NOT corrected**. Worse: the three corrected surfaces carry a wrong COUNT ("6/6 syncs this boot" — true figure: 8 post-boot syncs, all restarts, plus the boot-time start). Queue and library now drift. |
-| Is the upstream fix tested? | **No. Still zero builds.** The untested surface GREW (start-limit headroom + pin, both-manager audit class, more contract pins) and the daemon swept it twice more. |
-| New findings? | (1) Whole-boot proof: the path trigger produced **zero** syncs in 89 h; every one of the 8 post-boot syncs is a sudo-logged `systemctl restart`. (2) systemd source confirms the mechanism and that the fix cannot self-loop. (3) **Second-order hazard of the fix:** a live trigger doubles the starts per deploy, and the module's `startLimitBurst = 5` would then kill the path unit in a deploy wave — addressed in untested module text. (4) Consumer-grep found nothing in SystemNix that needs the sync to stay `active (exited)`. |
-| Box health | **Not escalated by me: 98.6–98.75 °C Tctl for the whole segment at load 15–44.** The same miss as 16-28 §d6, repeated. |
-| Did I follow "test first"? | **No.** I designed for ~35 min before running anything, and ran nothing. |
+| Question                                                            | Answer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Is the P0 correction (wrong "missed ×2 / 13 h stale" story) landed? | **Half.** AGENTS.md + systemd.md corrected and committed (`e49279f5f`), storage row corrected (rode daemon `cd145269e`). **TODO_LIST queue row NOT corrected** (my edit failed and I never retried), **15-15 report NOT corrected**. Worse: the three corrected surfaces carry a wrong COUNT ("6/6 syncs this boot" — true figure: 8 post-boot syncs, all restarts, plus the boot-time start). Queue and library now drift.                                                                                                                |
+| Is the upstream fix tested?                                         | **No. Still zero builds.** The untested surface GREW (start-limit headroom + pin, both-manager audit class, more contract pins) and the daemon swept it twice more.                                                                                                                                                                                                                                                                                                                                                                        |
+| New findings?                                                       | (1) Whole-boot proof: the path trigger produced **zero** syncs in 89 h; every one of the 8 post-boot syncs is a sudo-logged `systemctl restart`. (2) systemd source confirms the mechanism and that the fix cannot self-loop. (3) **Second-order hazard of the fix:** a live trigger doubles the starts per deploy, and the module's `startLimitBurst = 5` would then kill the path unit in a deploy wave — addressed in untested module text. (4) Consumer-grep found nothing in SystemNix that needs the sync to stay `active (exited)`. |
+| Box health                                                          | **Not escalated by me: 98.6–98.75 °C Tctl for the whole segment at load 15–44.** The same miss as 16-28 §d6, repeated.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Did I follow "test first"?                                          | **No.** I designed for ~35 min before running anything, and ran nothing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 ---
 
@@ -47,9 +47,9 @@ WHOLE TODO LIST", halted 18:15 on "FULL STATUS UPDATE, THEN WAIT".
      to the second;
    - unit state: path unit `active/running` since 2026-11-19 00:09:50; service `Type=oneshot`,
      `RemainAfterExit=yes`, `active (exited)`.
-   → **The path trigger produced 0 syncs in 89 h.** This closes 16-28 §d9 ("not individually
-   attributed"): every post-boot sync this boot was an explicit restart. Captures:
-   `~/.cache/recon/bms-journal-fullboot.txt`, `bms-restarts-fullboot.txt`, `entries-lt-1727.txt`.
+     → **The path trigger produced 0 syncs in 89 h.** This closes 16-28 §d9 ("not individually
+     attributed"): every post-boot sync this boot was an explicit restart. Captures:
+     `~/.cache/recon/bms-journal-fullboot.txt`, `bms-restarts-fullboot.txt`, `entries-lt-1727.txt`.
 3. **Control-group census (17:3x).** 4 system path units; the only one whose target has
    `RemainAfterExit=yes` (`boot-mirror-sync.path`) is the only one in `running`; `monitor365-graphical-restart`,
    `systemd-ask-password-console`, `systemd-ask-password-wall` (targets without it) all sit in `waiting`.
@@ -80,7 +80,7 @@ WHOLE TODO LIST", halted 18:15 on "FULL STATUS UPDATE, THEN WAIT".
    - `scripts/deploy.sh` `deploy_restart` (line 43) = synchronous `systemctl restart` under `timeout`,
      no `is-active` wait loop → unaffected.
    - `scripts/pre-reboot-check.sh` §11 compares trees, not unit state → unaffected.
-   → no consumer found that breaks. This is the "land the replacement before removing the old state" check.
+     → no consumer found that breaks. This is the "land the replacement before removing the old state" check.
 8. **Second-order hazard of the fix found and addressed in module text (reasoned, untested).** With a live
    trigger each gen-install costs a path-triggered run PLUS deploy.sh's provisioner restart — 2 starts per
    deploy where the deaf era paid 1. The module's `startLimitBurst = 5` / 300 s is then reachable by two
@@ -98,13 +98,13 @@ WHOLE TODO LIST", halted 18:15 on "FULL STATUS UPDATE, THEN WAIT".
 
 ### b1. P0 correction — 3 of 5 surfaces, all 3 with a wrong count
 
-| Surface | State | Carries "6/6 syncs this boot"? |
-| --- | --- | --- |
-| `AGENTS.md` boot-mirror paragraph | corrected, committed `e49279f5f` | **yes — wrong** |
-| `docs/agents/systemd.md` boot-mirror bullet | corrected, committed `e49279f5f` | **yes ("all 6 syncs this boot") — wrong** |
-| `docs/todo/storage.md` row | corrected, daemon `cd145269e` | **yes — wrong**; also a timestamp typo ("17:4x", the edit was ~17:33) |
-| `TODO_LIST.md` queue row "Backstop boot-mirror-sync…" | **NOT corrected — still the wrong "missed fires / 13 h" row** | n/a |
-| 15-15 report §a / §c.2 / §d / §f | **NOT corrected — no addendum, no inline marker** | n/a |
+| Surface                                               | State                                                         | Carries "6/6 syncs this boot"?                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `AGENTS.md` boot-mirror paragraph                     | corrected, committed `e49279f5f`                              | **yes — wrong**                                                       |
+| `docs/agents/systemd.md` boot-mirror bullet           | corrected, committed `e49279f5f`                              | **yes ("all 6 syncs this boot") — wrong**                             |
+| `docs/todo/storage.md` row                            | corrected, daemon `cd145269e`                                 | **yes — wrong**; also a timestamp typo ("17:4x", the edit was ~17:33) |
+| `TODO_LIST.md` queue row "Backstop boot-mirror-sync…" | **NOT corrected — still the wrong "missed fires / 13 h" row** | n/a                                                                   |
+| 15-15 report §a / §c.2 / §d / §f                      | **NOT corrected — no addendum, no inline marker**             | n/a                                                                   |
 
 True figure for all three: **9 sync starts this boot = 1 boot-time start + 8 sudo-logged restarts; 0
 path-triggered.** Conclusion unchanged and stronger; the number is wrong. Queue row and library row have
@@ -112,14 +112,14 @@ drifted (library says "deaf trigger", queue still says "backstop against missed 
 
 ### b2. Upstream fix in `~/projects/nixos-modules` — WRITTEN, LARGER, STILL ZERO TESTS RUN
 
-| File | Change | Lives in |
-| --- | --- | --- |
-| `modules/boot-mirror/default.nix` | (16:20) `RemainAfterExit = false` + self-pin + comments. **This segment:** header states the "returns to INACTIVE" contract; `startLimitBurst` 5 → 30 with rationale; NEW self-pin `startLimitBurst >= 20`; path-unit comment rewritten on the `path.c` mechanics | `82ff6c3`, `766be30` |
+| File                                      | Change                                                                                                                                                                                                                                                                                                                                                                                     | Lives in                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| `modules/boot-mirror/default.nix`         | (16:20) `RemainAfterExit = false` + self-pin + comments. **This segment:** header states the "returns to INACTIVE" contract; `startLimitBurst` 5 → 30 with rationale; NEW self-pin `startLimitBurst >= 20`; path-unit comment rewritten on the `path.c` mechanics                                                                                                                          | `82ff6c3`, `766be30`            |
 | `modules/systemd-shape-audit/default.nix` | (16:20) class 11: detector, `allowPathTriggerOnRemainAfterExit`, assertion, header. **This segment:** detector scans BOTH managers (user offenders reported `user:<name>`) and requires the target enabled; header "Three" → "Eleven bug classes", scope note (drop-in `[Service]` text is not parsed), "four allow*" → "allow*"; option description + assertion message say both managers | `82ff6c3`, `766be30`, `3ab8d22` |
-| `tests/boot-mirror.nix` | (16:23) RemainAfterExit pin + JSON field. **This segment:** start-limit pin (`>= 20`) + JSON field | `a24c20a`, `3ab8d22` |
-| `tests/systemd-shape-audit-contract.nix` | (16:23) class-11 fixture, expectation, "eleven"/11. **This segment:** user-manager fixture `shape-c11u` + `(expect "user:shape-c11u" …)` | `a24c20a`, `3ab8d22` |
-| `tests/boot-mirror-vm.nix` | (16:2x) second-write leg, `try/except` raising "path trigger is deaf", inactive/waiting asserts. **Unchanged this segment** | `766be30` |
-| `tests/negative/run.sh` | (16:2x) legs `remainafterexit-restored`, `vm-deaf-trigger`, `class11-neutered`, `class11-fixture-stripped`. **Unchanged this segment** | `766be30` |
+| `tests/boot-mirror.nix`                   | (16:23) RemainAfterExit pin + JSON field. **This segment:** start-limit pin (`>= 20`) + JSON field                                                                                                                                                                                                                                                                                         | `a24c20a`, `3ab8d22`            |
+| `tests/systemd-shape-audit-contract.nix`  | (16:23) class-11 fixture, expectation, "eleven"/11. **This segment:** user-manager fixture `shape-c11u` + `(expect "user:shape-c11u" …)`                                                                                                                                                                                                                                                   | `a24c20a`, `3ab8d22`            |
+| `tests/boot-mirror-vm.nix`                | (16:2x) second-write leg, `try/except` raising "path trigger is deaf", inactive/waiting asserts. **Unchanged this segment**                                                                                                                                                                                                                                                                | `766be30`                       |
+| `tests/negative/run.sh`                   | (16:2x) legs `remainafterexit-restored`, `vm-deaf-trigger`, `class11-neutered`, `class11-fixture-stripped`. **Unchanged this segment**                                                                                                                                                                                                                                                     | `766be30`                       |
 
 **Not done:** `nix fmt` · `boot-mirror-contract` build · `systemd-shape-audit-contract` build ·
 `boot-mirror-vm` build/run · `CASES=bootmirror,shapeaudit bash tests/negative/run.sh` ·
@@ -127,6 +127,7 @@ drifted (library says "deaf trigger", queue still says "backstop against missed 
 re-float · SystemNix selftest + negative legs.
 
 **Designed but NOT written (found while reading the VM test against the fixed semantics):**
+
 - The second-write leg needs a `SubState == waiting` precondition INSIDE the `try` that raises "path
   trigger is deaf" — otherwise the `vm-deaf-trigger` mutation leg times out on a generic driver error and
   its marker never appears.
@@ -146,9 +147,11 @@ manager showed no path units (`systemctl --user list-units --type=path` printed 
 pipeline); `!= true;` is unique in the module (the `vm-deaf-trigger` sed relies on it).
 
 ### b3. Calm-box smoke battery (pipeline row 1172, battery half) — NOT RUN
+
 Gate: io PSI avg10 and avg60 < 30 %. Probes: 17:23 = 36.9 / 36.0; 18:15 = 34.0 / 30.4. No watcher armed.
 
 ### b4. Deploy — NOT ATTEMPTED
+
 No calm window at my two probes, the upstream fix is untested, and a foreign session re-floated two
 flake inputs at 18:14 (daemon `50079d9d7`: `d5cc683 → 2786a2a`, `cac0e44 → 3e2723d`; nixos-modules still
 `a221220`) — a deploy now would carry those floats.
@@ -237,6 +240,7 @@ state" still `in_progress`, "test upstream fix" never flipped while I was editin
 ## f) Next — 45 things, ordered
 
 **P0 — finish what is half-landed**
+
 1. Correct the TODO_LIST queue row (view → edit → pathspec commit, one breath); add the 15-15 report
    correction addendum + inline markers on §a/§c.2/§d/§f.
 2. Fix the count on AGENTS.md, systemd.md and the storage row ("9 starts = 1 boot-time + 8 restarts, 0
@@ -261,7 +265,7 @@ state" still `in_progress`, "test upstream fix" never flipped while I was editin
 
 **P1 — the box**
 13. Tctl 98–99 °C / acpitz 97 °C across the whole segment at load 15–44: cause (cooling vs normal
-    baseline) — not investigated; is this the box's normal reading?
+baseline) — not investigated; is this the box's normal reading?
 14. Failed set grew 7 → 9 (`llama-vlm-cap@…` instances 2 → 6): re-census at a calm moment.
 15. 15 commits ahead of origin, 0 behind — nothing pushed since `119bfe8fb`: push window (owner).
 16. bge-m3 embedding server ~60 % CPU since 01:03 (carried).
@@ -274,7 +278,7 @@ state" still `in_progress`, "test upstream fix" never flipped while I was editin
 21. `pre-reboot-check` §11 runtime leg: `boot-mirror-sync.path` SubState == waiting.
 22. Path-unit liveness metric + alarm (consumer side).
 23. deploy.sh: keep or drop the `boot-mirror-sync` provisioner restart once the trigger is proven live
-    (it now costs a second sync per deploy).
+(it now costs a second sync per deploy).
 24. deploy.sh: log the switch timestamp explicitly.
 25. Calm-box battery (pipeline row 1172 battery half) — re-arm the bounded watcher.
 26. Smoke baseline: restore vs natural re-baseline (carried).
@@ -301,12 +305,12 @@ state" still `in_progress`, "test upstream fix" never flipped while I was editin
 43. Attribute the unexplained sudo probes `is-active boot-mirror-sync.service` + `journalctl -u
     boot-mirror-sync --since '5 minutes ago'` at 2026-11-20 21:59:43 (not deploy.sh's `deploy_restart`).
 44. After the fix deploys: update the comment in `platforms/nixos/system/boot-mirror.nix`
-    (`system_service_active{service="boot-mirror-sync"}` reads 0 from then on).
+(`system_service_active{service="boot-mirror-sync"}` reads 0 from then on).
 
 **Owner-gated / carried over**
 45. Push arrangement + CI bundle-2 sops key · passkey registration confirm · `/data/docker` and
-    gcs-staging reclaim · media-atlas hub-api-key rotation · whether THIS session continues the upstream
-    work or hands it to a fresh session.
+gcs-staging reclaim · media-atlas hub-api-key rotation · whether THIS session continues the upstream
+work or hands it to a fresh session.
 
 ## g) Three questions I cannot answer myself
 

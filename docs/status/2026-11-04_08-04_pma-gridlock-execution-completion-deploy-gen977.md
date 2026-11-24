@@ -14,18 +14,18 @@
 
 ## §1 Execution narrative
 
-| Time | Event |
-| --- | --- |
-| ~23:2x | **flm STOPPED** (service + socket, self-elevating harness) per owner ruling. Crash-loop ended, counter frozen at 10. Discovery: PMA fallbacks 30s → **0.4s** (connection-refused fast path) — stopping the provider *raised* throughput. |
-| ~00:07 | **Deploy attempt 1 ABORTED at the entry pressure gate** — io PSI 40.7%, sdb 103.7% util (parallel sessions' ghostty scopes). Gate refused; I had not pre-checked PSI. |
-| 00:10-00:50 | PSI watch: storm sustained 46-94%. Owner asked (wait / force / abort) → **force** authorized. |
-| ~00:5x | **Deploy attempt 2 ABORTED** — battery §1: `doc-counts` failed: FEATURES.md stamped 47 packages, eval truth 48 (the parallel session's `docs-gates` flake-input pick landed without the re-stamp). Re-derived live, re-stamped FEATURES.md, `DOC-COUNTS GREEN`. |
-| ~00:5x+ | **Deploy attempt 3 ABORTED** — §11 tree-mutation race: the daemon swept my uncommitted FEATURES.md stamp mid-battery. Fixed by pathspec commit — then hit a no-op commit failure (the tree had moved again overnight). |
-| 07:0x | Morning: the offsite-borg session had committed through 07:00 (`d34e239d7`, carrying my FEATURES stamp). Quiescence poll: HOT until 07:0x (their `backup.nix` in flight), QUIESCENT 4×60s from ~07:2x. |
-| ~07:4x | **Deploy attempt 4: LANDED as gen-977.** Exit 3 (new smoke failures vs baseline — triaged below). |
-| 07:4x+ | **Live verifications**: anchor `readlink /run/current-system` == `system-977-link` ✓; PMA binary `8sqjxh34…-4053b2ed` (new PID 3776905) ✓; `gcc-wrapper-16.2.0` in live unit PATH, **0 gcc-not-found lines** ✓. |
+| Time        | Event                                                                                                                                                                                                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~23:2x      | **flm STOPPED** (service + socket, self-elevating harness) per owner ruling. Crash-loop ended, counter frozen at 10. Discovery: PMA fallbacks 30s → **0.4s** (connection-refused fast path) — stopping the provider _raised_ throughput.                                                  |
+| ~00:07      | **Deploy attempt 1 ABORTED at the entry pressure gate** — io PSI 40.7%, sdb 103.7% util (parallel sessions' ghostty scopes). Gate refused; I had not pre-checked PSI.                                                                                                                     |
+| 00:10-00:50 | PSI watch: storm sustained 46-94%. Owner asked (wait / force / abort) → **force** authorized.                                                                                                                                                                                             |
+| ~00:5x      | **Deploy attempt 2 ABORTED** — battery §1: `doc-counts` failed: FEATURES.md stamped 47 packages, eval truth 48 (the parallel session's `docs-gates` flake-input pick landed without the re-stamp). Re-derived live, re-stamped FEATURES.md, `DOC-COUNTS GREEN`.                           |
+| ~00:5x+     | **Deploy attempt 3 ABORTED** — §11 tree-mutation race: the daemon swept my uncommitted FEATURES.md stamp mid-battery. Fixed by pathspec commit — then hit a no-op commit failure (the tree had moved again overnight).                                                                    |
+| 07:0x       | Morning: the offsite-borg session had committed through 07:00 (`d34e239d7`, carrying my FEATURES stamp). Quiescence poll: HOT until 07:0x (their `backup.nix` in flight), QUIESCENT 4×60s from ~07:2x.                                                                                    |
+| ~07:4x      | **Deploy attempt 4: LANDED as gen-977.** Exit 3 (new smoke failures vs baseline — triaged below).                                                                                                                                                                                         |
+| 07:4x+      | **Live verifications**: anchor `readlink /run/current-system` == `system-977-link` ✓; PMA binary `8sqjxh34…-4053b2ed` (new PID 3776905) ✓; `gcc-wrapper-16.2.0` in live unit PATH, **0 gcc-not-found lines** ✓.                                                                           |
 | 07:40-07:41 | flm was re-armed during the switch window (stc socket cascade class): one last ABRT at 07:40:30 (old PMA client), restart 07:41:31, **zero crashes since** — `OPENAI_TIMEOUT=10m` held through the cold load. The fix's core claim verified in production without me restarting anything. |
-| 08:0x | PMA settling (2.05 → 1.4 → 1.1 cores); 26 commits/19 min; queue-full WARNs continue (199 since switch) — drain is throughput-bound. |
+| 08:0x       | PMA settling (2.05 → 1.4 → 1.1 cores); 26 commits/19 min; queue-full WARNs continue (199 since switch) — drain is throughput-bound.                                                                                                                                                       |
 
 **go-commit "push it yourself"**: no push happened — verification showed the fix was already pushed (`559720d`, 2026-10-07, ancestor-of-origin) and already locked into PMA (`9fc2026b`, 21:13 the same evening). Row 43's real blocker was the stale deployed binary, not the push chain.
 
@@ -33,20 +33,20 @@
 
 ## §2 Evidence ledger
 
-| Claim | Probe | Result |
-| --- | --- | --- |
-| flm crash-loop ended | journal since stop | counter frozen 10 overnight; guard did not re-arm |
-| Fallback throughput jump | PMA journal 23:25+ | `duration=434ms` (was `duration=30.09s`) |
-| Deploy gate abort 1 | deploy log §ENTRY | `I/O PSI some avg10 = 40.73% WITH disk busy = 103.7%` |
-| doc-counts failure | predeploy-3.log | `FEATURES packages asserts 47, eval truth is 48` |
-| 48th package | `git diff d4128ee0e..HEAD -- lib/lars-packages.nix` | `docs-gates = flakePkg inputs.docs-gates` (pbx-artmann extraction, 2026-11-03) |
-| Re-stamp verified | `nix build .#checks.x86_64-linux.doc-counts` | GREEN |
-| gen-977 anchored | `readlink /run/current-system` vs `sort -V` newest link | identical `bs0sgf6l…` / `system-977-link` |
-| PMA rebuilt | `pgrep -af` + unit `Service.Environment` | `…-4053b2ed…/bin/…`, PATH contains `gcc-wrapper-16.2.0` |
-| gcc holds dead | `journalctl … since "-10 min" \| rg -c gcc` | 0 (morning rate was 211/70min pre-switch) |
-| flm survived new client | journal 07:41+ | 0 crash lines since 07:41:31; port 52625 LISTEN |
-| Backlog still draining | `rg -c 'batch queue full' since 07:45` | 199 (throughput-bound, not blocked) |
-| LLM commits not yet resumed | `rg 'heuristic fallback\|committed changes' since 07:45` | all heuristic, no real LLM commit yet |
+| Claim                       | Probe                                                    | Result                                                                         |
+| --------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| flm crash-loop ended        | journal since stop                                       | counter frozen 10 overnight; guard did not re-arm                              |
+| Fallback throughput jump    | PMA journal 23:25+                                       | `duration=434ms` (was `duration=30.09s`)                                       |
+| Deploy gate abort 1         | deploy log §ENTRY                                        | `I/O PSI some avg10 = 40.73% WITH disk busy = 103.7%`                          |
+| doc-counts failure          | predeploy-3.log                                          | `FEATURES packages asserts 47, eval truth is 48`                               |
+| 48th package                | `git diff d4128ee0e..HEAD -- lib/lars-packages.nix`      | `docs-gates = flakePkg inputs.docs-gates` (pbx-artmann extraction, 2026-11-03) |
+| Re-stamp verified           | `nix build .#checks.x86_64-linux.doc-counts`             | GREEN                                                                          |
+| gen-977 anchored            | `readlink /run/current-system` vs `sort -V` newest link  | identical `bs0sgf6l…` / `system-977-link`                                      |
+| PMA rebuilt                 | `pgrep -af` + unit `Service.Environment`                 | `…-4053b2ed…/bin/…`, PATH contains `gcc-wrapper-16.2.0`                        |
+| gcc holds dead              | `journalctl … since "-10 min" \| rg -c gcc`              | 0 (morning rate was 211/70min pre-switch)                                      |
+| flm survived new client     | journal 07:41+                                           | 0 crash lines since 07:41:31; port 52625 LISTEN                                |
+| Backlog still draining      | `rg -c 'batch queue full' since 07:45`                   | 199 (throughput-bound, not blocked)                                            |
+| LLM commits not yet resumed | `rg 'heuristic fallback\|committed changes' since 07:45` | all heuristic, no real LLM commit yet                                          |
 
 ---
 
@@ -76,7 +76,7 @@
 ## §6 d) TOTALLY FUCKED UP (the execution-phase miss ledger)
 
 1. **Fired deploy attempt 1 with NO pre-flight PSI check** — AGENTS.md documents the pressure gate, the freeze-#22 discipline, and the evening's own status reports said "four eval roots pressure-blocked"; I checked tree-quiescence and eval but skipped the pressure axis, wasted a full battery run, and needed the gate to teach me. The gate worked; my pre-flight didn't.
-2. **Left my own deploy-critical edit uncommitted while deploying** — the FEATURES.md re-stamp sat in the working tree (required for §1/doc-counts to pass!), and the daemon swept it MID-BATTERY → §11 tree-mutation abort. The rule I needed: *commit your own deploy-required edits (pathspec) before firing*. This one is squarely mine.
+2. **Left my own deploy-critical edit uncommitted while deploying** — the FEATURES.md re-stamp sat in the working tree (required for §1/doc-counts to pass!), and the daemon swept it MID-BATTERY → §11 tree-mutation abort. The rule I needed: _commit your own deploy-required edits (pathspec) before firing_. This one is squarely mine.
 3. **`rg -r` trap, strikes #3 and #4 of the session** — hook-blocked twice more (`-rln` muscle memory). Documented in AGENTS.md verbatim; I keep typing it under time pressure.
 4. **Raw script invocation instead of the flake app** — `scripts/pre-deploy-check.sh` → permission-denied exit 127, then had to read apps.nix to find `nix run .#pre-deploy-check`. AGENTS.md says use flake commands, not raw paths. Wasted round trips.
 5. **Midnight `--since` empty-read nearly became a false conclusion** — `journalctl --since "23:25"` at 00:0x resolved to future-Nov-4 and returned silently EMPTY; I initially read that as "PMA went quiet" and started toward the hang class. The `-n 3` contradiction caught it. This is the SAME class as the boot-id empty-read trap in AGENTS.md ("an empty read is never evidence") — I documented that trap and then repeated it in a new costume.
@@ -104,6 +104,7 @@
 Carry-forwards from the first report's §8 are referenced, not duplicated. ✱ = harvested this session. (o) owner / (d) deploy-gated / (u) upstream / (x) other session's domain.
 
 ### Close the incident (this arc's direct tail)
+
 1. (o) Keep flm UP now that it survived the new client (it is up — re-armed by the switch cascade), or re-stop per preference. Default: keep up.
 2. Verify the FIRST real LLM commit lands (`duration=10-20s`, no heuristic WARN) — the true incident-all-clear. Account for 4h cooldown-cap expiry.
 3. Watch queue-full WARN rate → 0 (backlog fully drained); today's commit flood is heuristic-quality — expect a message-quality dip on pushed history.
@@ -116,6 +117,7 @@ Carry-forwards from the first report's §8 are referenced, not duplicated. ✱ =
 10. Enumerate the 4 new battery warnings (7→11 delta) from deploy-3.log.
 
 ### Structural follow-ups (from this arc's lessons)
+
 11. ✱ AGENTS.md: midnight `--since` trap encoded next to the empty-read doctrine.
 12. Encode "commit-own-deploy-critical-edits first" into docs/CONTRIBUTING.md daemon-race policy.
 13. Add pre-flight PSI probe to my personal deploy checklist (and consider a `deploy-when-quiescent` PSI leg — the script already exists in scripts/).
@@ -125,6 +127,7 @@ Carry-forwards from the first report's §8 are referenced, not duplicated. ✱ =
 17. Add "commit generate failures by family" counter (refused vs timeout vs 4xx) to the textfile collector — distinguishes stopped-provider from hung-provider automatically.
 
 ### Carry-forward (first report §8, still open)
+
 18. (o) flm v1.0.2 heap bug upstream check (now with the SEGV datapoint).
 19. Monitor-leg verification row (services.md, queued) — did the alerts page during the incident?
 20. Queue-saturation + gate-env-false-hold alert signals (services.md row, queued).
@@ -155,6 +158,7 @@ Carry-forwards from the first report's §8 are referenced, not duplicated. ✱ =
 45. `go version -m` probe habit for deployed Go services (would have caught the stale binary in one command at 22:0x last night).
 
 ### Deliberately not minted (recorded, not queued)
+
 46-50. Heuristic-message quality study, gomend/mr-sync consolidation, stash-hygiene scripting, PMA release cadence, discovery-daemon socket-mode audit — duplicates of existing watch rows or lacking a concrete ask; recorded here so the next prune's WARN recount includes them.
 
 ---
@@ -183,4 +187,3 @@ Second owner round (~08:1x): keep flm up · rotate the Immich key "use fucking n
 4. Storm persists (PSI 70-83% at 08:2x, morning builds) — the same reason attempt-1 aborted and the gate refuses tq.
 
 Self-harvest: the stale-binary + LLM-resumption row landed in services.md + TODO_LIST; the midnight `--since` trap landed in AGENTS.md's journalctl doctrine. Nothing else minted — Immich fix done inline (this section), flm watch covered by the existing row.
-

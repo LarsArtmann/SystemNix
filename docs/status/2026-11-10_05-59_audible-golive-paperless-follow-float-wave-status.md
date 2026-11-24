@@ -67,6 +67,7 @@
 ## f) Up to 50 things we should get done next
 
 **The blocked chain — executes the moment the wave lands (item 1 harvested, both surfaces):**
+
 1. [harvested] Post-wave deploy verification: anchor (`readlink /run/current-system` == newest `system-N-link`), audible-sync units live, config-check green against REAL creds, start the first seed run, journal three-phase check, `backup_all_healthy` freshness row appears — plus paperless-gpt follow eval-proof (mkForce llama-chat throwaway or the deploy's own eval).
 2. 🧑 Owner: GCP project `pim-sync-prod` + People API + Desktop client + **In production** publishing (pim-sync gate 1 of 3).
 3. 🧑 Owner: Stalwart DAV account for `bot:pim-sync` on pbx.artmann.tech → sops editor paste (gate 2).
@@ -115,4 +116,4 @@
 
 ---
 
-*Harvest record: §f.1 appended to TODO_LIST.md + docs/todo/services.md at authoring time (BEFORE this report's claim — §e.2 applied). §f.15-18 recorded here only: three are one-file doc patches batchable post-wave, one is a script productization needing a design pass; queueing them as four separate one-liners mid-wave would churn the dispatch queue for wave-adjacent work. All other §f groups carry their not-harvested reasons inline.*
+_Harvest record: §f.1 appended to TODO_LIST.md + docs/todo/services.md at authoring time (BEFORE this report's claim — §e.2 applied). §f.15-18 recorded here only: three are one-file doc patches batchable post-wave, one is a script productization needing a design pass; queueing them as four separate one-liners mid-wave would churn the dispatch queue for wave-adjacent work. All other §f groups carry their not-harvested reasons inline._

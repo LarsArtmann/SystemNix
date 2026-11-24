@@ -10,37 +10,37 @@
 
 ## a) FULLY DONE (verified in-session; details + receipts in the 02-33 report §a)
 
-| # | Item | Proof |
-|---|------|-------|
-| a.1 | **pkce provisioner semantics closed** — create-OR-update proven at source (pocket-id.nix:252-275, `pkceEnabled` in the PUT body); canary remainder retagged `[blocked:deploy]` on both surfaces | source read |
-| a.2 | **systemd-shape-audit class 9** — ~170 [Service]-section keys + `Limit*` prefix rejected in `unitConfig`; escape hatch; docs mirror-trap bullet | eval green ×3 + negative leg throws |
-| a.3 | **First `--apply` prune: 357 rows** → CHANGELOG with pre-prune line numbers; WARN A/B recounted (DRIFT 60→74 expected; unharvested 203→202 measured at a HEAD worktree) | `0d0913e30` + daemon `f123b49d7` |
-| a.4 | **Phantom citation annotated on ALL 4 remaining surfaces** (05-03 §2, 10-15 §2, the 10-17 task report — a 5th surface the "four" count missed — CHANGELOG:1005 re-pointed) | grep: zero un-annotated cites |
-| a.5 | **vm-top-metrics collector end-to-end in-tree** — selftesting script + module + runbook + evo-x2 enable; first live sample already names the class (helium/electron ~1.45 TiB VmSize) | selftest + live run + unit/timer eval probes |
-| a.6 | **boot-evidence-scratch-gc weekly user timer** (module + home-base import; absent-checkout no-op degrade) | eval + HM-closure probe `OnCalendar=weekly` |
-| a.7 | **io-psi-crosscheck `verdict` mode** — PHANTOM/REAL/INCONCLUSIVE classifier, D-state outranks; 6 unit cases + correct live classification of the current box | selftest OK + live run |
-| a.8 | **bench-cold-load hardening ×4** (durable ~/.cache scratch, mem-PSI columns in both JSON paths, 2-poll gate hysteresis) + **4-leg guard selftest, 4/4 live PASS** (which exposed the true guard ORDER: server → model → port → gate → cold) | selftest run |
-| a.9 | **check-buildcache-known-parity**: shape 4 (KNOWN-added stays green) + rename-proof leg riding flake check | selftest run |
-| a.10 | **commit-msg WARN leg** (queue/library rows without Task-Queue-ID footer → warning, never blocks) — shellcheck-clean, live-verified both directions | hook probe |
-| a.11 | **CONTRIBUTING ×3 clauses** (LIVE/HOST-state probe duty; footer-heredoc + daemon-sweep; RETIRE-in-diagnosing-session) + **queue-header stamp-hygiene bullet** | file edits |
-| a.12 | **AGENTS.md sudo-exception widened** with this session's own-shell probe (`sudo -n true` rc 0) | live probe |
-| a.13 | **Chromium adj-300 citation pinned AND content-re-verified** at `9a988a2a…` (main@{#1733436}) — constants match verbatim | GitHub API + raw fetch at SHA |
-| a.14 | **10 verification/supersede closures** (trash-prune + trash-metric landed-checks, nix-gate stale-since-10-17, hermes re-pin stale, NNP answered, kill_pid premise-corrected + fixed, dead-server-JSONL already-landed, btrbk excludes landed, bak-subvol reference CLEAN, trash-in-snapshot answered, bd-deploy audit 30/30 genuine) | each with live probe or tree grep |
-| a.15 | **Closeout report + self-harvest** (02-33 report; 2 new rows + twins landed) | gate OK after |
+| #    | Item                                                                                                                                                                                                                                                                                                                                 | Proof                                        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| a.1  | **pkce provisioner semantics closed** — create-OR-update proven at source (pocket-id.nix:252-275, `pkceEnabled` in the PUT body); canary remainder retagged `[blocked:deploy]` on both surfaces                                                                                                                                      | source read                                  |
+| a.2  | **systemd-shape-audit class 9** — ~170 [Service]-section keys + `Limit*` prefix rejected in `unitConfig`; escape hatch; docs mirror-trap bullet                                                                                                                                                                                      | eval green ×3 + negative leg throws          |
+| a.3  | **First `--apply` prune: 357 rows** → CHANGELOG with pre-prune line numbers; WARN A/B recounted (DRIFT 60→74 expected; unharvested 203→202 measured at a HEAD worktree)                                                                                                                                                              | `0d0913e30` + daemon `f123b49d7`             |
+| a.4  | **Phantom citation annotated on ALL 4 remaining surfaces** (05-03 §2, 10-15 §2, the 10-17 task report — a 5th surface the "four" count missed — CHANGELOG:1005 re-pointed)                                                                                                                                                           | grep: zero un-annotated cites                |
+| a.5  | **vm-top-metrics collector end-to-end in-tree** — selftesting script + module + runbook + evo-x2 enable; first live sample already names the class (helium/electron ~1.45 TiB VmSize)                                                                                                                                                | selftest + live run + unit/timer eval probes |
+| a.6  | **boot-evidence-scratch-gc weekly user timer** (module + home-base import; absent-checkout no-op degrade)                                                                                                                                                                                                                            | eval + HM-closure probe `OnCalendar=weekly`  |
+| a.7  | **io-psi-crosscheck `verdict` mode** — PHANTOM/REAL/INCONCLUSIVE classifier, D-state outranks; 6 unit cases + correct live classification of the current box                                                                                                                                                                         | selftest OK + live run                       |
+| a.8  | **bench-cold-load hardening ×4** (durable ~/.cache scratch, mem-PSI columns in both JSON paths, 2-poll gate hysteresis) + **4-leg guard selftest, 4/4 live PASS** (which exposed the true guard ORDER: server → model → port → gate → cold)                                                                                          | selftest run                                 |
+| a.9  | **check-buildcache-known-parity**: shape 4 (KNOWN-added stays green) + rename-proof leg riding flake check                                                                                                                                                                                                                           | selftest run                                 |
+| a.10 | **commit-msg WARN leg** (queue/library rows without Task-Queue-ID footer → warning, never blocks) — shellcheck-clean, live-verified both directions                                                                                                                                                                                  | hook probe                                   |
+| a.11 | **CONTRIBUTING ×3 clauses** (LIVE/HOST-state probe duty; footer-heredoc + daemon-sweep; RETIRE-in-diagnosing-session) + **queue-header stamp-hygiene bullet**                                                                                                                                                                        | file edits                                   |
+| a.12 | **AGENTS.md sudo-exception widened** with this session's own-shell probe (`sudo -n true` rc 0)                                                                                                                                                                                                                                       | live probe                                   |
+| a.13 | **Chromium adj-300 citation pinned AND content-re-verified** at `9a988a2a…` (main@{#1733436}) — constants match verbatim                                                                                                                                                                                                             | GitHub API + raw fetch at SHA                |
+| a.14 | **10 verification/supersede closures** (trash-prune + trash-metric landed-checks, nix-gate stale-since-10-17, hermes re-pin stale, NNP answered, kill_pid premise-corrected + fixed, dead-server-JSONL already-landed, btrbk excludes landed, bak-subvol reference CLEAN, trash-in-snapshot answered, bd-deploy audit 30/30 genuine) | each with live probe or tree grep            |
+| a.15 | **Closeout report + self-harvest** (02-33 report; 2 new rows + twins landed)                                                                                                                                                                                                                                                         | gate OK after                                |
 
 **Total: 33 queue rows ticked** (both surfaces where twins exist), 2 new rows minted. Ready-row population: 1079 → ~1046.
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's missing |
-|---|------|----------------|
-| b.1 | **Owed flake check** (daemon-swept `.nix` bytes) | Never ran — PSI never < 20. The debt GREW: it now covers this session's 5 nix surfaces incl. **darwin/rpi evals never performed**. Single-host evals are not the check. |
-| b.2 | **/data du -sb MB-grain re-baseline + compare-one-liner smoke-test** | PSI-gated all session (now 76% avg300). Rows exist (57/162-class). |
-| b.3 | **vm-top-metrics observability chain** | Tree-side done; NOT deployed; **no pre-deploy-check leg** (trash-metrics got §20 — vm-top got none); SigNoz panel rowed, not started. |
-| b.4 | **boot-evidence-gc** | Tree-side done; NOT deployed; the absent-checkout degrade branch is designed but never exercised live. |
-| b.5 | **class 9 scope** | System services only; system-declared user units deliberately uncovered (no incident; noted, not rowed). |
-| b.6 | **verdict classifier's PHANTOM leg** | Unit-proven but has **never fired on a real phantom window** — the live run hit the D-state branch (correct). First real phantom window is the true test. |
-| b.7 | **commit-msg WARN leg coverage** | Fires only for commits that RUN hooks — the auto-commit daemon bypasses hooks by design, so heuristic sweeps stay footer-less (accepted; the WARN targets authored dispatch commits). |
+| #   | Item                                                                 | What's missing                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b.1 | **Owed flake check** (daemon-swept `.nix` bytes)                     | Never ran — PSI never < 20. The debt GREW: it now covers this session's 5 nix surfaces incl. **darwin/rpi evals never performed**. Single-host evals are not the check.               |
+| b.2 | **/data du -sb MB-grain re-baseline + compare-one-liner smoke-test** | PSI-gated all session (now 76% avg300). Rows exist (57/162-class).                                                                                                                    |
+| b.3 | **vm-top-metrics observability chain**                               | Tree-side done; NOT deployed; **no pre-deploy-check leg** (trash-metrics got §20 — vm-top got none); SigNoz panel rowed, not started.                                                 |
+| b.4 | **boot-evidence-gc**                                                 | Tree-side done; NOT deployed; the absent-checkout degrade branch is designed but never exercised live.                                                                                |
+| b.5 | **class 9 scope**                                                    | System services only; system-declared user units deliberately uncovered (no incident; noted, not rowed).                                                                              |
+| b.6 | **verdict classifier's PHANTOM leg**                                 | Unit-proven but has **never fired on a real phantom window** — the live run hit the D-state branch (correct). First real phantom window is the true test.                             |
+| b.7 | **commit-msg WARN leg coverage**                                     | Fires only for commits that RUN hooks — the auto-commit daemon bypasses hooks by design, so heuristic sweeps stay footer-less (accepted; the WARN targets authored dispatch commits). |
 
 ## c) NOT STARTED (this session's triage; gates named)
 
@@ -63,17 +63,20 @@
 ## e) WHAT WE SHOULD IMPROVE (the three questions, answered bluntly)
 
 **What did I forget?**
+
 - To capture BOTH gate counts (DRIFT + unharvested) at WARN-A time — the prune script records only DRIFT; that blind spot CAUSED d.1 and d.2 (rowed this session: pipeline row).
 - A pre-deploy smoke leg for vm-top-metrics (trash-metrics got one; my new collector got none).
 - That "eval-green" ≠ "check-green" for SHARED surfaces — home-base/configuration.nix changes implicate darwin/rpi, and I never evaluated them.
 - That the commit-msg WARN leg is structurally half-ghost on this repo (daemon commits bypass hooks).
 
 **What could I have done better?**
+
 - Order of operations on the prune: measure → inspect → apply → record. I applied between inspect-lite and measure.
 - Write mutations and selftests against VIEWED context, not against my mental model of the file (both first-run failures were model-vs-file mismatches).
 - Escalate instead of politely deferring: after 90 minutes of PSI > 20, the right move was to surface to you that the verification debt was compounding, not to keep polling a gate that never opened.
 
 **What could we still improve (systemic)?**
+
 - **Prune script hardening** (rowed): WARN-A captures both counts + F27b as a documented pre-apply leg.
 - **A cheap shared-surface eval battery**: when a session touches platforms/common/, run evo-x2 + darwin toplevel evals (not the full check) — minutes, not 20 GB, closes the worst gap without the storm.
 - **Collector completeness rule**: new textfile collectors ship WITH their pre-deploy leg in the same change (vm-top is the counterexample; make it the rule so the next one isn't).

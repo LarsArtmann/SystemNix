@@ -7,16 +7,16 @@
 
 ## Live State at Writing (02:50)
 
-| Surface | State |
-| --- | --- |
-| summit-planner | **active/running** on gen-1022, MainPID exe `5abv8snw…-summit-planner-0.1.0` (the `3e26dea` seed-fix build), direct `/healthz` = 200 w/ full security headers, gatus journal probes 200 every 60s (~150µs vs <500ms gate), NRestarts=1 (the switch restart; no loop) |
-| Anchor | gen-1022 `yxpz58jx…` == newest `system-1022-link` (verified by NUMBER at 01:46) |
-| Backup chain | leaf-creator active, `/mnt/pool/backups/summit-planner/` exists, timer armed 03:55 — **first artifact pending** (fires 2026-11-22 03:55) |
-| identity.db | does not exist yet (first owner registration bootstraps it; 0600-at-creation is the app contract, **not yet verifiable**) |
-| Paperless rider | paperless-gpt **active** (was start-limit-failed since 11-20 23:22), paperless-web DisallowedHost **0** since 01:00 (was 25,638/48h) — the 03:19 session's `14ec73b28` fix proven live |
-| Deploys | #1 foreign actor 19:27→20:49 (gen-1021 `f7qlsnwg…`, wedged ~70 min on cv-server's pending start job, then anchored); #2 this session 00:30→01:46 (gen-1022, carried the seed fix) |
-| Upstream | `LarsArtmann/summit-planner` `3e26dea` pushed (forgejo origin + github mirror): seed skips already-recorded events; regression test reproduces the exact prod failure against pre-fix code (stash-verified); `go test ./...` green |
-| SystemNix | HEAD `eed931a99`; **NOT pushed** (never-push-unasked + CI would red on the missing bundle key) |
+| Surface         | State                                                                                                                                                                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| summit-planner  | **active/running** on gen-1022, MainPID exe `5abv8snw…-summit-planner-0.1.0` (the `3e26dea` seed-fix build), direct `/healthz` = 200 w/ full security headers, gatus journal probes 200 every 60s (~150µs vs <500ms gate), NRestarts=1 (the switch restart; no loop) |
+| Anchor          | gen-1022 `yxpz58jx…` == newest `system-1022-link` (verified by NUMBER at 01:46)                                                                                                                                                                                      |
+| Backup chain    | leaf-creator active, `/mnt/pool/backups/summit-planner/` exists, timer armed 03:55 — **first artifact pending** (fires 2026-11-22 03:55)                                                                                                                             |
+| identity.db     | does not exist yet (first owner registration bootstraps it; 0600-at-creation is the app contract, **not yet verifiable**)                                                                                                                                            |
+| Paperless rider | paperless-gpt **active** (was start-limit-failed since 11-20 23:22), paperless-web DisallowedHost **0** since 01:00 (was 25,638/48h) — the 03:19 session's `14ec73b28` fix proven live                                                                               |
+| Deploys         | #1 foreign actor 19:27→20:49 (gen-1021 `f7qlsnwg…`, wedged ~70 min on cv-server's pending start job, then anchored); #2 this session 00:30→01:46 (gen-1022, carried the seed fix)                                                                                    |
+| Upstream        | `LarsArtmann/summit-planner` `3e26dea` pushed (forgejo origin + github mirror): seed skips already-recorded events; regression test reproduces the exact prod failure against pre-fix code (stash-verified); `go test ./...` green                                   |
+| SystemNix       | HEAD `eed931a99`; **NOT pushed** (never-push-unasked + CI would red on the missing bundle key)                                                                                                                                                                       |
 
 ---
 
@@ -79,6 +79,7 @@
 ## f) Up to 50 Things To Get Done Next
 
 **This session's direct residue (agent-ready):**
+
 1. Write the fd-3 `/dev/tcp` + `bash -c` wrapper gotcha into AGENTS.md (§c.1, §d.6).
 2. Write the stc pending-job block class (restart-loop vs start-limit-hit job completion) into docs/agents/systemd.md (§d/wedge note).
 3. File the cv-server sqlite-deadline upstream row (§c.7).
@@ -141,6 +142,7 @@
 ---
 
 **Working notes (probes that worked / traps hit):**
+
 - healthz probe in agent shells: `bash -c 'exec 3<>/dev/tcp/127.0.0.1/7612; printf "GET /healthz HTTP/1.0\r\nHost: localhost\r\n\r\n" >&3; cat <&3'` — the bare fd-3 form dies `unsupported redirect fd: 3` in the tool shell (mvdan/sh).
 - MainPID: `busctl get-property … /org/freedesktop/systemd1/unit/<esc> org.freedesktop.systemd1.Service MainPID` (`.Service` interface; ActiveState stays on `.Unit`).
 - stc wedge forensics: `busctl … ListJobs` names the pending-job holder; restart-loop units hold start jobs indefinitely, start-limit-hit units complete theirs as failed.

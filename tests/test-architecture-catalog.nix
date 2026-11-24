@@ -34,7 +34,6 @@
 # 120s fail-open budget.
 {
   pkgs,
-  lib ? pkgs.lib,
   ...
 }:
 let

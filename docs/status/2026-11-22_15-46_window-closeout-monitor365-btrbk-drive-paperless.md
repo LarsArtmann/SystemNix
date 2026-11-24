@@ -52,39 +52,40 @@
 ## f) NEXT THINGS (up to 50; queued subset appended, dedup-checked)
 
 **Deploy-window cluster (all blocked on the next owner-gated deploy):**
+
 1. Execute the 2026-10-17 post-deploy battery's five probes.
 2. Verify ioTier.heavyDB + StartLimitBurst=10 render live (`systemctl show`); confirm upstream Restart=always still coexists with the mkForce override.
 3. Confirm `/var/lib/.../monitor365-backup.prom` absent + the replacement backups.prom consumed by a live check (row 3850).
-4. Fold the `1f1517f8e` fixes into the same battery (precedence survived, identity DB mode 0600). *(Queued.)*
+4. Fold the `1f1517f8e` fixes into the same battery (precedence survived, identity DB mode 0600). _(Queued.)_
 5. Watch monitor365 gatus flap count 24h post-deploy (row 3849).
-**Storage/storm:**
+   **Storage/storm:**
 6. Fix compsize starvation (row 524) — design: catch-up slot vs dampened band vs last-success-age override.
 7. Determine btrbk-data's last green send (row 3853).
 8. Prove the paging leg during the Nov 19-21 drought (row 3854).
 9. Starvation-observability pattern: last-success-age gauge on gated collectors (e.4).
-**Queue/git hygiene:**
+   **Queue/git hygiene:**
 10. Claim-vs-diff commit guard (row 3861).
 11. Daemon-commit amend interlock (row 3862).
 12. Standalone bootmetrics lint re-run for first-hand evidence (row 3863).
 13. Sweep other 2026-11-22 LANDED annotations still unticked (row 3852).
 14. Annotate row 522's compsize battery leg as unsatisfiable under the starvation (row 3859).
-**Drive-paperless follow-ups:**
+    **Drive-paperless follow-ups:**
 15. Batch-cap leg vs real API (row 3855).
 16. Missing-source first-boot leg (row 3856).
 17. drive-ingest fixture 403 negative leg (row 3858).
 18. immich fresh-DB admin race decision + restore-runbook step (row 3857).
 19. Move `checks.drive-paperless-e2e` to nightly CI (row 3860).
 20. Stale-scope wording refresh in rows 527 (10-30 report §f.9).
-21. File:line citation rot in drive-paperless module comments — re-cite controller+decorator form. *(Queued.)*
+21. File:line citation rot in drive-paperless module comments — re-cite controller+decorator form. _(Queued.)_
 22. Hands-off VM bootstrap ordering (admin-sign-up before provisioner) if the e2e re-iterates.
-**Docs:**
+    **Docs:**
 23. Correction-report discoverability: `*-correction.md` naming convention + README grep line (14-21 report §f.6).
 24. Single-source the daemon-race repair recipe (14-21 report §f.8).
 25. TODO_LIST prune pass (`scripts/prune-done-todos.sh`, dry-run first) — unchecked mass is large; expect WARNs to rise.
-26. Verify commit `fd769ada4`'s deploy-leg row enumerates ALL blocked:deploy legs, not just the storm wedge. *(Superseded by the new enumeration row.)*
+26. Verify commit `fd769ada4`'s deploy-leg row enumerates ALL blocked:deploy legs, not just the storm wedge. _(Superseded by the new enumeration row.)_
 27. "Re-verified <date> by <task-id>" append convention on re-dispatch ticks (08-02 report §e.4).
 28. Verification-mechanism note in CONTRIBUTING's re-dispatch protocol (08-02 report §e.3).
-29–50. (Refinements of the above — CI wiring details for row 3860, paperless version-skew notes, tq-verdict loudness, fleet-wide daemon-sweep audit — deliberately not itemized to avoid queue noise.)
+    29–50. (Refinements of the above — CI wiring details for row 3860, paperless version-skew notes, tq-verdict loudness, fleet-wide daemon-sweep audit — deliberately not itemized to avoid queue noise.)
 
 ## g) OWNER QUESTIONS
 

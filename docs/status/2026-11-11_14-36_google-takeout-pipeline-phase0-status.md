@@ -45,16 +45,16 @@
 
 ## f) Top next tasks (ranked)
 
-| # | Task | Impact | Effort | State |
-| --- | --- | --- | --- | --- |
-| 1 | Assemble links.html from the verified triplets → `ingest-html` → staging urls.txt + parts.tsv (exact) | Critical | S | [ready] — everything verified, one command chain |
-| 2 | Convert cookies.json → cookies.txt (Netscape, 0600) | Critical | S | [ready] |
-| 3 | Probe auth: fetch part 13 (565 B) with cookies; if 302→accounts.google.com → request proper cookie export (DevTools shows HttpOnly) | Critical | S | [ready] |
-| 4 | Fire Gate G1 (`takeout-download.sh start` under tmux; 1–3 days) | Critical | M | [ready] after 1–3 |
-| 5 | Gate G2 verify battery + report | Critical | M | queued row exists |
-| 6 | Gate G3: owner Immich API key → dry-run → real ingest (days) | High | M | queued row exists |
-| 7 | Gates G4/G5: OpenCloud app password → rclone WebDAV + drive-paperless | High | L | queued row exists |
-| 8 | Commit the exact-size/ingest-html upgrade (shellcheck-green fixture-green NOW) | Medium | S | [ready] |
+| # | Task                                                                                                                                | Impact   | Effort | State                                            |
+| - | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------------------------------------------ |
+| 1 | Assemble links.html from the verified triplets → `ingest-html` → staging urls.txt + parts.tsv (exact)                               | Critical | S      | [ready] — everything verified, one command chain |
+| 2 | Convert cookies.json → cookies.txt (Netscape, 0600)                                                                                 | Critical | S      | [ready]                                          |
+| 3 | Probe auth: fetch part 13 (565 B) with cookies; if 302→accounts.google.com → request proper cookie export (DevTools shows HttpOnly) | Critical | S      | [ready]                                          |
+| 4 | Fire Gate G1 (`takeout-download.sh start` under tmux; 1–3 days)                                                                     | Critical | M      | [ready] after 1–3                                |
+| 5 | Gate G2 verify battery + report                                                                                                     | Critical | M      | queued row exists                                |
+| 6 | Gate G3: owner Immich API key → dry-run → real ingest (days)                                                                        | High     | M      | queued row exists                                |
+| 7 | Gates G4/G5: OpenCloud app password → rclone WebDAV + drive-paperless                                                               | High     | L      | queued row exists                                |
+| 8 | Commit the exact-size/ingest-html upgrade (shellcheck-green fixture-green NOW)                                                      | Medium   | S      | [ready]                                          |
 
 **Harvest status:** rows for 1/3/4/5/6/7 already live in `docs/todo/services.md` (Takeout block) + the G1 queue row in TODO_LIST; the handoff row needs its D3 text updated (cookies.json form factor + probe step) — will ride the next commit.
 
@@ -65,13 +65,13 @@
 
 ## Verification log
 
-| Check | Command | Result |
-| --- | --- | --- |
-| Syntax | `bash -n` ×3 scripts | clean |
-| Lint | `shellcheck` ×3 scripts | clean (SC2318/SC2001 fixed, not suppressed) |
-| Downloader fixture | synthetic links.html (attrs + entities + report link) via `ingest-html` | 3/3 parts, exact sizes+filenames, report excluded, 3 absolute URLs |
-| Verify battery selftest | `takeout-verify.sh --selftest` | 4/4 legs GREEN (happy/CRC/coverage/missing-part) |
-| Ingest failure paths | no-staging, no-key | loud, correct pointers |
-| Exact-size sum | triplets from the real page | ≈ 879.65 GB — matches the page's stated total |
-| TODO gate | `check-todo-system.sh` (at last commit) | OK (WARNs = known baseline) |
-| Cookie inventory | `jq .[].name` (names only, no values) | 8 cookies, HttpOnly family absent |
+| Check                   | Command                                                                 | Result                                                             |
+| ----------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Syntax                  | `bash -n` ×3 scripts                                                    | clean                                                              |
+| Lint                    | `shellcheck` ×3 scripts                                                 | clean (SC2318/SC2001 fixed, not suppressed)                        |
+| Downloader fixture      | synthetic links.html (attrs + entities + report link) via `ingest-html` | 3/3 parts, exact sizes+filenames, report excluded, 3 absolute URLs |
+| Verify battery selftest | `takeout-verify.sh --selftest`                                          | 4/4 legs GREEN (happy/CRC/coverage/missing-part)                   |
+| Ingest failure paths    | no-staging, no-key                                                      | loud, correct pointers                                             |
+| Exact-size sum          | triplets from the real page                                             | ≈ 879.65 GB — matches the page's stated total                      |
+| TODO gate               | `check-todo-system.sh` (at last commit)                                 | OK (WARNs = known baseline)                                        |
+| Cookie inventory        | `jq .[].name` (names only, no values)                                   | 8 cookies, HttpOnly family absent                                  |

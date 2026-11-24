@@ -4,12 +4,12 @@
 
 ## a) The deploy chain (each forced DEPLOY_FORCE_PRESSURE=2, owner-exempt)
 
-| Gen | Landed | Carried | Pre-flight catch |
-| --- | --- | --- | --- |
-| 1008 | 21:07 (75-min activation) | wave + runner fix + SC2129 + invoices/go-health floats | SC2129: the wave commit's OWN publish-gate emitter failed shellcheck — never build-proven before (first keep-going run caught it; `83b868d08`) |
-| 1009 | ~23:20 | immich caps leg 1 (d8b7b4baa) | — |
-| 1010 | 01:25 | setpriv peer-auth (a667d6bdd) | — |
-| 1011 | 09:16 (88-min, the 07:48 log) | CAP_CHOWN+FOWNER (rode 740a9f3ec) | — |
+| Gen  | Landed                        | Carried                                                | Pre-flight catch                                                                                                                               |
+| ---- | ----------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1008 | 21:07 (75-min activation)     | wave + runner fix + SC2129 + invoices/go-health floats | SC2129: the wave commit's OWN publish-gate emitter failed shellcheck — never build-proven before (first keep-going run caught it; `83b868d08`) |
+| 1009 | ~23:20                        | immich caps leg 1 (d8b7b4baa)                          | —                                                                                                                                              |
+| 1010 | 01:25                         | setpriv peer-auth (a667d6bdd)                          | —                                                                                                                                              |
+| 1011 | 09:16 (88-min, the 07:48 log) | CAP_CHOWN+FOWNER (rode 740a9f3ec)                      | —                                                                                                                                              |
 
 ## b) Battery verdicts (all PASS)
 

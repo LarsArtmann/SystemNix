@@ -10,16 +10,16 @@
 
 **By citation:** the 15-46 report §a (five items: monitor365 runbook refresh; storm-wedge ioTier/start-limit batch; btrbk BE/6 + compsize first-night watch; drive-paperless e2e VM test; bootmetrics attribution correction). All headline landings re-verified GREEN at HEAD `4b2786cd3`:
 
-| Landing | Re-check at HEAD | Verdict |
-| --- | --- | --- |
-| `ioTier.heavyDB` serviceConfig on monitor365-server | `modules/nixos/services/monitor365.nix:634` (fragment applied, not `//`-merged — the shallow-merge form `// ioTier` is GONE at HEAD, fixed by `1f1517f8e`) | GREEN |
-| `StartLimitBurst = mkForce 10` | `monitor365.nix:641` | GREEN |
-| Phantom `monitor365-backup.prom` purge rule | `modules/nixos/services/backup-coordination.nix:157` tmpfiles `r` rule present | GREEN |
-| dnsblockd `/etc/hosts`-shadow runbook section | `docs/services/dnsblockd.md:19` present | GREEN |
-| bootmetrics `transaction_open` OPEN-path fixture | `flake/parts/checks/selftests.nix:113-118` present; TODO row 521 `[x]` with the attribution correction appended (names `95fd92e85` as the real wiring commit) | GREEN |
-| drive-paperless e2e VM test | `tests/test-drive-paperless-e2e.nix` + `tests/default.nix` present (commit `b15d03ec8`); go-live rows BLOCKED on owner OAuth inputs (`7edc9fa60`) | GREEN |
-| Runbook-refresh row ticks | `f9b0d027d` present in history; TODO row 523 `[x]` with the OBSERVED narrative | GREEN |
-| ioTier precedence + identity-DB perms fixes | `1f1517f8e` in history; battery fold-in row appended (TODO_LIST tail) | GREEN |
+| Landing                                             | Re-check at HEAD                                                                                                                                              | Verdict |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `ioTier.heavyDB` serviceConfig on monitor365-server | `modules/nixos/services/monitor365.nix:634` (fragment applied, not `//`-merged — the shallow-merge form `// ioTier` is GONE at HEAD, fixed by `1f1517f8e`)    | GREEN   |
+| `StartLimitBurst = mkForce 10`                      | `monitor365.nix:641`                                                                                                                                          | GREEN   |
+| Phantom `monitor365-backup.prom` purge rule         | `modules/nixos/services/backup-coordination.nix:157` tmpfiles `r` rule present                                                                                | GREEN   |
+| dnsblockd `/etc/hosts`-shadow runbook section       | `docs/services/dnsblockd.md:19` present                                                                                                                       | GREEN   |
+| bootmetrics `transaction_open` OPEN-path fixture    | `flake/parts/checks/selftests.nix:113-118` present; TODO row 521 `[x]` with the attribution correction appended (names `95fd92e85` as the real wiring commit) | GREEN   |
+| drive-paperless e2e VM test                         | `tests/test-drive-paperless-e2e.nix` + `tests/default.nix` present (commit `b15d03ec8`); go-live rows BLOCKED on owner OAuth inputs (`7edc9fa60`)             | GREEN   |
+| Runbook-refresh row ticks                           | `f9b0d027d` present in history; TODO row 523 `[x]` with the OBSERVED narrative                                                                                | GREEN   |
+| ioTier precedence + identity-DB perms fixes         | `1f1517f8e` in history; battery fold-in row appended (TODO_LIST tail)                                                                                         | GREEN   |
 
 ## b) PARTIALLY DONE
 
@@ -45,6 +45,7 @@ None appended. The 15-46 report queued its (f) subset the same day (TODO_LIST ta
 ## g) OWNER QUESTIONS
 
 **By citation to the 15-46 report §g (both still unanswered):**
+
 1. When is the next acceptable PSI-calm deploy window? Six verification legs across four batches are blocked on it. — BLOCKED: when do you want the next `nix run .#deploy`?
 2. Guard appetite: claim-vs-diff commit check — blocking pre-commit leg or WARN-only selftest?
 
@@ -54,4 +55,4 @@ None appended. The 15-46 report queued its (f) subset the same day (TODO_LIST ta
 
 ---
 
-*Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`.*
+_Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`._

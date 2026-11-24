@@ -3,6 +3,7 @@
 **Session:** audible-dirs diagnosis + fix (started ~19:04 2026-11-10, report written 01:13 2026-11-11; single session, owner prompt "why is audible-sync-dirs failing all the time" + "keep going until everything works").
 
 **Scope line — what this report VERIFIED (command/artifact) vs NOT verified:**
+
 - VERIFIED: the 226 failure signature + count (`journalctl -u audible-sync-dirs.service --since today`, 8 matching lines = 4 failed starts at 12:23 / 13:24 / 18:00 / 19:01, all `status=226/NAMESPACE`, all naming `/mnt/pool/services/audible` as the missing namespace path); pool mount state (`grep pool /proc/mounts` — btrfs on /dev/sda mounted, `/mnt/pool/services/` populated with 11 sibling service dirs); the module's unit config (`view modules/nixos/services/audible-sync.nix` + `nix eval .#...audible-sync-dirs.serviceConfig.ReadWritePaths` → pre-fix `["/mnt/pool/services/audible"]`, post-fix `["/mnt/pool/services"]`); sibling-pattern comparison (google-sync-dirs → `/mnt/pool/backups`, opencloud + tq-agent-pool → `/mnt/pool/services`); fix #1 live-verified (gen-998 switch, 23:43 journal run got PAST namespace setup → `mkdir` succeeded); fix #2's failure signature (23:43 + 00:44 journal: root `chown` → `Operation not permitted` inside the hardened namespace); `harden{}` accepts `CapabilityBoundingSet` (lib/systemd.nix:17,114) and `mkPoolDirUnit` bakes the exact owner-set triple (lib/default.nix:92-94); post-fix eval (`nix eval ...CapabilityBoundingSet` → `"CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE"`); deadnix + statix standalone re-runs green; anchor `readlink /run/current-system` == `system-998-link` target (`vkads03jr…f9a75f4`) at 00:43.
 - NOT verified / NOT attempted: deploy #4 outcome (caps fix, fired 01:12, still building — §b); the first audible seed run (never started — owner question open since the 05-59 session); the 7 OTHER failed units seen in deploy3's pre-switch listing (btrfs-verify-pool-backups, btrfs-verify-snapshots, forgejo-github-sync, inboxclean-sync, journal-import, post-crash-calm-gate, service-health-check — NOT root-caused, suspected IO-storm victims, unverified); WHO/WHEN created gen-997 and whether another session's deploy already carried my RWP fix before deploy3 (deploy3's own log line "No new profile generation (system-997 unchanged — config already active)" contradicts gen-998's existence — unexplained, not investigated per owner's no-side-research instruction); the pma library-reports session's internals (foreign session — only liveness + IO footprint probed).
 
@@ -46,11 +47,12 @@
 
 ## f) Up to 50 things to get done next
 
-*Harvest note: §f.1-§f.8 are THIS report's direct follow-ups and are cited from queue surfaces (TODO_LIST.md + docs/todo/services.md + docs/todo/pipeline.md) in this same landing; the rest are roadmap-class observations from this session's run, deliberately not harvested (no owner ask, no verified defect — DELIBERATELY NOT HARVESTED).*
+_Harvest note: §f.1-§f.8 are THIS report's direct follow-ups and are cited from queue surfaces (TODO_LIST.md + docs/todo/services.md + docs/todo/pipeline.md) in this same landing; the rest are roadmap-class observations from this session's run, deliberately not harvested (no owner ask, no verified defect — DELIBERATELY NOT HARVESTED)._
 
 **audible go-live completion (direct follow-ups):**
-1. Verify deploy #4 outcome: gen-999 anchor, dirs unit clean exit, 3 leaf dirs owned `audible-sync:audible-sync`, zero new journal failures. *(deploy in flight)*
-2. Owner decision + execution: start first seed run now (48h budget, HDD idle) vs wait for Sunday 05:00 tick. *(blocked:user)*
+
+1. Verify deploy #4 outcome: gen-999 anchor, dirs unit clean exit, 3 leaf dirs owned `audible-sync:audible-sync`, zero new journal failures. _(deploy in flight)_
+2. Owner decision + execution: start first seed run now (48h budget, HDD idle) vs wait for Sunday 05:00 tick. _(blocked:user)_
 3. Three-phase seed journal check: `exporting full library listing` → `downloading full library (AAXC…)` → `decrypting to DRM-free M4B`; verify `last_success` marker + `backup_all_healthy` freshness row appears.
 4. Live-fire the `onFailure` → Discord path once (intentional fail in a throwaway extendModules unit — never force-enable in-tree).
 5. Wire dirs-oneshot outcome visibility: post-provisioner `is-failed` sweep in deploy.sh (§e.3) so the next 226-class failure alerts same-day.
@@ -59,7 +61,7 @@
 8. Retick the post-wave verification row's remaining legs (paperless-gpt auto-follow eval-proof rides the same deploy-family wave).
 
 **Deploy / pressure-gate policy (direct follow-up):**
-9. Write the DEPLOY_FORCE_PRESSURE authority rule (who, what delta, what storm duration escalates) into docs/agents/stability.md or CONTRIBUTING.md. *(owner input via §g Q3)*
+9. Write the DEPLOY_FORCE_PRESSURE authority rule (who, what delta, what storm duration escalates) into docs/agents/stability.md or CONTRIBUTING.md. _(owner input via §g Q3)_
 10. Codify the two-line deploy pre-flight (PSI read + drv-equality) as a check step or script wrapper; cite deploy3's unexplained "system-997 unchanged" line as the motivating ambiguity.
 11. Triage whether "No new profile generation (system-997 unchanged — config already active)" in deploy3's log is an nh display quirk or a real skipped-gen path (gen-998 exists; the two lines contradict).
 12. Add the leaf-RWP + chown-caps runtime-shaped audit (§e.4) with negative tests in `scripts/negative-test-lints.sh`.
@@ -111,6 +113,7 @@
 **Deploy history since this report:** deploy #4/4b/4c died on the foreign float wave; deploy #5 (02:17, poll-loop auto-fired on a green eval probe) aborted rc=1 — its own lock float hit §13/§14 drift because the foreign wave was mid-ceremony (registry expected pre-float revs); the wave LANDED by ~03:00 (registry == lock == allowlist all at crm `f2d1726`); four foreign gate-refusals (03:36–03:59, code=12, no override) kept the box quiet. Deploy #6 fired 07:33 after a full pre-flight: eval green, drv-equality proved REAL drift (`glidwahg…` deriver ≠ `xw40s431…` tree), eval-relevant files quiescent 5+ min, `DEPLOY_FORCE_PRESSURE=1` (third force-override, same justification — delta one unit file, storm foreign ~40-53% IO PSI).
 
 **LIVE state (verified, not assumed):**
+
 - gen-999 `y4nrx9n6fmpzy4wz1r002c1fgmkjpyyp…` live, anchor == newest `system-999-link` (deploy auto-repaired the nh exit-4 unanchor).
 - Live unit carries BOTH fixes: `CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE` + `ReadWritePaths=/mnt/pool/services` (grep of `/etc/systemd/system/audible-sync-dirs.service`).
 - Dirs unit journal: ran 07:46:40 (activation) + 08:47:26 (re-fire) — "Finished" both times, NO chown error, NO 226.
@@ -118,12 +121,14 @@
 - Unit result: `Result=success`, `ExecMainStatus=0`, active(exited); main `audible-sync.service` inactive/dead, zero journal entries (timer-gated, Sunday 05:00).
 
 **Deploy #6 rc=3 smoke battery (168 PASS / 8 FAIL / 1 STORM-SUSPECT / 4 SKIP under 62% IO PSI) — attributed, NONE audible-sync's:**
+
 - 4 activation-failed units are the DEPLOY3 storm-casualty set (forgejo-github-sync, inboxclean-sync, post-crash-calm-gate, service-health-check — pre-existing on gen-998).
 - Self-healed within the hour: inboxclean-sync, calm-gate, service-health-check, geometrikks-log-pull-pbx (all inactive/dead clean), bank-sync (active/running).
 - THREE persistent, all FOREIGN-owned (flagged for their owning sessions, not fixed here): `forgejo-github-sync` exit 6/NOTCONFIGURED (missing credential/config); `tq-agent-pool` crash-loop (`.postgres-wrapp`/`mariadbd` children escape the cgroup stop, 32.7G swap peak); `forgejo-runner-evo-x2` still inactive — its 5-min runner-ensure timer has NOT converged it (contradicts the smoke check's own claim; triage needed).
 - Storm note: a foreign deploy attempt at 08:26 was flock-refused (holder from the 07:33 window still alive); gen-999 remained newest throughout.
 
 **Remaining-leg closures from this row's §b list:**
+
 - Deploy-verify legs (anchor, dirs clean exit, 3 leaf dirs owned): DONE (above).
 - Tile + Gatus: tile `openaudible.png` present (`audible-sync.nix:395`); §16 tile-pack gate GREEN in deploy #6's battery (the switch completing proves every blocking pre-deploy gate passed). Audible has no port → gatus-coverage-audit (also green in #6) is the only Gatus surface.
 - Paperless-gpt follow eval-proof: throwaway `extendModules` (mkForce `llama-chat.enable = true`) → `paperless-gpt.enable` resolves GREEN via the auto-follow in `configuration.nix:698` (result captured in `~/.cache/audible-fix/pgpt-proof.out`; the `ocrProvider = llm` throw is opt-in-only, default `"off"` — the auto-follow branch is NOT booby-trapped).

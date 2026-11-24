@@ -5,15 +5,15 @@
 
 ## Verification basis
 
-| Claim | Evidence | Result |
-| --- | --- | --- |
-| Tombstone live | `git log --oneline --grep tombstone` → `4d2b5d77e` | committed before any row work |
-| io-PSI probes work | live probe runs ×2 | attributed a LIVE transient storm in one pass (fish pid 247 MB/s, PSI some avg10 97.5 → drained minutes later); caught that the pid-join needs lexicographic `sort -k1,1` |
-| Scanner noise gone | full-history scan after rewrite | 1,400+ HIT lines → 224 (198 ctx7sk + 1 AIza + 5 gsk_ + 20 syn_cb0b — all real-leak classes), 8 visible allowlist skips, 0 sk-00000 phantoms |
-| Scanner selftest | `nix build .#checks.x86_64-linux.secret-history-scanner-selftest` | green ×2; mutation (de-anchored `sk-`) trips the L2 regression leg |
-| gitleaks selftest | `nix build .#checks.x86_64-linux.gitleaks-coverage-selftest` | green; mutations (any-ULID allowlist; useDefault=false) fail loudly |
-| crash-triage S-0025 legs | `bash scripts/test-crash-triage.sh` + nix check + live `--boots 4` | PASS; live verdict block: "abrupt=3 clean=0 running=1 — all abrupt boots have branch proposals + evidence" |
-| shellcheck | severity=warning on all touched scripts | clean |
+| Claim                    | Evidence                                                           | Result                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tombstone live           | `git log --oneline --grep tombstone` → `4d2b5d77e`                 | committed before any row work                                                                                                                                             |
+| io-PSI probes work       | live probe runs ×2                                                 | attributed a LIVE transient storm in one pass (fish pid 247 MB/s, PSI some avg10 97.5 → drained minutes later); caught that the pid-join needs lexicographic `sort -k1,1` |
+| Scanner noise gone       | full-history scan after rewrite                                    | 1,400+ HIT lines → 224 (198 ctx7sk + 1 AIza + 5 gsk_ + 20 syn_cb0b — all real-leak classes), 8 visible allowlist skips, 0 sk-00000 phantoms                               |
+| Scanner selftest         | `nix build .#checks.x86_64-linux.secret-history-scanner-selftest`  | green ×2; mutation (de-anchored `sk-`) trips the L2 regression leg                                                                                                        |
+| gitleaks selftest        | `nix build .#checks.x86_64-linux.gitleaks-coverage-selftest`       | green; mutations (any-ULID allowlist; useDefault=false) fail loudly                                                                                                       |
+| crash-triage S-0025 legs | `bash scripts/test-crash-triage.sh` + nix check + live `--boots 4` | PASS; live verdict block: "abrupt=3 clean=0 running=1 — all abrupt boots have branch proposals + evidence"                                                                |
+| shellcheck               | severity=warning on all touched scripts                            | clean                                                                                                                                                                     |
 
 ## a) FULLY DONE
 
@@ -79,7 +79,7 @@
 19. S-0041/S-0042 monitor365 upstream JWT-off-argv + SsoConfigRow logging (upstream repo work).
 20. S-0003/S-0005 eval-guard + §18 CPU-leg follow-ups.
 
-*(Items 3–20 are pre-existing plan/library rows — deliberately not re-harvested; only item 11 was new from this session.)*
+_(Items 3–20 are pre-existing plan/library rows — deliberately not re-harvested; only item 11 was new from this session.)_
 
 ## g) QUESTIONS (max 3)
 

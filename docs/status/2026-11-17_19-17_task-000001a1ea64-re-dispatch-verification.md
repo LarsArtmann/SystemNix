@@ -15,7 +15,7 @@ this fire ran the CONTRIBUTING re-dispatch protocol over all 5 items.
   /readyz semantics row (services.md "Health Hub /readyz semantics"), borg tripwire (RESOLVED, pipeline.md),
   papdashboard float/deploy + WARN rows (items 2/3 of this batch), node-exporter freeze-56 row (stability.md).
 - Load-bearing live spot-check (step 2): the node-exporter poisoned-prom claim —
-  `system_health.prom` line 1 = `system_flm_crash_trigger_pair_24h ` (metric name, EMPTY value, `cat -A`-verified);
+  `system_health.prom` line 1 = `system_flm_crash_trigger_pair_24h` (metric name, EMPTY value, `cat -A`-verified);
   node_exporter rejected it **46,734 times today** (parse error "line 1: expected float as value, got empty"),
   still failing at 19:12:06. Poison class LIVE, fix in-tree deploy-gated — exactly as the row states. TRUE.
 

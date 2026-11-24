@@ -6,16 +6,16 @@ marked **inferred**, and every section carries its re-verification command.
 
 ## Service facts (verified)
 
-| Fact            | Value                                                                  |
-| --------------- | ---------------------------------------------------------------------- |
-| Host            | `pbx.artmann.tech` (root SSH works: `ssh root@pbx.artmann.tech`)       |
-| Service         | `stalwart.service` — **active** (`systemctl is-active stalwart`)        |
-| Binary version  | stalwart **0.16.27** (store path in the unit's ExecStart)               |
-| Store           | RocksDB at `/var/lib/stalwart/db` (config JSON declares only the store) |
-| Config          | `/nix/store/jvyji802…-stalwart.json` = `{"@type":"RocksDb","path":…}`   |
-| Admin bootstrap | `STALWART_RECOVERY_ADMIN=admin:$(systemd-creds cat admin)` in ExecStart |
+| Fact            | Value                                                                                                           |
+| --------------- | --------------------------------------------------------------------------------------------------------------- |
+| Host            | `pbx.artmann.tech` (root SSH works: `ssh root@pbx.artmann.tech`)                                                |
+| Service         | `stalwart.service` — **active** (`systemctl is-active stalwart`)                                                |
+| Binary version  | stalwart **0.16.27** (store path in the unit's ExecStart)                                                       |
+| Store           | RocksDB at `/var/lib/stalwart/db` (config JSON declares only the store)                                         |
+| Config          | `/nix/store/jvyji802…-stalwart.json` = `{"@type":"RocksDb","path":…}`                                           |
+| Admin bootstrap | `STALWART_RECOVERY_ADMIN=admin:$(systemd-creds cat admin)` in ExecStart                                         |
 | Listeners       | `127.0.0.1:8082` (inner HTTP/admin API), `*:993` IMAPS, `*:995` POP3; public HTTPS via the host nginx on `:443` |
-| Webmail         | Bulwark at `webmail.artmann.tech` (hosts/pbx/bulwark.nix)               |
+| Webmail         | Bulwark at `webmail.artmann.tech` (hosts/pbx/bulwark.nix)                                                       |
 
 Re-verify:
 

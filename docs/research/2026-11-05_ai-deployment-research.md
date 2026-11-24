@@ -7,7 +7,7 @@
 
 ### 1. Demand classification — we have none; canon demands one
 
-- **Canon:** scale-to-zero is "often a liability" for LLMs (KServe/Knative guidance — 16 GB of weights = a minute-plus cold start; serverless GPU cold starts run 40–120 s, weights dominate). The standard answer is a per-endpoint decision: warm replica for latency-critical, scale-to-zero only for light/spiky demand. Ollama's `keep_alive` 5-minute idle-unload is the only mainstream *automatic* idle unload; Triton and vLLM make residency an *orchestrator decision* (explicit load/unload API, opt-in sleep mode). Tiered reclamation: KV cache → weights-to-CPU → discard.
+- **Canon:** scale-to-zero is "often a liability" for LLMs (KServe/Knative guidance — 16 GB of weights = a minute-plus cold start; serverless GPU cold starts run 40–120 s, weights dominate). The standard answer is a per-endpoint decision: warm replica for latency-critical, scale-to-zero only for light/spiky demand. Ollama's `keep_alive` 5-minute idle-unload is the only mainstream _automatic_ idle unload; Triton and vLLM make residency an _orchestrator decision_ (explicit load/unload API, opt-in sleep mode). Tiered reclamation: KV cache → weights-to-CPU → discard.
 - **Us:** "enabled" is the only mode. `nsfw-classifier` is boot-resident **and** runs a batch scan timer (`nsfw-immich-scan`) — spiky+batch demand paying continuous residency. `fastflowlm`/`llama-vlm` are socket-activated (Accept=true) — the correct demand-driven pattern, already canon-shaped. `monitor365`/`dnsblockd` are genuinely continuous (resident is right).
 - **Divergence:** spiky and batch consumers are boot-resident. Canon fix: measure per-service request rates, then socket-activate / idle-stop the spiky ones.
 
@@ -19,7 +19,7 @@
 
 ### 3. Restart policy — the hardest divergence, one line to fix
 
-- **Canon:** systemd ≥254 ships `RestartSteps`/`RestartMaxDelaySec` exponential backoff (man page: "values between 3 and 5 are good choices"); v262 adds `RestartRandomizedDelaySec` jitter *explicitly because* simultaneously failing instances cause "resource congestion". Kubernetes CrashLoopBackOff: 10 s doubling to a 5-min cap, reset after 10 min healthy. AWS Builders Library: retries are selfish — naive restarts delay recovery.
+- **Canon:** systemd ≥254 ships `RestartSteps`/`RestartMaxDelaySec` exponential backoff (man page: "values between 3 and 5 are good choices"); v262 adds `RestartRandomizedDelaySec` jitter _explicitly because_ simultaneously failing instances cause "resource congestion". Kubernetes CrashLoopBackOff: 10 s doubling to a 5-min cap, reset after 10 min healthy. AWS Builders Library: retries are selfish — naive restarts delay recovery.
 - **Us:** fleet-wide `Restart=on-failure` + fixed `RestartSec=10` + `startLimitBurst=5/300s`. Worst case = **five full model loads in ~50 s** of crash-loop (the flm-real ×5 SIGABRT pile-driver, 2026-11-05, is exactly this shape).
 - **Fix:** `RestartSteps=4` + `RestartMaxDelaySec=10min` on every model-loading unit (verify NixOS systemd ≥254 first). Canon-identical, config-only.
 
@@ -45,14 +45,14 @@
 
 ## Ranked deltas (Pareto order)
 
-| # | Delta | Cost | Kills |
-| - | ----- | ---- | ----- |
-| 1 | Restart backoff (`RestartSteps=4`, cap 10min) on model-loader units | one line ×4 modules | crash-loop model-reload pile-drivers |
-| 2 | Extract re-embed backlog → calm-window, content-hash-idempotent timer job | design + module work | the storm engine at root |
+| # | Delta                                                                                    | Cost                   | Kills                                       |
+| - | ---------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------- |
+| 1 | Restart backoff (`RestartSteps=4`, cap 10min) on model-loader units                      | one line ×4 modules    | crash-loop model-reload pile-drivers        |
+| 2 | Extract re-embed backlog → calm-window, content-hash-idempotent timer job                | design + module work   | the storm engine at root                    |
 | 3 | Demand profiling (request rates per AI service) → socket-activate / idle-stop spiky ones | measurement + decision | guaranteed boot cold-reads nobody asked for |
-| 4 | Ghost-package detector eval check | small check | 19-day-unwired class |
-| 5 | Serialize concurrent cold loads (`stability:261`, existing) | After=-chain or slot | six-warmup boot pile-up |
-| 6 | 465 GB write-destination attribution (existing §b follow-up) | forensics | unknown amplifier |
+| 4 | Ghost-package detector eval check                                                        | small check            | 19-day-unwired class                        |
+| 5 | Serialize concurrent cold loads (`stability:261`, existing)                              | After=-chain or slot   | six-warmup boot pile-up                     |
+| 6 | 465 GB write-destination attribution (existing §b follow-up)                             | forensics              | unknown amplifier                           |
 
 ## Sources
 

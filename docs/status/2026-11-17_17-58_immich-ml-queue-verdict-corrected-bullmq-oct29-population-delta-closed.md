@@ -52,4 +52,4 @@ Self-harvest note: item 1 is the existing watch row's verification leg (not re-q
 
 ---
 
-*Reported 2026-11-17 17:58 CET. Commits local-only per no-push rule. Waiting for instructions on all owner-gated items.*
+_Reported 2026-11-17 17:58 CET. Commits local-only per no-push rule. Waiting for instructions on all owner-gated items._

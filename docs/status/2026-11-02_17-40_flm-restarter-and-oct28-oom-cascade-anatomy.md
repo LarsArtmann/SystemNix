@@ -39,17 +39,17 @@ or (b) mask the socket for the boot in the guard sacrifice branch. Queued as fol
 Trigger context: **global OOM (CONSTRAINT_NONE), free swap 0 kB of 62 GiB**, invoker kswapd0 (×5
 invocations) + `tq` (1 invocation, killed the llama-chat victim). Victim table:
 
-| # | time | victim | unit / memcg | total-vm | adj | note |
-|---|------|--------|--------------|----------|-----|------|
-| 1 | 10:14:05 | bun 3639162 | user@1000.service/app.slice/run-p3639162-i3650853.scope | 6.46 GiB | 1000 | tq-agent-pool era agent scope |
-| 2 | 10:14:05 | bun 3403769 | user@1000.service/app.slice/run-p3403769-i3304710.scope | 6.46 GiB | 1000 | same class, second session |
-| 3 | 10:14:05 | llama-server 1453 | /system.slice/llama-chat.service (invoker: tq) | 41.7 GiB | 300 | mmap'd model; same victim #38 + #34 killed later |
-| 4 | 10:15:23 | chromium 44547 uid 975 | user@975.service/app.slice/**hermes-worker-cron**-f59d5d8cfb7b-exec-….scope | **1.414 TiB** | 300 | the §f.20 class: hermes cron chromium 1.45 TiB reservation |
-| 5 | 10:15:23 | chromium 3392891 | user-1000.slice/session-74.scope | **1.414 TiB** | 300 | interactive session scope |
-| 6 | 10:15:23 | chrome-headless 3595707 | (same kswapd0 pass as #5 → session-74.scope) | **1.414 TiB** | 300 | |
-| 7 | 10:15:23 | chrome-headless 3592942 | (same kswapd0 pass as #5 → session-74.scope) | **1.414 TiB** | 300 | |
-| 8 | 10:15:23 | llama-server 2627055 | /system.slice/llama-embeddings.service | 11 MB | 300 | killed at startup, adj-ranked |
-| 9 | 10:15:23 | helium 7854 | app.slice/app-org.chromium.Chromium-7854.scope | 53.6 GiB | 200 | the owner's browser |
+| # | time     | victim                  | unit / memcg                                                                | total-vm      | adj  | note                                                       |
+| - | -------- | ----------------------- | --------------------------------------------------------------------------- | ------------- | ---- | ---------------------------------------------------------- |
+| 1 | 10:14:05 | bun 3639162             | user@1000.service/app.slice/run-p3639162-i3650853.scope                     | 6.46 GiB      | 1000 | tq-agent-pool era agent scope                              |
+| 2 | 10:14:05 | bun 3403769             | user@1000.service/app.slice/run-p3403769-i3304710.scope                     | 6.46 GiB      | 1000 | same class, second session                                 |
+| 3 | 10:14:05 | llama-server 1453       | /system.slice/llama-chat.service (invoker: tq)                              | 41.7 GiB      | 300  | mmap'd model; same victim #38 + #34 killed later           |
+| 4 | 10:15:23 | chromium 44547 uid 975  | user@975.service/app.slice/**hermes-worker-cron**-f59d5d8cfb7b-exec-….scope | **1.414 TiB** | 300  | the §f.20 class: hermes cron chromium 1.45 TiB reservation |
+| 5 | 10:15:23 | chromium 3392891        | user-1000.slice/session-74.scope                                            | **1.414 TiB** | 300  | interactive session scope                                  |
+| 6 | 10:15:23 | chrome-headless 3595707 | (same kswapd0 pass as #5 → session-74.scope)                                | **1.414 TiB** | 300  |                                                            |
+| 7 | 10:15:23 | chrome-headless 3592942 | (same kswapd0 pass as #5 → session-74.scope)                                | **1.414 TiB** | 300  |                                                            |
+| 8 | 10:15:23 | llama-server 2627055    | /system.slice/llama-embeddings.service                                      | 11 MB         | 300  | killed at startup, adj-ranked                              |
+| 9 | 10:15:23 | helium 7854             | app.slice/app-org.chromium.Chromium-7854.scope                              | 53.6 GiB      | 200  | the owner's browser                                        |
 
 Feed to §f.20 (hermes-worker-cron chromium anatomy): **4 MORE ~1.45 TiB reservations in this cascade**
 (#4 explicit hermes cron exec scope; #5–#7 same total-vm signature in session-74.scope); anon-rss of

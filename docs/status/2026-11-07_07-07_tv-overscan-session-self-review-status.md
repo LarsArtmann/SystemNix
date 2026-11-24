@@ -51,22 +51,22 @@
 
 ## f) Next tasks (ranked; 14 real items — padding to 50 with unrelated work would violate this report's scope)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Persistence test: power-cycle the TV, re-check edges; if reset, execute re-run recipe | High | S (owner-gated) | Verification |
-| 2 | Promote `~/.cache/lg-tv-ssap` tooling into `scripts/` with a real websocat runtime input (queued ✓) | High | S | Cleanup |
-| 3 | dnsblockd registry entry for `192.168.1.10` (queued ✓) | Medium | S | Feature |
-| 4 | TOFU cert pinning for the tv-* scripts (lgtv2 `verifyCert` pattern) | Medium | S | Quality |
-| 5 | DMS keybind/widget: one-click "re-apply TV aspect fix" (`tv-set-setting.sh` x2) | Medium | M | Feature |
-| 6 | Owner decision: attempt hotel-mode exit via physical remote (`1105`/`9876`) | Medium | S (owner hands) | Decision |
-| 7 | Enumerate the 15 `getServiceList` services; note useful ones (switchInput, power, WoL) | Low | S | Documentation |
-| 8 | WoL wake wiring for the TV (needs TV-side "Mobile TV On" check first) | Low | S | Feature |
-| 9 | Gatus/monitoring: cheap TV-presence check (SSDP or TCP 3001) → dashboard tile | Low | S | Monitoring |
-| 10 | Delete or fix `set-underscan.py` (d.5) | Low | S | Cleanup |
-| 11 | Fold the "impossibility requires exhaustion table" + "protocol-before-probe" lessons into session discipline (docs/agents/desktop.md already carries the concrete traps) | Low | S | Documentation |
-| 12 | Check TV firmware-update availability (LG hotel firmware may change/reset behavior) | Low | S | Watch |
-| 13 | Probe whether the TV's `getServiceList` exposes power control → scripted standby for the persistence test (feeds #1) | Low | S | Feature |
-| 14 | Right-slit reopen condition documented in the `[decision]` row — nothing further until a factory-menu path opens | — | — | Closed |
+| #  | Task                                                                                                                                                                     | Impact | Effort          | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------- | ------------- |
+| 1  | Persistence test: power-cycle the TV, re-check edges; if reset, execute re-run recipe                                                                                    | High   | S (owner-gated) | Verification  |
+| 2  | Promote `~/.cache/lg-tv-ssap` tooling into `scripts/` with a real websocat runtime input (queued ✓)                                                                      | High   | S               | Cleanup       |
+| 3  | dnsblockd registry entry for `192.168.1.10` (queued ✓)                                                                                                                   | Medium | S               | Feature       |
+| 4  | TOFU cert pinning for the tv-* scripts (lgtv2 `verifyCert` pattern)                                                                                                      | Medium | S               | Quality       |
+| 5  | DMS keybind/widget: one-click "re-apply TV aspect fix" (`tv-set-setting.sh` x2)                                                                                          | Medium | M               | Feature       |
+| 6  | Owner decision: attempt hotel-mode exit via physical remote (`1105`/`9876`)                                                                                              | Medium | S (owner hands) | Decision      |
+| 7  | Enumerate the 15 `getServiceList` services; note useful ones (switchInput, power, WoL)                                                                                   | Low    | S               | Documentation |
+| 8  | WoL wake wiring for the TV (needs TV-side "Mobile TV On" check first)                                                                                                    | Low    | S               | Feature       |
+| 9  | Gatus/monitoring: cheap TV-presence check (SSDP or TCP 3001) → dashboard tile                                                                                            | Low    | S               | Monitoring    |
+| 10 | Delete or fix `set-underscan.py` (d.5)                                                                                                                                   | Low    | S               | Cleanup       |
+| 11 | Fold the "impossibility requires exhaustion table" + "protocol-before-probe" lessons into session discipline (docs/agents/desktop.md already carries the concrete traps) | Low    | S               | Documentation |
+| 12 | Check TV firmware-update availability (LG hotel firmware may change/reset behavior)                                                                                      | Low    | S               | Watch         |
+| 13 | Probe whether the TV's `getServiceList` exposes power control → scripted standby for the persistence test (feeds #1)                                                     | Low    | S               | Feature       |
+| 14 | Right-slit reopen condition documented in the `[decision]` row — nothing further until a factory-menu path opens                                                         | —      | —               | Closed        |
 
 ## g) Questions I cannot answer myself (3)
 

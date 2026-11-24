@@ -5,7 +5,7 @@
 
 ## Verdict up front
 
-The linked-records manager you are missing is **not a new tool** — it is a missing structured layer inside the deployment configs: SystemNix's `services.integration` registry already links *service → serving surface* (vHost, checks, tiles, ports, OIDC, backup) with eval enforcement, but it stops before *service → data store → class → writers/readers → restore*. That second half exists today only as hand-maintained prose (`docs/agents/data-ownership.md`) plus per-service runbooks — doctrine without a gate. The proposal on the table: extend the registry entry with a `data` field, gate it at eval like tile coverage already is, generate the ownership inventory from it (the `registry-matrix-drift` pattern), and carry the edges in `/etc/systemnix/integration-manifest.json`. `project-meta` stays repo-level and must NOT own this (it cannot fail a deploy and never evaluates the fleet).
+The linked-records manager you are missing is **not a new tool** — it is a missing structured layer inside the deployment configs: SystemNix's `services.integration` registry already links _service → serving surface_ (vHost, checks, tiles, ports, OIDC, backup) with eval enforcement, but it stops before _service → data store → class → writers/readers → restore_. That second half exists today only as hand-maintained prose (`docs/agents/data-ownership.md`) plus per-service runbooks — doctrine without a gate. The proposal on the table: extend the registry entry with a `data` field, gate it at eval like tile coverage already is, generate the ownership inventory from it (the `registry-matrix-drift` pattern), and carry the edges in `/etc/systemnix/integration-manifest.json`. `project-meta` stays repo-level and must NOT own this (it cannot fail a deploy and never evaluates the fleet).
 
 ## a) FULLY DONE
 
@@ -43,6 +43,7 @@ The linked-records manager you are missing is **not a new tool** — it is a mis
 ## f) NEXT (ranked; 43 items — harvest pending owner instruction)
 
 **Decisions / ADR**
+
 1. Owner decision: adopt the `services.integration.<name>.data` extension as the prod-lineage system of record (this report's core proposal).
 2. ADR (or amendment to data-ownership.md §The rule): registry declarations = truth for lineage; the markdown table becomes generated output.
 3. Pick the pilot service (recommendation: `crm.nix` — richest chain: truth + projection + external truth + auth material + backup leg).

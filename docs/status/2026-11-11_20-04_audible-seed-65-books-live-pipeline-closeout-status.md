@@ -4,11 +4,13 @@
 **Session:** closes the audible arc opened by the owner's "how many books are backed up / how can I play 1?" — scope: everything after the `2026-11-11_15-55_audible-seed-aax-pivot-four-runtime-bugs-status.md` report (which is annotated in-place with the closure).
 
 **Owner's opener answered in one line each:**
+
 - **Forgot:** to `nix build` the touched derivations BEFORE deploying (shellcheck runs at BUILD time and `nix flake check --no-build` — my pre-commit confidence source — never builds scripts; three deploys burned on a 1-second shellcheck failure I could have seen in 1 minute), and that `.crush/skills` is a symlink — my sops-skill recipe landed in the delivery layer, not any git repo.
 - **Could have done better:** after deploy9's mystery build failure I fired deploy10 and deploy11 on GUESSES instead of forcing the rebuild first (`--rebuild` surfaced nothing because the store already held a cached output — I mistook cache-hits for builds); and I race-checked "no nh running" then fired deploy12/13 seconds later, losing two flocks to the exact window I had just measured.
 - **Can still improve:** the winning strategy (poll for the FOREIGN deploy's success instead of racing for a window) should become the documented default under multi-agent storms; pre-deploy "build touched drvs" belongs next to the drv-equality pre-flight; the daemon's own behavior (visible in the process list: a `crush run` instructed to `git commit` with `--no-verify if needed`) explains every daemon-race anomaly of the last week and deserves a design row.
 
 **Scope — VERIFIED here (fresh commands this session):**
+
 - Books state: `ls /mnt/pool/services/audible/books/ | wc -l` → **65**; `du -sh` → **28 GB**; filenames show ASIN-prefixed 128 kbps LC stereo M4Bs (Atomic Habits, Dopamine Nation, Beyond Order, Ordinary Men, Traffic Secrets, …).
 - Seed journal (17:45→18:12): `New aax files: 64` → "64 AAX files present (library: 86 items)" → "65 M4B in books/, 64 newly decrypted, 0 decrypt failures" → "run complete — last_success updated". Raw AAX deleted post-remux (downloads/ .aax count = 0, by design).
 - SC2095: deploy11's log carries shellcheck's verdict verbatim (`ffmpeg may swallow stdin … Use ffmpeg -nostdin`); fix `-nostdin` committed `850f5a559` with the FULL pre-commit battery green (flake check included — doc-counts stamps held).
@@ -18,6 +20,7 @@
 - 15:55 report's §b.1 annotated in-place with the closure (annotation, not rewrite).
 
 **Scope — NOT verified:**
+
 - **The 21 non-downloaded items are UNATTRIBUTED** — Plus borrowals vs podcasts vs gone-server-side; the per-asin license errors sit in the journal and a library.json↔books/ diff would name them. Not derived yet.
 - **Sunday-tick semantics risk NOT tested**: the 21 refused items DID get covers/chapters/PDFs written into downloads/ — if audible-cli's skip-if-exists keys on those side files, next Sunday's run may skip their AUDIO as "already downloaded" forever. Unverified, potentially silent.
 - **Backup Freshness Gatus endpoint for audible-sync**: `last_success` is touched (verified in the unit dir); the freshness endpoint going green was NOT probed (deemed adjacent-scope).
@@ -118,7 +121,7 @@
 39. **Newer audible-cli evaluation** (plus-download support, AAXC license changes) — Medium / M / Feature (queued-adjacent).
 40. **Weekly audible run watch after the first Sunday tick** (2026-11-15 05:00) — Medium / S / Verification (NEW; first real timer run).
 
-*(deliberately NOT harvested: 5-7 are owner questions in §g; 1-4 + 8-9 + 40 are NEW — pipeline/services rows appended below per the standing self-harvest rule; the rest carry queue rows from today's earlier reports.)*
+_(deliberately NOT harvested: 5-7 are owner questions in §g; 1-4 + 8-9 + 40 are NEW — pipeline/services rows appended below per the standing self-harvest rule; the rest carry queue rows from today's earlier reports.)_
 
 ## g) Questions I can NOT figure out myself
 

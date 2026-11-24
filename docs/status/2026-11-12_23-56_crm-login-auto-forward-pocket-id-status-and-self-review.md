@@ -51,6 +51,7 @@ Nothing. No data damage, no live-system mutation, no broken gates, no foreign wo
 ## f) NEXT TASKS (session-derived, no unrelated research)
 
 Deploy chain (owner-gated):
+
 1. Push crm master (owner decision — push-gated).
 2. SystemNix: bump `crm` lock input to the pushed rev; verify the go-modules vendorHash carries (go.mod untouched) — `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` enumeration first.
 3. `nix run .#deploy`; verify anchor per the 2026-10-14 discipline.
@@ -92,6 +93,7 @@ Repo hygiene noticed during gates (pre-existing, not this session's):
 **Row landed:** `e4e6ae7ca` — TODO_LIST queue one-liner + docs/todo/services.md library entry for the evaluation sweep (both surfaces, one commit, cites this report §c.4).
 
 **Deploy chain discovered + executed so far:**
+
 1. **The crm feature was ALREADY PUSHED** — the parallel session swept crm master to `9d96dad` (includes my `43f9e64` + an upstream oauth2/sqlite vendorHash chase `c626704`). Two newer machineapi commits (`c87013b`, `e691417`) remained local/unpushed — that session was still mid-wave.
 2. **crm is HARD-PINNED in SystemNix** (`flake.nix` `?rev=`, the deliberate no-master-tracking policy): `nix flake update crm` correctly did NOT move it (the silent-NO-OP pin class). Roll executed per protocol: lock-free package probe built `kith-crm-9d96dadc…` green with NO override (upstream bakes the hash post-`c626704`) → pin rolled in flake.nix + the allowlist row in lib/flake-input-pin-audit.nix (also fixing that row's STALE `f2d1726` text — the e383ba9 roll had updated flake.nix but missed the row) → lock moved to `9d96dad`, toplevel evals green. Commit rode daemon `4ab8170eb` (content HEAD-verified).
 3. **First deploy attempt: PSI gate refused (exit 12)** — io some avg10 ~24-41, disks genuinely busy (29% nvme): the CV repo's tq-agent batch (`buildflow --fix --build-mode=full`, `nix build .#cv`, test batteries) plus applyflow tests. NOT forced.

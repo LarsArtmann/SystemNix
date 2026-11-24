@@ -65,13 +65,13 @@ Every linked document carries a custom field pointing at the bank-sync
 transaction, and every matched transaction has a ledger row pointing at the
 document:
 
-| Direction | Store | Value |
-| --- | --- | --- |
-| document → transaction | Paperless custom field `bank_sync_receipt` | `qonto/receipt/<transaction-uuid>` |
-| document → transaction (clickable) | Paperless custom field `bank_sync_tx_url` (URL type) | `https://banksync.home.lan/partials/transaction?id=<uuid>&provider=qonto` |
-| document → statement month | Paperless custom field `bank_sync_statement` | `qonto/<balance-id>/<YYYY-MM>` |
-| transaction → document | bank-sync `paperless_receipt_uploads` | `(provider=qonto, external_id=<uuid>, kind=receipt, document_id, checksum, filename, tx_date)` |
-| statement month → document | bank-sync `paperless_uploads` | `(provider=qonto, balance_id, window_start/end, document_id, checksum)` |
+| Direction                          | Store                                                | Value                                                                                          |
+| ---------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| document → transaction             | Paperless custom field `bank_sync_receipt`           | `qonto/receipt/<transaction-uuid>`                                                             |
+| document → transaction (clickable) | Paperless custom field `bank_sync_tx_url` (URL type) | `https://banksync.home.lan/partials/transaction?id=<uuid>&provider=qonto`                      |
+| document → statement month         | Paperless custom field `bank_sync_statement`         | `qonto/<balance-id>/<YYYY-MM>`                                                                 |
+| transaction → document             | bank-sync `paperless_receipt_uploads`                | `(provider=qonto, external_id=<uuid>, kind=receipt, document_id, checksum, filename, tx_date)` |
+| statement month → document         | bank-sync `paperless_uploads`                        | `(provider=qonto, balance_id, window_start/end, document_id, checksum)`                        |
 
 Attachments/invoices are matched deterministically and locally:
 filename date (Europe/Berlin, ±1 day) + absolute amount + counterparty text;

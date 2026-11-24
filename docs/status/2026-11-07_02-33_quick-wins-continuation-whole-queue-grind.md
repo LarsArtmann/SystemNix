@@ -9,6 +9,7 @@
 ## a) FULLY DONE (33 queue rows closed, ticked with evidence on both surfaces where twins exist)
 
 ### Verification/superseded closures (premise-checked, live-probed)
+
 1. **pkce provisioner semantics** — source-verified create-OR-update (`pocket-id.nix:252-275`: existing clients take `api_put` with `clientAttrs`, which inherits `pkceEnabled` at :257). No manual flip needed; remainder (live canary) retagged `[blocked:deploy]` on both surfaces.
 2. **nix-gate-removal deploy row — STALE since 10-17**: live-proven (plain ELF `nix`, an entire session of unmolested evals at PSI 30-50, no NIX_HEAVY_GATE_FORCE).
 3. **hermes re-pin row — STALE**: lock at `6b21d056` (last hermes move 06:28 Nov 6) is check-proven green by the 11:35 full `flake check --all-systems` (fc-113500.log).
@@ -21,6 +22,7 @@
 10. **[blocked:deploy] audit — 30/30 genuine**, zero sudo-only mismatches, zero retags needed.
 
 ### Code landed (eval-green, rides next deploy)
+
 11. **systemd-shape-audit class 9**: ~170 documented [Service]-section keys + `Limit*` prefix family rejected inside `unitConfig`; `allowUnitConfigServiceKeys` escape; header/docs/negative-test legs. Verified BOTH directions: evo-x2 toplevel eval green (assertions forced) AND `CASES=shapeaudit` 3/3 PASS (the new leg throws the marker). First mutation attempt was malformed (nested-attr eval crash) — the harness correctly rejected it; fixed mutation mutates at unit level. docs/agents/systemd.md mirror-trap bullet added.
 12. **vm-top-metrics collector** (row 153): scripts/vm-top-metrics.sh (selftesting: top-N order, kernel-thread skip, TOP_N bound, hwm, comm sanitization) + module (trash-metrics pattern, ExecStartPost start-contract) + runbook + evo-x2 enable. First live run already shows the target class: helium/electron at ~1.45 TiB VmSize each. Selftest caught a real trap: **call-site env-prefix does NOT rebind globals frozen at script start** (documented in the runbook).
 13. **boot-evidence-scratch-gc weekly user timer** (row 154): platforms/common/programs/boot-evidence-gc.nix, checkout-referenced (catalog-inventory precedent), absent-checkout no-op degrade; HM probe confirms OnCalendar=weekly renders.
@@ -30,6 +32,7 @@
 17. **commit-msg WARN leg**: staged queue/library rows without Task-Queue-ID footer → warning (never blocks); shellcheck-clean, live-verified both directions.
 
 ### Docs/conventions landed
+
 18. CONTRIBUTING: step-2 LIVE/HOST-state clause, step-4 footer-heredoc + daemon-sweep clause, RETIRE-in-diagnosing-session paragraph.
 19. TODO_LIST header: re-fire stamp-hygiene bullet (~3-stamp cap, collapse convention).
 20. AGENTS.md sudo-exception widened (probe ×2).
@@ -37,18 +40,19 @@
 22. **Chromium adj-300 citation pinned AND re-verified**: `9a988a2a…` (main@{#1733436}, 2026-11-02T23:59:47Z); constants fetched at that SHA match the citation verbatim.
 
 ### The first `--apply` prune (owner question 3, answered by directive)
+
 23. **357 `[x]` rows pruned** (159 queue + 198 libraries), entry block with pre-prune line numbers pasted into CHANGELOG, 3 truncation-forged half-links normalized (caught by the pre-commit link check), count rows updated (DRIFT 60→74 expected unmasking; unharvested 203→202 — **DOWN one**, pre-count measured live at a HEAD worktree). **Process miss, recorded in the CHANGELOG entry: F27b (never prune a row whose Source carries an open drift) ran POST-apply instead of before; no over-prune materialized.** Committed `0d0913e30` (bulk rode daemon `f123b49d7`).
 
 ---
 
 ## b) DELIBERATELY DEFERRED (PSI-gated, gates named)
 
-| Item | Gate |
-|---|---|
-| Owed full `nix flake check --no-build` (tee ~/.cache/fc.log) + era-annotate 00-15 §f.2 + drift baseline | io PSI some avg10 < ~20 (observed 22-50 all session; row exists) |
-| /data du -sb MB-grain re-baseline + compare-one-liner smoke + storage.md verdict | same gate (rows 57/162-equivalents exist) |
-| Stale deploy-gated claims sweep (row 494) | needs the healthy post-deploy window — the live host is mid-recovery (CrowdSec down, HM start-limit per the 01-20 report); post-deploy batteries on a broken host false-red |
-| storage-ledger capability (row 140) | unmet prerequisites (dirSizes wiring + spawn_blocking rows) |
+| Item                                                                                                    | Gate                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Owed full `nix flake check --no-build` (tee ~/.cache/fc.log) + era-annotate 00-15 §f.2 + drift baseline | io PSI some avg10 < ~20 (observed 22-50 all session; row exists)                                                                                                            |
+| /data du -sb MB-grain re-baseline + compare-one-liner smoke + storage.md verdict                        | same gate (rows 57/162-equivalents exist)                                                                                                                                   |
+| Stale deploy-gated claims sweep (row 494)                                                               | needs the healthy post-deploy window — the live host is mid-recovery (CrowdSec down, HM start-limit per the 01-20 report); post-deploy batteries on a broken host false-red |
+| storage-ledger capability (row 140)                                                                     | unmet prerequisites (dirSizes wiring + spawn_blocking rows)                                                                                                                 |
 
 ## c) PROCESS FINDINGS (this session's own lessons)
 

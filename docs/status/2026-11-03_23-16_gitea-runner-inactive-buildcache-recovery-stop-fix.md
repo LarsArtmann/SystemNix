@@ -19,25 +19,25 @@ FAIL Gitea runner - INACTIVE: start job deleted by a cycle breaker or unit stopp
 That text comes from `scripts/post-deploy-check.sh` §21 (the ordering-cycle gate's runner canary,
 line 202 pre-fix). **The message's own hypothesis was wrong.** Live evidence:
 
-| Time (precise) | Event |
-| --- | --- |
-| 21:11:01.895 | `Starting Recover buildcache mount after USB hotplug (zombie reaper + remount)` (fired by **deploy.sh**, sudo TTY pts/42, `systemctl start buildcache-usb-recovery.service`) |
-| 21:11:01.913 | `mnt-buildcache.automount: Deactivated successfully` |
-| 21:11:01.915 | `mnt-buildcache.mount: Deactivated successfully` |
-| 21:11:01.920 | `Stopping Gitea Actions Runner...` |
-| 21:11:01.944 | `gitea-runner-evo\x2dx2.service: Deactivated successfully` / `Stopped` |
-| 21:11:01.958 → :02.270 | automount re-armed, `/mnt/buildcache` remounted (`/dev/sdb1`) |
-| 21:12:13 | `gitea-runner-ensure: gitea-runner-evo\x2dx2.service not active — clearing start-limit, starting (no-block)` → runner back |
+| Time (precise)         | Event                                                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 21:11:01.895           | `Starting Recover buildcache mount after USB hotplug (zombie reaper + remount)` (fired by **deploy.sh**, sudo TTY pts/42, `systemctl start buildcache-usb-recovery.service`) |
+| 21:11:01.913           | `mnt-buildcache.automount: Deactivated successfully`                                                                                                                         |
+| 21:11:01.915           | `mnt-buildcache.mount: Deactivated successfully`                                                                                                                             |
+| 21:11:01.920           | `Stopping Gitea Actions Runner...`                                                                                                                                           |
+| 21:11:01.944           | `gitea-runner-evo\x2dx2.service: Deactivated successfully` / `Stopped`                                                                                                       |
+| 21:11:01.958 → :02.270 | automount re-armed, `/mnt/buildcache` remounted (`/dev/sdb1`)                                                                                                                |
+| 21:12:13               | `gitea-runner-ensure: gitea-runner-evo\x2dx2.service not active — clearing start-limit, starting (no-block)` → runner back                                                   |
 
-* **Zero** `deleted to break ordering cycle` lines in the window (`journalctl --since 21:00 | grep -c` = 0). The 2026-10-25/26 cycle class was NOT the cause.
-* The runner was stopped by **stop propagation**: the rendered unit carries
+- **Zero** `deleted to break ordering cycle` lines in the window (`journalctl --since 21:00 | grep -c` = 0). The 2026-10-25/26 cycle class was NOT the cause.
+- The runner was stopped by **stop propagation**: the rendered unit carries
   `RequiresMountsFor=/mnt/buildcache/ci-runner-cache` (forgejo.nix), which systemd turns into
   `Requires=mnt-buildcache.mount` + `After=`. `buildcache-usb-recovery` step 1 stops that mount
   **unconditionally, on every deploy**, so every buildcache-bound daemon dies with it.
-* Nothing converged it back inside the deploy: the runner is `wantedBy=forgejo.service` (correct —
+- Nothing converged it back inside the deploy: the runner is `wantedBy=forgejo.service` (correct —
   it must not be pulled by multi-user), and the only re-pull was the **5-minute** ensure timer,
   which fired **72 s later**. The smoke ran in that gap → FAIL.
-* Runner was already processing CI again when I arrived (poller launched 21:12:14); at report time
+- Runner was already processing CI again when I arrived (poller launched 21:12:14); at report time
   it is active (`pid 124051`) and running an `act` workflow (`pid 180086`).
 
 Truth in one line: **a deploy-time "recovery" tore down a healthy mount, and the mount's
@@ -80,18 +80,18 @@ Truth in one line: **a deploy-time "recovery" tore down a healthy mount, and the
 ## d) TOTALLY FUCKED UP
 
 1. **The fix is not live.** Committed ≠ fixed: the running generation still tears the mount down on every deploy, so the very next deploy can reproduce the pasted FAIL. This is the honest state of the ticket.
-2. **I trusted the FAIL message's diagnosis for the first pass.** "start job deleted by a cycle breaker" is a *hypothesis baked into a check message*, and it sent me into the ordering-cycle audit before I had looked at causality. The journal had the answer in 5 precise timestamps. Cost: ~10 minutes and a near-miss on the report's premise. (Message fixed — a smoke line should point at evidence, never assert a cause.)
-3. **Two VM iterations wasted on the guest's udev timing.** The production-shaped `x-systemd.device-timeout=2s` fails the *first* boot mount in the guest (udev socket comes up at 11.7 s, the boot transaction queues `dev-vdb.device` at 11.5 s) → `dev-vdb.device/start timed out`, consumer dependency-failed. I should have reasoned about switch-root udev settle before the first run.
-4. **Discovered, not fixed, an adjacent live breakage**: `home-lars-tmp.mount` is in state **`failed`** (`Mount process exited, status=32`), `/home/lars/tmp` is not mounted, and the resulting `ENODEV` defeats `buildcache-gc`'s *optional* `ReadWritePaths` entries (`-${home}/tmp/go-lint`) — the `-` prefix only tolerates ENOENT, not ENODEV — so `buildcache-gc` died `226/NAMESPACE` at 21:11:04 during the same deploy. Currently `/home/lars/tmp` is gone (nothing mounts it), so the next GC run will likely fail the same way. Root cause not investigated (out of the ticket's scope; the mount is not declared anywhere in this repo — only `cv.nix` *uses* the path).
-5. **I did not re-verify the live runner after a *real* recovery run** (would require either deploying or manually running the store script against the live mount). So the "deploy no longer kills the runner" claim is VM-proven and eval-proven, not live-proven.
+2. **I trusted the FAIL message's diagnosis for the first pass.** "start job deleted by a cycle breaker" is a _hypothesis baked into a check message_, and it sent me into the ordering-cycle audit before I had looked at causality. The journal had the answer in 5 precise timestamps. Cost: ~10 minutes and a near-miss on the report's premise. (Message fixed — a smoke line should point at evidence, never assert a cause.)
+3. **Two VM iterations wasted on the guest's udev timing.** The production-shaped `x-systemd.device-timeout=2s` fails the _first_ boot mount in the guest (udev socket comes up at 11.7 s, the boot transaction queues `dev-vdb.device` at 11.5 s) → `dev-vdb.device/start timed out`, consumer dependency-failed. I should have reasoned about switch-root udev settle before the first run.
+4. **Discovered, not fixed, an adjacent live breakage**: `home-lars-tmp.mount` is in state **`failed`** (`Mount process exited, status=32`), `/home/lars/tmp` is not mounted, and the resulting `ENODEV` defeats `buildcache-gc`'s _optional_ `ReadWritePaths` entries (`-${home}/tmp/go-lint`) — the `-` prefix only tolerates ENOENT, not ENODEV — so `buildcache-gc` died `226/NAMESPACE` at 21:11:04 during the same deploy. Currently `/home/lars/tmp` is gone (nothing mounts it), so the next GC run will likely fail the same way. Root cause not investigated (out of the ticket's scope; the mount is not declared anywhere in this repo — only `cv.nix` _uses_ the path).
+5. **I did not re-verify the live runner after a _real_ recovery run** (would require either deploying or manually running the store script against the live mount). So the "deploy no longer kills the runner" claim is VM-proven and eval-proven, not live-proven.
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Stop-ownership audit for mount-gated daemons.** We now have *three* instances of the same class: pool remount stops pool daemons (2026-10-04, `pool-recovery.restartUnits`), buildcache remount stops buildcache daemons (2026-11-03, this fix), rust-cache remount would do the same (not yet wired). The eval-guard pattern should be **generic and shared** (one helper that, for any mount point, computes bound daemons and asserts convergence coverage) instead of copy-pasted per module — `pool-recovery` and `buildcache` now duplicate ~30 lines of identical filter logic.
-2. **Destructive "recovery" units must be idempotent no-ops on healthy state.** Both `buildcache-usb-recovery` and `rust-cache-usb-recovery` (and, historically, `mnt-buildcache.mount` start jobs) assume "run me = something is broken". deploy.sh calls them unconditionally after every switch. Rule proposal: *any unit deploy.sh fires after every switch must be a no-op when the system is healthy*.
+1. **Stop-ownership audit for mount-gated daemons.** We now have _three_ instances of the same class: pool remount stops pool daemons (2026-10-04, `pool-recovery.restartUnits`), buildcache remount stops buildcache daemons (2026-11-03, this fix), rust-cache remount would do the same (not yet wired). The eval-guard pattern should be **generic and shared** (one helper that, for any mount point, computes bound daemons and asserts convergence coverage) instead of copy-pasted per module — `pool-recovery` and `buildcache` now duplicate ~30 lines of identical filter logic.
+2. **Destructive "recovery" units must be idempotent no-ops on healthy state.** Both `buildcache-usb-recovery` and `rust-cache-usb-recovery` (and, historically, `mnt-buildcache.mount` start jobs) assume "run me = something is broken". deploy.sh calls them unconditionally after every switch. Rule proposal: _any unit deploy.sh fires after every switch must be a no-op when the system is healthy_.
 3. **Every smoke FAIL message must be evidence, not diagnosis.** `post-deploy-check.sh` has other messages with embedded hypotheses (`cycle breaker`, `phantom metrics`, etc.). Audit them all for the same "wrong premise costs a dispatch cycle" bug. Twice this repo has paid for it (2026-10-23 stale premise, this one).
 4. **5-minute convergence is too slow for a CI runner.** The ensure timer cadence (`OnUnitActiveSec=5min`) is the only safety net for three separate stop classes. Consider 60 s, or event-driven (`PathChanged`/mount-comes-back trigger) — the timer is the fallback of last resort, not the design.
-5. **Optional path prefixes (`-`) do not cover ENODEV.** Our hardening helper and every `ReadWritePaths` that names a path *under a mount point* inherits this trap. Worth a lint: `ReadWritePaths` under a `fileSystems` mount point should be flagged (or at least documented in `docs/agents/systemd.md`).
+5. **Optional path prefixes (`-`) do not cover ENODEV.** Our hardening helper and every `ReadWritePaths` that names a path _under a mount point_ inherits this trap. Worth a lint: `ReadWritePaths` under a `fileSystems` mount point should be flagged (or at least documented in `docs/agents/systemd.md`).
 6. **`journalctl -u` needs the systemd-escaped unit name.** `-u gitea-runner-evo-x2.service` returned `-- No entries --` and nearly convinced me the unit did not exist; the real name is `gitea-runner-evo\x2dx2.service` (path escaping turns `-` into `\x2d`). Add to `docs/agents/systemd.md` / `shell-devtools.md`: resolve unit names via `busctl … ListUnits` or `systemctl list-units`-equivalent, never by typing hostnames.
 7. **Parallel-session churn is the dominant risk to verification claims.** During this session the tree gained: my 5 files committed by the daemon, `flake.lock` dirty then clean, `TODO_LIST.md` + `docs/todo/pipeline.md` dirty, and 6 unrelated commits (T-02 pool backup work). Any "flake check passed" I could produce would cover only my files.
 8. **Test cost vs value**: the new VM test builds in ~1.5 min wall (cached tarball) — cheap enough to run on every change to either cache-SSD module; wire it into the negative-test nightly alongside `pool-recovery`.
@@ -109,7 +109,7 @@ Truth in one line: **a deploy-time "recovery" tore down a healthy mount, and the
 9. Add the §e.1 shared helper: extract the "bound daemons under mount point" filter into `lib/` and use it from both `pool-recovery` and `buildcache`.
 10. Apply the healthy fast path + converge + eval gate to `modules/nixos/services/rust-cache.nix`.
 11. Add `recoveryRestartUnits` peers for any future rust-cache-bound daemon; add the same `flock` there.
-12. Extend `tests/test-buildcache-recovery.nix` with the zombie scenario (stop automount+mount, then `mount` a *different* ext4 disk at the mountpoint; recovery must reap it and remount the real device).
+12. Extend `tests/test-buildcache-recovery.nix` with the zombie scenario (stop automount+mount, then `mount` a _different_ ext4 disk at the mountpoint; recovery must reap it and remount the real device).
 13. Add a concurrency leg to that VM test: two `systemctl start` calls racing must not double-remount (assert one `buildcache recovered` line).
 14. Audit `scripts/post-deploy-check.sh` for other hypothesis-as-fact messages (§e.3).
 15. Consider a retry window for the runner canary (2-3 probes over ~60 s) so a legitimate in-flight restart is not a FAIL.
@@ -124,13 +124,13 @@ Truth in one line: **a deploy-time "recovery" tore down a healthy mount, and the
 24. Run shellcheck (or `nix run .#lint`) over `scripts/post-deploy-check.sh` after the message edit.
 25. Check whether any selftest/fixture asserts the old runner-canary wording (`scripts/test-post-deploy-*.sh`).
 26. Re-check the coordinator (`deploy.sh`) restart list: is `buildcache-usb-recovery` still wanted post-fix, now that it is a no-op when healthy? (Yes, keep: it heals real faults. But document that it is idempotent.)
-27. Consider moving the runner's cache binding off `/mnt/buildcache/ci-runner-cache` onto a path that is *not* Requires-gated (e.g. env-only, no mount dependency) if we ever want deploys to be able to remount the cache while CI runs. Trade-off: churn-to-shadow-dir risk. Currently the mount gate is right; keep it.
+27. Consider moving the runner's cache binding off `/mnt/buildcache/ci-runner-cache` onto a path that is _not_ Requires-gated (e.g. env-only, no mount dependency) if we ever want deploys to be able to remount the cache while CI runs. Trade-off: churn-to-shadow-dir risk. Currently the mount gate is right; keep it.
 28. Measure: how often does a real USB flap occur (journal count of `buildcache recovered` per month)? If frequent, reconsider the SSD/bridge (JMS567 flap history).
 29. Gatus: is there a check that catches "runner inactive" independently of the deploy smoke? If not, add a `gitea-runner` metric/health check (the ensure timer masks outages).
 30. Add `buildcache_recovery_would_teardown` / `_healthy_skips` counters to `buildcache-metrics` so "deploys stopped killing consumers" is observable.
-31. Review `deploy.sh`'s ordering: recovery runs *after* the switch; if a consumer starts *between* mount stop and remount it will fail once. Converge handles it; verify with a real deploy.
+31. Review `deploy.sh`'s ordering: recovery runs _after_ the switch; if a consumer starts _between_ mount stop and remount it will fail once. Converge handles it; verify with a real deploy.
 32. Audit other `RequiresMountsFor`-gated daemons fleet-wide (beyond pool/buildcache/rust-cache): a one-off eval that lists every daemon + its bound mount point.
-33. Extend `pool-recovery`'s audit to also flag *oneshots* that name optional paths under a mount (§e.5 class).
+33. Extend `pool-recovery`'s audit to also flag _oneshots_ that name optional paths under a mount (§e.5 class).
 34. Add the class to `docs/agents/storage.md` "USB hotplug self-healing stack" as an explicit invariant list.
 35. Consider a `systemd-shape-audit` rule: a unit with `RequiresMountsFor` + `Restart != no` and no convergence registration = eval warning fleet-wide.
 36. Re-verify the escape form: `utils.escapeSystemdPath` escapes `-`, producing `\x2d` — is that the systemd-consistent expectation here (a path-escape, not a plain name)? If yes, document; if it was accidental, fix (unit name is now load-bearing in three places: unit, ensure timer, converge list).
@@ -159,12 +159,12 @@ Truth in one line: **a deploy-time "recovery" tore down a healthy mount, and the
 
 You asked for the report and then to wait, so nothing was written into the TODO system. The rows to add the moment you say go:
 
-| Target file | Row |
-| --- | --- |
-| `TODO_LIST.md` | `[blocked:deploy] Deploy + live-verify the buildcache-recovery fast path (runner must keep its PID across the switch; journal shows "buildcache healthy")` |
-| `docs/todo/storage.md` | `[ready] Give rust-cache-usb-recovery the same healthy-fast-path + converge + eval coverage gate` · `[ready] Extract the "bound daemons under a mount point" filter into lib/ and reuse it from pool-recovery + buildcache` |
+| Target file             | Row                                                                                                                                                                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `TODO_LIST.md`          | `[blocked:deploy] Deploy + live-verify the buildcache-recovery fast path (runner must keep its PID across the switch; journal shows "buildcache healthy")`                                                                     |
+| `docs/todo/storage.md`  | `[ready] Give rust-cache-usb-recovery the same healthy-fast-path + converge + eval coverage gate` · `[ready] Extract the "bound daemons under a mount point" filter into lib/ and reuse it from pool-recovery + buildcache`    |
 | `docs/todo/services.md` | `[ready] Fix home-lars-tmp.mount (failed, status=32) or remove ${home}/tmp from buildcache-gc ReadWritePaths + cv.nix playwright path` · `[watch] gitea-runner has no independent liveness check (ensure timer masks outages)` |
-| `docs/todo/pipeline.md` | `[ready] VM test legs: zombie/foreign-fs scenario, concurrency, mutation-negative for mount_healthy` |
+| `docs/todo/pipeline.md` | `[ready] VM test legs: zombie/foreign-fs scenario, concurrency, mutation-negative for mount_healthy`                                                                                                                           |
 
 ## i) EVIDENCE INDEX (commands used, all re-runnable)
 

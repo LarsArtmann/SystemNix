@@ -8,22 +8,42 @@
 
 ## Verification matrix (all live on evo-x2, 2026-11-05 01:4x–02:1x)
 
-| check | result |
-| --- | --- |
-| bash -n + shellcheck | green |
-| PSI gate refusal in a storm (io avg10 53–83%) | ABORT rc=1, fix guidance printed |
-| PSI_ACCEPT=1 noisy-window smoke | GREEN end-to-end (below) |
-| held-port guard (PORT=8848, live embedder) | FAIL rc=1, rogue-port-holder guidance |
-| unreadable-model guard | FAIL rc=1 with fix |
-| COLD=drop without root | FAIL with the no-new-privileges explanation (agent sandbox blocks sudo entirely — typed AND script-internal) |
-| server-death detection | caught instantly via /proc state=Z (a plain `kill -0` NEVER fires for unreaped background children — zombies exist until wait; cost one wasted 1200s poll before the fix) |
-| cleanup | no leaked llama-server on the scratch port after runs; tmpdir removed (KEEP_RAW=1 preserves logs) |
-| JSONL compactness | jq -c (default pretty output broke one-object-per-line) |
+| check                                         | result                                                                                                                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bash -n + shellcheck                          | green                                                                                                                                                                     |
+| PSI gate refusal in a storm (io avg10 53–83%) | ABORT rc=1, fix guidance printed                                                                                                                                          |
+| PSI_ACCEPT=1 noisy-window smoke               | GREEN end-to-end (below)                                                                                                                                                  |
+| held-port guard (PORT=8848, live embedder)    | FAIL rc=1, rogue-port-holder guidance                                                                                                                                     |
+| unreadable-model guard                        | FAIL rc=1 with fix                                                                                                                                                        |
+| COLD=drop without root                        | FAIL with the no-new-privileges explanation (agent sandbox blocks sudo entirely — typed AND script-internal)                                                              |
+| server-death detection                        | caught instantly via /proc state=Z (a plain `kill -0` NEVER fires for unreaped background children — zombies exist until wait; cost one wasted 1200s poll before the fix) |
+| cleanup                                       | no leaked llama-server on the scratch port after runs; tmpdir removed (KEEP_RAW=1 preserves logs)                                                                         |
+| JSONL compactness                             | jq -c (default pretty output broke one-object-per-line)                                                                                                                   |
 
 ## Green smoke record (accepted-noisy, storm-depressed by design)
 
 ```json
-{"schema": 1, "ts": "2026-11-05T02:12:28+01:00", "probe": "cold-load", "model": "/data/ai/models/gguf/bge-m3.gguf", "bytes": 1157671200, "server": "/run/current-system/sw/bin/llama-server-rocm", "cold": "vmtouch-fadvise", "load_mode": "none", "port": 18849, "ctx": 4096, "ngl": 99, "psi_gate_max": 20, "psi_pre": 83.01, "psi_post": 51.52, "psi_max_during": 86.6, "psi_avg_during": 67.3, "load_s": 157.02, "mb_s": 7, "psi_accepted": true}
+{
+  "schema": 1,
+  "ts": "2026-11-05T02:12:28+01:00",
+  "probe": "cold-load",
+  "model": "/data/ai/models/gguf/bge-m3.gguf",
+  "bytes": 1157671200,
+  "server": "/run/current-system/sw/bin/llama-server-rocm",
+  "cold": "vmtouch-fadvise",
+  "load_mode": "none",
+  "port": 18849,
+  "ctx": 4096,
+  "ngl": 99,
+  "psi_gate_max": 20,
+  "psi_pre": 83.01,
+  "psi_post": 51.52,
+  "psi_max_during": 86.6,
+  "psi_avg_during": 67.3,
+  "load_s": 157.02,
+  "mb_s": 7,
+  "psi_accepted": true
+}
 ```
 
 vmtouch evicted 282,635 pages (1G) before launch; the 7 MiB/s figure is the honest storm number the PSI gate exists to prevent contaminating real baselines with.

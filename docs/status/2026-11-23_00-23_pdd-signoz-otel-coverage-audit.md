@@ -10,10 +10,10 @@
 
 ## Verdict (delivered in-session, live-probed — not config-read)
 
-| Question | Answer |
-| --- | --- |
+| Question                   | Answer                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------- |
 | Properly linked to SigNoz? | **Logs only** — passive fleet-journald ingestion. No active OTLP link of any kind. |
-| Full OTEL? | **NO.** No OpenTelemetry SDK, no OTLP env, zero spans ever. |
+| Full OTEL?                 | **NO.** No OpenTelemetry SDK, no OTLP env, zero spans ever.                        |
 
 ## Evidence (all commands run this session, all agent-shell-safe)
 
@@ -36,6 +36,7 @@
 ## Fix landed this session
 
 `docs/services/project-discovery-daemon.md` — three runbook drifts corrected + posture recorded at source:
+
 - `vHost.layer="none"` → **"protected"** (module renders protected since 2026-11-22, subdomain `discover`);
 - "no ioTier" → **ioTier.background** (bridge unit, io-tier-coverage audit);
 - "Loopback ONLY: … without authentication" → backend-loopback + protected-vHost publication (forward-auth external, LAN bypass open);
@@ -83,6 +84,7 @@
 ## f) Up to 50 things we should get done next (session-derived only; unsorted slots deliberately left unfilled rather than padded)
 
 **SystemNix — monitoring/gatus:**
+
 1. Close the source-reasoned gatus row: curl `http://localhost:8765/` + `/api/health` with the exact pat legs, tick `docs/todo/services.md` row.
 2. Add a degraded-health gatus leg: body-pat the `/api/health` `status` field so soft degradation (still `reachable:true`) pages instead of only hard-down.
 3. Update monitoring.md's ClickHouse logs recipe to the working JSON-path form (`resource.service.name`), noting the Variant/GROUP-BY trap and the heredoc backtick rule.
@@ -115,11 +117,13 @@
 ## f) Harvest record (status-report self-harvest doctrine)
 
 Harvested NOW into both surfaces (queue one-liner + domain library, no drift):
-- **H1** `[ready]` → monitoring.md + TODO_LIST: monitoring.md ClickHouse logs recipe update (JSON-path form + Variant trap + heredoc-backtick rule). *Deliberately not fixed inline: report-then-wait instruction.*
+
+- **H1** `[ready]` → monitoring.md + TODO_LIST: monitoring.md ClickHouse logs recipe update (JSON-path form + Variant trap + heredoc-backtick rule). _Deliberately not fixed inline: report-then-wait instruction._
 - **H2** `[ready]` → services.md + TODO_LIST: degraded-health gatus leg (body-pat on `/api/health` status field).
 - **H3** `[decision]` → monitoring.md + TODO_LIST: full-OTEL vs gatus-only terminal state for this daemon (owner-gated; covers §f.4/5/11/12 wiring prerequisites).
 
 Deliberately NOT harvested, with reasons:
+
 - §f.1 (close the gatus row) — the row ALREADY EXISTS in services.md; adding a second row would duplicate, not advance.
 - §f.13–18 (upstream repo defects) — they live in the daemon repo, not this one; recorded here as evidence only. Filing upstream is a separate owner-gated act (verify-before-filing applies first).
 - §f.19 (IO taming) — existing row in services.md already owns it; this session adds no new premise to it.
@@ -133,4 +137,4 @@ Deliberately NOT harvested, with reasons:
 
 ---
 
-*Probe evidence retained verbatim in session transcript; no artifacts outside this repo were written. /tmp used by nothing; ClickHouse probes were read-only SELECTs; the bridge probe was a GET.*
+_Probe evidence retained verbatim in session transcript; no artifacts outside this repo were written. /tmp used by nothing; ClickHouse probes were read-only SELECTs; the bridge probe was a GET._

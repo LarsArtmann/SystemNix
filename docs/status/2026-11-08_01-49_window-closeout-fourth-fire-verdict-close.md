@@ -108,7 +108,7 @@ The queue already holds the full harvest of fires 1–3 + the T03 corpus sweep; 
 
 1. **Why does the queue keep re-dispatching this closeout — is the failure on the write side or the read side of the verdict channel?** The queued `[decision]` row (queue tail, fire 3) asks whether the verdict step fails silently; THIS fire sharpens it with a contradiction the row's text predates: fire 3's report claims a clean record (exit 0, 105 bytes to the file channel), yet fire 4 dispatched — so either that record never landed or the queue's reader missed it. Owner-side queue introspection (does `$TQ_RESULT_FILE` survive the session handoff? is the file per-dispatch and read at exit?) is the only way to close it; repo artifacts cannot answer. The existing decision row stays queued verbatim (append-only rule).
 2. **Should the queue guard footer-bearing closeout commits with no readable verdict before re-dispatching** (re-prompt instead of a paid re-fire)? Same decision row; listed separately because it is the actionable half of Q1 and has now cost three paid re-dispatches.
-3. *(No new product questions. The five standing owner decisions remain queued verbatim: hermes keep-vs-kill; ClickHouse retention vs forward-only finality; EVO-X2 thermal risk acceptance; monitor365 containment ruling; coredump retention policy. The stale routing row (d.3) resolves under the first of these.)*
+3. _(No new product questions. The five standing owner decisions remain queued verbatim: hermes keep-vs-kill; ClickHouse retention vs forward-only finality; EVO-X2 thermal risk acceptance; monitor365 containment ruling; coredump retention policy. The stale routing row (d.3) resolves under the first of these.)_
 
 ## h) BAND DRIFT
 

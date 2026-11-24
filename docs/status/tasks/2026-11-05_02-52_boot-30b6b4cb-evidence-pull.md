@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 30b6b4cb —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Nov 05 03:05:44 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Nov 05 03:05:44 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/rc87rnbc117k7rwdxa0kla5wg0azgm6r-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Nov 05 03:05:44 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Nov 05 03:13:46 evo-x2 systemd[1]: Finished SigNoz telemetry coverage collector (traces freshness per registered service).
 Nov 05 03:13:46 evo-x2 systemd[1]: signoz-coverage-metrics.service: Consumed 627ms CPU time over 1min 3.673s wall clock time, 36.7M memory peak, 8K read from disk, 1.2M incoming IP traffic, 89K outgoing IP traffic.
@@ -30,6 +32,7 @@ Nov 05 03:13:47 evo-x2 signoz-wrapper[11598]: {"timestamp":"2026-11-05T03:13:47.
 ```
 
 ## Census
+
 - oom-lines: 0
 - oom kill-pass join: 0 killed process(es) — 0 memcg-attested, 0 unit-joined, 0 unresolved
 - guard-lines (memory-emergency-guard): 13
@@ -37,14 +40,17 @@ Nov 05 03:13:47 evo-x2 signoz-wrapper[11598]: {"timestamp":"2026-11-05T03:13:47.
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 ```
 
 ## OOM kill-pass join — memcg per killed process (kernel-attested or systemd unit-join, never inferred)
+
 ```
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Nov 05 03:07:55 evo-x2 memory-emergency-guard-check[30389]: MEMORY EMERGENCY IO-PAUSE (trip #6862, zone 6): NO eligible headless tree matched the attribution (patterns: nix-daemon.service tq-agent-pool.service session- monitor365-server.service app.slice/run- llama-chat.service) — pressure persists but nothing pausable; escalation arms after 3 such trips
 Nov 05 03:07:55 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -62,17 +68,20 @@ Nov 05 03:13:41 evo-x2 systemd[1]: memory-emergency-guard.service: Consumed 680m
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Nov 05 03:07:12 evo-x2 thermal-pstate-guard-check[23527]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=96C(hi:95/lo:80)
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Nov 05 03:05:44 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/rc87rnbc117k7rwdxa0kla5wg0azgm6r-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 05 03:05:44 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/rc87rnbc117k7rwdxa0kla5wg0azgm6r-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Nov 05 03:05:44 evo-x2 kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
 Nov 05 03:05:46 evo-x2 kernel: amdgpu 0000:c6:00.0: [drm] Registered 4 planes with drm panic
 ```
+
 ## Remote log tail — ClickHouse death window (signoz_logs.distributed_logs_v2)
 
 Death window per M22: [journal cut -> next boot], epoch-ns UTC. At a watchdog death the local journal loses its final ~30-90s to flush lag; when the OTel->ClickHouse pipeline is alive the remote tail is FRESHER than the journal cut (#36: newest row 5s before the cut), and when the collector died pre-death the pipeline is silently DARK (#37: 4h19m outage).
@@ -80,6 +89,7 @@ Window: 1793844827000000000 -> 1793844987000000000 epoch-ns UTC (2026-11-05 02:1
 Pipeline ALIVE in this window — newest row: 1793844832628355000 (2026-11-05 02:13:52 UTC); rows fetched: 20 (last 20 by timestamp DESC). Per M22 pull BOTH sources: ClickHouse is fresher than the journal cut by the flush lag.
 
 Last rows (timestamp<TAB>body, newest first):
+
 ```
 1793844832628355000	Starting Detect niri DRM zombie state and restart niri...
 1793844832532183000	time=2026-11-05T03:13:52.532+01:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=crush_events.prom err="failed to open textfile data file \\"/var/lib/prometheus-node-exporter/textfile_collectors/crush_events.prom\\": open /var/lib/prometheus-node-exporter/textfile_collectors/crush_events.prom: permission denied"

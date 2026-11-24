@@ -22,18 +22,18 @@ qmd's GGUF inference goes through node-llama-cpp, whose Linux backends are CPU /
 
 ## Verification evidence chain
 
-| Gate | Result |
-| --- | --- |
-| Binding probe (store addon, patched plugin dir) | `loaded Vulkan backend`, `GPU: vulkan` |
-| Real qmd vsearch (prototype tree) | 0 fallback warnings; old run warned `no GPU acceleration` |
-| Real qmd embed (prototype tree, `--timeout 2`) | `gpu_busy_percent` spikes 31/45/22/27% (idle 1-2%); host CPU ≈ 0 during inference; 0 CPU-fallback warnings |
-| Built package artifact | wrapper paths correct; shim present; bun PT_INTERP = `glibc-2.44-57/lib/ld-linux-x86-64.so.2` |
-| Built package end-to-end vsearch | **0 fallback warnings** (qmd's warning fires iff `llama.gpu === false`), search completed |
-| `binsDir` runtime-relative resolution from copied tree | verified (package copy self-resolves) |
-| nixpkgs vulkan-loader default ICD discovery | verified (no `VK_DRIVER_FILES` needed; kept explicit anyway — boot-mirror box) |
-| Latest upstream 3.22.3 vulkan tarball | same missing export → bump ≠ fix (upstream ask stays) |
-| ai-meter visibility | qmd = in-process GGUF, zero OpenAI-compatible HTTP → invisible to the ai-meter proxy by construction (not a metering gap) |
-| Bonus | system `uname` works again under the new env (old wrapper's glibc-2.42 LDL broke 2.43-built PATH binaries) |
+| Gate                                                   | Result                                                                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Binding probe (store addon, patched plugin dir)        | `loaded Vulkan backend`, `GPU: vulkan`                                                                                    |
+| Real qmd vsearch (prototype tree)                      | 0 fallback warnings; old run warned `no GPU acceleration`                                                                 |
+| Real qmd embed (prototype tree, `--timeout 2`)         | `gpu_busy_percent` spikes 31/45/22/27% (idle 1-2%); host CPU ≈ 0 during inference; 0 CPU-fallback warnings                |
+| Built package artifact                                 | wrapper paths correct; shim present; bun PT_INTERP = `glibc-2.44-57/lib/ld-linux-x86-64.so.2`                             |
+| Built package end-to-end vsearch                       | **0 fallback warnings** (qmd's warning fires iff `llama.gpu === false`), search completed                                 |
+| `binsDir` runtime-relative resolution from copied tree | verified (package copy self-resolves)                                                                                     |
+| nixpkgs vulkan-loader default ICD discovery            | verified (no `VK_DRIVER_FILES` needed; kept explicit anyway — boot-mirror box)                                            |
+| Latest upstream 3.22.3 vulkan tarball                  | same missing export → bump ≠ fix (upstream ask stays)                                                                     |
+| ai-meter visibility                                    | qmd = in-process GGUF, zero OpenAI-compatible HTTP → invisible to the ai-meter proxy by construction (not a metering gap) |
+| Bonus                                                  | system `uname` works again under the new env (old wrapper's glibc-2.42 LDL broke 2.43-built PATH binaries)                |
 
 **Known verification nuance:** the built binary finishes a vsearch so fast that per-process `/proc` map sampling raced it; built-binary GPU proof = qmd's own fallback-warning gate + the identical-mechanism embed probe on the prototype. A `gpu_busy` snapshot from the BUILT binary during a real embed is a listed follow-up.
 
@@ -99,6 +99,7 @@ qmd's GGUF inference goes through node-llama-cpp, whose Linux backends are CPU /
 **Deliberately skipped:** 2 push — never-push-without-explicit-ask stands; deploy needs no push (owner can push the wave when ready)
 
 **Deploy & verify (the fix's last mile)**
+
 1. Vet the foreign flake.lock float in 98dfd8643 (3 rev moves — identify inputs, find the owning session) before push.
 2. Push `master` (ahead 1) — push-gated on owner.
 3. Deploy the qmd-gpu generation via the quiescent path (`scripts/deploy-when-quiescent.sh`).
@@ -161,4 +162,4 @@ qmd's GGUF inference goes through node-llama-cpp, whose Linux backends are CPU /
 
 ---
 
-*Evidence commands for every claim are in the session transcript; the artifact-level gates are also encoded in `pkgs/qmd-gpu.nix`'s header (re-run after any upstream qmd bump).*
+_Evidence commands for every claim are in the session transcript; the artifact-level gates are also encoded in `pkgs/qmd-gpu.nix`'s header (re-run after any upstream qmd bump)._

@@ -63,7 +63,7 @@ The batch's central premise — "llama.cpp 0.6.0 LM=dio SIGABRTs mid-load under 
 
 Markers: **[Q]** queued this session (queue + library, both surfaces), **[X]** existing open row spotted while working, **[I]** idea from this session, not yet queued, **[O]** owner decision (see §g).
 
-1. [X] Take the A1 strict-gate baseline (23.4G Qwen, LM=none, ctx 4096) — THE before-number every /data leg gates on; record load_s/mb_s into design doc §4.
+1. [x] Take the A1 strict-gate baseline (23.4G Qwen, LM=none, ctx 4096) — THE before-number every /data leg gates on; record load_s/mb_s into design doc §4.
 2. [O] Calm-window slot priority: A1 baseline vs the dio-diagnostic datapoint (§g Q1) — both need io-quiet windows.
 3. [O] Benchmark definition: keep official LM=none vs switch to dio before the baseline lands (§g Q2).
 4. [Q] bench-cold-load: auto-detect embedding GGUFs (GGUF header `general.architecture`) → auto-`--embedding`/refuse — prevents the whole misattribution class.
@@ -72,35 +72,35 @@ Markers: **[Q]** queued this session (queue + library, both surfaces), **[X]** e
 7. [Q] bench-cold-load: mem PSI columns in psi.csv + JSONL.
 8. [Q] bench-cold-load: PSI-gate hysteresis (2 consecutive calm polls or avg60).
 9. [Q] Upstream ggml-org/llama.cpp clean-error row — verify-before-filing first (master assert state + dupe scan), then draft.
-10. [X] bench-cold-load selftest fixture (guards: held port, unreadable model, bad COLD, gate refusal).
-11. [X] kill_pid cleanup-trap fixes in bench-hot-file.sh:81 + bench-samsung-livefs.sh:146.
+10. [x] bench-cold-load selftest fixture (guards: held port, unreadable model, bad COLD, gate refusal).
+11. [x] kill_pid cleanup-trap fixes in bench-hot-file.sh:81 + bench-samsung-livefs.sh:146.
 12. [I] Coredump retention on evo-x2: both 0.6.0 cores "Storage: missing" within ~19h — decide policy (§g Q3), then either extract-on-sight discipline or a retention bump.
 13. [I] Confirm from the llama-vlm module/doc that the VL GGUF path can never hit the embedding assert (annotation hardened; a one-line doc note would pin it).
 14. [I] Reconcile coredumpctl list-TIME (02:06:33) vs info Timestamp (02:05:15) semantics before either timestamp is cited as the death minute (SI_TKILL vs corefile write — cosmetic, only if cited again).
 15. [I] The 02:12 green smoke (LM=none smoke, 157s) exists only as quoted text in the 02-18 report — its JSONL line was never appended (OUT unset); a one-time backfill note or accept-and-move-on.
-16. [X] After the baseline lands: A1 chattr +C per-dir application wave (design doc sequencing, owner-gated).
-17. [X] §6 owner decision asks in the design doc (A2 XFS trigger value etc.) — owner still owns the target VALUE.
+16. [x] After the baseline lands: A1 chattr +C per-dir application wave (design doc sequencing, owner-gated).
+17. [x] §6 owner decision asks in the design doc (A2 XFS trigger value etc.) — owner still owns the target VALUE.
 18. [I] When dio datapoints accumulate: a dio-vs-none read-rate comparison line in the storage agent doc (pure-DirectIO vs buffered cold-load delta as an A2 diagnostic).
 19. [I] bench-cold-load: optionally emit the derived-model echo into the JSONL (derived vs explicit MODEL=) so out-of-tree fallback runs are self-identifying.
 20. [I] Consider a `--dry-run` flag printing the exact llama-server cmdline + flags without launching (verification affordance; pairs with the selftest row).
-21. [X] Post-baseline: record numbers into the storage ledger row per design doc §4 contract.
+21. [x] Post-baseline: record numbers into the storage ledger row per design doc §4 contract.
 22. [I] /tmp bench dirs from earlier runs still on disk (`/tmp/bench-cold-load.{PY1egy,ZWqIFI,BY4ZaI}`) — safe to trash once evidence copies are confirmed durable (PY1egy is; the other two hold no unique evidence).
 23. [I] KEEP_RAW dirs accumulate in /tmp when runs fail before cleanup — the cleanup trap covers it, but a tmpfiles age-out rule for /tmp/bench-cold-load.* would bound the residue.
-24. [X] The upstream flm-real SIGABRT row (freeze-#47 leg) is unrelated to this falsification — do NOT conflate the two SIGABRT families in future reads (flm = libgomp barrier; bge = GGML_ASSERT n_outputs_max).
+24. [x] The upstream flm-real SIGABRT row (freeze-#47 leg) is unrelated to this falsification — do NOT conflate the two SIGABRT families in future reads (flm = libgomp barrier; bge = GGML_ASSERT n_outputs_max).
 25. [I] A one-line "SIGABRT families seen on this box" table in docs/agents/stability.md or the gotchas archive (flm/gomp vs bge/embedding-assert vs future) to stop cross-family misattribution at the source.
 
 Items 26-50 deliberately not fabricated: this session's honest discovery set is the 25 above; padding the list with unrelated queue rows would violate the "report what you noticed" scope.
 
 ## self-audit (harvest table)
 
-| Direct follow-up from THIS session | Surface |
-| --- | --- |
-| Upstream clean-error-for-embedding row | TODO_LIST.md + docs/todo/upstream.md (queued earlier this session) |
-| Optional dio 23.4G diagnostic row | TODO_LIST.md + docs/todo/storage.md (queued earlier this session) |
-| auto-EMBED detect / crash-event JSONL / KEEP_RAW durable / mem-PSI sampler / gate hysteresis | TODO_LIST.md + docs/todo/storage.md (queued at report time, this commit) |
-| Coredump retention policy | Deliberately NOT harvested as a row: it is a pure owner disk-spend decision with no agent-executable step until answered (see §g Q3) |
+| Direct follow-up from THIS session                                                                                                                                              | Surface                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upstream clean-error-for-embedding row                                                                                                                                          | TODO_LIST.md + docs/todo/upstream.md (queued earlier this session)                                                                                                                      |
+| Optional dio 23.4G diagnostic row                                                                                                                                               | TODO_LIST.md + docs/todo/storage.md (queued earlier this session)                                                                                                                       |
+| auto-EMBED detect / crash-event JSONL / KEEP_RAW durable / mem-PSI sampler / gate hysteresis                                                                                    | TODO_LIST.md + docs/todo/storage.md (queued at report time, this commit)                                                                                                                |
+| Coredump retention policy                                                                                                                                                       | Deliberately NOT harvested as a row: it is a pure owner disk-spend decision with no agent-executable step until answered (see §g Q3)                                                    |
 | coredumpctl timestamp reconciliation; llama-vlm doc note; backfill of the 02:12 smoke JSONL; dry-run flag; derived-model JSONL echo; SIGABRT families table; /tmp residue trash | Deliberately NOT harvested: cosmetic/optional ideas listed in §f as [I]; harvesting all five would bloat the queue for marginal value — they live in this report's §f with full context |
-| A1 baseline, selftest, kill_pid, §6 asks | Pre-existing rows (this session created none of them) |
+| A1 baseline, selftest, kill_pid, §6 asks                                                                                                                                        | Pre-existing rows (this session created none of them)                                                                                                                                   |
 
 ## §g QUESTIONS FOR THE OWNER (cannot self-answer)
 
@@ -110,22 +110,22 @@ Items 26-50 deliberately not fabricated: this session's honest discovery set is 
 
 ## Verification matrix (commands run THIS session, results)
 
-| check | result |
-| --- | --- |
-| `git log --grep Task-Queue-ID` (re-dispatch) | 2 pre-landed footer commits found (items 2+3), item 1 absent |
-| coredumpctl info 2304916 / 2367016 | SIGABRT SI_TKILL; cmdlines dio vs **none**, both bge-m3, no `--embedding`; cores "missing" |
-| journal `_PID=` for both PIDs | no entries (stderr went to the deleted temp-dir log) — evidence dead end, documented |
-| crash repro run (dio, no EMBED, KEEP_RAW=1, port 18849) | RC=1, "(core dumped)", assert text captured: llama-context.cpp:2275 GGML_ASSERT(n_outputs_max <= cparams.n_outputs_max), init warmup encode |
-| exoneration run 1 (dio+EMBED, strict gate, port 18848) | GREEN: 123.86s, psi_pre 17.23, psi_accepted=false, psi_max_during 45.7 |
-| exoneration run 2 (dio+EMBED, PSI_ACCEPT=1, port 18851) | GREEN: 149.24s, psi_pre 39.12, psi_accepted=true, storm 39-62% |
-| shellcheck standalone (severity=warning) on bench-cold-load.sh | clean |
-| bash -n on bench-cold-load.sh | clean |
-| item-2 derivation snippet (sed/grep on llama-chat.nix) | echoes the correct 23.4G path |
-| item-3 decision text grep | present in design doc §5 (ctx 4096 OFFICIAL) |
-| git trailers on 96f570575 | `%(trailers:key=Task-Queue-ID,valueonly)` = the task ID |
-| all-three-footers grep | 96f570575 + 94f1c35b4 + 983f17fca present |
-| soft-reset split zero-loss proof | `git diff <pre-split-batch> HEAD` EMPTY |
-| leaked-process sweep | none (pgrep clean; 8138 = the live vlm service, untouched) |
-| tq verdict | recorded (996 bytes) |
+| check                                                          | result                                                                                                                                      |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `git log --grep Task-Queue-ID` (re-dispatch)                   | 2 pre-landed footer commits found (items 2+3), item 1 absent                                                                                |
+| coredumpctl info 2304916 / 2367016                             | SIGABRT SI_TKILL; cmdlines dio vs **none**, both bge-m3, no `--embedding`; cores "missing"                                                  |
+| journal `_PID=` for both PIDs                                  | no entries (stderr went to the deleted temp-dir log) — evidence dead end, documented                                                        |
+| crash repro run (dio, no EMBED, KEEP_RAW=1, port 18849)        | RC=1, "(core dumped)", assert text captured: llama-context.cpp:2275 GGML_ASSERT(n_outputs_max <= cparams.n_outputs_max), init warmup encode |
+| exoneration run 1 (dio+EMBED, strict gate, port 18848)         | GREEN: 123.86s, psi_pre 17.23, psi_accepted=false, psi_max_during 45.7                                                                      |
+| exoneration run 2 (dio+EMBED, PSI_ACCEPT=1, port 18851)        | GREEN: 149.24s, psi_pre 39.12, psi_accepted=true, storm 39-62%                                                                              |
+| shellcheck standalone (severity=warning) on bench-cold-load.sh | clean                                                                                                                                       |
+| bash -n on bench-cold-load.sh                                  | clean                                                                                                                                       |
+| item-2 derivation snippet (sed/grep on llama-chat.nix)         | echoes the correct 23.4G path                                                                                                               |
+| item-3 decision text grep                                      | present in design doc §5 (ctx 4096 OFFICIAL)                                                                                                |
+| git trailers on 96f570575                                      | `%(trailers:key=Task-Queue-ID,valueonly)` = the task ID                                                                                     |
+| all-three-footers grep                                         | 96f570575 + 94f1c35b4 + 983f17fca present                                                                                                   |
+| soft-reset split zero-loss proof                               | `git diff <pre-split-batch> HEAD` EMPTY                                                                                                     |
+| leaked-process sweep                                           | none (pgrep clean; 8138 = the live vlm service, untouched)                                                                                  |
+| tq verdict                                                     | recorded (996 bytes)                                                                                                                        |
 
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3-5 f.7 f.10 f.11 f.24 · already-tracked f.6 f.8 f.9 f.17 · OBSOLETE f.14 f.15 · NEW rowed: 7 rows (merged f.1+2+16+21, f.19+20, f.22+23) → storage 4, stability 2, ai-stack 1

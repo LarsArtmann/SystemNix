@@ -8,13 +8,13 @@
 
 ## Numbers (btrfs filesystem du -s, unprivileged, 2026-11-05 01:5x)
 
-| slice | files | logical | disk (Total) | ratio |
-| --- | --- | --- | --- | --- |
-| models/jan | 8,061 | 113.38 GiB (121,730,522,448 B) | 113.37 GiB | 1.000 |
-| models/image | 456 | 264.05 GiB (283,502,339,353 B) | 264.03 GiB | 1.000 |
-| models/fastflowlm | 10 | 22.62 GiB (24,292,111,297 B) | 22.62 GiB | 1.000 |
-| models/gguf | 4 | 2.16 GiB (2,317,448,266 B) | 2.16 GiB | 1.000 |
-| cache | 429 | 108.53 GiB (116,511,938,587 B) | 108.51 GiB | 1.000 |
+| slice             | files | logical                        | disk (Total) | ratio |
+| ----------------- | ----- | ------------------------------ | ------------ | ----- |
+| models/jan        | 8,061 | 113.38 GiB (121,730,522,448 B) | 113.37 GiB   | 1.000 |
+| models/image      | 456   | 264.05 GiB (283,502,339,353 B) | 264.03 GiB   | 1.000 |
+| models/fastflowlm | 10    | 22.62 GiB (24,292,111,297 B)   | 22.62 GiB    | 1.000 |
+| models/gguf       | 4     | 2.16 GiB (2,317,448,266 B)     | 2.16 GiB     | 1.000 |
+| cache             | 429   | 108.53 GiB (116,511,938,587 B) | 108.51 GiB   | 1.000 |
 
 ~0 of 515 GiB saved. Exclusive = 0.00 B and Set shared 82–98% everywhere: btrbk /data snapshots pin essentially the whole tree (reclaim = snapshot expiry, Phase F context).
 

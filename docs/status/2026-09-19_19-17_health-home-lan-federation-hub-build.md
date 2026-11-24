@@ -39,12 +39,12 @@
 ## c) NOT STARTED
 
 1. `health-hub` has **zero tests** — `parseRemotes` is real parsing logic with no table-driven suite and no fuzz target (the repo has a fuzz-registry rule: new target ⇒ `fuzz.yml` + AGENTS.md in the same change).
-~~2. README / FEATURES / TODO_LIST updates in go-health-dashboard — the hub is a new user-facing binary; AGENTS.md was updated, the sales page was not.~~ **NOT-DO — dup of §f.17/§f.18.**
-3. go-health v0.3.0 tag + dashboard re-pin (kills the pseudo-version debt; documented as the plan).
-4. Post-deploy verification of anything (see f). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
-~~5. Browser suite re-run on go-health-dashboard after the toolchain bump (unit tests ran; chromedp suite did not).~~ **NOT-DO — dup of §f.15.**
-~~6. SystemNix AGENTS.md per-service section for health-dashboard (runbook exists; AGENTS entry doesn't).~~ done — per-service deep context superseded by the runbook's own authoritative Agent Notes section (docs/services/health-dashboard.md, migrated from AGENTS.md 2026-10-01)
-~~7. HARVEST of section (f) into SystemNix `TODO_LIST.md` / domain files.~~ done — hub follow-ups live in the domain libraries (docs/todo/services.md Health Hub verification chain; docs/todo/monitoring.md hub rows)
+   ~~2. README / FEATURES / TODO_LIST updates in go-health-dashboard — the hub is a new user-facing binary; AGENTS.md was updated, the sales page was not.~~ **NOT-DO — dup of §f.17/§f.18.**
+2. go-health v0.3.0 tag + dashboard re-pin (kills the pseudo-version debt; documented as the plan).
+3. Post-deploy verification of anything (see f). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+   ~~5. Browser suite re-run on go-health-dashboard after the toolchain bump (unit tests ran; chromedp suite did not).~~ **NOT-DO — dup of §f.15.**
+   ~~6. SystemNix AGENTS.md per-service section for health-dashboard (runbook exists; AGENTS entry doesn't).~~ done — per-service deep context superseded by the runbook's own authoritative Agent Notes section (docs/services/health-dashboard.md, migrated from AGENTS.md 2026-10-01)
+   ~~7. HARVEST of section (f) into SystemNix `TODO_LIST.md` / domain files.~~ done — hub follow-ups live in the domain libraries (docs/todo/services.md Health Hub verification chain; docs/todo/monitoring.md hub rows)
 
 ## d) TOTALLY FUCKED UP
 

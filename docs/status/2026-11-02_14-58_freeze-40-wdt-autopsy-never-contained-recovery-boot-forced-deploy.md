@@ -11,32 +11,32 @@ Freeze #40 — **Branch C (storm-leading: IO livelock whole-boot, thermal + a la
 
 ## §a Family classification — discriminators (each verified this session)
 
-| Discriminator | Reading | Source |
-| --- | --- | --- |
-| Journal cut | mid-traffic, last line 14:41:59 (atlas /health/ready 200 @ 124 ms + SEV1 line, sub-second healthy) | pull boundary section |
-| Shutdown ceremony | NONE (zero PID-1 shutdown lines) | pull boundary section |
-| Reset reason | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired` | boot 0 kernel log 14:43:39 |
-| cut → boot gap | 99 s (inside the 92–131 s WDT signature) | `--list-boots` |
-| Storm leg (LEADING) | IO PSI some avg60 52–98.88 % the WHOLE boot (trip #6011 at 11:39:38, 4 min post-boot); final heartbeat 14:33:02: avg60 98.88 %, disk 100 %, MemAvailable 20.9 % | guard lines in pull |
-| Memory leg (LATE) | 0 OOM whole-boot, but MemAvailable 41.4 % (11:39) → 26.8 % (12:30) → 20.9 % (14:33) + SEV1 "ZRAM SWAP CRITICAL" 14:41:59 — llama-chat resident since 12:51:31 | guard heartbeats + SEV1 line |
-| Thermal leg (TERMINAL) | 134 DEEP THROTTLE ENTERs (one per ~83 s while pegged; first 11:36 — boot never cooled); final ENTER window ends 14:41:57, 3 s pre-cut | full-count grep |
-| Kernel panic/oops | NONE — the pull's 4 "Oops" hits are Go app log strings (file-renamer, pma git retry) | verified in pull |
+| Discriminator          | Reading                                                                                                                                                         | Source                       |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Journal cut            | mid-traffic, last line 14:41:59 (atlas /health/ready 200 @ 124 ms + SEV1 line, sub-second healthy)                                                              | pull boundary section        |
+| Shutdown ceremony      | NONE (zero PID-1 shutdown lines)                                                                                                                                | pull boundary section        |
+| Reset reason           | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired`                                                                           | boot 0 kernel log 14:43:39   |
+| cut → boot gap         | 99 s (inside the 92–131 s WDT signature)                                                                                                                        | `--list-boots`               |
+| Storm leg (LEADING)    | IO PSI some avg60 52–98.88 % the WHOLE boot (trip #6011 at 11:39:38, 4 min post-boot); final heartbeat 14:33:02: avg60 98.88 %, disk 100 %, MemAvailable 20.9 % | guard lines in pull          |
+| Memory leg (LATE)      | 0 OOM whole-boot, but MemAvailable 41.4 % (11:39) → 26.8 % (12:30) → 20.9 % (14:33) + SEV1 "ZRAM SWAP CRITICAL" 14:41:59 — llama-chat resident since 12:51:31   | guard heartbeats + SEV1 line |
+| Thermal leg (TERMINAL) | 134 DEEP THROTTLE ENTERs (one per ~83 s while pegged; first 11:36 — boot never cooled); final ENTER window ends 14:41:57, 3 s pre-cut                           | full-count grep              |
+| Kernel panic/oops      | NONE — the pull's 4 "Oops" hits are Go app log strings (file-renamer, pma git retry)                                                                            | verified in pull             |
 
 → **Branch C, the #34–#39 lineage; 5th consecutive WDT-confirmed cut. Storm-led this time (vs #39's thermal-led): 0 OOM and thermal only terminal.**
 
 ## §b Whole-boot census (full-count greps, cross-checked against the canonical pull)
 
-| Metric | Value |
-| --- | --- |
-| Window | 11:35:45 → 14:42:00 CET (**3 h 06 m**) |
-| Guard trips | **#6011 → #6076 = 66** (~**21.3/h** — new record rate; #39 = 19.4/h; storm band was 1.3–11.7 pre-#39); 65 IO-PAUSE + socket-action trips, **every single one "NO eligible headless tree matched"** |
-| Guard log lines | 545 |
-| DEEP THROTTLE ENTERs | **134** (vs #39's 2477 over 56 h — but the ~83 s cadence while pegged matches; this boot simply never had a cool minute from 11:36) |
-| OOM invocations / kills | **0 / 0** (first Branch-C cut with zero OOM — the memory leg arrived as pressure + zram fill, not kills) |
-| llama-chat lifecycle | ensure-timer Started 11:35:53 (boot-second 8) → cold-load fails at 11:49:14 / 12:02:46 / 12:16:07 / 12:29:28 / 12:42:50 (5 × ~13 min ≈ **110 GB of QLC reads in the first 75 min alone**) → attempt #6 converged **12:51:31** (health 200) → resident to death |
-| Deploys in-boot | gen-970 12:24:30 (opencloud session, forced through pressure); **13:58:49 float-deploy gate-BLOCKED exit 12 at 14:15:15 (gate worked); 14:19:41 re-fire with `DEPLOY_FORCE_PRESSURE=1` → gen-971 switch completed 14:32:50** |
-| gatus | Memory Pressure Warning TRIGGERED 14:41:52 (8 s pre-cut) |
-| SEV1 at death | MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP; ZRAM SWAP CRITICAL (14:41:59) |
+| Metric                  | Value                                                                                                                                                                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Window                  | 11:35:45 → 14:42:00 CET (**3 h 06 m**)                                                                                                                                                                                                                         |
+| Guard trips             | **#6011 → #6076 = 66** (~**21.3/h** — new record rate; #39 = 19.4/h; storm band was 1.3–11.7 pre-#39); 65 IO-PAUSE + socket-action trips, **every single one "NO eligible headless tree matched"**                                                             |
+| Guard log lines         | 545                                                                                                                                                                                                                                                            |
+| DEEP THROTTLE ENTERs    | **134** (vs #39's 2477 over 56 h — but the ~83 s cadence while pegged matches; this boot simply never had a cool minute from 11:36)                                                                                                                            |
+| OOM invocations / kills | **0 / 0** (first Branch-C cut with zero OOM — the memory leg arrived as pressure + zram fill, not kills)                                                                                                                                                       |
+| llama-chat lifecycle    | ensure-timer Started 11:35:53 (boot-second 8) → cold-load fails at 11:49:14 / 12:02:46 / 12:16:07 / 12:29:28 / 12:42:50 (5 × ~13 min ≈ **110 GB of QLC reads in the first 75 min alone**) → attempt #6 converged **12:51:31** (health 200) → resident to death |
+| Deploys in-boot         | gen-970 12:24:30 (opencloud session, forced through pressure); **13:58:49 float-deploy gate-BLOCKED exit 12 at 14:15:15 (gate worked); 14:19:41 re-fire with `DEPLOY_FORCE_PRESSURE=1` → gen-971 switch completed 14:32:50**                                   |
+| gatus                   | Memory Pressure Warning TRIGGERED 14:41:52 (8 s pre-cut)                                                                                                                                                                                                       |
+| SEV1 at death           | MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP; ZRAM SWAP CRITICAL (14:41:59)                                                                                                                                                                                 |
 
 ## §c Causal chain — five acts, every step evidenced
 

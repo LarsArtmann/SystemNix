@@ -662,15 +662,15 @@ and a runner pulled via forgejo.service.wants).
 ## Runner stop classes — the FOURTH one is mount-stop propagation (2026-11-03)
 
 An INACTIVE runner has four distinct causes. Diagnose by journal timestamp
-order, never by the smoke line's prose (that line used to *assert* a cause,
+order, never by the smoke line's prose (that line used to _assert_ a cause,
 "deleted by a cycle breaker", and it misrouted the first responder of the
 2026-11-03 incident):
 
-| # | Class | Signature |
-| - | ----- | --------- |
-| 1 | Ordering cycle | `journalctl \| grep 'deleted to break ordering cycle'` > 0 in the window |
-| 2 | Crash loop | `start-limit-hit` on `gitea-runner-*`, non-zero exit codes |
-| 3 | Manual/ensure-driven stop | someone ran `systemctl stop`; journal shows no peer unit |
+| # | Class                      | Signature                                                                                                                     |
+| - | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Ordering cycle             | `journalctl \| grep 'deleted to break ordering cycle'` > 0 in the window                                                      |
+| 2 | Crash loop                 | `start-limit-hit` on `gitea-runner-*`, non-zero exit codes                                                                    |
+| 3 | Manual/ensure-driven stop  | someone ran `systemctl stop`; journal shows no peer unit                                                                      |
 | 4 | **Mount-stop propagation** | `mnt-buildcache.mount: Deactivated successfully` immediately followed by `Stopping Gitea Actions Runner` (7 ms on 2026-11-03) |
 
 **Class 4 mechanism (2026-11-03, 21:11:01):** the runner carries
@@ -696,7 +696,7 @@ healthy mount. Recovery fell to the 5-minute `gitea-runner-ensure` timer
 step-0 healthy fast path (`buildcache healthy (/mnt/buildcache) - no
 teardown`) and `converge_consumers()`, and the runner is registered in
 `services.buildcache.recoveryRestartUnits` from `forgejo.nix` (where the unit
-lives) so a *real* remount brings it straight back instead of leaving the
+lives) so a _real_ remount brings it straight back instead of leaving the
 ensure timer to cover. An eval gate rejects any future buildcache-bound daemon
 that is not registered. Full doctrine: `docs/agents/storage.md` → "A recovery
 unit fired on EVERY deploy must be a no-op when healthy".

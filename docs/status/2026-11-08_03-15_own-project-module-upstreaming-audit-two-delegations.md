@@ -16,20 +16,25 @@
 ## Classification matrix
 
 ### Already delegated (16 — pattern-following, no action)
+
 monitor365 (gold standard) · discordsync · browser-history (server+agent) · cv · inboxclean · pim-sync · storage-collector · tq-agent-pool (go-taskqueue) · overview · indexer-web (index) · file-and-image-renamer · nix-email · bank-sync · visionreviewd (vision-review-agent) · projects-management-automation · crush-daily (consumed via `systems/evo-x2.nix` imports). (emeet-pixyd follows the same shape for a third-party repo.)
 
 ### Delegated THIS session (2)
+
 - **mr-sync** → `inputs.mr-sync.nixosModules.dashboard` (repo `module-dashboard.nix`, upstream VM-tested `checks.dashboard-vm`). SystemNix wrapper keeps: package+vendorHash float-shim, `ports.mr-sync`, primaryUser, sops GITHUB_TOKEN, onFailure, serviceDefaults, ioTier(idle M15) + harden bounds, integration entry. Upstream adds (verified improvements): git+gh PATH, cache persistence (`~/.cache/mr-sync` ReadWritePaths + prep oneshot), network-online ordering, full hardening table.
 - **nsfw-classifier** → `inputs.nsfw-classifier.nixosModules.default` (repo `nix/nixos-module.nix`, extracted 2026-10-18 FROM our module explicitly "until it delegates here" — the delegation was pending since then). SystemNix keeps: port-catalog default, lars/users + live-checkout pinning (`protectHome = false`), calm-gate ordering, ~/projects mount gating, onFailure, ioTier, serviceDefaults, catalog + integration entries + gatus-coverage exemption, and the ENTIRE immichScan surface (ADR-061: deployment-only wiring, deliberately never upstream).
 
 ### Gap-fixes queued, not executable now (2)
+
 - **cvagent** — upstream `Code-To-CV-Agent/nix/module.nix` declares the SAME `services.cvagent` namespace with a DIFFERENT deployment model (discovery `scan --all` + dashboard + dedicated user + /var/lib) vs our live one (importance-ranked curated list + `mesh` export into the CV checkout + AI model/baseurl/daily-spend-cap + primaryUser + 90min budget). Both cannot be imported (option collision). Needs an upstream capability merge first. → §f.1
 - **hermes (hermes-agent)** — upstream `nix/nixosModules.nix` (shared with its HM module) exists in the local checkout but is UNPUSHED (HEAD 686193c0 not contained by any remote branch) and the lock sits behind it (0ea6ea9). Re-lock needs the push + probe-before-lock; delegating hermes.nix (1076 lines) is the single biggest remaining extraction. → §f.2
 
 ### Repos exporting no module yet (6, queue) → §f.3
+
 crm (543-line SystemNix module) · media-atlas (908) · papdashboard (968 — only the service unit would move; the tile/icons-pack layer is SystemNix-internal dashboard infrastructure) · journal (`journal-serve`/`journal-backup`; repo is rev-pinned on the templ wave) · project-discovery-daemon (216) · go-health-dashboard/health-dashboard (302). dnsblockd already has its own `[blocked:user]` migration row (TODO_LIST 2026-11-08, upstream module exists at the locked rev) — not duplicated.
 
 ### Correctly SystemNix-native (stays — the "or not?!" half of the answer)
+
 - **Host infra / the platform itself:** every `*-audit.nix`, integration.nix, sops*, gatus*, signoz*, buildcache, pool-recovery, memory-emergency-guard, system-health, backup-coordination, hot-db/hot-user-caches, post-crash-calm-gate, boot-*, dns-failover/dual-wan/wifi-failover, agent-unit-control, sev1-escalation, tq-agent-pool's SystemNix layer, etc.
 - **Glue automation with no product repo:** geometrikks (sqlite+scripts art-business tooling), google-sync, drive-paperless, audible-sync (audible-cli), github-auto-assign, pim-sync's remainder, media pipelines.
 - **In-tree BY DESIGN:** ai-meter (`pkgs/ai-meter.nix` header: "homelab-specific infrastructure, deliberately NOT a separate repo" — zero-dep, no FOD ever).

@@ -4,11 +4,13 @@
 **Session:** continuation of the audible arc (reports `2026-11-11_01-13…` + `2026-11-11_09-13…`). Owner asked: "how many audiobooks are backed up? how can I play 1 to verify?" — the answer cascaded into four first-run runtime bugs, an empirically-proven pipeline pivot, and the first DRM-free book on the pool.
 
 **Direct answers to the opener:**
+
 - **Forgot:** to load the project's sops skill before the sops work (derived the host-key→age recipe the hard way), and that `git status` after every daemon-race is cheaper than reconstructing where a fix landed.
 - **Could have done better:** verified the download flags against the real CLI BEFORE the first deploy instead of shipping three dead flags; read the calm-gate's `--max-wait-min` before wondering why activations took an hour; started the single-asin AAX test before rewriting the module (the Propaganda test is what revealed everything).
 - **Can still improve:** runtime-first verification for new service units (eval gates are structurally blind to CLI flags, license servers, and path resolution); a stamp-counts helper so foreign count drift stops blocking everyone's commits.
 
 **Scope — VERIFIED here (fresh commands this session):**
+
 - Books count at question time: `find /mnt/pool/services/audible -type f | wc -l` → **0**; main unit never ran (empty journal since go-live); timer = Sunday 05:00 +10min jitter, `Persistent=true`.
 - Bug #1 (auth symlink): full traceback from `journalctl -u audible-sync` — `FileNotFoundError: '/nix/store/auth.json'`, `status=3/NOTIMPLEMENTED`; CLI source read (`config.py:48` — `pathlib.Path(filename).resolve()` follows the config.toml symlink; `dirname` → `/nix/store`).
 - Bug #1 fix live: rendered config.toml greps `auth_file = "/var/lib/audible-sync/config/auth.json"`; re-run passed the export phase.
@@ -22,6 +24,7 @@
 - doc-counts whack-a-mole: README gatus 297→298 (foreign "DNS Forwarder Cold" endpoint, `513084277`) and FEATURES packages 52→53 (foreign `io-surface` input, `6a832fbd1`) — both re-stamped and committed; the gate then passed.
 
 **Scope — NOT verified:**
+
 - The seed has NOT yet completed a run with the AAX pipeline: the fix is committed (HEAD) but the deploy carrying it kept losing the window to the foreign deploy-storm (nh locks, half-staged trees); a quiescence-gated loop is running in the background and will deploy + start the seed when the tree quiets.
 - Whether Plus-catalog titles (borrowals inside the 86) are AAX-downloadable: untested — owned titles are proven; Plus titles may still be refused account-side.
 - AAX audio quality: the delivered file is the 64 kbps LC stream (legacy format); I have no AAXC comparison (the license path is dead account-side).
@@ -81,7 +84,7 @@
 
 ## f) NEXT — up to 50 things to get done next
 
-*(ranked by impact; NEW items from this arc are harvested at authoring time; queued items marked)*
+_(ranked by impact; NEW items from this arc are harvested at authoring time; queued items marked)_
 
 1. **Land the AAX-pipeline deploy and start the seed** (quiescence loop running) — Critical / S / Feature (unblocks the whole archive).
 2. **Verify first full seed**: 86 items → AAX downloads → M4B count, journal three-phase check, freshness row appears — Critical / M / Verification (seed-gated).
@@ -119,7 +122,7 @@
 34. **Audible: cover/PDF dedup into the M4B** (covers currently land as loose .jpg in downloads/) — Low / M / Feature (NEW observation: 86 covers + 20 PDFs downloaded fine and now sit next to the audio).
 35. **Consider audible-cli newer version** (0.3.3 vs upstream; may carry plus-download + AAXC license fixes) — Medium / M / Feature (NEW).
 
-*(deliberately NOT harvested: items 3-4 are owner questions carried in §g; item 1-2 are the active loop's work; the rest either have queue rows already or are roadmap-class.)*
+_(deliberately NOT harvested: items 3-4 are owner questions carried in §g; item 1-2 are the active loop's work; the rest either have queue rows already or are roadmap-class.)_
 
 ## g) Questions I can NOT figure out myself
 

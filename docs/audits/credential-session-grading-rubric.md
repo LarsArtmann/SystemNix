@@ -8,14 +8,14 @@ classes ONCE so future audits (quarterly cadence, see
 
 ## Dimensions (weight)
 
-| # | Dimension | Weight | Question it answers |
-| --- | --- | --- | --- |
-| D1 | Single home + sealing at rest | 20 | Does every credential live in exactly one place, sealed, readable only by the process that needs it? |
-| D2 | Proactive refresh | 20 | Is a session refreshed BEFORE it dies (condition-driven), not on a calendar? |
-| D3 | No divergent copies | 15 | Is there one session store of record (no shadow copies drifting stale)? |
-| D4 | Says-when-it-cannot | 15 | Does the system expose unseeded/invalid/drifted states OUTSIDE the journal (metric/check/alert)? |
-| D5 | Claims pinned by tests | 15 | Can every claim FAIL a test (VM leg, eval guard, build check)? |
-| D6 | Human operability | 15 | Can a human seed/rotate/restore in under a minute without touching a shell secret? |
+| #  | Dimension                     | Weight | Question it answers                                                                                  |
+| -- | ----------------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| D1 | Single home + sealing at rest | 20     | Does every credential live in exactly one place, sealed, readable only by the process that needs it? |
+| D2 | Proactive refresh             | 20     | Is a session refreshed BEFORE it dies (condition-driven), not on a calendar?                         |
+| D3 | No divergent copies           | 15     | Is there one session store of record (no shadow copies drifting stale)?                              |
+| D4 | Says-when-it-cannot           | 15     | Does the system expose unseeded/invalid/drifted states OUTSIDE the journal (metric/check/alert)?     |
+| D5 | Claims pinned by tests        | 15     | Can every claim FAIL a test (VM leg, eval guard, build check)?                                       |
+| D6 | Human operability             | 15     | Can a human seed/rotate/restore in under a minute without touching a shell secret?                   |
 
 Score each dimension 0–10, multiply by weight, sum → /100.
 
@@ -39,14 +39,14 @@ sanity-check one known value through the same pipeline first
 
 ## Baseline scores (2026-11-09, CV at gen-992 → plan P1–P11)
 
-| Dimension | 19:30 audit | After the SUPERB plan (pending deploy verify) |
-| --- | --- | --- |
-| D1 | 5 (key in 4-reader cv-env) | 8 (key scoped to 2 readers; pinned by env check) |
-| D2 | 0 (expiry display-only) | 9 (expiry-gated daily loop; pinned by VM leg) |
-| D3 | 3 (three session homes) | 4 (decision pack filed; owner gate open) |
-| D4 | 2 (journal-only) | 8 (metrics + SigNoz drafts + post-deploy leg) |
-| D5 | 0 (zero pins) | 8 (VM leg + 2 eval checks + negative proof) |
-| D6 | 6 (UI works; no walkthrough) | 8 (walkthrough + restore drill documented; no CLI rotate yet) |
+| Dimension | 19:30 audit                  | After the SUPERB plan (pending deploy verify)                 |
+| --------- | ---------------------------- | ------------------------------------------------------------- |
+| D1        | 5 (key in 4-reader cv-env)   | 8 (key scoped to 2 readers; pinned by env check)              |
+| D2        | 0 (expiry display-only)      | 9 (expiry-gated daily loop; pinned by VM leg)                 |
+| D3        | 3 (three session homes)      | 4 (decision pack filed; owner gate open)                      |
+| D4        | 2 (journal-only)             | 8 (metrics + SigNoz drafts + post-deploy leg)                 |
+| D5        | 0 (zero pins)                | 8 (VM leg + 2 eval checks + negative proof)                   |
+| D6        | 6 (UI works; no walkthrough) | 8 (walkthrough + restore drill documented; no CLI rotate yet) |
 
 _The "after" column is OFFICIAL since 2026-11-10 02:24 (gen-995 switch;
 live battery 05:22): D1/D2/D4 now carry evidence class `probed` (key-split

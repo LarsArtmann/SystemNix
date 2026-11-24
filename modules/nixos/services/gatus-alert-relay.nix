@@ -136,16 +136,15 @@ _: {
 
         systemd.services.gatus-alert-relay = {
           description = "Gate on gatus' Discord webhook (boot grace, SEV1 mute, flap collapse)";
-          after =
-            [ "network-online.target" ]
-            # The tq sink posts to the write API after the gates pass — order
-            # after the api unit so a boot-time failing check's FIRST report
-            # lands (ordering only; the api being down costs a logged retry,
-            # never an alert loss — same contract as the Discord upstream).
-            ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
-          wants =
-            [ "network-online.target" ]
-            ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
+          after = [
+            "network-online.target"
+          ]
+          # The tq sink posts to the write API after the gates pass — order
+          # after the api unit so a boot-time failing check's FIRST report
+          # lands (ordering only; the api being down costs a logged retry,
+          # never an alert loss — same contract as the Discord upstream).
+          ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
+          wants = [ "network-online.target" ] ++ lib.optionals tqSinkEnabled [ "tq-api.service" ];
           # Ordering vs gatus: if the relay is not up when gatus fires its
           # first webhook POST, that alert is lost (gatus does not retry
           # provider sends). Start before gatus; both are wanted by
@@ -161,15 +160,17 @@ _: {
             # alert) — standard service tier.
             ioTier.service
             {
-              EnvironmentFile =
-                [ config.sops.templates."gatus-env".path ]
-                ++ lib.optionals tqSinkEnabled [ config.sops.templates."tq-api-env".path ];
+              EnvironmentFile = [
+                config.sops.templates."gatus-env".path
+              ]
+              ++ lib.optionals tqSinkEnabled [ config.sops.templates."tq-api-env".path ];
               # argv: the mute list MUST stay one quoted token — systemd
               # word-splits ExecStart on spaces, so an unquoted list truncates
               # at the first space and the SEV1 mute silently degrades to the
               # first word (found 2026-10-24 by rendering the unit; no eval
               # guard validates argv shape).
-              ExecStart = "${lib.getExe pkg} -listen 127.0.0.1:${toString cfg.port} -boot-grace ${toString cfg.bootGraceSeconds}s -flap-window ${toString cfg.flapWindowSeconds}s -flap-max ${toString cfg.flapMaxTriggers} -flap-quiet ${toString cfg.flapQuietSeconds}s -rearm-guard ${toString cfg.rearmGuardSeconds}s -sev1-freshness ${toString cfg.sev1FreshnessSeconds}s -sev1-mute \"${lib.concatStringsSep "," cfg.sev1MuteEndpoints}\""
+              ExecStart =
+                "${lib.getExe pkg} -listen 127.0.0.1:${toString cfg.port} -boot-grace ${toString cfg.bootGraceSeconds}s -flap-window ${toString cfg.flapWindowSeconds}s -flap-max ${toString cfg.flapMaxTriggers} -flap-quiet ${toString cfg.flapQuietSeconds}s -rearm-guard ${toString cfg.rearmGuardSeconds}s -sev1-freshness ${toString cfg.sev1FreshnessSeconds}s -sev1-mute \"${lib.concatStringsSep "," cfg.sev1MuteEndpoints}\""
                 + lib.optionalString tqSinkEnabled " -tq-url ${tqSinkURL}";
             }
           ];

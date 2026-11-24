@@ -152,7 +152,7 @@ build (§d1), one real pre-commit hole discovered (§e4).
 6. [H] File the pre-commit hole (amended flake.lock commits skip the toplevel build
    gate) as a negative-test-harness row + fix.
 7. [H] progressCmd flip: ask the owner (§g1), then wire `services.audiblesync.progressCmd`
-   + the audible-progress.py path in one deploy if approved.
+   - the audible-progress.py path in one deploy if approved.
 8. [I] Upstream: operator-triggered reconcile endpoint (POST /reconcile dry-run +
    execute panel) — the startup-only gap means new Audible purchases stay invisible
    until the next restart.
@@ -193,8 +193,8 @@ build (§d1), one real pre-commit hole discovered (§e4).
 24. [I] Push SystemNix when the owner wants (2–3 commits ahead; the freeze-59 autopsy
     is the parallel session's — coordinate).
 
-*(Deliberately capped at honest items; speculative ideas beyond these are ROADMAP
-material, not queue material.)*
+_(Deliberately capped at honest items; speculative ideas beyond these are ROADMAP
+material, not queue material.)_
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

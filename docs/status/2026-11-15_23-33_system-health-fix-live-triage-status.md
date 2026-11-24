@@ -3,6 +3,7 @@
 **2026-11-15 23:33 CET · session window ~16:05–17:15 (work) + 23:30–23:33 (re-verification)**
 
 **Scope line — what this report VERIFIED (commands/artifacts):**
+
 - Gen-1013 deploy log (user-pasted, 143/5/0 pre-deploy, exit-4 activation, 170/6/3/18/2 smoke) — classified line-by-line.
 - `system-health-metrics` root cause: source read (`modules/nixos/services/system-health.nix:907-911, 1057-1061`), BUILT-script read (`/nix/store/h2nzaw70…` line 1202 + head), journal evidence (16:44–17:10 failures).
 - Fix: edits applied, `writeShellApplication` shellcheck green (build of `ij3kqa5k…-system-health-metrics.drv`), `nix build .#checks.x86_64-linux.system-health-rendered-unique` green (full evo-x2 eval), `bash -n` + rendered grep on `fv2m8zfy…` output, errexit-survival simulation, scoped `nix fmt` clean.
@@ -11,6 +12,7 @@
 - Commits: `ea09cbc5c` (module fix), `25c8bdd48` (AGENTS.md lesson correction) — verified via `git show --stat` (each carries exactly my 1 file, nothing foreign).
 
 **Scope line — what this report did NOT verify:**
+
 - Gatus "Kernel Memcg OOM" check state and Discord delivery during the blindness window (not probed; harvested instead).
 - The `systemctl cat` mangles-escaped-names claim (carried from the original lesson UNVERIFIED by me — only `is-active`/`start` were re-verified live).
 - WHO/WHAT deployed gen-1014/1015 (~18:03) — observed only as generation movement; the carrying session was not researched (out of scope per instruction).
@@ -45,7 +47,7 @@
 
 1. **Two wrong-name reads of the SAME escaped-name unit in one session.** (a) Hand-built busctl path missing `_5c` → false `inactive` for a LIVE unit; (b) `journalctl -u forgejo-runner-evo-x2.service` (unescaped) → "No entries" → I briefly concluded "ensure did NOT converge". Both are the "empty/wrong read is never evidence" class the AGENTS.md documents — violated twice, same hour, same unit. The false busctl reading nearly made me REWRITE the working ensure script to busctl — a regression disguised as a fix, stopped only by the journal cross-check.
 2. **Fabricated a store path** (`/nix/store/2f6cycb…-nix-2.33.4/bin/nix-store`) — guessing paths is banned; empty output I almost misread as data.
-3. **First LoadUnit probe returned empty and I moved on** without resolving my own parse bug (`tr -d '"'` leaves the `o ` type prefix) — an inconclusive probe treated as complete.
+3. **First LoadUnit probe returned empty and I moved on** without resolving my own parse bug (`tr -d '"'` leaves the `o` type prefix) — an inconclusive probe treated as complete.
 4. **Commit hygiene failed at both steps**: subject 77 > 72 chars (didn't count) → hook rejection; the slow re-amend then opened the exact daemon-race window the repo documents — HEAD moved mid-amend, both changes stranded under heuristic messages. The documented `git log -1` peek discipline was not applied.
 5. **Multiedit before View** (twice) — tool contract violated, wasted calls.
 6. **First errexit simulation was bogus** (backgrounded a function DEFINITION instead of invoking it) — nearly "verified" nothing.
@@ -66,7 +68,8 @@
 ## f) Up to 50 things to get done next (brainstorm, impact-ordered — only item 1 is harvested; the rest are ROADMAP fuel pending your instruction)
 
 **Verification/closure (this fix's tail):**
-1. Verify gatus "Kernel Memcg OOM" check green + no stuck alert episode *(HARVESTED to TODO_LIST + monitoring.md)*
+
+1. Verify gatus "Kernel Memcg OOM" check green + no stuck alert episode _(HARVESTED to TODO_LIST + monitoring.md)_
 2. Post-deploy smoke re-run when calm — clears the 2 STORM-SUSPECT CV checks + fish-startup WARN re-baseline
 3. Preserve §17 throttle counter readings from the 16:4x smoke into the freeze-#54 archive (the 18:03 restarts zeroed the counters; the quoted values are now unrecoverable from the live cgroups)
 4. Add the rendered-script grep selftest (no `\$?` literal; census `| head` pipelines carry `|| true`)
@@ -105,7 +108,7 @@
 31. Data-flow selftest harness for collector scripts (fake consumer round-trip)
 32. Review whether eval-time ordering-cycle-audit should have a runtime counterpart (ListJobs probe post-switch)
 
-*(32 honest items; not padded to 50 — the remainder would be invented scope.)*
+_(32 honest items; not padded to 50 — the remainder would be invented scope.)_
 
 ## g) Questions I cannot figure out myself
 

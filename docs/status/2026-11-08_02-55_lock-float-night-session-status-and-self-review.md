@@ -79,6 +79,7 @@
 ## f) 50 things to get done next (session-sourced only; brainstorm, not commitments — most are ROADMAP fuel)
 
 **Deploy-blocking / tree health**
+
 1. Sibling session: finish mr-sync refactor + add the missing IO tier to `mr-sync-dashboard-prep` (tree eval is RED right now).
 2. Deploy the forgejo `.runner` rm-leg (49066bc92) on the next wave; verify a `systemctl restart` converges with zero conflicts.
 3. Re-run `nix run .#pre-reboot-check` + §11 mirror parity after tonight's final gen (post-02:32 switch, unverified).

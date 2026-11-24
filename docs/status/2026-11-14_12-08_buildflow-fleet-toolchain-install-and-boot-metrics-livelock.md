@@ -22,18 +22,18 @@
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| buildflow triple-install diagnosis + which copy wins | `which -a`, 3× `buildflow version` |
-| Declarative home chosen per doctrine (`base.nix`, not `nix profile`) | `docs/agents/shell-devtools.md:35` + file structure survey |
-| 6 tools added to `base.nix`, grouped, commented with versions + provenance | git diff: +10 lines, 3 insertion points |
-| Both hosts eval-green on the change | `nix eval …toplevel.drvPath` ×2 |
-| Locked-nixpkgs attr + version verification (incl. staleness proof for the profile copies) | single `nix eval` JSON |
-| `~/go/bin/cue` stray trashed | `ls ~/go/bin | grep -c cue` → 0 |
-| Parallel deploy's failure root-caused (3 gate legs, box-state) | `…/2026-11-14_11-43-00.log` lines 4-5, 133 |
-| gen-1006 anchor verified (no UNANCHORED exposure) | readlink equality check |
-| Liveloock root-caused with the sanctioned probe | `busctl ListJobs` (one job: itself) |
-| Fuzz swarm identified, NOT killed, confirmed self-exited | `pgrep -fc httputil.test` → 0 |
+| Item                                                                                      | Evidence                                                   |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| buildflow triple-install diagnosis + which copy wins                                      | `which -a`, 3× `buildflow version`                         |
+| Declarative home chosen per doctrine (`base.nix`, not `nix profile`)                      | `docs/agents/shell-devtools.md:35` + file structure survey |
+| 6 tools added to `base.nix`, grouped, commented with versions + provenance                | git diff: +10 lines, 3 insertion points                    |
+| Both hosts eval-green on the change                                                       | `nix eval …toplevel.drvPath` ×2                            |
+| Locked-nixpkgs attr + version verification (incl. staleness proof for the profile copies) | single `nix eval` JSON                                     |
+| `~/go/bin/cue` stray trashed                                                              | `ls ~/go/bin                                               |
+| Parallel deploy's failure root-caused (3 gate legs, box-state)                            | `…/2026-11-14_11-43-00.log` lines 4-5, 133                 |
+| gen-1006 anchor verified (no UNANCHORED exposure)                                         | readlink equality check                                    |
+| Liveloock root-caused with the sanctioned probe                                           | `busctl ListJobs` (one job: itself)                        |
+| Fuzz swarm identified, NOT killed, confirmed self-exited                                  | `pgrep -fc httputil.test` → 0                              |
 
 ## b) PARTIALLY DONE
 
@@ -79,7 +79,7 @@ Box-level fucked-up observed (not caused by me, flagged): boot transaction open 
 
 ## f) Up to 50 things to get done next (brainstorm; ROADMAP fuel marked)
 
-*Session-direct:*
+_Session-direct:_
 
 1. Deploy base.nix fleet-toolchain to evo-x2 once watcher-01A conditions pass (PSI < 20 % + phases emitted + metric in TSDB).
 2. Post-deploy: `nix profile remove cue dprint gci ruff tailwindcss_4 typos` → verify profile empty (doctrine restored).
@@ -92,7 +92,7 @@ Box-level fucked-up observed (not caused by me, flagged): boot transaction open 
 9. `buildflow doctor` binary-freshness green after the system copy lands.
 10. Notify/attribute the parallel deploy session — its 11:43 attempt died on box-state; it may retry blind into my deploy (flock protects, but churn).
 
-*Box-state observed:*
+_Box-state observed:_
 
 11. Confirm the boot transaction actually closes ~12:24 (FinishTimestamp sets) — if not, escalate to the stability runbook.
 12. Attribute the 11:2x–12:0x I/O storm (per-cgroup io.pressure; predates the fuzz swarm).
@@ -105,7 +105,7 @@ Box-level fucked-up observed (not caused by me, flagged): boot transaction open 
 19. Post-storm pre-deploy battery re-run evidence → appendix to this report.
 20. Unattributed `M AGENTS.md` in the tree at session start — identify owner (daemon/parallel session), verify intent.
 
-*Doctrine/process:*
+_Doctrine/process:_
 
 21. Pre-deploy pre-flight script (see §e.1).
 22. Session-start ritual incl. lock-holder scan (§e.2).
@@ -118,7 +118,7 @@ Box-level fucked-up observed (not caused by me, flagged): boot transaction open 
 29. Add `httputil.test`-style fuzz etiquette: nice/ionice or GOMAXPROCS cap when a deploy window is plausible.
 30. Flock-holder UX in deploy.sh: print holder age + tty for faster owner contact.
 
-*Fleet/tools:*
+_Fleet/tools:_
 
 31. `~/go/bin` re-accumulated strays audit (golangci-lint, actionlint, art-dupl, cmdguard-lint, cqrs-lint, govalid, go-finding, benchstat, brandid-lint visible this session) — trash-vs-keep per doctrine.
 32. gci 0.14.0 nixpkgs pin vs buildflow doctor's `go install …@latest` hint — pick one policy.
@@ -131,7 +131,7 @@ Box-level fucked-up observed (not caused by me, flagged): boot transaction open 
 39. SigNoz boot-phase dashboard panel: verify it isn't a dotted-suffix phantom (store-truth sweep applies).
 40. Extend `checks`/negative tests for the new base.nix block? (probably none needed — plain package list — confirm no pin-audit interaction.)
 
-*ROADMAP fuel:*
+_ROADMAP fuel:_
 
 41. boot-metrics v2: systemd-analyze polling from a timer that is never a boot-transaction member.
 42. A first-class "boot finished" metric (manager-state composite) as the gate leg instead of textfile presence.

@@ -93,7 +93,7 @@
 31. Byte-verify-anchor discipline reinforcement (already documented; tonight's recurrence may warrant a hook, not a doc).
 32. Merge the storm/freeze narrative set (see 5).
 33. CHANGELOG row for the daemon-commit debt: guard fix rides a heuristic message (ef6bf1b51) — contents verified, message not amended (two-commits-back = rebase, declined).
-34. ~~Skill-creator note: how-to-golang trigger description over-matches box-infra questions (21-43 §e.5, carried).~~ done at `SKILLS 2cb16fc — description now scopes Go-performance to app/library choices and excludes box-level build/cache infra (GOCACHE placement`, ` cache disks`, ` build-storm IO)`
+34. ~~Skill-creator note: how-to-golang trigger description over-matches box-infra questions (21-43 §e.5, carried).~~ done at `SKILLS 2cb16fc — description now scopes Go-performance to app/library choices and excludes box-level build/cache infra (GOCACHE placement`, `cache disks`, `build-storm IO)`
 35. ~~buildflow builtin skill load failure retry (carried).~~ **NOT-DO — buildflow is a USER skill at ~/.agents/skills/buildflow (loads fine); crush:// is the BUILTIN namespace and correctly 404s a non-builtin; no config carries the wrong path (rg-verified 2026-11-06) — wrong-namespace assumption from the 19-50 report, not a Crush defect.**
 
 **Pointers to tracked rows noticed this session (36–43)**
@@ -127,12 +127,12 @@
 
 ## Evidence appendix (this window, 22:21–22:27)
 
-| Time | Probe | Result |
-| --- | --- | --- |
+| Time        | Probe         | Result                                                                                                                                                                                                                                    |
+| ----------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 22:21–22:26 | edits + tests | direnv blessed-list fix + regression test (24/24 pass); migrate-script race fix; TODO rows both surfaces; `check-todo-system.sh` → structure clean (186 unharvested §f WARN = standing drift, incl. my deliberately-deferred 19-50/21-43) |
-| 22:26 | `date` | 22:26:55 CET |
-| 22:26 | uptime/PSI | up 1:47, load 17.08, io PSI some avg10 51.62 — calming |
-| 22:26 | git | tree clean; HEAD 75658d3f7 (rows), ef6bf1b51 (guard fix + report), 99af6e0d4 (relocation, amended) — all verified by `git show --stat`; unpushed |
+| 22:26       | `date`        | 22:26:55 CET                                                                                                                                                                                                                              |
+| 22:26       | uptime/PSI    | up 1:47, load 17.08, io PSI some avg10 51.62 — calming                                                                                                                                                                                    |
+| 22:26       | git           | tree clean; HEAD 75658d3f7 (rows), ef6bf1b51 (guard fix + report), 99af6e0d4 (relocation, amended) — all verified by `git show --stat`; unpushed                                                                                          |
 
 **Sources:** live probes as tabled; the three predecessor reports (19-50, 21-43, 22-21); `docs/status/2026-11-05_21-03_freeze-49-fix-session-brutal-self-review.md` (parallel session — freeze #49 confirmation); git history as cited.
 

@@ -10,14 +10,14 @@
 
 **By citation:** the 15-46 report §a (five items: monitor365 runbook refresh; storm-wedge ioTier/start-limit batch; btrbk BE/6 + compsize first-night watch; drive-paperless e2e VM test; bootmetrics attribution correction) and the 16-05 report's green landing table. All headline landings re-verified GREEN at HEAD `f0f45a573`:
 
-| Landing | Re-check at HEAD | Verdict |
-| --- | --- | --- |
-| `ioTier.heavyDB` serviceConfig on monitor365-server (fragment, not `//`-merge) | `modules/nixos/services/monitor365.nix:634` | GREEN |
-| `StartLimitBurst = mkForce 10` | `monitor365.nix:641` | GREEN |
-| Phantom `monitor365-backup.prom` tmpfiles purge rule | `modules/nixos/services/backup-coordination.nix:157` | GREEN |
-| dnsblockd `/etc/hosts`-shadow runbook section | `docs/services/dnsblockd.md:19` | GREEN |
-| bootmetrics `transaction_open` OPEN-path fixture | `flake/parts/checks/selftests.nix:113-118` | GREEN |
-| drive-paperless e2e VM test | `tests/test-drive-paperless-e2e.nix` present (commit `b15d03ec8`) | GREEN |
+| Landing                                                                        | Re-check at HEAD                                                  | Verdict |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------- | ------- |
+| `ioTier.heavyDB` serviceConfig on monitor365-server (fragment, not `//`-merge) | `modules/nixos/services/monitor365.nix:634`                       | GREEN   |
+| `StartLimitBurst = mkForce 10`                                                 | `monitor365.nix:641`                                              | GREEN   |
+| Phantom `monitor365-backup.prom` tmpfiles purge rule                           | `modules/nixos/services/backup-coordination.nix:157`              | GREEN   |
+| dnsblockd `/etc/hosts`-shadow runbook section                                  | `docs/services/dnsblockd.md:19`                                   | GREEN   |
+| bootmetrics `transaction_open` OPEN-path fixture                               | `flake/parts/checks/selftests.nix:113-118`                        | GREEN   |
+| drive-paperless e2e VM test                                                    | `tests/test-drive-paperless-e2e.nix` present (commit `b15d03ec8`) | GREEN   |
 
 No landing regressed between the 16-05 pass (HEAD `4b2786cd3`) and this pass (HEAD `f0f45a573`). The delta between those heads is exactly one foreign auto-commit (`f0f45a573`, forgejo fixture/script/module files, 16:10) — parallel session, does not touch any of this window's surfaces (noted in passing, attributed honestly per the shared-tree rule).
 
@@ -45,6 +45,7 @@ None appended. The 15-46 report queued its (f) subset the same day and all rows 
 ## g) OWNER QUESTIONS
 
 **By citation to the 15-46 report §g (both still unanswered; already encoded in queue rows 496/3848 for the deploy window):**
+
 1. When is the next acceptable PSI-calm deploy window? Six verification legs across four batches are blocked on it.
 2. Guard appetite: claim-vs-diff commit check — blocking pre-commit leg or WARN-only selftest?
 
@@ -54,4 +55,4 @@ None appended. The 15-46 report queued its (f) subset the same day and all rows 
 
 ---
 
-*Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`; prior re-verify: `docs/status/2026-11-22_16-05_window-reverify-monitor365-five-task-window.md`.*
+_Verification-only pass per the dispatch-time dedup contract. Canonical report: `docs/status/2026-11-22_15-46_window-closeout-monitor365-btrbk-drive-paperless.md`; prior re-verify: `docs/status/2026-11-22_16-05_window-reverify-monitor365-five-task-window.md`._

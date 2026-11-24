@@ -75,9 +75,10 @@
       # BdJyCEvl, got Dr4pv45p (first-hand keep-going,
       # ~/.cache/lockfloat/keepgoing-1119.log). Same drop/re-add protocol.
       serverPkg =
-        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server.overrideAttrs {
-          vendorHash = "sha256-Dr4pv45pyccEYAXnI8hpoavwEGBSpyNrwHGwv0vPqpU=";
-        };
+        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server.overrideAttrs
+          {
+            vendorHash = "sha256-Dr4pv45pyccEYAXnI8hpoavwEGBSpyNrwHGwv0vPqpU=";
+          };
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;

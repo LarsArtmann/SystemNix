@@ -99,4 +99,4 @@ Every step below is live-probed this session with the probe command cited; nothi
 
 ---
 
-*Report per owner directive 2026-11-03 21:35 CET. Self-harvest complete (items 1-3 landed; 4-11 dispositioned above). Waiting for instructions.*
+_Report per owner directive 2026-11-03 21:35 CET. Self-harvest complete (items 1-3 landed; 4-11 dispositioned above). Waiting for instructions._

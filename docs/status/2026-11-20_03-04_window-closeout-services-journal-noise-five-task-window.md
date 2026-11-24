@@ -3,6 +3,7 @@
 **Report time:** 2026-11-20 ~03:04 · **HEAD at write:** `3de836d36` · **Window:** 5 completed tasks (task IDs `…a1ea328819`, `…a1ea64e363`, `…a1f5694e9d`, `…a1f5803cb3`, `…a1f5d5b5da`) · **Dispatch-time dedup:** no prior window report covers this span (grepped `docs/status/README.md` + window reports for the span dates and all 5 task IDs — only each task's own closeout hits) → full pass.
 
 Per-task closeout reports (read first, cited throughout):
+
 - `docs/status/tasks/2026-11-17_17-37_task-000001a1ea328819f6e7a1d46ff400000000.md` (papdashboard 674/min noise)
 - `docs/status/tasks/2026-11-17_19-26_task-000001a1ea64e363ae531e2a914a00000000.md` (5 smoke failures triage)
 - (no separate report; commit `59051808a` is the artifact) migrate-user-tmp-fixture USER fix
@@ -80,7 +81,7 @@ Per-task closeout reports (read first, cited throughout):
 8. PapDashboard file-size split-wave (49 files) + fleet go-directive wave — un-blocks the upstream commit wall (rows minted).
 9. Document `dnsblockd_tracking_metrics_dropped_total` (minted).
 10. Pre-commit darwin-red disposition (minted).
-11–30. See each closeout's own §f for the full ranked candidate lists; not duplicated here (all already routed to TODO_LIST/domain libraries or deliberately left report-only under the per-session 10-mint cap).
+    11–30. See each closeout's own §f for the full ranked candidate lists; not duplicated here (all already routed to TODO_LIST/domain libraries or deliberately left report-only under the per-session 10-mint cap).
 
 ## g) QUESTIONS FOR THE OWNER (minted as blocked rows)
 

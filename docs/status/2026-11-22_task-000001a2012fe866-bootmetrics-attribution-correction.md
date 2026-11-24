@@ -18,15 +18,15 @@ made the repair unavailable.
 
 ## Attribution record (verified)
 
-| Surface | Commit |
-| --- | --- |
-| item-5 fixture + checks + negative-lint legs | **95fd92e8517** (daemon, heuristic) |
-| item-5 commit carrying the claim message | cc3c8f2ce372 |
-| storm-wedge ioTier isolation | afecf20d6 |
-| monitor365-backup phantom-red purge | 619939b7f |
-| ci-watchdog BLOCKED row | 4357048d8 |
-| deploy-leg queueing | fd769ada4 |
-| dnsblockd runbook pointer (already satisfied) | 5b346bb8d |
+| Surface                                       | Commit                              |
+| --------------------------------------------- | ----------------------------------- |
+| item-5 fixture + checks + negative-lint legs  | **95fd92e8517** (daemon, heuristic) |
+| item-5 commit carrying the claim message      | cc3c8f2ce372                        |
+| storm-wedge ioTier isolation                  | afecf20d6                           |
+| monitor365-backup phantom-red purge           | 619939b7f                           |
+| ci-watchdog BLOCKED row                       | 4357048d8                           |
+| deploy-leg queueing                           | fd769ada4                           |
+| dnsblockd runbook pointer (already satisfied) | 5b346bb8d                           |
 
 `git show --stat 95fd92e8517`: `flake/parts/checks/selftests.nix` (+32),
 `scripts/negative-test-lints.sh` (+14), `docs/services/monitor365.md` (1 line).

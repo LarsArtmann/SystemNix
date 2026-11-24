@@ -61,4 +61,4 @@
 
 ---
 
-*Arte in Aeternum — report waits for instructions; the deploy waiter stays armed.*
+_Arte in Aeternum — report waits for instructions; the deploy waiter stays armed._

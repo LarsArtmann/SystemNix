@@ -82,7 +82,7 @@ mutation-smoke.sh night-quiet semantics; mkSqliteBackupUnit sidecar cleanup + mo
 29. EXISTING — week-one AI-facts quality review (cvagent).
 30. EXISTING — cap dispatch-stamp follow-through: re-run the cap survey after the next few watch fires (the collapse pattern needs to HOLD under real re-stamps, not just once).
 
-*(30 items — every one traces to this session's work or its direct observation; the wider queue beyond these stays owned by TODO_LIST itself.)*
+_(30 items — every one traces to this session's work or its direct observation; the wider queue beyond these stays owned by TODO_LIST itself.)_
 
 ## g) Questions I can NOT figure out myself (max 3)
 

@@ -31,7 +31,9 @@ mkdir -p "$STUB"
 # be invoked by an absolute bash (checks pass ${pkgs.bash}/bin/bash).
 BASH_BIN="$(command -v bash)"
 
-{ printf '#!%s\n' "$BASH_BIN"; cat <<'STUBEOF'
+{
+  printf '#!%s\n' "$BASH_BIN"
+  cat <<'STUBEOF'
 if [ "${STUB_BOOT_STATE:-open}" = open ]; then
   echo "Bootup is not yet finished (org.freedesktop.systemd1.Manager.Finished not signaled)" >&2
   exit 1
@@ -41,7 +43,9 @@ STUBEOF
 } >"$STUB/systemd-analyze"
 chmod +x "$STUB/systemd-analyze"
 
-{ printf '#!%s\n' "$BASH_BIN"; cat <<'STUBEOF'
+{
+  printf '#!%s\n' "$BASH_BIN"
+  cat <<'STUBEOF'
 if [ "${1:-}" = show ] && [ "${2:-}" = graphical.target ]; then
   echo "ActiveEnterTimestampMonotonic=123000000"
   exit 0
@@ -89,33 +93,33 @@ STUB_BOOT_STATE=open run_variant open
 prom="$WORK/open/collectors/boot-metrics.prom"
 [ -f "$prom" ] || fail "open variant wrote no boot-metrics.prom"
 grep -q '^transaction_open 1$' "$prom" || fail "open variant: transaction_open 1 missing"
-grep -Eq '^transaction_open_seconds_past_graphical [0-9]+$' "$prom" \
-  || fail "open variant: age gauge missing/non-numeric"
-grep -q '^transaction_open_seconds_past_graphical 877$' "$prom" \
-  || fail "open variant: age math wrong (uptime 1000.40 - monotonic 123s = 877)"
-grep -q '^boot_metrics_scrape_errors 0$' "$prom" \
-  || fail "open variant: refusal misclassified as scrape error"
-grep -q "boot transaction still open" "$WORK/open/stderr.log" \
-  || fail "open variant: refusal log line missing"
+grep -Eq '^transaction_open_seconds_past_graphical [0-9]+$' "$prom" ||
+  fail "open variant: age gauge missing/non-numeric"
+grep -q '^transaction_open_seconds_past_graphical 877$' "$prom" ||
+  fail "open variant: age math wrong (uptime 1000.40 - monotonic 123s = 877)"
+grep -q '^boot_metrics_scrape_errors 0$' "$prom" ||
+  fail "open variant: refusal misclassified as scrape error"
+grep -q "boot transaction still open" "$WORK/open/stderr.log" ||
+  fail "open variant: refusal log line missing"
 
 # ── Leg 2: CLOSED path (systemd-analyze answers) ──
 STUB_BOOT_STATE=closed run_variant closed
 prom="$WORK/closed/collectors/boot-metrics.prom"
 [ -f "$prom" ] || fail "closed variant wrote no boot-metrics.prom"
 grep -q '^transaction_open 0$' "$prom" || fail "closed variant: transaction_open 0 missing"
-grep -q '^transaction_open_seconds_past_graphical 0$' "$prom" \
-  || fail "closed variant: age must be 0 once finished"
-grep -q '^boot_phase_duration_seconds{phase="userspace"} 2.500$' "$prom" \
-  || fail "closed variant: userspace phase metric missing/misparsed"
-grep -q '^boot_total_duration_seconds 6.500$' "$prom" \
-  || fail "closed variant: total duration missing/misparsed"
+grep -q '^transaction_open_seconds_past_graphical 0$' "$prom" ||
+  fail "closed variant: age must be 0 once finished"
+grep -q '^boot_phase_duration_seconds{phase="userspace"} 2.500$' "$prom" ||
+  fail "closed variant: userspace phase metric missing/misparsed"
+grep -q '^boot_total_duration_seconds 6.500$' "$prom" ||
+  fail "closed variant: total duration missing/misparsed"
 
 # ── Leg 3: CONTROL — open_age_secs stripped (the 2026-10-18 127 class) ──
 STUB_BOOT_STATE=open run_variant control \
   '/^open_age_secs() [{]$/,/^}$/d'
-grep -qve '^0$' "$WORK/control/rc" \
-  || fail "control: stripped variant ran clean (rc=$(<"$WORK/control/rc")) — regression net is gone"
-[ ! -f "$WORK/control/collectors/boot-metrics.prom" ] \
-  || fail "control: stripped variant still wrote a textfile (the 127-class kill did not fire)"
+grep -qve '^0$' "$WORK/control/rc" ||
+  fail "control: stripped variant ran clean (rc=$(<"$WORK/control/rc")) — regression net is gone"
+[ ! -f "$WORK/control/collectors/boot-metrics.prom" ] ||
+  fail "control: stripped variant still wrote a textfile (the 127-class kill did not fire)"
 
 echo "PASS [bootmetrics]: open-path, closed-path, and 127-control legs green"

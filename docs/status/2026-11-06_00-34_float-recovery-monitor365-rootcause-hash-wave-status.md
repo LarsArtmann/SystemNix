@@ -95,6 +95,7 @@ T2 Phase B prepare (owner sudo; the speed win), T3 the deploy (+6 parked riders)
 3. **D4 name-list single-source**: refactor the 5-surface blessed-cache name list now (rides tonight's momentum, ~100 min) or keep the consumer-grep rule as the only guard until after the cutover has soaked?
 
 ---
+
 **Self-harvest note (deliberately minimal):** §f items 1–10 are the in-flight T1 sweep (owned by the plan's EXECUTING annotations, not new asks); 11–25 map to existing rows (stability.md:337/340/341/342, storage.md, pipeline.md, upstream.md) or the plan's T-table; 26–28 are genuinely new small asks — queued here for the next HARVEST pass rather than editing TODO surfaces mid-red-float (the tree is one edit away from a clean proof #2; TODO edits can wait for green).
 
 **Next action on resume:** finish §f 1–5, launch float-register proof #2.

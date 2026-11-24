@@ -8,19 +8,19 @@
 
 ## Timeline (this session only)
 
-| Time (CET) | Event |
-| --- | --- |
-| 04:15–04:23 | Daemon commits b0b2e22/a08ef87 (docs only — not the cause) |
-| ~04:30 | Owner's deploy attempt aborts at §16 (log `2026-11-12_05-18-27.log` — timestamped later than the paste; the pasted run is that battery) |
-| ~04:40 | Reproduced: `nix build /nix/store/…-papdashboard-icons` → **"don't know how to build these paths"** — the §16 on-the-fly realize was structurally broken for a never-registered drv, NOT a broken icons build |
-| ~04:50 | Built the subset via the flake attr (`…config.services.papdashboard.iconsDir`) → GREEN, out path `a2v2ap19r3…-papdashboard-icons` (43 entries) — pack source FOD had been GC'd and re-fetched clean |
-| ~05:00 | Root-cause fix in `scripts/pre-deploy-check.sh` §16: realize via flake attrpath instead of bare out-path; shellcheck + `bash -n` green; daemon committed it as `00080450` (verified: 1-file diff, only my change rode it) |
-| ~05:10 | `--section-16-only` → **PASS**: "all 45 tiles carry icons (43 pack + 2 URL); all 43 pack icons exist" |
-| 05:24 | Deploy #2 (`DEPLOY_FORCE_PRESSURE=2`; PSI 36.8% but disks idle — D-state phantom on a kworker, ghostty scopes 73–79% io.pressure; forced per owner's original intent). **Battery PASSED** (build only runs post-battery), then `nh os switch` build failed: HaGeZi-dyndns-raw FOD hash mismatch (specified yb9EEGbS, got c1sqvguO) |
-| ~05:40 | Root-caused: `hagezi` helper is COMMIT-PINNED (`f8c1f9f8`, since 2026-11-06) — immutable URL, so NOT upstream drift. The dyndns pin was stale since the 11-06 commit wave (kept its 2026-10-16 branch-era value; warm store path masked it until GC collected it) |
-| ~05:45 | Stability probe ×2, 20 s apart → both `c1sqvguO` (= build's `got:`). Re-pinned `platforms/common/dns-blocklists.nix` + rewrote the stale comment. **Audited ALL 23 pins** against the commit via `nix store prefetch-file`: **23/23 OK** |
-| ~05:50 | `nix build --keep-going` toplevel — failed again; **my first output capture was tail-only and lost the root enumeration** (see §d) |
-| 12:05 | Re-ran keep-going with `tee` capture: **9 distinct go-modules FOD hash mismatches**. HEAD moved to `152bef10d` "float go-cqrs-lite to tip — cqrs-lint vendorHash re-stale" — a **parallel session** floated the lock during the 6 h gap |
+| Time (CET)  | Event                                                                                                                                                                                                                                                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 04:15–04:23 | Daemon commits b0b2e22/a08ef87 (docs only — not the cause)                                                                                                                                                                                                                                                                         |
+| ~04:30      | Owner's deploy attempt aborts at §16 (log `2026-11-12_05-18-27.log` — timestamped later than the paste; the pasted run is that battery)                                                                                                                                                                                            |
+| ~04:40      | Reproduced: `nix build /nix/store/…-papdashboard-icons` → **"don't know how to build these paths"** — the §16 on-the-fly realize was structurally broken for a never-registered drv, NOT a broken icons build                                                                                                                      |
+| ~04:50      | Built the subset via the flake attr (`…config.services.papdashboard.iconsDir`) → GREEN, out path `a2v2ap19r3…-papdashboard-icons` (43 entries) — pack source FOD had been GC'd and re-fetched clean                                                                                                                                |
+| ~05:00      | Root-cause fix in `scripts/pre-deploy-check.sh` §16: realize via flake attrpath instead of bare out-path; shellcheck + `bash -n` green; daemon committed it as `00080450` (verified: 1-file diff, only my change rode it)                                                                                                          |
+| ~05:10      | `--section-16-only` → **PASS**: "all 45 tiles carry icons (43 pack + 2 URL); all 43 pack icons exist"                                                                                                                                                                                                                              |
+| 05:24       | Deploy #2 (`DEPLOY_FORCE_PRESSURE=2`; PSI 36.8% but disks idle — D-state phantom on a kworker, ghostty scopes 73–79% io.pressure; forced per owner's original intent). **Battery PASSED** (build only runs post-battery), then `nh os switch` build failed: HaGeZi-dyndns-raw FOD hash mismatch (specified yb9EEGbS, got c1sqvguO) |
+| ~05:40      | Root-caused: `hagezi` helper is COMMIT-PINNED (`f8c1f9f8`, since 2026-11-06) — immutable URL, so NOT upstream drift. The dyndns pin was stale since the 11-06 commit wave (kept its 2026-10-16 branch-era value; warm store path masked it until GC collected it)                                                                  |
+| ~05:45      | Stability probe ×2, 20 s apart → both `c1sqvguO` (= build's `got:`). Re-pinned `platforms/common/dns-blocklists.nix` + rewrote the stale comment. **Audited ALL 23 pins** against the commit via `nix store prefetch-file`: **23/23 OK**                                                                                           |
+| ~05:50      | `nix build --keep-going` toplevel — failed again; **my first output capture was tail-only and lost the root enumeration** (see §d)                                                                                                                                                                                                 |
+| 12:05       | Re-ran keep-going with `tee` capture: **9 distinct go-modules FOD hash mismatches**. HEAD moved to `152bef10d` "float go-cqrs-lite to tip — cqrs-lint vendorHash re-stale" — a **parallel session** floated the lock during the 6 h gap                                                                                            |
 
 ---
 
@@ -49,6 +49,7 @@
 ## d) TOTALLY FUCKED UP (session mistakes + current hard blocker)
 
 **Session mistakes (mine):**
+
 1. **First keep-going build output piped through `tail -15` — lost the entire root-failure enumeration** and forced a full re-run of a multi-minute build. This violates the standing capture-once-then-grep discipline (tee to file, then grep). The re-run (with tee) is what surfaced the real current state. Cost: one wasted heavy build on a PSI-sensitive box + 6 h of delayed truth.
 2. First diagnosis eval probed the WRONG env surface (`.environment.PAP_ICONS_DIR` — pre-delegation home) and burned a heavy evo-x2 eval on it; the §16 code comment documents both surfaces and would have said so had I read the scanner before eval-ing.
 3. Two full pre-deploy batteries (~5 min eval-heavy each) were run on a box the pressure gate itself flagged — the second was arguably necessary (post-fix), but I did not wait for pressure to drain first, I forced (=2) both times.
@@ -58,7 +59,7 @@
 
 ## e) WHAT WE SHOULD IMPROVE (systemic, observed this session)
 
-1. **§11 blind spot — "cache warm" is not "pin correct".** §11 builds only *uncached* go-modules FODs; a stale pin whose store path exists is skipped as "satisfied" and detonates later on GC (HaGeZi-dyndns exact mechanism; likely several of the 9 vendorHash mismatches). The battery needs a cheap pin-vs-actual audit leg (the `prefetch-file` compare I ran for blocklists took ~60 s for 23 URLs) or §11's wording/verdict must stop claiming "vendorHash valid" when it only proved the uncached subset.
+1. **§11 blind spot — "cache warm" is not "pin correct".** §11 builds only _uncached_ go-modules FODs; a stale pin whose store path exists is skipped as "satisfied" and detonates later on GC (HaGeZi-dyndns exact mechanism; likely several of the 9 vendorHash mismatches). The battery needs a cheap pin-vs-actual audit leg (the `prefetch-file` compare I ran for blocklists took ~60 s for 23 URLs) or §11's wording/verdict must stop claiming "vendorHash valid" when it only proved the uncached subset.
 2. **Blocklist pins and Go vendorHashes share one failure class with two ad-hoc mechanisms.** The 23-pin audit is currently a hand-rolled loop; make it a script/check so the next masked-stale pin dies in CI, not in a deploy build.
 3. **Deploy log did not capture my run's battery output** (`2026-11-12_05-24-33.log` contains zero "PapDashboard" lines; the user's 05-18-27 log has them). Battery-passed evidence for my run exists only in the session transcript (build only starts after battery exit 0). Likely the `exec > >(sudo tee …)` process-substitution interacting with the backgrounded shell — worth a look; deploy forensics doctrine treats that log as first-stop evidence.
 4. **capture-once-then-grep must include MY OWN ad-hoc builds** — tee, never tail, on anything whose full output could matter (repeat of §d-1; it keeps being relearned).

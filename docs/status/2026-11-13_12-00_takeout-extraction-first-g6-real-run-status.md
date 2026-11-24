@@ -33,13 +33,13 @@ getting the data out and into owned infrastructure. All deletion talk is future-
 
 ### a2. First REAL production pipeline pass (helpless.ai) — this is the actual goal
 
-| Step | Result |
-| --- | --- |
+| Step                    | Result                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------- |
 | Extract (member-scoped) | `Takeout/Drive/*` from all 7 parts → **1,300 files / 1,528,919,192 B** in `extracted/` |
-| `index` | **1,300 new ledger rows**, 13.9 s wall (sha256 fallback), 0 already known |
-| `plan` | 1,300 NEW / 0 unchanged / 0 vanished · buckets: 243 photos (`photos.txt`), 1,057 other |
-| `balance` (G6) | **BALANCED** — Drive 1,300 files / 1,528,919,192 B on both sides, rc 0 |
-| `report` | 1,300 rows · **80 content-duplicate sets** · **91,235,063 B redundant** inside Drive |
+| `index`                 | **1,300 new ledger rows**, 13.9 s wall (sha256 fallback), 0 already known              |
+| `plan`                  | 1,300 NEW / 0 unchanged / 0 vanished · buckets: 243 photos (`photos.txt`), 1,057 other |
+| `balance` (G6)          | **BALANCED** — Drive 1,300 files / 1,528,919,192 B on both sides, rc 0                 |
+| `report`                | 1,300 rows · **80 content-duplicate sets** · **91,235,063 B redundant** inside Drive   |
 
 The archive is now 24 GB on the pool (22 GB zips + 1.5 GB Drive extract + small artifacts).
 
@@ -62,22 +62,23 @@ exactly.
 ### a5. Session-wide work already reported at 11:35 (still valid)
 
 Staging + registry + fleet plan + dedup ledger tool (index/plan/balance/report) + glob intake
-+ CRC-on-fold + `init --no-manifest`; own-plan re-audit (offsite hole, source matrix,
-reconciliation gate); both TODO surfaces synced; foreign parallel-session files left untouched.
+
+- CRC-on-fold + `init --no-manifest`; own-plan re-audit (offsite hole, source matrix,
+  reconciliation gate); both TODO surfaces synced; foreign parallel-session files left untouched.
 
 ---
 
 ## b) PARTIALLY DONE
 
 1. **helpless.ai G2** — the zips are CRC-clean and the Drive side is balanced, but
-   *completeness* is still unproven: no exports-page save → no `parts.tsv`/`products.tsv`.
+   _completeness_ is still unproven: no exports-page save → no `parts.tsv`/`products.tsv`.
    Worse, G2 would currently seed the **embedded racedriver8k product manifest** (see d2), so
    a premature run would fail spuriously.
 2. **Ingest chain (G3–G5)** — staged and proven up to the credential boundary. No photo has
    entered Immich, no Drive file OpenCloud, no doc Paperless yet.
 3. **Ledger coverage** — 1,300 rows (Drive only). Google Photos (5,282 files / 17.9 GB) is
    deliberately out of the ledger (immich-go dedups server-side); Mail (7.4 GB) and all cold
-   products never enter it by design. The *cross-cycle* value is therefore untested until a
+   products never enter it by design. The _cross-cycle_ value is therefore untested until a
    second cycle exists.
 4. **Index performance** — 1.5 GB in 13.9 s ≈ 107 MB/s with sha256; extrapolated to the
    543 GB racedriver8k Drive ≈ 85 min, to 3.9 TB ≈ 10 h. `b3sum` still not installed (the
@@ -116,7 +117,7 @@ reconciliation gate); both TODO surfaces synced; foreign parallel-session files 
    production extract wrote malformed `new-files.tsv`; only my own post-run sanity awk
    (`b+=$3` → 0) caught it. Had I fed that file to `rclone --files-from`, the failure would
    have been confusing and later. Fixed + structural assertion added.
-2. **The latent verify trap got worse in practice, not better.** I have now *proven* the
+2. **The latent verify trap got worse in practice, not better.** I have now _proven_ the
    execution path that trips it (a staging with no `products.tsv`) yet still did not fix it in
    `takeout-verify.sh`. If the owner saves the page tomorrow and I run G2 blind, it compares
    against racedriver8k's 68-product list. Still the #1 queued fix.
@@ -129,7 +130,7 @@ reconciliation gate); both TODO surfaces synced; foreign parallel-session files 
    future extraction with a different `-d`/`-j` shape (or a product other than Drive) would
    make every file look NEW and destroy the unchanged-detection value. I did not strip the
    `Takeout/` prefix in `index`.
-6. **I probed destinations but not their *write* path.** "All LISTEN" proves liveness, not
+6. **I probed destinations but not their _write_ path.** "All LISTEN" proves liveness, not
    that Immich accepts an upload or OpenCloud accepts a WebDAV PUT with the eventual
    credentials. No harm yet — but the report must not be read as "ready to ingest".
 7. **Report addendum was appended via shell heredoc**, outside the edit tool; the pre-commit
@@ -156,7 +157,7 @@ reconciliation gate); both TODO surfaces synced; foreign parallel-session files 
 4. **Replace ad-hoc extraction with a helper** (`takeout-extract.sh`) that distinguishes
    `unzip` rc 11 from real I/O errors, logs per-product counts, and refuses to run when
    `free < 1.2×extract + 500 GB`.
-5. **Normalize ledger relpaths** (strip `Takeout/`, canonicalize separators) *before* a second
+5. **Normalize ledger relpaths** (strip `Takeout/`, canonicalize separators) _before_ a second
    cycle exists — changing it after 3.9 TB is indexed would invalidate the unchanged logic.
 6. **Provision `b3sum`** (repo toolset) and make hashing algorithm a recorded, single-valued
    choice per ledger (mixing blake3/sha256 breaks duplicate detection silently today).

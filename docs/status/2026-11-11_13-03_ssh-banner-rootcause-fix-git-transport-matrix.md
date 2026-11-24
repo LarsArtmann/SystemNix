@@ -49,6 +49,7 @@
 ## f) 50 THINGS TO GET DONE NEXT (brainstorm — ROADMAP fuel unless tagged)
 
 **Direct follow-ups of this session (harvested to the queue):**
+
 1. Deploy the gen carrying `bannerText=null` at a quiescent window (poll: clean tree + no eval-relevant file <5min mtime, then `nix run .#deploy`); `[ready]`
 2. Post-deploy probe: banner absent on `ssh forgejo@…` + real git push round-trip over forgejo SSH (first write-path test); `[ready]`
 3. Trash orphan `platforms/nixos/users/ssh-banner` after a full repo sweep (incl. docs/tests/scripts) proves zero refs; `[ready]`
@@ -108,6 +109,6 @@
 
 ## g) QUESTIONS FOR THE OWNER (cannot figure out myself)
 
-1. **Banner posture:** is kill-everywhere final, or do you want the legal banner kept for *interactive* logins (Match-scoped, `Banner none` only for `forgejo` git)? I assumed "hate it ⇒ remove everywhere" and landed that.
+1. **Banner posture:** is kill-everywhere final, or do you want the legal banner kept for _interactive_ logins (Match-scoped, `Banner none` only for `forgejo` git)? I assumed "hate it ⇒ remove everywhere" and landed that.
 2. **Forgejo mirror visibility:** `lars/SystemNix.git` (and possibly other mirrors) are anonymously readable over HTTPS on the LAN. Intended? If not, should mirrors default private and canonical repos stay public?
 3. **Deploy timing:** deploy the banner fix now (I'll verify quiescence against the parallel session first), or batch it into the next deploy window you're driving?

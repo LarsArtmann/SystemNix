@@ -26,8 +26,8 @@ underneath me). Plan: docs/planning/2026-11-15_15-16-cv-family-pareto-plan.html
    (notify-failure@cv-profile-probe.service.service 09:41:42→09:41:43 on the
    11-16 exit-3, clean exit).
 8. **T06/T07** slow-path identified (`reader.Scan(WithLimit(0))` per request)
-   + design decided (TTL snapshot cache; event-invalidate impossible
-   cross-process; startup-once rejected as too stale).
+   - design decided (TTL snapshot cache; event-invalidate impossible
+     cross-process; startup-once rejected as too stale).
 9. **T08** read-model cache implemented upstream (Config.ReadCacheTTL,
    60s default, negative disables, double-checked singleflight fill,
    clone-on-return, invalidation in projectStream + RebuildProjections).
@@ -187,6 +187,7 @@ underneath me). Plan: docs/planning/2026-11-15_15-16-cv-family-pareto-plan.html
 ## f) NEXT 50 (ordered by leverage, not by tier)
 
 **Deploy chain (unblocks the most):**
+
 1. Owner push: Code-To-CV-Agent master (cache + PATH + preflight + VM leg +
    maxcommitsample) — the blocked:push row.
 2. Bake the cvagent go-modules vendorHash on the floated rev (BuildFlow
@@ -211,90 +212,90 @@ underneath me). Plan: docs/planning/2026-11-15_15-16-cv-family-pareto-plan.html
 
 **Queue/review debt from this session:**
 14. Tick a dedicated throttle-verdict row (8.6M/20.6k/212.8k) with the
-    24h-re-read cadence the plan wanted.
+24h-re-read cadence the plan wanted.
 15. Add a T42 queue row (currently only in the close-out §c).
 16. Move the sops `cvagent_ai_api_key` rotation question INTO the owner
-    cards doc.
+cards doc.
 17. Verify the BuildFlow ci.yml auto-rewrite sitting in Code-To-CV-Agent's
-    worktree — commit, revert, or discard deliberately.
+worktree — commit, revert, or discard deliberately.
 18. Re-run crm `go build ./...` after the parallel dep wave lands; then let
-    the daemon sweep my main.go.
+the daemon sweep my main.go.
 19. Eval-verify the T41 module render on HEAD (`nix eval` the cvagent-scan
-    environmentFile + the mint client list) — closes §b.4.
-    **RESOLVED 2026-11-17 (parallel batch session):** the eval-verify CAUGHT
-    the render broken — the 15:04 dash-prefixed `-/run/ai-meter-keys/…` in
-    `scan.environmentFile` violates the upstream option's `nullOr path` type
-    (every evo-x2 eval failed; daemon sweeps bypassed the hook that would
-    have caught it at commit time). Fix: option left at default `null`, the
-    optional-load dash moved to the unit layer
-    (`systemd.services.cvagent-scan.serviceConfig.EnvironmentFile =
+environmentFile + the mint client list) — closes §b.4.
+**RESOLVED 2026-11-17 (parallel batch session):** the eval-verify CAUGHT
+the render broken — the 15:04 dash-prefixed `-/run/ai-meter-keys/…` in
+`scan.environmentFile` violates the upstream option's `nullOr path` type
+(every evo-x2 eval failed; daemon sweeps bypassed the hook that would
+have caught it at commit time). Fix: option left at default `null`, the
+optional-load dash moved to the unit layer
+(`systemd.services.cvagent-scan.serviceConfig.EnvironmentFile =
     lib.mkForce [ "-/run/ai-meter-keys/cvagent.env" ]`) with the intent
-    preserved (missing mint degrades to rule-based, never fails the unit);
-    full `nix flake check --no-build --all-systems --keep-going` green.
+preserved (missing mint degrades to rule-based, never fails the unit);
+full `nix flake check --no-build --all-systems --keep-going` green.
 20. Run the upstream VM test (`nix flake check` in Code-To-CV-Agent or the
-    vm-test attr) — closes §b.5.
+vm-test attr) — closes §b.5.
 
 **Deferred plan work (T32-T34, upstream CV):**
 21. T32: reproduce boot-sync-before-bind under load (instrument cv-server
-    startup phases).
+startup phases).
 22. T33: bind-first fix (content sync after :8098 up).
 23. T34: StreamMarker-leak trace into the create path.
 24. After T33: revisit whether the site-side 20min ExecStartPost gate can
-    tighten (the 15m13s startup should shrink with bind-first).
+tighten (the 15m13s startup should shrink with bind-first).
 
 **Owner-gated (cards pending answers):**
 25. Card 1: provision Turso or accept-warn-close the analytics row.
 26. Card 2: graphrag provider pick (recommend: accept-warn now, bge-m3 after
-    the llama-rag bisect clears).
+the llama-rag bisect clears).
 27. Card 3: seed the three portals; then T31 proof checklist.
 28. Card 4: federation cadence pick (recommend INFO→debug + 0.2Hz upstream).
 29. sops `cvagent_ai_api_key` rotation/removal decision (now unconsumed).
 30. CRM dedupe dry-run (T35) once the checkpoint fix deploys.
 31. T36: CV render smoke in a clean-PSI window (verify STORM-SUSPECT covers
-    it first — that IS T25, still open in my book).
+it first — that IS T25, still open in my book).
 32. T25 proper: confirm/document that the existing storm gate downgrades
-    render-leg FAILs, or add the render-leg-specific PSI gate.
+render-leg FAILs, or add the render-leg-specific PSI gate.
 
 **Monitoring/verification hygiene:**
 33. Watch cvagent MemoryHigh counter growth post-cache-deploy (expect the
-    8.6M/44h rate to collapse; if not, the WAL-checkpoint question returns).
+8.6M/44h rate to collapse; if not, the WAL-checkpoint question returns).
 34. Watch cv-server 20.6k trips post-deploy (its 1G cap may warrant the
-    same budget review papdashboard got).
+same budget review papdashboard got).
 35. crm-server 212.8k trips — same §17 triage treatment (separate service,
-    surfaced by my battery run).
+surfaced by my battery run).
 36. Keep the §24 leg's 26h windows honest across timer jitter (scan ran
-    06:00→07:40 today; 26h holds, but a 3h runtime blowup would flirt with
-    the window — revisit if a scan ever exceeds ~4h).
+06:00→07:40 today; 26h holds, but a 3h runtime blowup would flirt with
+the window — revisit if a scan ever exceeds ~4h).
 37. Baseline file: the 4 battery FAILs (bank-sync, health-hub, CRM 303,
-    papdashboard 507/min) are each someone's open row — none mine, all
-    worth their own dispatch.
+papdashboard 507/min) are each someone's open row — none mine, all
+worth their own dispatch.
 38. bank-sync sync_errors_total>0 — the §12-adjacent row (not CV scope).
 39. health-hub /readyz 503 — a remote is dark; find which.
 40. papdashboard journal 507/min — the hotloop class has its own row.
 
 **Repo hygiene (small, from this session's observations):**
 41. The stale `nix/flake.lock` duplicate-input WARNs BuildFlow listed in
-    Code-To-CV-Agent (3 duplicate groups) — follows-cleanup upstream.
+Code-To-CV-Agent (3 duplicate groups) — follows-cleanup upstream.
 42. Code-To-CV-Agent AGENTS.md 914 lines vs the 220 budget (BuildFlow WARN)
-    — split per the fleet convention.
+— split per the fleet convention.
 43. buildflow.db 1.01GB — VACUUM (BuildFlow's own prescription).
 44. The `dprint.json` network-plugin fetches (3 remote .wasm) — the pipeline
-    row already exists (TODO_LIST:793); keep it queued.
+row already exists (TODO_LIST:793); keep it queued.
 45. go.mod `go 1.27.3` patch-component WARN in Code-To-CV-Agent — floor
-    should be major.minor.
+should be major.minor.
 46. dependabot grouping WARNs in Code-To-CV-Agent (3 findings) — one config
-    edit.
+edit.
 47. My upstream commits rode daemon heuristic messages (d2889fb, 48e17e5) —
-    history readability debt; next time amend-forward when the daemon
-    hasn't yet pushed past (this time it had).
+history readability debt; next time amend-forward when the daemon
+hasn't yet pushed past (this time it had).
 48. `docs/planning/2026-11-17_cv-family-owner-cards.md` — add the sops
-    rotation card (dup of 16, do it in the same edit).
+rotation card (dup of 16, do it in the same edit).
 49. The vendorHash WARN BuildFlow raised on Code-To-CV-Agent's own flake
-    (its go.mod moved post-hash) — the upstream repo's own FOD needs its
-    hash refreshed before ITS CI/next build, independent of SystemNix.
+(its go.mod moved post-hash) — the upstream repo's own FOD needs its
+hash refreshed before ITS CI/next build, independent of SystemNix.
 50. This report + the previous close-out (15-33) both note the §c gates —
-    reconcile them into the plan file's provenance block when the plan is
-    eventually archived (annotate-only).
+reconcile them into the plan file's provenance block when the plan is
+eventually archived (annotate-only).
 
 ## g) THREE QUESTIONS (not answerable from anything I can probe)
 

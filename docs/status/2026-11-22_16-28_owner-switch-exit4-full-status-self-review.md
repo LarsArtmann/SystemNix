@@ -5,27 +5,27 @@ boot-mirror root cause + an upstream fix that is now **mid-flight and UNTESTED**
 **Halted:** on owner order at 16:28 ("full status update, then WAIT"). Nothing was pushed by this session.
 **State stamp (16:28:15 CET, every value live-probed):**
 
-| What | Value |
-| --- | --- |
-| Anchor | `/run/current-system` = `4b1h1ymh…` = `system-1023-link` (anchored, stable since 14:59) |
-| SystemNix | HEAD `119bfe8fb`, tree clean, **0 ahead of origin/master** |
-| nixos-modules (upstream) | HEAD `a24c20a` = 2 LOCAL heuristic daemon commits (unpushed), 2 files uncommitted |
-| Box | io PSI some avg10 **99.0 %**, load avg **1040**, Tctl **98 °C**, 7 failed units, mem PSI some 7 % |
-| Deploys | none since 08:11 (07:41 + 08:11 both entry-refused code=12); owner ran `nh os switch` directly at 14:06 |
-| Processes of mine | none running (all background jobs completed) |
+| What                     | Value                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Anchor                   | `/run/current-system` = `4b1h1ymh…` = `system-1023-link` (anchored, stable since 14:59)                 |
+| SystemNix                | HEAD `119bfe8fb`, tree clean, **0 ahead of origin/master**                                              |
+| nixos-modules (upstream) | HEAD `a24c20a` = 2 LOCAL heuristic daemon commits (unpushed), 2 files uncommitted                       |
+| Box                      | io PSI some avg10 **99.0 %**, load avg **1040**, Tctl **98 °C**, 7 failed units, mem PSI some 7 %       |
+| Deploys                  | none since 08:11 (07:41 + 08:11 both entry-refused code=12); owner ran `nh os switch` directly at 14:06 |
+| Processes of mine        | none running (all background jobs completed)                                                            |
 
 ---
 
 ## TL;DR
 
-| Question | Answer |
-| --- | --- |
-| Is the owner's failed switch repaired? | **Yes.** The runtime was fully activated but unanchored; profile `system-1023` + boot entry + Samsung mirror are consistent; `pre-reboot-check` re-run at 15:50: **17 passed / 5 warnings / 0 failed — SAFE TO REBOOT**. |
-| What caused the exit 4? | An UNRELATED timer unit (`system-health-metrics`) failed inside the activation window under IO storm (journal scans exit-124); `switch-to-configuration` counts every failed unit at settle. |
-| Biggest finding | The boot-mirror `PathChanged` trigger is **deaf for the whole boot**: its target service carries `RemainAfterExit=true`, so the watch never re-arms after the first successful sync. deploy.sh's explicit restarts were doing all the syncing. Root cause validated; upstream fix written, **not a single test run yet**. |
-| Biggest mistake (mine) | I committed a WRONG explanation of that finding ("missed 2 fires, mirror stale ~13 h") to 5 SystemNix surfaces BEFORE checking entry mtimes — and those commits are now on origin (pushed by another session/the owner, not by me). |
-| Did I re-surface the 3 open §g questions? | **No — not until this report.** The handoff required it; work kept going instead. They are in §g below. |
-| Box health | **Bad, and not caused by this session:** io PSI 99 %, load 1040, 98 °C — the documented freeze class. With gen-1023 anchored and the mirror synced, an unplanned watchdog reboot now boots the RUNNING generation instead of silently reverting. |
+| Question                                  | Answer                                                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Is the owner's failed switch repaired?    | **Yes.** The runtime was fully activated but unanchored; profile `system-1023` + boot entry + Samsung mirror are consistent; `pre-reboot-check` re-run at 15:50: **17 passed / 5 warnings / 0 failed — SAFE TO REBOOT**.                                                                                                  |
+| What caused the exit 4?                   | An UNRELATED timer unit (`system-health-metrics`) failed inside the activation window under IO storm (journal scans exit-124); `switch-to-configuration` counts every failed unit at settle.                                                                                                                              |
+| Biggest finding                           | The boot-mirror `PathChanged` trigger is **deaf for the whole boot**: its target service carries `RemainAfterExit=true`, so the watch never re-arms after the first successful sync. deploy.sh's explicit restarts were doing all the syncing. Root cause validated; upstream fix written, **not a single test run yet**. |
+| Biggest mistake (mine)                    | I committed a WRONG explanation of that finding ("missed 2 fires, mirror stale ~13 h") to 5 SystemNix surfaces BEFORE checking entry mtimes — and those commits are now on origin (pushed by another session/the owner, not by me).                                                                                       |
+| Did I re-surface the 3 open §g questions? | **No — not until this report.** The handoff required it; work kept going instead. They are in §g below.                                                                                                                                                                                                                   |
+| Box health                                | **Bad, and not caused by this session:** io PSI 99 %, load 1040, 98 °C — the documented freeze class. With gen-1023 anchored and the mirror synced, an unplanned watchdog reboot now boots the RUNNING generation instead of silently reverting.                                                                          |
 
 ---
 
@@ -75,14 +75,14 @@ boot-mirror root cause + an upstream fix that is now **mid-flight and UNTESTED**
 
 ### b1. Upstream fix in `~/projects/nixos-modules` — WRITTEN, ZERO TESTS RUN, not pushed
 
-| File | Change | Where it lives now |
-| --- | --- | --- |
-| `modules/boot-mirror/default.nix` | `RemainAfterExit = false` + self-pinned assertion "must not set RemainAfterExit" + rewritten narrative | daemon commit `82ff6c3` (16:20, heuristic) |
-| `modules/systemd-shape-audit/default.nix` | new **class 11**: path unit → RemainAfterExit=yes target; detector `pathTriggerOffenders`, option `allowPathTriggerOnRemainAfterExit`, assertion, header | same `82ff6c3` |
-| `tests/boot-mirror.nix` | RemainAfterExit pin + JSON field | daemon commit `a24c20a` (16:23, heuristic) |
-| `tests/systemd-shape-audit-contract.nix` | class-11 fixture + expectation, "eleven"/11 | same `a24c20a` |
-| `tests/boot-mirror-vm.nix` | replaced `wait_for_unit` with a second-write leg (must mirror WITHOUT explicit restart) + inactive/waiting asserts | **uncommitted** |
-| `tests/negative/run.sh` | 2 `bootmirror` legs (`remainafterexit-restored`, `vm-deaf-trigger`) + 2 `shapeaudit` legs (`class11-neutered`, `class11-fixture-stripped`) | **uncommitted** |
+| File                                      | Change                                                                                                                                                   | Where it lives now                         |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `modules/boot-mirror/default.nix`         | `RemainAfterExit = false` + self-pinned assertion "must not set RemainAfterExit" + rewritten narrative                                                   | daemon commit `82ff6c3` (16:20, heuristic) |
+| `modules/systemd-shape-audit/default.nix` | new **class 11**: path unit → RemainAfterExit=yes target; detector `pathTriggerOffenders`, option `allowPathTriggerOnRemainAfterExit`, assertion, header | same `82ff6c3`                             |
+| `tests/boot-mirror.nix`                   | RemainAfterExit pin + JSON field                                                                                                                         | daemon commit `a24c20a` (16:23, heuristic) |
+| `tests/systemd-shape-audit-contract.nix`  | class-11 fixture + expectation, "eleven"/11                                                                                                              | same `a24c20a`                             |
+| `tests/boot-mirror-vm.nix`                | replaced `wait_for_unit` with a second-write leg (must mirror WITHOUT explicit restart) + inactive/waiting asserts                                       | **uncommitted**                            |
+| `tests/negative/run.sh`                   | 2 `bootmirror` legs (`remainafterexit-restored`, `vm-deaf-trigger`) + 2 `shapeaudit` legs (`class11-neutered`, `class11-fixture-stripped`)               | **uncommitted**                            |
 
 **Not done:** `nix fmt` after the last two edits · `boot-mirror-contract` build · `systemd-shape-audit-contract`
 build · `boot-mirror-vm` build/run · `CASES=bootmirror,shapeaudit bash tests/negative/run.sh` ·
@@ -97,6 +97,7 @@ matches, so no allow-list entry should be needed); the `vm-deaf-trigger` leg rel
 in the module (it is: count 1).
 
 **Resume recipe (exactly where I stopped):**
+
 ```bash
 cd ~/projects/nixos-modules
 nix fmt
@@ -110,15 +111,18 @@ CASES=bootmirror,shapeaudit bash tests/negative/run.sh
 ```
 
 ### b2. Calm-box smoke battery (pipeline.md row 1172, battery half)
+
 A 24-minute watcher armed at 15:44 fired **nothing**: io PSI never dropped below 36 % (gate: avg10 and
 avg60 < 30 %). The backup-artifact half of that row IS verified. The fleet smoke baseline is still the
 01:46 storm-poisoned file.
 
 ### b3. Corrections of my own wrong claim
+
 Discovered at ~16:05 (see d1). **Not started** — the owner's halt came first. Six surfaces are wrong on
 disk right now, five of them on origin.
 
 ### b4. Deploy of what is already committed
+
 `UMask=0077` (summit-planner) + the monitor365 `//`→mkMerge refactor are committed and NOT deployed. No
 deploy was attempted by this session (entry gate: the box has been storming all afternoon).
 
@@ -215,13 +219,14 @@ not individually attributed; that the 2026-10-17 "convergence double-run" was tw
 ## f) Next — 48 things, ordered
 
 **P0 — fix what is wrong on disk**
+
 1. Correct d1 on all 5 files: AGENTS.md boot-mirror paragraph, `docs/agents/systemd.md` boot-mirror bullet,
    `docs/todo/storage.md` row, `TODO_LIST.md` queue row (re-word both rows into the real fix), 15-15 report
    correction addendum (§a, §c.2).
 2. Run the b1 resume recipe to green (fmt, 2 contract builds, VM test, negative harness, flake check).
 3. Update the module README ("Contract" list) and every "ten classes" wording upstream.
 4. Verify `git log c0e4198..HEAD --stat` in nixos-modules holds only my 6 files; squash `82ff6c3` + `a24c20a`
-   + the 2 uncommitted files into ONE properly-messaged commit (`git reset --soft c0e4198 && git commit`).
+   - the 2 uncommitted files into ONE properly-messaged commit (`git reset --soft c0e4198 && git commit`).
 5. Push upstream + `nix flake update nixos-modules` in SystemNix + verify the rev with python3 (needs g-Q1).
 6. SystemNix: add the RemainAfterExit leg to `boot-mirror-path-trigger` and the `bootmirror` negative leg.
 7. `nix flake check --no-build --all-systems` green after the float (class 11 must flag nothing else).
@@ -254,7 +259,7 @@ not individually attributed; that the 2026-10-17 "convergence double-run" was tw
 28. pre-reboot-check: runtime leg "boot-mirror-sync.path SubState == waiting".
 29. pre-reboot-check §10 "no default entry resolved — gc-root audit skipped": investigate.
 30. The hook's transient "store path …-flake-input-pin-audit/sample-flake.nix does not exist": find the GC
-    trigger, add one retry.
+trigger, add one retry.
 31. Write the stc pending-job wedge class to `docs/agents/systemd.md` (c5).
 
 **P2 — summit-planner / service close-outs**

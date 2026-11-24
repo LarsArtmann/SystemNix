@@ -6,12 +6,13 @@ projects via native platforms, email, AND telephone)?" This report covers ONLY t
 session's work and what it noticed, per owner instruction.
 
 **Scope — verified vs not:**
+
 - VERIFIED first-hand: journals (cv-scan 48h, cv-server 7/30d, cv-agent 7/30d, cvagent
   3d, cv-gunio-weekly user unit post-21:00), deployed-unit inspection
   (`/etc/systemd/system`), sops template wiring (sops.nix), flake.lock revs, production
   config cross-check (cv.nix settings vs CV DI code), two read-only subagent code audits
   (decisionmodel/Jev; LLM surfaces), TODO-system gate re-run, gun.io timer registration
-  + its 21:00 fire.
+  - its 21:00 fire.
 - NOT verified (and why): prod pipeline store contents + `/api/agent/status` + any
   X-API-Key surface (sudo dead in agent shells, NNP; no key on disk for agents); the
   DEV store copy at `~/projects/CV/data/pipeline.sqlite` (readable by lars — I never

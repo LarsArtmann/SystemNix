@@ -10,16 +10,16 @@
 
 **Verified fresh (06:42 → 09:48):**
 
-| Claim | Evidence |
-| --- | --- |
-| Deploy landed: gen 983, anchor equal by hash + generation NUMBER | `readlink system-983-link` == `readlink /run/current-system` == `pcfbrxjab…`; deploy log 07-26-14 exited 08:43:17 after 4623 s |
-| The barrier is in the deployed system and DID ITS JOB | switch diff listed `unit-post-crash-calm-gate.service <none>` (new unit); journal: REFUSE lines every 15 s through the storm, then at 08:37:01 **waited the full 1 h 3 m and REFUSED at cap** (OnFailure fired — by design), ActiveState inactive after |
-| **The psi-wait-gates are holding clients RIGHT NOW** | journal 09:46: `psi-wait-gate: WAIT: fastflowlm — avg10=31.34% >= 30% (check 9, 240s elapsed); queued clients keep waiting` + `WAIT: llama-vlm-cap — (check 1)` |
-| **The chronic storm engine was measured**: the pre-switch llama-embeddings instance wrote **465.4 GB in 4 h 20 m** (7.2 G read, 2 h 46 min CPU) | its stop line in the switch journal, 07:36:47 |
-| cvagent's page parade is over | busctl live: `TimeoutStartUSec = 5400000000` (90 min) on gen 983 |
-| TODO-system gate: 0 FAILs after marker fixes | `check-todo-system.sh` count 0 (twice) |
-| `nix flake check --no-build --all-systems`: rc 0 on my manual run | background job 054 — the two parallel-session deploy failures on the same leg were load/tree-churn deaths, not syntax |
-| I corrupted TODO_LIST.md and recovered it byte-exactly | 1934-line mass-append → pattern-strip → `git diff --stat` back to the parallel session's 1/1 in-flight delta |
+| Claim                                                                                                                                           | Evidence                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy landed: gen 983, anchor equal by hash + generation NUMBER                                                                                | `readlink system-983-link` == `readlink /run/current-system` == `pcfbrxjab…`; deploy log 07-26-14 exited 08:43:17 after 4623 s                                                                                                                          |
+| The barrier is in the deployed system and DID ITS JOB                                                                                           | switch diff listed `unit-post-crash-calm-gate.service <none>` (new unit); journal: REFUSE lines every 15 s through the storm, then at 08:37:01 **waited the full 1 h 3 m and REFUSED at cap** (OnFailure fired — by design), ActiveState inactive after |
+| **The psi-wait-gates are holding clients RIGHT NOW**                                                                                            | journal 09:46: `psi-wait-gate: WAIT: fastflowlm — avg10=31.34% >= 30% (check 9, 240s elapsed); queued clients keep waiting` + `WAIT: llama-vlm-cap — (check 1)`                                                                                         |
+| **The chronic storm engine was measured**: the pre-switch llama-embeddings instance wrote **465.4 GB in 4 h 20 m** (7.2 G read, 2 h 46 min CPU) | its stop line in the switch journal, 07:36:47                                                                                                                                                                                                           |
+| cvagent's page parade is over                                                                                                                   | busctl live: `TimeoutStartUSec = 5400000000` (90 min) on gen 983                                                                                                                                                                                        |
+| TODO-system gate: 0 FAILs after marker fixes                                                                                                    | `check-todo-system.sh` count 0 (twice)                                                                                                                                                                                                                  |
+| `nix flake check --no-build --all-systems`: rc 0 on my manual run                                                                               | background job 054 — the two parallel-session deploy failures on the same leg were load/tree-churn deaths, not syntax                                                                                                                                   |
+| I corrupted TODO_LIST.md and recovered it byte-exactly                                                                                          | 1934-line mass-append → pattern-strip → `git diff --stat` back to the parallel session's 1/1 in-flight delta                                                                                                                                            |
 
 **NOT verified:** the deploy's exit-3 smoke details beyond embeddings (the log's full NEW-failures list — "Service Sanity CPU" line unexplored); whether the box would have survived WITHOUT the gates this boot (unfalsifiable); the render-side ExecStartPre assert for fastflowlm via my battery (its nix-eval leg died silently under load — superseded by the LIVE journal proof).
 
@@ -54,14 +54,14 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| Pattern | Fix |
-| --- | --- |
-| Unguarded shell variables addressing file surgery | Pattern-anchored sed only; `[ -n "$var" ]` guards are not optional; for one-line queue edits, `edit`-tool exact-match beats shell sed entirely |
-| Live-session row collisions | One bounced edit = stand down and leave a marker commit message or wait; never round three |
-| Fire-before-lock-check | A pre-flight `ls /tmp/.systemnix-deploy.lock` + fd-scan belongs in ANY deploy wrapper I write (and the queued tooling row) |
-| Batteries must be dry-runnable | The post-deploy battery's asserts should run green against a KNOWN-good state before they're trusted against a fresh deploy |
-| Smoke baselines vs admission gates | post-deploy-check needs gate-awareness: a service held by a refused post-crash-calm-gate is NOT a regression — annotate/skip with the gate's state as the reason |
-| Deployment docs for the gate | The module header documents the kill-switch; it must also document the RE-ADMIT path (restart gate → re-wait → start units) — the operational question the first refused boot immediately raises |
+| Pattern                                           | Fix                                                                                                                                                                                              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Unguarded shell variables addressing file surgery | Pattern-anchored sed only; `[ -n "$var" ]` guards are not optional; for one-line queue edits, `edit`-tool exact-match beats shell sed entirely                                                   |
+| Live-session row collisions                       | One bounced edit = stand down and leave a marker commit message or wait; never round three                                                                                                       |
+| Fire-before-lock-check                            | A pre-flight `ls /tmp/.systemnix-deploy.lock` + fd-scan belongs in ANY deploy wrapper I write (and the queued tooling row)                                                                       |
+| Batteries must be dry-runnable                    | The post-deploy battery's asserts should run green against a KNOWN-good state before they're trusted against a fresh deploy                                                                      |
+| Smoke baselines vs admission gates                | post-deploy-check needs gate-awareness: a service held by a refused post-crash-calm-gate is NOT a regression — annotate/skip with the gate's state as the reason                                 |
+| Deployment docs for the gate                      | The module header documents the kill-switch; it must also document the RE-ADMIT path (restart gate → re-wait → start units) — the operational question the first refused boot immediately raises |
 
 ## f) NEXT (up to 50; ✘ = existing row)
 
@@ -86,4 +86,4 @@
 
 **Self-harvest compliance:** §f 4–6 landed as queue one-liners + library rows at authoring time (below); §f 7 recorded here (session-local tooling); §f 8–9 are §g owner legs; §f 10 belongs to the parallel session.
 
-*Then wait for instructions.*
+_Then wait for instructions._

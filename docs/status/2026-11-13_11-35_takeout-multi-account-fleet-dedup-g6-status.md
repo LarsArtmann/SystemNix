@@ -36,17 +36,17 @@ Note: the parent `google-takeout/` is root:root 755, so staging creation needs t
 
 7 parts, 22 GB compressed, all `unzip -t` CRC-clean, sizes stable, no in-flight temp files:
 
-| Product | Files | Uncompressed |
-| --- | --- | --- |
-| Google Photos | 5,282 | 17.88 GB |
-| Mail | 1 (mbox) | 7.44 GB |
-| Drive | 1,300 | 1.53 GB |
-| Access Log Activity | 2 | 217 MB |
-| NotebookLM | 198 | 215 MB |
-| My Activity | 22 | 66 MB |
-| YouTube and YouTube Music | 13 | 11 MB |
-| Voice | 507 | 7.9 MB |
-| Calendar / Chrome / Contacts / Keep / Wallet / Profile / Play / Chat / Meet / Earth / Maps / Gemini / +small | ~130 | < 1 MB each |
+| Product                                                                                                      | Files    | Uncompressed |
+| ------------------------------------------------------------------------------------------------------------ | -------- | ------------ |
+| Google Photos                                                                                                | 5,282    | 17.88 GB     |
+| Mail                                                                                                         | 1 (mbox) | 7.44 GB      |
+| Drive                                                                                                        | 1,300    | 1.53 GB      |
+| Access Log Activity                                                                                          | 2        | 217 MB       |
+| NotebookLM                                                                                                   | 198      | 215 MB       |
+| My Activity                                                                                                  | 22       | 66 MB        |
+| YouTube and YouTube Music                                                                                    | 13       | 11 MB        |
+| Voice                                                                                                        | 507      | 7.9 MB       |
+| Calendar / Chrome / Contacts / Keep / Wallet / Profile / Play / Chat / Meet / Earth / Maps / Gemini / +small | ~130     | < 1 MB each  |
 
 Export groups: `takeout-20261110T224436Z-001.zip` (archive_browser.html only) and
 `takeout-20261110T224438Z-{1..6}-00N.zip`. **Completeness is unproven** — Google's export

@@ -4,6 +4,7 @@
 **Session scope:** One question chain — "how does github.com/yjid/kensaku compare to what we already have?" → "write a .md for comparisons" → "OpenCloud × Paperless-ngx × file-and-image-renamer vs kensaku". Docs-only session: two files written, zero eval-relevant surfaces touched, no deploy, no service mutation.
 
 **Verified in this session (artifact, not impression):**
+
 - kensaku repo facts via `gh repo view yjid/kensaku --json` + `gh api repos/yjid/kensaku/readme`: created 2026-10-24T21:00:26Z, latest v1.0.15 published 2026-11-04T19:30:37Z, MIT, Rust, 857 stars, pushed 2026-11-05.
 - kensaku release assets enumerated via `gh api repos/yjid/kensaku/releases/latest --jq '.assets[].name'`: AppImage/deb/rpm + `kensaku-cli-linux-x86_64` (static binary) + SHA256SUMS.
 - No upstream nix support: `repos/yjid/kensaku/contents/flake.nix` → 404; `search/code?q=kensaku+repo:NixOS/nixpkgs+filename:package.nix` → 0 hits. (First query form was a 422 parse error, corrected to the filename-scoped form.)
@@ -13,8 +14,9 @@
 - Verification pass: `nix fmt -- <both files>` → "formatted 2 files (0 changed)"; relative-link check → 8/8 OK; `git status` read back.
 
 **NOT verified in this session (and why):**
+
 - **Every kensaku RUNTIME behavior claim** — nothing was installed or executed; the CLI binary was never downloaded. The deliverable self-labels all of Part 1 as README/USAGE-claim level. Reason: scope discipline (compare, don't adopt) + an unknown unsigned binary deserves an explicit owner go rather than a unilateral run.
-- OpenCloud 7.2.4 search *depth* without Tika (filename-only vs some content indexing) — the "no Tika deployed" half is grep-verified; the "→ limited" half is an inference from upstream architecture, not an upstream-source check.
+- OpenCloud 7.2.4 search _depth_ without Tika (filename-only vs some content indexing) — the "no Tika deployed" half is grep-verified; the "→ limited" half is an inference from upstream architecture, not an upstream-source check.
 - qmd's live MCP set / collection state — cited from its runbook (2026-10-09 rescope note), not re-probed.
 - The three concurrently-modified files (`docs/todo/upstream.md`, `modules/nixos/services/buildcache.nix`, `scripts/lib/buildcache-reap-names.sh`) — another session's work; flagged in chat, deliberately not diff-reviewed or co-verified per the shared-tree discipline.
 - No `nix flake check` / eval ran — docs-only diff is eval-irrelevant by the repo's own predicate; nothing I wrote can break the build.
@@ -24,16 +26,19 @@
 ## Self-critique first (the three questions asked)
 
 **What did I forget?**
+
 1. The **gh-FIRST web-research precedence** (documented at [docs/agents/shell-devtools.md:39](../agents/shell-devtools.md)) — I reached for the fetch tool first: one wasted call on the github.com HTML page (nav chrome only) and one 404 on `raw.../main/README.md` before the correct `gh api` path. Two dead calls, ~15 seconds, doctrine violation anyway.
 2. A **live probe of `kensaku-cli`** was feasible this session (single static binary, `download` tool, unprivileged run) and would have upgraded the entire deliverable from claim-level to evidence-level. I chose scope discipline instead and labeled the gap — defensible, but the F08 errata doctrine ("every audit-style deep dive MUST include a live-probe phase") leans the other way. This is the single biggest upgrade left on the table.
 3. I did **not check the section-quality-guide pitfall about (f) harvesting until the skill told me** — the §f list below is deliberately NOT harvested (owner demanded WAIT); the why is recorded in this report per the self-harvest rule, but it should have been a conscious decision earlier.
 
 **What could I have done better?**
+
 1. Ask the owner's probe go/no-go **before** writing the evaluation, so the doc could ship at evidence-level in one pass instead of two.
 2. The research-README index row I added isn't pipe-aligned with its table neighbors (the formatter accepts it — 0 changed — so it is canonical, but raw-diff aesthetics suffered; the signoz row shows the house look).
 3. The OpenCloud "search → limited" phrasing in the capability matrix mixes a verified fact with an inference in one cell; the inference deserves its own label inside the cell.
 
 **What could I still improve (standing)?**
+
 1. For any future external-tool evaluation: default to probe-first (download static CLI → run read-only subcommands → then write), with the owner gate asked in the same message that proposes the comparison.
 2. Keep claim-labeling discipline (it worked here — every kensaku fact is traceable), but pair it with a named upgrade path in the doc (done: Part 5 probe protocol).
 
@@ -41,33 +46,33 @@
 
 ## a) FULLY DONE
 
-| # | What | Evidence | Scope |
-| --- | --- | --- | --- |
-| 1 | In-chat kensaku-vs-stack comparison answered with live-verified repo metadata | gh api outputs (metadata, assets, flake 404, nixpkgs 0-hit) | chat turn 1 |
-| 2 | Full five-surface comparison doc written | [docs/research/2026-11-06_kensaku-vs-local-search-stack.md](../research/2026-11-06_kensaku-vs-local-search-stack.md) on disk; `nix fmt` 0 changed; 8/8 relative links verified | docs/research/ (new file) |
-| 3 | Research index row added, newest-first in "Evaluations & comparisons" with refresh trigger | README.md lines 25-34 read back post-edit | docs/research/README.md |
-| 4 | Claim-vs-verified labeling discipline held end-to-end | every kensaku fact carries README/USAGE-claim labels; every in-tree fact carries file:line cites | deliverable |
-| 5 | Concurrent-session discipline: 3 foreign modified files flagged, untouched, not co-verified | git status output + explicit chat flag | shared tree |
-| 6 | House style matched to the newest comparison doc (signoz-gap-analysis pattern): Date/Status/Trigger/Sources header, TL;DR verdict, per-surface analysis, refresh trigger | file structure | deliverable |
+| # | What                                                                                                                                                                     | Evidence                                                                                                                                                                       | Scope                     |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| 1 | In-chat kensaku-vs-stack comparison answered with live-verified repo metadata                                                                                            | gh api outputs (metadata, assets, flake 404, nixpkgs 0-hit)                                                                                                                    | chat turn 1               |
+| 2 | Full five-surface comparison doc written                                                                                                                                 | [docs/research/2026-11-06_kensaku-vs-local-search-stack.md](../research/2026-11-06_kensaku-vs-local-search-stack.md) on disk; `nix fmt` 0 changed; 8/8 relative links verified | docs/research/ (new file) |
+| 3 | Research index row added, newest-first in "Evaluations & comparisons" with refresh trigger                                                                               | README.md lines 25-34 read back post-edit                                                                                                                                      | docs/research/README.md   |
+| 4 | Claim-vs-verified labeling discipline held end-to-end                                                                                                                    | every kensaku fact carries README/USAGE-claim labels; every in-tree fact carries file:line cites                                                                               | deliverable               |
+| 5 | Concurrent-session discipline: 3 foreign modified files flagged, untouched, not co-verified                                                                              | git status output + explicit chat flag                                                                                                                                         | shared tree               |
+| 6 | House style matched to the newest comparison doc (signoz-gap-analysis pattern): Date/Status/Trigger/Sources header, TL;DR verdict, per-surface analysis, refresh trigger | file structure                                                                                                                                                                 | deliverable               |
 
 ## b) PARTIALLY DONE
 
-| # | What works | What remains | Blocker | Effort |
-| --- | --- | --- | --- | --- |
-| 1 | The evaluation doc answers the asked question completely at analysis level | kensaku runtime evidence gap: no probe of CLI/search/OCR/MCP; doc stays claim-level | owner go/no-go on running the static binary + folder scope for a probe | S |
-| 2 | §f next-task list written | items NOT harvested into TODO_LIST/domain libs | owner's explicit "WAIT FOR INSTRUCTIONS" — harvesting now would violate it; recorded here as deliberate | S (once unblocked) |
-| 3 | OpenCloud search row in the matrix | "no Tika deployed" verified (grep empty); search-depth-without-Tika unverified | needs one upstream-source check | S |
-| 4 | Comparison depth for THIS box | resource-footprint, index-size, macOS-side (Lars-MacBook-Air 256GB) and CJK-relevance angles were consciously out of scope | probe first — these are probe outputs, not desk analysis | M |
+| # | What works                                                                 | What remains                                                                                                               | Blocker                                                                                                 | Effort             |
+| - | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------ |
+| 1 | The evaluation doc answers the asked question completely at analysis level | kensaku runtime evidence gap: no probe of CLI/search/OCR/MCP; doc stays claim-level                                        | owner go/no-go on running the static binary + folder scope for a probe                                  | S                  |
+| 2 | §f next-task list written                                                  | items NOT harvested into TODO_LIST/domain libs                                                                             | owner's explicit "WAIT FOR INSTRUCTIONS" — harvesting now would violate it; recorded here as deliberate | S (once unblocked) |
+| 3 | OpenCloud search row in the matrix                                         | "no Tika deployed" verified (grep empty); search-depth-without-Tika unverified                                             | needs one upstream-source check                                                                         | S                  |
+| 4 | Comparison depth for THIS box                                              | resource-footprint, index-size, macOS-side (Lars-MacBook-Air 256GB) and CJK-relevance angles were consciously out of scope | probe first — these are probe outputs, not desk analysis                                                | M                  |
 
 ## c) NOT STARTED
 
-| # | What | Why not started | Still wanted? |
-| --- | --- | --- | --- |
-| 1 | `kensaku-cli` v1.0.15 live probe (state/search --json, PDF + screenshot OCR spot-checks, MCP initialize handshake) | owner gate: running an unknown unsigned binary + choosing probe folders | yes — the doc's own refresh trigger |
-| 2 | Any kensaku packaging (flake or nixpkgs watch) | deliberately not started — WATCH verdict; qmd lesson says adopt upstream packaging only | yes, passively (row watched) |
-| 3 | kensaku MCP ↔ Crush wiring trial + context-cost measurement | depends on (1) | conditional |
-| 4 | §f harvest into TODO_LIST + docs/todo | owner instruction gate | yes, on go |
-| 5 | Pre-existing adjacent rows NOT mine to start unbidden: ai-meter paperless embedding client (docs/todo/services.md:678), renamer local llama.cpp vision (ROADMAP.md:100), OpenCloud watch-fs decision (runbook trap 5), 2027-01-02 paperless quarterly re-audit | pre-existing, owner-prioritized elsewhere | unchanged |
+| # | What                                                                                                                                                                                                                                                           | Why not started                                                                         | Still wanted?                       |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1 | `kensaku-cli` v1.0.15 live probe (state/search --json, PDF + screenshot OCR spot-checks, MCP initialize handshake)                                                                                                                                             | owner gate: running an unknown unsigned binary + choosing probe folders                 | yes — the doc's own refresh trigger |
+| 2 | Any kensaku packaging (flake or nixpkgs watch)                                                                                                                                                                                                                 | deliberately not started — WATCH verdict; qmd lesson says adopt upstream packaging only | yes, passively (row watched)        |
+| 3 | kensaku MCP ↔ Crush wiring trial + context-cost measurement                                                                                                                                                                                                    | depends on (1)                                                                          | conditional                         |
+| 4 | §f harvest into TODO_LIST + docs/todo                                                                                                                                                                                                                          | owner instruction gate                                                                  | yes, on go                          |
+| 5 | Pre-existing adjacent rows NOT mine to start unbidden: ai-meter paperless embedding client (docs/todo/services.md:678), renamer local llama.cpp vision (ROADMAP.md:100), OpenCloud watch-fs decision (runbook trap 5), 2027-01-02 paperless quarterly re-audit | pre-existing, owner-prioritized elsewhere                                               | unchanged                           |
 
 ## d) TOTALLY FUCKED UP
 
@@ -85,36 +90,36 @@
 
 Ranked by impact. NEW = surfaced by this session; PRE = pre-existing row this session touched but did not start (source cited). This is a brainstorm pool per the status-report skill — harvesting waits for owner go (b2).
 
-| # | Task | Impact | Effort | Category | Origin |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Owner go/no-go + folder scope for the kensaku-cli live probe (the doc's Part 5 protocol) | Critical | S | Feature | NEW |
-| 2 | During any probe: verify sensitive-path default-denials (`.env*`, `.pem`, password-manager dirs) behave before pointing kensaku at real home dirs | Critical | S | Security | NEW |
-| 3 | Quantify screenshot-token leakage: index ~10 real screenshots incl. token-bearing ones (redact-argv class), inspect what text lands in the index DB, then decide exclusion/purge policy | High | S | Security | NEW |
-| 4 | Draft this-box exclusion policy for kensaku if adopted (nix store, /mnt/pool, buildcache dirs, node_modules-class) — protects QLC IO + bounds index size | High | M | Feature | NEW |
-| 5 | Verify OpenCloud 7.2.4 search depth without Tika upstream; correct the runbook + the research doc cell | Medium | S | Documentation | NEW |
-| 6 | Post-probe addendum to the research doc upgrading claim labels to evidence (or recording probe refusal) | Medium | M | Documentation | NEW |
-| 7 | If adopted: MCP scoping decision — which `.crushrc` project scopes get kensaku's MCP (mirror qmd's CV-only pattern; context-cost note applies) | Medium | M | Feature | NEW |
-| 8 | If adopted: niri bind for `kensaku --toggle` + DMS tray coexistence check | Medium | S | Feature | NEW |
-| 9 | If adopted: index-store location decision under the storage doctrine (OS config dir default vs hot-tier policy) | Medium | M | Feature | NEW |
-| 10 | If adopted: probe the Stats-for-Nerds index-size + RSS numbers on this box before any full-home index | Medium | S | Feature | NEW |
-| 11 | Probe task: verify shipped-Linux divergence from USAGE.md claims (Windows-first project — inotify limits, `--toggle` under niri) | Medium | S | Verification | NEW |
-| 12 | Cross-session coordination: confirm the foreign buildcache/reap-names/upstream.md changes reached completion by their owning session at a quiescent moment | Medium | S | Coordination | NEW |
-| 13 | Decide whether the GUI AppImage (appimage-run) is ever acceptable on this box vs hard-requiring a real nix package | Low | M | Decision | NEW |
-| 14 | macOS angle: decide if kensaku should ever run on Lars-MacBook-Air (256GB, 90%+ full — index cost matters) | Low | M | Decision | NEW |
-| 15 | If kensaku is ever adopted: add its surface to the right agent doc (desktop.md or monitoring.md) | Low | S | Documentation | NEW |
-| 16 | Renamer: probe DLQ/dashboard for stuck dead letters (never probed; habit gap found while reading the runbook) | Low | S | Maintenance | NEW |
-| 17 | qmd: collection inventory + staleness review (`qmd state`, index.yml) — nothing probed this session, all runbook-cited | Low | M | Maintenance | NEW |
-| 18 | qmd: re-verify the CV-only MCP scoping claim still holds (grep `.crushrc`s) | Low | S | Verification | PRE (runbook 2026-10-09) | <!-- format:allow -->
-| 19 | Polish the research-README row alignment to house style | Low | S | Cosmetic | NEW |
-| 20 | Keep the kensaku flake/nixpkgs watch alive at each research-README touch (refresh trigger already recorded) | Low | S | Watch | NEW |
-| 21 | Paperless: queue/confirm the 2027-01-02 quarterly AI re-audit (A24 + decision-triage eval loop) | Medium | S | Maintenance | PRE (paperless.md:307-317) |
-| 22 | Paperless embeddings: the `[ready]` ai-meter `paperless` client row (embeddings via :8107) sits unactioned | Medium | M | Feature | PRE (docs/todo/services.md:678) |
-| 23 | Paperless: verify RAG embeddings now serve the DECRYPTED statement content post-2026-09-15 decryption (value question from the empty-content incident) | Low | M | Verification | PRE-adjacent (paperless.md:269) |
-| 24 | Renamer: ROADMAP local llama.cpp vision-provider trial on the 8060S (ROCm) | Medium | L | Feature | PRE (ROADMAP.md:100) |
-| 25 | OpenCloud: next `opencloud-production` pin bump → re-check open PR #2704 (avatar `picture` claim import) | Low | S | Watch | PRE (runbook trap 14) |
-| 26 | OpenCloud: cleanup decision for quarantined derived state (`search/bleve.corrupt-20261027`, `idm.boltdb.broken-20261103-…`) | Low | S | Cleanup | PRE (runbook traps 10+13) |
-| 27 | OpenCloud: watch-fs enable decision if external-change workflows appear (deliberately off today) | Low | M | Decision | PRE (runbook trap 5) |
-| 28 | Harvest this §f into TODO_LIST + docs/todo domains once the owner says go (one pass, both surfaces per row) | High | S | Process | NEW (gate) |
+| #  | Task                                                                                                                                                                                    | Impact   | Effort | Category      | Origin                          |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- | ------------------------------- |
+| 1  | Owner go/no-go + folder scope for the kensaku-cli live probe (the doc's Part 5 protocol)                                                                                                | Critical | S      | Feature       | NEW                             |
+| 2  | During any probe: verify sensitive-path default-denials (`.env*`, `.pem`, password-manager dirs) behave before pointing kensaku at real home dirs                                       | Critical | S      | Security      | NEW                             |
+| 3  | Quantify screenshot-token leakage: index ~10 real screenshots incl. token-bearing ones (redact-argv class), inspect what text lands in the index DB, then decide exclusion/purge policy | High     | S      | Security      | NEW                             |
+| 4  | Draft this-box exclusion policy for kensaku if adopted (nix store, /mnt/pool, buildcache dirs, node_modules-class) — protects QLC IO + bounds index size                                | High     | M      | Feature       | NEW                             |
+| 5  | Verify OpenCloud 7.2.4 search depth without Tika upstream; correct the runbook + the research doc cell                                                                                  | Medium   | S      | Documentation | NEW                             |
+| 6  | Post-probe addendum to the research doc upgrading claim labels to evidence (or recording probe refusal)                                                                                 | Medium   | M      | Documentation | NEW                             |
+| 7  | If adopted: MCP scoping decision — which `.crushrc` project scopes get kensaku's MCP (mirror qmd's CV-only pattern; context-cost note applies)                                          | Medium   | M      | Feature       | NEW                             |
+| 8  | If adopted: niri bind for `kensaku --toggle` + DMS tray coexistence check                                                                                                               | Medium   | S      | Feature       | NEW                             |
+| 9  | If adopted: index-store location decision under the storage doctrine (OS config dir default vs hot-tier policy)                                                                         | Medium   | M      | Feature       | NEW                             |
+| 10 | If adopted: probe the Stats-for-Nerds index-size + RSS numbers on this box before any full-home index                                                                                   | Medium   | S      | Feature       | NEW                             |
+| 11 | Probe task: verify shipped-Linux divergence from USAGE.md claims (Windows-first project — inotify limits, `--toggle` under niri)                                                        | Medium   | S      | Verification  | NEW                             |
+| 12 | Cross-session coordination: confirm the foreign buildcache/reap-names/upstream.md changes reached completion by their owning session at a quiescent moment                              | Medium   | S      | Coordination  | NEW                             |
+| 13 | Decide whether the GUI AppImage (appimage-run) is ever acceptable on this box vs hard-requiring a real nix package                                                                      | Low      | M      | Decision      | NEW                             |
+| 14 | macOS angle: decide if kensaku should ever run on Lars-MacBook-Air (256GB, 90%+ full — index cost matters)                                                                              | Low      | M      | Decision      | NEW                             |
+| 15 | If kensaku is ever adopted: add its surface to the right agent doc (desktop.md or monitoring.md)                                                                                        | Low      | S      | Documentation | NEW                             |
+| 16 | Renamer: probe DLQ/dashboard for stuck dead letters (never probed; habit gap found while reading the runbook)                                                                           | Low      | S      | Maintenance   | NEW                             |
+| 17 | qmd: collection inventory + staleness review (`qmd state`, index.yml) — nothing probed this session, all runbook-cited                                                                  | Low      | M      | Maintenance   | NEW                             |
+| 18 | qmd: re-verify the CV-only MCP scoping claim still holds (grep `.crushrc`s)                                                                                                             | Low      | S      | Verification  | PRE (runbook 2026-10-09)        |
+| 19 | Polish the research-README row alignment to house style                                                                                                                                 | Low      | S      | Cosmetic      | NEW                             |
+| 20 | Keep the kensaku flake/nixpkgs watch alive at each research-README touch (refresh trigger already recorded)                                                                             | Low      | S      | Watch         | NEW                             |
+| 21 | Paperless: queue/confirm the 2027-01-02 quarterly AI re-audit (A24 + decision-triage eval loop)                                                                                         | Medium   | S      | Maintenance   | PRE (paperless.md:307-317)      |
+| 22 | Paperless embeddings: the `[ready]` ai-meter `paperless` client row (embeddings via :8107) sits unactioned                                                                              | Medium   | M      | Feature       | PRE (docs/todo/services.md:678) |
+| 23 | Paperless: verify RAG embeddings now serve the DECRYPTED statement content post-2026-09-15 decryption (value question from the empty-content incident)                                  | Low      | M      | Verification  | PRE-adjacent (paperless.md:269) |
+| 24 | Renamer: ROADMAP local llama.cpp vision-provider trial on the 8060S (ROCm)                                                                                                              | Medium   | L      | Feature       | PRE (ROADMAP.md:100)            |
+| 25 | OpenCloud: next `opencloud-production` pin bump → re-check open PR #2704 (avatar `picture` claim import)                                                                                | Low      | S      | Watch         | PRE (runbook trap 14)           |
+| 26 | OpenCloud: cleanup decision for quarantined derived state (`search/bleve.corrupt-20261027`, `idm.boltdb.broken-20261103-…`)                                                             | Low      | S      | Cleanup       | PRE (runbook traps 10+13)       |
+| 27 | OpenCloud: watch-fs enable decision if external-change workflows appear (deliberately off today)                                                                                        | Low      | M      | Decision      | PRE (runbook trap 5)            |
+| 28 | Harvest this §f into TODO_LIST + docs/todo domains once the owner says go (one pass, both surfaces per row)                                                                             | High     | S      | Process       | NEW (gate)                      |
 
 That is 28 substantive items. Items 29-50 are withheld deliberately: without new research (which this report was told not to do), rows beyond ~28 would be padding, and padded harvest pools poison TODO_LIST with vague entries — the exact anti-pattern the docs-health HARVEST rules exist for.
 

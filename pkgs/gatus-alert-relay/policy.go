@@ -104,7 +104,7 @@ func parseAlert(body []byte) (endpoint string, state alertState, desc []string, 
 			for line := range strings.SplitSeq(text, "\n") {
 				if line = strings.TrimSpace(line); line != "" {
 					desc = append(desc, line)
-			}
+				}
 			}
 			return m[1], state, desc, true
 		}

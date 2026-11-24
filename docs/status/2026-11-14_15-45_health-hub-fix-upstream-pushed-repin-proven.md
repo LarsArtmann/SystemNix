@@ -50,6 +50,7 @@
 ## f) UP TO 50 NEXT THINGS (this session's direct follow-ups first, then the queue as observed)
 
 Direct follow-ups from THIS session:
+
 1. **[ready]** Deploy when owner approves — brings `health-hub-169e946` live; then full post-deploy battery (anchor check, §17 sweep, §19 freshness, health-dashboard Gatus/tile smoke).
 2. **[ready]** Run the env/-gitignore sweep across active LarsArtmann Go repos (the queued row): `git check-ignore -v` every on-disk `env/` dir; re-include via repo-local negations; report each find.
 3. **[ready]** Check upstream go-health-dashboard for OTHER imports of untracked dirs at `169e946` (go list ./... vs tracked files) — same class, one rev later.

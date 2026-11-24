@@ -62,6 +62,7 @@ One dispatch-queue batch, two items, expected to be a documentation pass + a liv
 Grouped, session-scoped only. **Harvest:** ★ = landed in TODO_LIST + domain library by this session; ⚑ = already carried by existing rows/close-outs (deliberately not duplicated); owner-gated items listed for visibility, not queued.
 
 **Direct follow-ups of this session**
+
 1. ★ **rpi3-dns.home.lan answers with evo-x2 (wildcard, record missing)** — add a real host record (.151; sweep lan-router/macbook), control-probe after. Queued: TODO_LIST services + docs/todo/services.md.
 2. ⚑ **Deploy the collector fix** (leg removal) — rides the next natural deploy; carried in the ticked item-2 close-outs (a new row would duplicate the closed item's deploy-gated semantics).
 3. ⚑ **Post-deploy re-verify: scrape_errors flips 0** on the first fixed-collector run — part of #2's post-deploy battery, named in the close-out.

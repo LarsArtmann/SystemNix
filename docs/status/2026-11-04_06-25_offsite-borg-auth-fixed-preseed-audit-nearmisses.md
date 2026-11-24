@@ -6,14 +6,14 @@
 
 ## Live state at authoring
 
-| What | State |
-| --- | --- |
-| io PSI some avg10 | 79.4% (avg60 85.5%) — storm UNBROKEN since session open (04:46→05:06 watcher samples: 78–92%) |
-| Deploy watcher | KILLED (job 032) at ~06:1x after the sizing audit turned the seed budget RED — never fired |
-| Pool breakdown du (job 037) | STILL RUNNING (idle-class du under storm; no output yet) |
-| Box (sftp `df -h`) | 1.0 TB total · **18.5 GB used** · 1006 GB free |
-| Auth to box | **rc=0 key-only** (probe = `ls` over port 23, pinned known_hosts) |
-| 06:30 borg timer | will NOT fire today — service not yet switched live (enable committed, deploy pending) |
+| What                        | State                                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------- |
+| io PSI some avg10           | 79.4% (avg60 85.5%) — storm UNBROKEN since session open (04:46→05:06 watcher samples: 78–92%) |
+| Deploy watcher              | KILLED (job 032) at ~06:1x after the sizing audit turned the seed budget RED — never fired    |
+| Pool breakdown du (job 037) | STILL RUNNING (idle-class du under storm; no output yet)                                      |
+| Box (sftp `df -h`)          | 1.0 TB total · **18.5 GB used** · 1006 GB free                                                |
+| Auth to box                 | **rc=0 key-only** (probe = `ls` over port 23, pinned known_hosts)                             |
+| 06:30 borg timer            | will NOT fire today — service not yet switched live (enable committed, deploy pending)        |
 
 ## §a FULLY DONE
 
@@ -70,7 +70,7 @@
 7. **Land the exclude edit** in `platforms/nixos/system/backup.nix`: `/data/.snapshots` (mandatory) + decided others
 8. Update the module's exclude-count comment (27 → actual) + docs table if changed
 9. `nix flake check --no-build` (eval gate)
-10. Correct `docs/services/offsite-borg.md` step 3 → install-ssh-key procedure + two-store lesson *(harvested, see ledger)*
+10. Correct `docs/services/offsite-borg.md` step 3 → install-ssh-key procedure + two-store lesson _(harvested, see ledger)_
 11. Update `docs/services/offsite-borg.md` exclude runbook table with the audit's additions
 12. Re-arm `deploy-watcher.sh` (only after 7+9 green)
 13. PSI gate: wait for drain or owner "force"
@@ -112,6 +112,6 @@
 - **Mapped to EXISTING rows, not re-harvested:** deploy/verify/seed/drill/docs-flip items = scope of the storage.md:58 row + go-live checklist (docs/services/offsite-borg.md); sudo-sizing + pool hogs = the 2026-11-03 "pre-seed exclude-vs-live-tree audit probe" row (still open, §b.1 extends it); append-only + known_hosts = standing [decision] rows.
 - **Deliberately NOT harvested:** watcher re-arm (session-scoped orchestration, not durable work), §f.1 prose answer (conversational debt, no repo artifact), harness tidy-up (§e.5, one-off).
 
-*Auth leg complete and verified; seed budget audit RED and blocking the deploy by design — the trap it caught is the reason the audit gate exists. Waiting for instructions.*
+_Auth leg complete and verified; seed budget audit RED and blocking the deploy by design — the trap it caught is the reason the audit gate exists. Waiting for instructions._
 
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2-5 f.7-11 f.14 f.15 f.17 f.32-34 · already-tracked f.16 f.18-20 f.22-26 f.28-30 f.35-37 · OBSOLETE f.1 f.6 f.12 f.13 f.21 · NEW rowed: f.27(+07-05 §f.18+07-19) → storage [watch], f.31(+07-05 §f.6+07-19) → security [blocked:user]

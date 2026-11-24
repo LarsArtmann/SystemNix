@@ -34,7 +34,7 @@
 
 ## f) Up to 50 things we should get done next
 
-*(self-harvested at authoring — every obligation landed in an existing surface this session; no new rows minted)*
+_(self-harvested at authoring — every obligation landed in an existing surface this session; no new rows minted)_
 
 1. ~~Deploy D2 carries T18+T19 config~~ done — — deliberately not harvested as a new row: the plan's own T3/D2 owner gate owns it (plan line 52 + tombstone).
 2. ~~Live-verify the verify-site reap on the next verify run~~ done — — deliberately not harvested: the mechanism self-verifies (journal `reaping stale site-verify tree` line on next run; the 1.5G dormant tree is the built-in fixture).

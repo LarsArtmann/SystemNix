@@ -94,48 +94,48 @@ Started as "why is IO 100% on many disks?!" — answered as a build storm (monit
 
 Legend: **[harvested]** = landed in TODO_LIST + docs/todo/storage.md during this report's authoring; **[exists]** = already-queued row elsewhere; **[idea]** = brainstorm/ROADMAP fuel, deliberately NOT harvested (no bounded ask yet, or unverified premise). Direct follow-ups of this session's work were harvested at authoring time per the status-report discipline; the rest are recorded here so they are not entombed.
 
-| # | Item | Domain | Status |
-| --- | --- | --- | --- |
-| 1 | Deploy both SystemNix waves at first PSI-calm window | rust-cache | **[harvested]** [ready] |
-| 2 | Post-deploy verify: 13 links, timer armed, provisioner journal, monitor365 untouched | rust-cache | **[harvested]** (part of #1) |
-| 3 | Fixture-test provisioner + GC v2 as flake checks (pair with buildcache-init fixture row) | rust-cache | **[harvested]** [ready] |
-| 4 | Port target-gc's fingerprint-orphan logic into rust-cache-gc (+ builder guard) | rust-cache | **[harvested]** [ready] |
-| 5 | Provisioner/GC counters → rust-cache.prom + Gatus staleness check | monitoring | **[harvested]** [ready] |
-| 6 | [watch] monitor365 regrowth — placement question returns at ~150G | capacity | **[harvested]** [watch] |
-| 7 | Check/create docs/services/rust-cache.md runbook | docs | **[harvested]** [ready] |
-| 8 | sccache 33G vs 32G cap — verify LRU is actually holding | rust-cache | **[harvested]** (folded into #5 metrics) |
-| 9 | Upstream shrink levers: collapse libduckdb-sys feature-variant hashes | monitor365 | [idea] — needs upstream duckdb-sys investigation |
-| 10 | `incremental = false` for dev-test profile — measure speed-vs-size | monitor365 | [idea] — benchmark first |
-| 11 | Per-wave test-matrix trim (owner workflow decision) | monitor365 | [idea] — owner call |
-| 12 | Wave-scale target-gc validation + cadence decision | monitor365 | [idea] — after next full wave |
-| 13 | Wire target-gc into monitor365 flake (`nix run .#target-gc`) or CI | monitor365 | [idea] |
-| 14 | Top-20 largest test-binary audit (per-bin size vs linked deps) | monitor365 | [idea] |
-| 15 | duperemove/bedup identical-`libduckdb.a` dedup experiment on btrfs | storage | [idea] |
-| 16 | Emergency sweep leg: 15-min df check at ≥88% | rust-cache | [idea] — weekly GC + guards may suffice |
-| 17 | `target.migrated-*` age-reap policy (or document manual-only as final) | storage | [exists-adjacent] — decision row carries it |
-| 18 | Merge-SanDisks IO tests | storage | **[exists]** storage.md [decision] |
-| 19 | Split-GC thresholds | storage | **DONE this session** — ticked |
-| 20 | buildcache-init/rust-cache-init provisioning fixture | storage | **[exists]** TODO_LIST:1240 (paired with #3) |
-| 21 | Annotate 2026-11-15 report §21 with storm attribution | docs | **DONE this session** (during authoring) |
-| 22 | Freeze-ledger note: no freeze rode the 807-load storm (WDT held) | stability | [idea] — one-paragraph ledger addendum |
-| 23 | nice/ionice policy for owner linker waves | stability | [idea] — owner workflow decision |
-| 24 | activitywatch `aw-server-rust` nested-target policy | storage | [idea] — nix-built tree, likely no-op |
-| 25 | rust-cache-metrics first-scrape race | monitoring | **[exists]** storage.md |
-| 26 | Sweep stale frozen-spare references | docs | **[exists]** TODO_LIST:1302 |
-| 27 | Home-tree space audit batch (projects 144G pre-clean figure is stale post-clean) | storage | **[exists]** storage.md [blocked:user] — figures need refresh after the owner's clean |
-| 28 | Samsung nvme0n1p2 16.6TiB write-rate attribution | storage | **[exists]** storage.md — monitor365 churn through the projects subvol feeds this if placement ever moves |
-| 29 | psi-wait-gate units must not hold boot transactions open | stability | **[exists]** TODO_LIST:3667 [decision] |
-| 30 | Resumable-reader pause automation (freeze-6 rule) | stability | **[exists]** TODO_LIST:214 |
-| 31 | Root-cause phantom-PSI deploy gate | stability | **[exists]** storage.md/stability |
-| 32 | Productize the sandbox-extract harness (python renderer + stub trees) as a repo test lib | pipeline | [idea] — subsumed by #3 if done well |
-| 33 | Dangling-WARN noise suppression for deferred-provision links | rust-cache | [idea] — cosmetic |
-| 34 | Provisioner end-of-run: name deferred projects explicitly | rust-cache | [idea] — cosmetic |
-| 35 | Recreate-dir events should surface (a manual wipe signal) | rust-cache | [idea] |
-| 36 | `flake.nix` `?ref=`+`?rev=` combo parse-trap audit | flake | **[exists]** 2026-11-15 report §23 (foreign list) |
-| 37 | pin-audit selftest leg for path-form rev pins | flake | **[exists]** §24 (foreign list) |
-| 38 | §10 loan mechanism for boot-window-unavailable metrics gate | stability | **[exists]** §20 (foreign list) |
-| 39 | nixfmt-over-nixpkgs session attribution | stability | **[exists]** §22 (foreign list) |
-| 40 | Rust-cache SSD SMART trend watch (SandForce 60TBW class under 100G/day bursts) | storage | [idea] — the wear question hides behind "rebuildable cache" |
+| #  | Item                                                                                     | Domain     | Status                                                                                                    |
+| -- | ---------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
+| 1  | Deploy both SystemNix waves at first PSI-calm window                                     | rust-cache | **[harvested]** [ready]                                                                                   |
+| 2  | Post-deploy verify: 13 links, timer armed, provisioner journal, monitor365 untouched     | rust-cache | **[harvested]** (part of #1)                                                                              |
+| 3  | Fixture-test provisioner + GC v2 as flake checks (pair with buildcache-init fixture row) | rust-cache | **[harvested]** [ready]                                                                                   |
+| 4  | Port target-gc's fingerprint-orphan logic into rust-cache-gc (+ builder guard)           | rust-cache | **[harvested]** [ready]                                                                                   |
+| 5  | Provisioner/GC counters → rust-cache.prom + Gatus staleness check                        | monitoring | **[harvested]** [ready]                                                                                   |
+| 6  | [watch] monitor365 regrowth — placement question returns at ~150G                        | capacity   | **[harvested]** [watch]                                                                                   |
+| 7  | Check/create docs/services/rust-cache.md runbook                                         | docs       | **[harvested]** [ready]                                                                                   |
+| 8  | sccache 33G vs 32G cap — verify LRU is actually holding                                  | rust-cache | **[harvested]** (folded into #5 metrics)                                                                  |
+| 9  | Upstream shrink levers: collapse libduckdb-sys feature-variant hashes                    | monitor365 | [idea] — needs upstream duckdb-sys investigation                                                          |
+| 10 | `incremental = false` for dev-test profile — measure speed-vs-size                       | monitor365 | [idea] — benchmark first                                                                                  |
+| 11 | Per-wave test-matrix trim (owner workflow decision)                                      | monitor365 | [idea] — owner call                                                                                       |
+| 12 | Wave-scale target-gc validation + cadence decision                                       | monitor365 | [idea] — after next full wave                                                                             |
+| 13 | Wire target-gc into monitor365 flake (`nix run .#target-gc`) or CI                       | monitor365 | [idea]                                                                                                    |
+| 14 | Top-20 largest test-binary audit (per-bin size vs linked deps)                           | monitor365 | [idea]                                                                                                    |
+| 15 | duperemove/bedup identical-`libduckdb.a` dedup experiment on btrfs                       | storage    | [idea]                                                                                                    |
+| 16 | Emergency sweep leg: 15-min df check at ≥88%                                             | rust-cache | [idea] — weekly GC + guards may suffice                                                                   |
+| 17 | `target.migrated-*` age-reap policy (or document manual-only as final)                   | storage    | [exists-adjacent] — decision row carries it                                                               |
+| 18 | Merge-SanDisks IO tests                                                                  | storage    | **[exists]** storage.md [decision]                                                                        |
+| 19 | Split-GC thresholds                                                                      | storage    | **DONE this session** — ticked                                                                            |
+| 20 | buildcache-init/rust-cache-init provisioning fixture                                     | storage    | **[exists]** TODO_LIST:1240 (paired with #3)                                                              |
+| 21 | Annotate 2026-11-15 report §21 with storm attribution                                    | docs       | **DONE this session** (during authoring)                                                                  |
+| 22 | Freeze-ledger note: no freeze rode the 807-load storm (WDT held)                         | stability  | [idea] — one-paragraph ledger addendum                                                                    |
+| 23 | nice/ionice policy for owner linker waves                                                | stability  | [idea] — owner workflow decision                                                                          |
+| 24 | activitywatch `aw-server-rust` nested-target policy                                      | storage    | [idea] — nix-built tree, likely no-op                                                                     |
+| 25 | rust-cache-metrics first-scrape race                                                     | monitoring | **[exists]** storage.md                                                                                   |
+| 26 | Sweep stale frozen-spare references                                                      | docs       | **[exists]** TODO_LIST:1302                                                                               |
+| 27 | Home-tree space audit batch (projects 144G pre-clean figure is stale post-clean)         | storage    | **[exists]** storage.md [blocked:user] — figures need refresh after the owner's clean                     |
+| 28 | Samsung nvme0n1p2 16.6TiB write-rate attribution                                         | storage    | **[exists]** storage.md — monitor365 churn through the projects subvol feeds this if placement ever moves |
+| 29 | psi-wait-gate units must not hold boot transactions open                                 | stability  | **[exists]** TODO_LIST:3667 [decision]                                                                    |
+| 30 | Resumable-reader pause automation (freeze-6 rule)                                        | stability  | **[exists]** TODO_LIST:214                                                                                |
+| 31 | Root-cause phantom-PSI deploy gate                                                       | stability  | **[exists]** storage.md/stability                                                                         |
+| 32 | Productize the sandbox-extract harness (python renderer + stub trees) as a repo test lib | pipeline   | [idea] — subsumed by #3 if done well                                                                      |
+| 33 | Dangling-WARN noise suppression for deferred-provision links                             | rust-cache | [idea] — cosmetic                                                                                         |
+| 34 | Provisioner end-of-run: name deferred projects explicitly                                | rust-cache | [idea] — cosmetic                                                                                         |
+| 35 | Recreate-dir events should surface (a manual wipe signal)                                | rust-cache | [idea]                                                                                                    |
+| 36 | `flake.nix` `?ref=`+`?rev=` combo parse-trap audit                                       | flake      | **[exists]** 2026-11-15 report §23 (foreign list)                                                         |
+| 37 | pin-audit selftest leg for path-form rev pins                                            | flake      | **[exists]** §24 (foreign list)                                                                           |
+| 38 | §10 loan mechanism for boot-window-unavailable metrics gate                              | stability  | **[exists]** §20 (foreign list)                                                                           |
+| 39 | nixfmt-over-nixpkgs session attribution                                                  | stability  | **[exists]** §22 (foreign list)                                                                           |
+| 40 | Rust-cache SSD SMART trend watch (SandForce 60TBW class under 100G/day bursts)           | storage    | [idea] — the wear question hides behind "rebuildable cache"                                               |
 
 Items 9–14 are the owner-chosen upstream track's concrete backlog (monitor365 repo). Items 36–39 are foreign-session lists observed in passing, listed only so they are not lost — not researched this session.
 
@@ -157,4 +157,4 @@ Items 9–14 are the owner-chosen upstream track's concrete backlog (monitor365 
 - **Something useful removed?** Yes, on purpose: the cold-prune-ALL leg and the tmpfiles L+ rules. Both were destructive under measured conditions; their replacements are strictly safer, and the removal rationale is recorded in the module comment + storage.md + CHANGELOG.
 - **Scope creep?** Held: monitor365 src/Cargo.toml/CI untouched (per the _ACTIVE NOT-touching list); SystemNix foreign overnight commits identified and not reviewed.
 
-*WAITING FOR INSTRUCTIONS.*
+_WAITING FOR INSTRUCTIONS._

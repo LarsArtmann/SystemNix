@@ -3,6 +3,7 @@
 **Headline:** The monitor365 pool-copy chain works for the first time ever (first-ever pool dump 9.3G, exit 0, prom green) — the root cause was deeper than the 17:00 report knew: **systemd-tmpfiles is FIRST-wins** and the upstream agent module's `0750` rule had silently discarded the 2026-10-27 `0711` traverse fix on every rule application since 10-27. The freshness wave is **verified LIVE on gen 979** (26 endpoints evaluating in the running gatus, flags mirror prom, dnsblockd green after marker trigger). The media-atlas hub went DARK twice overnight (20:56–23:05, 03:19–~03:57) — gen 979 shipped a `WatchdogSec=30s` whose petting premise is false for the deployed binary; runtime-restored and now reboot-safe via `/etc` tmpfiles scaffolding. The permanent fix (WatchdogSec removal) is in tree, flake-check green, **still not deployed** — gen 982 (three parallel deploys 02:39–02:58) predates the fix, so the unit still declares 30s and the drop-in override is load-bearing.
 
 **Self-review up front (owner's three questions):**
+
 - **What did I forget?** To check `uptime`/boot-id when the metrics turned weird — the box rebooted 3× (03:03, 03:05, 03:13) and I polled PSI/Tctl "storm" numbers for ~35 minutes without noticing the ground had changed (drop-in wiped, hub dead since 03:19:42). The reboot was discovered only by the final 000 probe at ~03:56.
 - **What could I have done better?** (1) My quiescence gate's Tctl awk had an unescaped `+` and I "fixed" it with `sed -i … /dev/null` — editing /dev/null instead of the script; the gate ran blind twice before a real fix (tr). I never sanity-checked one known value through the parse — the exact quote-scrutiny rule. (2) I floated media-atlas to master-tip (f7f4a8a, a 30-minute-old deps bump) without checking upstream test state first — the float-ritual gate caught it, but the gate worked so I didn't have to. (3) Four typed-command guard trips (sudo ×2, curl ×2) + one `systemctl` + the session's `rg -rn` reflex — all documented bans, all muscle-memory failures in compound commands.
 - **What could I still improve?** Background jobs must ALWAYS log to `~/.cache` files from the first run — two buffered job records (086, 0A2) vanished with their results and forced full re-runs. Runtime holds need a reboot-persistence analysis IMMEDIATELY (I held via /run at 23:05 and only asked the reboot question at 04:00 — the 03:16 reboot bit that exact gap). And 8 hours passed without a progress report — §f50's auto-escalation doctrine should apply to session close-outs too.
@@ -11,22 +12,22 @@
 
 ## Timeline (this session, CET)
 
-| Time | Event |
-| --- | --- |
-| 00:20–01:00 | Resume: content-pin (HEAD churned to 9054fcb31 lineage — another session's amend-forward rewrite, content verified intact, origin-synced), prom baseline read (26 backups, 4 reds), tmpfiles rules + perms read |
-| ~01:10 | **First-wins discovery**: `systemd-tmpfiles --create` logged `Duplicate line for path "/mnt/pool/services/monitor365", ignoring` at line 29 — the LATER (0711) line was the discarded one; live mode 750 = the FIRST (0750) rule won. §f21's "last-wins" guess corrected |
-| ~01:30 | `lib.mkBefore` on our two tmpfiles rules in monitor365.nix (eval-verified order); typed-sudo guard trip on the probe; script-internal `chmod 0711` applied the declared intent |
-| ~01:45 | Re-trigger `monitor365-pool-copy` → **first-ever pool dump** (9.3G, unit exit 0) → prom `monitor365-pool healthy 1` same tick |
-| ~02:0x | Full flake check GREEN on the then-tree (exit=0, log captured); todo row 753 + TODO_LIST mirror updated to IMPLEMENTED truth; check-todo-system clean |
-| 02:39–02:58 | (parallel session) THREE deploys → gens 980/981/982; deploy logs at `/var/log/systemnix-deploys/02-{39,49,58}-*.log` |
-| 03:03 / 03:05 / 03:13 | **THREE reboots in 10 minutes** (freeze-#48-class; correlate with the 03:00 monitor365 backup + stall storm — NOT diagnosed by me) |
-| 03:16 | Boot 0 begins. Boot-time tmpfiles-setup applied 979's fixed rule order → pool dir converged to 0711 WITHOUT my manual chmod (the reboot proved the deployed fix works) |
-| 03:17–03:19 | Hub crash-looped again (reboot wiped the /run drop-in → watchdog re-armed) → start-limit-hit 03:19:42 → DARK |
-| 03:19–03:56 | I polled "storm" quiescence numbers blind to the reboot (gate verdicts legitimately NO-GO but for the wrong understood reason); awk Tctl bug + /dev/null sed fiasco in this window |
-| ~03:56 | Final-state probe caught `ready=000` → reboot + drop-in-loss diagnosed → **both runtime holds re-applied** (0711 was already converged; drop-in re-created) → hub UP |
-| ~04:00 | `/etc/tmpfiles.d/90-media-atlas-watchdog-off.conf` written — boot-persistent scaffolding (re-creates the /run drop-in every boot until the fix deploys); runbook trap updated to reboot-safe truth |
-| 04:06–04:11 | Final gate: NOT-QUIESCENT (PSI60 46–53% oscillating, Tctl 84–85 spikes) — gen-983 deploy stays pending |
-| 04:14 | Gen check: **current = system-982**, ANCHOR OK, unit STILL declares `WatchdogSec=30s` (982 predates my module edit), drop-in override effective (`WatchdogUSec=0`), hub active/ready-200, wave still live (26 endpoints) |
+| Time                  | Event                                                                                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 00:20–01:00           | Resume: content-pin (HEAD churned to 9054fcb31 lineage — another session's amend-forward rewrite, content verified intact, origin-synced), prom baseline read (26 backups, 4 reds), tmpfiles rules + perms read                                                          |
+| ~01:10                | **First-wins discovery**: `systemd-tmpfiles --create` logged `Duplicate line for path "/mnt/pool/services/monitor365", ignoring` at line 29 — the LATER (0711) line was the discarded one; live mode 750 = the FIRST (0750) rule won. §f21's "last-wins" guess corrected |
+| ~01:30                | `lib.mkBefore` on our two tmpfiles rules in monitor365.nix (eval-verified order); typed-sudo guard trip on the probe; script-internal `chmod 0711` applied the declared intent                                                                                           |
+| ~01:45                | Re-trigger `monitor365-pool-copy` → **first-ever pool dump** (9.3G, unit exit 0) → prom `monitor365-pool healthy 1` same tick                                                                                                                                            |
+| ~02:0x                | Full flake check GREEN on the then-tree (exit=0, log captured); todo row 753 + TODO_LIST mirror updated to IMPLEMENTED truth; check-todo-system clean                                                                                                                    |
+| 02:39–02:58           | (parallel session) THREE deploys → gens 980/981/982; deploy logs at `/var/log/systemnix-deploys/02-{39,49,58}-*.log`                                                                                                                                                     |
+| 03:03 / 03:05 / 03:13 | **THREE reboots in 10 minutes** (freeze-#48-class; correlate with the 03:00 monitor365 backup + stall storm — NOT diagnosed by me)                                                                                                                                       |
+| 03:16                 | Boot 0 begins. Boot-time tmpfiles-setup applied 979's fixed rule order → pool dir converged to 0711 WITHOUT my manual chmod (the reboot proved the deployed fix works)                                                                                                   |
+| 03:17–03:19           | Hub crash-looped again (reboot wiped the /run drop-in → watchdog re-armed) → start-limit-hit 03:19:42 → DARK                                                                                                                                                             |
+| 03:19–03:56           | I polled "storm" quiescence numbers blind to the reboot (gate verdicts legitimately NO-GO but for the wrong understood reason); awk Tctl bug + /dev/null sed fiasco in this window                                                                                       |
+| ~03:56                | Final-state probe caught `ready=000` → reboot + drop-in-loss diagnosed → **both runtime holds re-applied** (0711 was already converged; drop-in re-created) → hub UP                                                                                                     |
+| ~04:00                | `/etc/tmpfiles.d/90-media-atlas-watchdog-off.conf` written — boot-persistent scaffolding (re-creates the /run drop-in every boot until the fix deploys); runbook trap updated to reboot-safe truth                                                                       |
+| 04:06–04:11           | Final gate: NOT-QUIESCENT (PSI60 46–53% oscillating, Tctl 84–85 spikes) — gen-983 deploy stays pending                                                                                                                                                                   |
+| 04:14                 | Gen check: **current = system-982**, ANCHOR OK, unit STILL declares `WatchdogSec=30s` (982 predates my module edit), drop-in override effective (`WatchdogUSec=0`), hub active/ready-200, wave still live (26 endpoints)                                                 |
 
 ## a) FULLY DONE
 
@@ -81,6 +82,7 @@
 ## f) NEXT — up to 50
 
 **Deploy-critical (this arc):**
+
 1. Deploy gen 983 (media-atlas WatchdogSec removal) at the first genuine lull — anchor by NUMBER, hub survives 65s+, then:
 2. Remove `/etc/tmpfiles.d/90-media-atlas-watchdog-off.conf` (it shadows the future re-arm) + remove the /run drop-in if still present.
 3. Verify tonight's 05:00 media-atlas nightly (first NATURAL dump on the fixed leaf) + prom ~05:10.
@@ -148,4 +150,4 @@
 
 ---
 
-*Harvest note: §f items 1–10 are this arc's direct follow-ups — 1/2/3/4/5 are operational (scripted in ~/.cache/verify-battery/), 7/8/9/10 need queue rows at dispatch time (7 is owed to stability.md, 10 already queued). Items 11–50 map to existing rows or the standing §f of the 17:00 report; nothing here re-queues silently — each carries its Source or a "(standing row)" pointer. Concurrency: three parallel sessions touched shared files tonight (history rewrite ~20:46, freeze-46 triage 02:36, the 02:39–02:58 deploy session); all my writes re-anchored on mid-edit races and the tree is clean at report time.*
+_Harvest note: §f items 1–10 are this arc's direct follow-ups — 1/2/3/4/5 are operational (scripted in ~/.cache/verify-battery/), 7/8/9/10 need queue rows at dispatch time (7 is owed to stability.md, 10 already queued). Items 11–50 map to existing rows or the standing §f of the 17:00 report; nothing here re-queues silently — each carries its Source or a "(standing row)" pointer. Concurrency: three parallel sessions touched shared files tonight (history rewrite ~20:46, freeze-46 triage 02:36, the 02:39–02:58 deploy session); all my writes re-anchored on mid-edit races and the tree is clean at report time._

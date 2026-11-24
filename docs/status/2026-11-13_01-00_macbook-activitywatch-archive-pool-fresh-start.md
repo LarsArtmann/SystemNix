@@ -11,15 +11,15 @@ DONE end-to-end: 32.34 GB (21.2 GB db + 11.1 GB stale WAL + shm) cold-copied fro
 
 ## Evidence table
 
-| # | Claim | Evidence |
-|---|-------|----------|
-| 1 | Copy complete, byte-size-exact | rsync stats: total 32,337,269,756 B; all 6 files size-identical Mac↔pool (`stat -c %s` both ends) |
-| 2 | Copy content-valid | `PRAGMA integrity_check` = `ok` on the pool copy (5,183,642 pages, page_size 4096) |
-| 3 | WAL was stale space | `wal_checkpoint(TRUNCATE)` → `0\|0\|0` (zero pending frames); db grew only +102,400 B |
-| 4 | Vacuumed copy valid | integrity ok + identical counts (5,413,160 / 990,598 / 13); size 21,188,591,616 (−43 MB, freelist was 0 — dense) |
-| 5 | Bloat root cause | per-bucket counts: utilization buckets = 3,186,788 events (59%); source `.ini` had `poll_time = 5` (evo-x2's 2026-08-18 fix never reached the Mac — the Mac runs the .app bundle, not the HM instances) |
-| 6 | Mac freed + fresh start | `df`: 215M → 31G avail; fresh 24,576 B db created; `/api/0/info` 200 (`lars-macbook-air`, v0.13.2, device_id preserved); buckets registering; `poll_time = 300` in both ini sections |
-| 7 | Provenance | README.md + SHA256SUMS in the archive dir; storage.md archive/ inventory line updated |
+| # | Claim                          | Evidence                                                                                                                                                                                                |
+| - | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | Copy complete, byte-size-exact | rsync stats: total 32,337,269,756 B; all 6 files size-identical Mac↔pool (`stat -c %s` both ends)                                                                                                       |
+| 2 | Copy content-valid             | `PRAGMA integrity_check` = `ok` on the pool copy (5,183,642 pages, page_size 4096)                                                                                                                      |
+| 3 | WAL was stale space            | `wal_checkpoint(TRUNCATE)` → `0\|0\|0` (zero pending frames); db grew only +102,400 B                                                                                                                   |
+| 4 | Vacuumed copy valid            | integrity ok + identical counts (5,413,160 / 990,598 / 13); size 21,188,591,616 (−43 MB, freelist was 0 — dense)                                                                                        |
+| 5 | Bloat root cause               | per-bucket counts: utilization buckets = 3,186,788 events (59%); source `.ini` had `poll_time = 5` (evo-x2's 2026-08-18 fix never reached the Mac — the Mac runs the .app bundle, not the HM instances) |
+| 6 | Mac freed + fresh start        | `df`: 215M → 31G avail; fresh 24,576 B db created; `/api/0/info` 200 (`lars-macbook-air`, v0.13.2, device_id preserved); buckets registering; `poll_time = 300` in both ini sections                    |
+| 7 | Provenance                     | README.md + SHA256SUMS in the archive dir; storage.md archive/ inventory line updated                                                                                                                   |
 
 ---
 
@@ -91,12 +91,12 @@ Harvested to queue + domain libraries (this report's §f obligations — all lan
 
 ## Timeline (condensed)
 
-| Time (CET) | Event |
-|---|---|
-| 23:05-23:11 | Pre-reads; pool/archive dir prep; SSH path found (no key trust) |
-| 23:12-23:2x | Owner installed key; IP corrected .200→.46; host identity verified (hostname+auth+inventory) |
-| 23:5x | Owner quit AW; cold verified (no procs + 12 s stability); rsync leg 1: 21.2 GB db complete, then io-timeout stall |
-| 00:07-00:12 | Stall triage (likely Mac sleep); mtime=epoch fixed; caffeinate armed; leg 2: remaining 11.1 GB — complete, sizes exact |
+| Time (CET)  | Event                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 23:05-23:11 | Pre-reads; pool/archive dir prep; SSH path found (no key trust)                                                              |
+| 23:12-23:2x | Owner installed key; IP corrected .200→.46; host identity verified (hostname+auth+inventory)                                 |
+| 23:5x       | Owner quit AW; cold verified (no procs + 12 s stability); rsync leg 1: 21.2 GB db complete, then io-timeout stall            |
+| 00:07-00:12 | Stall triage (likely Mac sleep); mtime=epoch fixed; caffeinate armed; leg 2: remaining 11.1 GB — complete, sizes exact       |
 | 00:14-00:3x | Reflink work copy; checkpoint (0 pending frames — WAL was stale space); integrity ok; counts; VACUUM INTO; vacuumed verified |
-| 00:5x | Mac: db+wal+shm deleted (no TM snapshots), poll_time 5→300, AW relaunched, API live, fresh db; 31 GB free |
-| 00:57-01:00 | SHA256SUMS, README, work/ removed; known_hosts cleanup; storage.md inventory; todo harvest; this report |
+| 00:5x       | Mac: db+wal+shm deleted (no TM snapshots), poll_time 5→300, AW relaunched, API live, fresh db; 31 GB free                    |
+| 00:57-01:00 | SHA256SUMS, README, work/ removed; known_hosts cleanup; storage.md inventory; todo harvest; this report                      |

@@ -18,6 +18,7 @@ The owner's two pasted browser errors turned out to be layers two and three of o
 ## a) FULLY DONE
 
 **Round 1 (PROXY_TLS, gens 969→970) — details in the 13:05 report:**
+
 1. Root cause by direct port probe (Go's `Client sent an HTTP request to an HTTPS server` + self-signed Acme cert on the proxy port); fixed with `PROXY_TLS = "false"` (`c767384eb`); runbook trap #11 + OC_INSECURE correction (`655bb4720`).
 2. Deployed gen 970 under owner override; anchor repaired (nh `stc test` profile trap); verified listeners/probes/journal; bank-sync 15-min timeout live-probed.
 3. pre-reboot-check §12 resurrected (`793bf3abb` — shellcheck-blocked build since 10-17 + SIGPIPE kill behind it; first live run 18 pass / 0 fail).
@@ -70,6 +71,7 @@ The owner's two pasted browser errors turned out to be layers two and three of o
 ## f) Up to 50 things to get done next (owner-pick — deliberately NOT harvested to the queue until you pick; §g answers may reorder this list)
 
 **Direct residues of this session (small, actionable now):**
+
 1. Fix `TODO_LIST.md:1714`'s opencloud leg (twice-stale "deploying this session").
 2. Confirm the gen-971 deploy wrapper drained cleanly (its exit line in its own log; flock free, no orphans).
 3. Fix the gatus WebFinger body-pat premise (queued row — the check cannot go green as written).

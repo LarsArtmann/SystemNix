@@ -6,7 +6,7 @@
 
 **Verified live this session** (commands/artifacts): `findmnt` exact-target + FSROOT semantics against real mounts; the §18 gate before/after via `bash scripts/shadow-split-gate.sh` (production mode, nix eval + findmnt, log at `~/.cache/ss-gate-live.log`); fixture suite local (42 cases) + Nix sandbox via `nix build -L .#checks.x86_64-linux.shadow-split-gate-selftest` (39 — privileged leg skips by design); shellcheck on all three touched scripts; btrbk-projects journal (`journalctl -u btrbk-projects --since 2026-11-07`); pool receives (`ls /mnt/pool/backups/projects-subvol`, sudo cross-check); frozen shadows (`sudo du` over `/mnt/btrfs-root/@/…`, 14 paths); freshness metric (`sudo cat …/projects_subvol_backup.prom`); btrbk config (`platforms/nixos/system/snapshots.nix:528-547`); IO PSI at report time (`/proc/pressure/io`).
 
-**NOT verified, and why:** the Gatus alert's own red state (the feeding metric `projects_subvol_backup_fresh 0` and the 36h-threshold alert config are verified; the Gatus API was not probed — "Gatus is red" is inference, flagged as such); the automount trigger+re-probe path against a genuinely *untriggered* automount (fixture-proven only — all live automounts were already triggered); a full `nix flake check` (only the single touched check attr was built — the selftests.nix edit is contained to one attr); whether the storm week's driver matters (explicitly out of scope per owner instruction).
+**NOT verified, and why:** the Gatus alert's own red state (the feeding metric `projects_subvol_backup_fresh 0` and the 36h-threshold alert config are verified; the Gatus API was not probed — "Gatus is red" is inference, flagged as such); the automount trigger+re-probe path against a genuinely _untriggered_ automount (fixture-proven only — all live automounts were already triggered); a full `nix flake check` (only the single touched check attr was built — the selftests.nix edit is contained to one attr); whether the storm week's driver matters (explicitly out of scope per owner instruction).
 
 ---
 
@@ -22,7 +22,7 @@
 ## b) PARTIALLY DONE
 
 1. **Commit hygiene**: the gate/test/selftests code lives in heuristic daemon commits (`f6e95709a`, `f7ce7f352`) that were **already pushed** when I went to amend — only `ddca5a53e` (CHANGELOG + wrapper) carries a real message. Traceability preserved via the commit message naming them; readability residue is permanent (fixing = force-push, forbidden).
-2. **btrbk-projects catch-up**: diagnosed + precondition documented; run not performed (correct in hindsight — PSI is 40% at report time, the gate would refuse anyway — but see §e.4: I verified that *after* deciding, not before).
+2. **btrbk-projects catch-up**: diagnosed + precondition documented; run not performed (correct in hindsight — PSI is 40% at report time, the gate would refuse anyway — but see §e.4: I verified that _after_ deciding, not before).
 3. **Automount trigger path (phase-2)**: fixture-proven, never live-proven against an untriggered automount.
 4. **`nix flake check`**: not run over the selftests.nix change in a commit context (single-attr build is green; hook skipped it — amend carried no staged eval-relevant paths).
 
@@ -38,16 +38,16 @@
 
 **Nothing with lasting damage.** Process failures, all caught by guards, all wasted round-trips:
 
-1. **`rg -rn` twice** — the documented replace-flag trap; hook-blocked both times. I tripped a known landmine the AGENTS.md file I was *operating from* explicitly warns about, twice, in one session.
+1. **`rg -rn` twice** — the documented replace-flag trap; hook-blocked both times. I tripped a known landmine the AGENTS.md file I was _operating from_ explicitly warns about, twice, in one session.
 2. **Edit-before-view ×3** (`selftests.nix`, `pre-deploy-check.sh`, `storage.md`) — I read regions with `sed` and then hit the edit tool's read-first gate. Each failure = one wasted round-trip into a racy shared tree.
-3. **Daemon-push-before-amend**: I continued into CHANGELOG/docs work with a dirty tree instead of pathspec-committing the green test suite immediately; the daemon committed AND pushed the code first. The AGENTS amend-forward protocol only rescues the *unpushed* HEAD.
+3. **Daemon-push-before-amend**: I continued into CHANGELOG/docs work with a dirty tree instead of pathspec-committing the green test suite immediately; the daemon committed AND pushed the code first. The AGENTS amend-forward protocol only rescues the _unpushed_ HEAD.
 
 ## e) WHAT WE SHOULD IMPROVE (self-review)
 
-1. **Commit at every green boundary.** The test suite went green at ~12:20; the properly-messaged commit exists only for the tail files. Rule for next time: green suite → immediate pathspec commit, *then* docs.
+1. **Commit at every green boundary.** The test suite went green at ~12:20; the properly-messaged commit exists only for the tail files. Rule for next time: green suite → immediate pathspec commit, _then_ docs.
 2. **`rg -n`, always.** And read files with `view`, not `sed`, when an edit follows.
 3. **Claim-grade discipline held, mostly**: "Gatus is paging" stayed hedged as inference in chat; the report names it as unverified. The "~126G" figure in my first answer was doc-sourced; measured 132G later — quotes should carry their provenance tag (estimate vs du).
-4. **Probe-before-decide**: I chose recommend-only for the catch-up run on doctrine ("quiet window"), then verified PSI only at report time. The doctrine happened to be right; the *sequence* was luck-compatible, not verified. Cheap fix: 2-second `/proc/pressure/io` read before any "wait for calm" recommendation.
+4. **Probe-before-decide**: I chose recommend-only for the catch-up run on doctrine ("quiet window"), then verified PSI only at report time. The doctrine happened to be right; the _sequence_ was luck-compatible, not verified. Cheap fix: 2-second `/proc/pressure/io` read before any "wait for calm" recommendation.
 5. **Skill scan timing**: BuildFlow was loaded only mid-task when I noticed `.buildflow.yml`; the repo-coverage scan belongs at step 1 of any task that might format/build.
 6. **Micro-split-brains found, not fixed** (harvested, §f.5): gate header still cites "storage.md ready row 1" (row evolved); §18 wrapper WARN summary text predates the new automount/foreign verdict vocabulary.
 7. **No ghost systems created** — the new `SS_MOUNTS_FILE`/`after:` fixture mechanism is documented, wired, and tested; nothing exists unwired.
@@ -79,7 +79,6 @@
 2. **Q2 answered by owner directive — "PSI <20 unrealistic! <80 is fine"**: the `btrbk-admission` wrapper now passes `--psi-max 80` (commit 5013fd42c, pre-commit battery green incl. all-systems eval; shared maintenance-entry-gate default stays 20, 60-min guard-trip window untouched). Agent owns the catch-up firing: `sudo systemctl start btrbk-projects` when IO PSI <80 AND guard trip-free. Execution state at addendum time: memory storm active (guard re-tripping), deploy of the band change waits for the deploy gate's calm window; first green run + receive verify to follow. Follow-up (same session): the watch row's "needs a calm-window catch-up mechanism" ask is also answered structurally — btrbk-projects enrolled in the guard's ioChurnUnits + backupUnits (starvation slot: avg60 <50 → bounded 900s-protected start; pairs with the avg10<80 admission gate into an automatic catch-up, no agent in the loop), deploy-gated with the band change.
 3. **Q3 (tar.zst archive keep-vs-skip) remains open** — shadow-cleanup stays owner-gated on it plus the Q1 sweep confirmation.
 
-
 ---
 
-*Arte in Aeternum — report waits for instructions.*
+_Arte in Aeternum — report waits for instructions._

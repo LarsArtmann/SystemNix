@@ -24,13 +24,13 @@ runtime backstop for statically-invisible (expansion-resolved) invocations.
 4. **rc load harness**: `bash scripts/crush-rc-test.sh --expect-model zai/glm-5.3` → all PASS, 1747 models listed — no 0.100.0 rc-parser regression.
 5. **Behavioral probes** (nested `crush run -y`, live rc, default model):
 
-   | Probe (bash tool, inside `-y` session) | Result |
-   |---|---|
-   | `ssh -V` (unblocked, direct) | **EXECUTED** — `OpenSSH_10.6p1, OpenSSL 3.5.9` |
-   | `curl --version` (unblocked, direct) | **EXECUTED** — `curl 8.22.0` |
-   | `sudo -n true` (unblocked, direct) | **EXECUTED, exit 0** — passwordless sudo WORKS in the nested session (no NoNewPrivileges failure; new datapoint vs the 2026-11-05 "sudo is DEAD in agent shells" entry — that entry holds for THIS outer session's shells, not for nested yolo crush sessions) |
-   | `wget --version` (still on the built-in list, direct) | **EXECUTED** — yolo auto-approves statically-matched dangerous requests (see §c correction) |
-   | `X=$(printf wget); $X --version` (still listed, expansion-resolved) | **BLOCKED at exec time** — `blocked: wget is a dangerous command`, exit 1 — the runtime backstop IS armed in yolo |
+   | Probe (bash tool, inside `-y` session)                              | Result                                                                                                                                                                                                                                                         |
+   | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `ssh -V` (unblocked, direct)                                        | **EXECUTED** — `OpenSSH_10.6p1, OpenSSL 3.5.9`                                                                                                                                                                                                                 |
+   | `curl --version` (unblocked, direct)                                | **EXECUTED** — `curl 8.22.0`                                                                                                                                                                                                                                   |
+   | `sudo -n true` (unblocked, direct)                                  | **EXECUTED, exit 0** — passwordless sudo WORKS in the nested session (no NoNewPrivileges failure; new datapoint vs the 2026-11-05 "sudo is DEAD in agent shells" entry — that entry holds for THIS outer session's shells, not for nested yolo crush sessions) |
+   | `wget --version` (still on the built-in list, direct)               | **EXECUTED** — yolo auto-approves statically-matched dangerous requests (see §c correction)                                                                                                                                                                    |
+   | `X=$(printf wget); $X --version` (still listed, expansion-resolved) | **BLOCKED at exec time** — `blocked: wget is a dangerous command`, exit 1 — the runtime backstop IS armed in yolo                                                                                                                                              |
 
    Raw outputs were captured at `~/.cache/crush-yolo-probe{,2,3}.out` and
    trashed after this report was written (quoted verbatim in §a.5 — the

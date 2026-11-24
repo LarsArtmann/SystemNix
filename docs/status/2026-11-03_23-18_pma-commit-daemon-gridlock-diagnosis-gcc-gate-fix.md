@@ -24,14 +24,14 @@ Plus one **retraction**: the `chore: stage pending work before dependency update
 
 ### Cause 1 — FastFlowLM demand-driven crash-loop (dominant)
 
-| Time | Event |
-| --- | --- |
-| 22:10:11 | PMA WARN `heuristic fallback ratio crossed alert threshold ratio=1` |
+| Time     | Event                                                                                         |
+| -------- | --------------------------------------------------------------------------------------------- |
+| 22:10:11 | PMA WARN `heuristic fallback ratio crossed alert threshold ratio=1`                           |
 | 22:10:47 | flm `double free or corruption (!prev)` → `code=dumped, status=6/ABRT`, **restart counter 4** |
-| 22:21:16 | same double-free, post-reload, while serving |
-| 22:59:55 | `status=6/ABRT` again |
-| 23:16:12 | **`status=11/SEGV`** — signature escalated |
-| 23:16:48 | restart counter **10**, model reloading |
+| 22:21:16 | same double-free, post-reload, while serving                                                  |
+| 22:59:55 | `status=6/ABRT` again                                                                         |
+| 23:16:12 | **`status=11/SEGV`** — signature escalated                                                    |
+| 23:16:48 | restart counter **10**, model reloading                                                       |
 
 This is the known class (`docs/todo/upstream.md` row "go-commit: release OPENAI_TIMEOUT + PMA re-vendor", still `[blocked:push]`): PMA's vendored go-commit hardcodes a 30s HTTP timeout, shorter than flm's 2–5 min cold load (worse tonight: `NPU busy, request queued (4/10)` backlog); the mid-prefill client-disconnect trips flm v1.0.2's heap corruption. SystemNix wires `OPENAI_TIMEOUT=10m` (module `extraEnvironment`), but the vendored go-commit predates the env knob — **inert until the re-vendor lands**. Every commit attempt therefore pays a 30s `context deadline exceeded` before falling back.
 
@@ -57,15 +57,15 @@ Daemon-side backup-restore cycle: renames `go.work` → `go.work.pdg-bak` **and 
 
 ## §2 Evidence ledger
 
-| Claim | Command (verbatim probes this session) | Result |
-| --- | --- | --- |
-| PMA alive | `pgrep -af` + `busctl …Unit ActiveState SubState` | PID 2302, `active/running` |
-| Unit PATH lacks gcc | `busctl get-property … org.freedesktop.systemd1.Service Environment` | PATH dump, no gcc/cc |
-| gcc false-holds chronic | `journalctl -u projects-management-automation --since 2026-10-31 \| rg 'gcc.*not found' -m1` | first hit 2026-11-02 14:34 |
-| Gate failure mix | journal 18:00–22:14 piped through `uniq -c` tallies | 1148 gcc / ~97 tidy / rest go.sum |
-| flm crash-loop | `journalctl -u fastflowlm` tails at 22:11/22:14/23:18 | counters 4 → 10, ABRT → SEGV |
-| Gate fix verified | `nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.projects-management-automation.path` | contains `gcc-wrapper-16.2.0` |
-| "stage pending work" ≠ PMA | `journalctl -u projects-management-automation --since 00:00 \| rg 'stage pending work'` → **empty**; `git show -s` on two such commits → **no `Daemon: true` trailer** (heuristic commits carry it); pickaxe across 7 candidate automation repos → **clean** | writer unattributed |
+| Claim                      | Command (verbatim probes this session)                                                                                                                                                                                                                       | Result                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
+| PMA alive                  | `pgrep -af` + `busctl …Unit ActiveState SubState`                                                                                                                                                                                                            | PID 2302, `active/running`        |
+| Unit PATH lacks gcc        | `busctl get-property … org.freedesktop.systemd1.Service Environment`                                                                                                                                                                                         | PATH dump, no gcc/cc              |
+| gcc false-holds chronic    | `journalctl -u projects-management-automation --since 2026-10-31 \| rg 'gcc.*not found' -m1`                                                                                                                                                                 | first hit 2026-11-02 14:34        |
+| Gate failure mix           | journal 18:00–22:14 piped through `uniq -c` tallies                                                                                                                                                                                                          | 1148 gcc / ~97 tidy / rest go.sum |
+| flm crash-loop             | `journalctl -u fastflowlm` tails at 22:11/22:14/23:18                                                                                                                                                                                                        | counters 4 → 10, ABRT → SEGV      |
+| Gate fix verified          | `nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.projects-management-automation.path`                                                                                                                                                   | contains `gcc-wrapper-16.2.0`     |
+| "stage pending work" ≠ PMA | `journalctl -u projects-management-automation --since 00:00 \| rg 'stage pending work'` → **empty**; `git show -s` on two such commits → **no `Daemon: true` trailer** (heuristic commits carry it); pickaxe across 7 candidate automation repos → **clean** | writer unattributed               |
 
 ---
 
@@ -117,6 +117,7 @@ Nothing destructive: no production state mutated, no service restarted, no forei
 Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = owner decision required; (d) = needs the next deploy; (u) = upstream/push-gated.
 
 ### Deploy & drain (the gridlock)
+
 1. (d) Deploy the gcc gate fix and verify the ~110 held-CGO repos drain (watch `build-gate` WARN rate → 0 gcc lines).
 2. (d) After deploy: confirm gate PATH on the LIVE unit carries `gcc-wrapper` (busctl probe, not just eval).
 3. (d) After deploy: confirm one real LLM commit lands (`duration=10-20s`, no heuristic tag) once flm stabilizes.
@@ -131,6 +132,7 @@ Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = o
 12. (o) After attribution: either finish or roll back the half-done dependency-update wave (repos with `go mod tidy`-needed staged state).
 
 ### Monitor legs (verify what we built actually fired)
+
 13. ✱ Verify tonight's PMA Commit Health alert path: `heuristic_fallbacks_24h ≥ 20` must have gone RED — probe the textfile metrics + Gatus history; fix a dead leg if green.
 14. Verify `system_flm_coredumps_24h` and `system_flm_crash_trigger_pair_24h` caught tonight (counter 10, ABRT→SEGV).
 15. Add a queue-saturation signal: metric + threshold on the `batch queue full` WARN rate (215/4h was invisible to alarms).
@@ -139,6 +141,7 @@ Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = o
 18. Confirm the flm Gatus smoke check is RED right now and that alert delivery actually pages.
 
 ### Gate hardening
+
 19. Eval-time assertion: PMA unit PATH must contain a cc wrapper (kills the gcc class forever, ~10 lines in the module).
 20. (o) Decide gcc-parity vs `CGO_ENABLED=0` policy with measured gate durations (parity is current; speed alternative documented).
 21. Study gate GOCACHE persistence across runs (20–200s builds × 1426 holds = real CPU; a warm cache halves it).
@@ -148,18 +151,21 @@ Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = o
 25. Add one canary CGO repo to the PMA selftest surface (would have caught the gcc hole on 2026-10-31).
 
 ### flm
+
 26. Check flm upstream for a v1.0.2 heap-corruption fix/bump (verify-before-filing; the bug is now SEGV, not just ABRT).
 27. flm crash-loop guard: refuse/queue-limit client requests after N coredumps per window (corpse-guard analogue to deploy.sh's).
 28. Post-fix: verify `OPENAI_TIMEOUT=10m` covers cold load + an NPU queue backlog like tonight's 4/10.
 29. (o) Consider a small fast model tier for commit messages when the 35B is unhealthy (quality tradeoff is owner's call).
 
 ### PMA tuning
+
 30. Post-drain: measure queue drain time; consider `PMA_COMMITTER_WORKERS 2→3` only with numbers (the 2026-08-09 pressure history constrains this).
 31. Upstream PMA: bound the batch queue + shed with a WARN summary counter (tonight's retry loop had no backpressure signal).
 32. Live-verify the "OPENAI_TIMEOUT inert" doc claim on the deployed binary (`go version -m` probe) instead of trusting docs.
 33. Update upstream.md row 43 with tonight's re-fire evidence (giant-line edit, full-line-match discipline).
 
 ### Fleet hygiene (noticed during the session)
+
 34. mr: prune the 5 dead chdir targets (Castle, bewerbungen, hierarchical-errors, payment-automation, template-SECURITY).
 35. (o) Git Town WIP stash clutter across repos (`stash@{N}: Git Town WIP` seen in ≥6 repos) — keep or drop policy.
 36. templ-components `AD go.work.pdg-bak` — coordinate with that repo's §21 owner to avoid double-cleanup races.
@@ -167,12 +173,14 @@ Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = o
 38. (o) The vendorHash treadmill watch row (4 re-stales in 9 days) — pick release-discipline nudge vs deliberate rev-pin.
 
 ### Process/docs
+
 39. ✱ Runbook escalation note: flm crash signature escalated to SEGV, counter 10 by 23:16 (harvested into the gridlock bullet).
 40. Add "as-of" timestamps to every live number in diagnosis answers (this session's counter-4-vs-10 gap).
 41. Extend the "commit-message evidence rule" habit to ANSWERS, not just commit messages (§6 lesson, encode in AGENTS.md if owner agrees).
 42. Pre-commit-canary idea (19) doubles as the negative-test harness case: add to `scripts/negative-test-lints.sh` groups.
 
 ### Deferred deliberately (not queued — reasons recorded in §9)
+
 43–50. Remaining candidates from brainstorming (alert-noise budget review, gomend/mr-sync consolidation, stash-hygiene scripting, heuristic-message quality study, PMA release cadence, discovery-daemon socket-mode audit) are NOT minted as rows: they are either duplicates of existing watch rows, lack a concrete ask, or need an owner ruling first. Recorded here so the drift-WARN recount after the next prune includes them.
 
 ---
@@ -180,6 +188,7 @@ Grouped; ✱ = harvested into TODO/domain libraries during this session; (o) = o
 ## §9 Self-harvest record (TODO-system discipline)
 
 Harvested at authoring time (all direct follow-ups of THIS report):
+
 - `docs/todo/upstream.md` — pdg-bak locate+index-clean row — **landed during the session** (before this report).
 - `TODO_LIST.md` `### services` — pdg-bak cleanup one-liner — **landed during the session**.
 - `docs/services/projects-management-automation.md` — gridlock + gcc bullets — **landed during the session**; SEGV escalation appended at harvest time.
@@ -204,6 +213,7 @@ Parallel session(s) were active tonight. Files dirty in the working tree that I 
 Owner rulings received ~00:0x: stop flm · deploy now · push go-commit myself.
 
 **Executed and verified:**
+
 1. **flm STOPPED** 23:2x (service+socket, self-elevating harness `~/.cache/pma-fix-20261103/stop-flm.sh`): crash-loop ended, restart counter frozen at 10, socket held inactive overnight — memory-emergency-guard did NOT re-arm it. Side effect discovered: PMA fallbacks went **30s → 0.4s** (connection-refused fast path) — commit throughput recovered immediately, even before the deploy.
 2. **go-commit OPENAI_TIMEOUT**: NOT pushed by me — verification showed it was **already pushed** (`559720d`, 2026-10-07, ancestor-of-origin verified) **and already locked into PMA** (`9fc2026b`, 2026-11-03 21:13, go-commit node = `4081b55`). Row 43's remaining blocker was never the push — it was that the RUNNING PMA binary predated the lock bump (`a257580d`, PID 2302 started 21:44). The stale-deployed-binary class.
 3. **Deploy landed 07:4x as gen-977** after three aborted attempts, each a DIFFERENT guard doing its job: (a) entry pressure gate — 46-66% io PSI storm from the parallel sessions' ghostty scopes (owner-authorized `DEPLOY_FORCE_PRESSURE=1` after freeze-45 context); (b) `doc-counts` eval gate — FEATURES.md said 47 packages, eval truth 48 (the parallel session's `docs-gates` flake-input pick landed without the re-stamp; re-derived live and re-stamped, `DOC-COUNTS GREEN`); (c) §11 tree-mutation race — the daemon swept my FEATURES stamp mid-battery (fixed by pathspec commit; then morning quiescence after the offsite-borg session's 07:00 commit).
@@ -213,4 +223,3 @@ Owner rulings received ~00:0x: stop flm · deploy now · push go-commit myself.
 **flm status**: held STOPPED by owner order. Restart is now SAFE whenever wanted (the disconnect-crash trigger is structurally fixed); memory-emergency-guard re-arm, if it happens, is equally safe. Until then PMA commits ride fast heuristic fallbacks.
 
 **§6 retraction follow-up**: the `chore: stage pending work before dependency update` writer remains UNATTRIBUTED (fleet pickaxe-clean); the staged go.mod/go.sum waves are most plausibly an external dependency-automation's leftovers — still queued in upstream.md.
-

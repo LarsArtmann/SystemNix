@@ -35,6 +35,7 @@ Contents (per the last `docker system df`, 2026-09-30): images 5.6G (re-pullable
 Backup answer: **NO current HDD-pool copy of /data.** btrbk-data has been deliberately skipped nightly by the EIO repair gate since the corruption discovery (journal 2026-11-02 23:30: "nightly pool send deliberately SKIPPED (known /data EIO)… This failure is the tripwire"; `/mnt/pool/backups/data` has zero received backups since 2026-08-20). What DOES exist: local `/data` snapshots daily through 2026-11-02 (14d+4w retention, same-disk), and the one safety copy that mattered most — the monitor365 DuckDB — was rsync'd to the pool archive 2026-10-22 (T04, owner-run, 39.21 GB verified). The 10 corrupt files blocking the pool send are all re-downloadable AI models awaiting the T06a sign-off sequence.
 
 **3. Placement confirmations (all already true, no change needed):**
+
 - **ClickHouse stays on QLC** — it is on QLC (dedicated XFS p9). Your directive RETIRES the standing relocation row ("relocate ClickHouse onto the Samsung", storage.md + TODO_LIST) — both stamped RETIRED 2026-11-03 (owner directive). Boot-storm mitigations remain the active levers.
 - **`/boot` stays on QLC, Samsung mirror-only** — matches live: canonical `/boot` is QLC p7 (NixOS-managed), Samsung p1 is the verified byte-mirror (boot-order-first, path unit re-syncs after every gen-install).
 - **AI models stay on QLC** — they are: `/data` (p8) holds `ai/` 543G. Your follow-on idea (better mount name / file layout / possibly different FS) is queued as a design-doc decision row.
@@ -43,17 +44,17 @@ Backup answer: **NO current HDD-pool copy of /data.** btrbk-data has been delibe
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|---|---|
-| QLC-vs-Samsung comparison delivered (sizes per tree, both disks) | du walks + df, figures in this report + session answer |
-| `~/.cache` true size measured after the automount-stub miss | `du -x` 119G (glac-fleet 25G, m365fix 22G, cv-go 19G, vra-gocache 8G, negative-test-lints.PR7oGL 6.4G, ds-gate 4.9G, `.Trash-1000` 4.8G) |
-| storage.md stale claims fixed: `~/projects`-in-`@` row → Samsung subvol + Phase F note; `@cache-home` "~16G" → ~126G (2026-11-03 probe); layout paragraph gains the projects-subvol clause | edits in `248c26be3` (daemon), verified by rg |
-| New gotcha documented: `du -x` silently skips idle automount stubs (autofs `st_dev` differs) | storage.md gotchas bullet, 2026-11-03 |
-| AGENTS.md `/data` composition refreshed (2026-09-06 → 2026-11-03 probe): ai 543G / models 28G / SteamLibrary 107G / gcs-staging 24G / llamacpp-models ~0 / docker 10.3G + permission-blind note | edit applied this session (working tree) |
-| gcs-staging staleness evidence gathered (the pending TODO_LIST row) | 2 subtrees / 98,718 files / newest 2026-10-01; row ticked DONE with pointer |
-| ClickHouse relocation row RETIRED on both surfaces per owner directive | storage.md row 156 + TODO_LIST row 1392 stamped |
-| crush-hot-db retention row updated with today's 73G tree measurement | storage.md row 169 UPDATE stamp |
-| Self-harvest: 5 new rows + 3 UPDATE stamps + 1 tick + 1 retirement landed in TODO_LIST + domain libraries | `check-todo-system.sh`: "OK: TODO queue/library structure clean" |
+| Item                                                                                                                                                                                            | Evidence                                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| QLC-vs-Samsung comparison delivered (sizes per tree, both disks)                                                                                                                                | du walks + df, figures in this report + session answer                                                                                   |
+| `~/.cache` true size measured after the automount-stub miss                                                                                                                                     | `du -x` 119G (glac-fleet 25G, m365fix 22G, cv-go 19G, vra-gocache 8G, negative-test-lints.PR7oGL 6.4G, ds-gate 4.9G, `.Trash-1000` 4.8G) |
+| storage.md stale claims fixed: `~/projects`-in-`@` row → Samsung subvol + Phase F note; `@cache-home` "~16G" → ~126G (2026-11-03 probe); layout paragraph gains the projects-subvol clause      | edits in `248c26be3` (daemon), verified by rg                                                                                            |
+| New gotcha documented: `du -x` silently skips idle automount stubs (autofs `st_dev` differs)                                                                                                    | storage.md gotchas bullet, 2026-11-03                                                                                                    |
+| AGENTS.md `/data` composition refreshed (2026-09-06 → 2026-11-03 probe): ai 543G / models 28G / SteamLibrary 107G / gcs-staging 24G / llamacpp-models ~0 / docker 10.3G + permission-blind note | edit applied this session (working tree)                                                                                                 |
+| gcs-staging staleness evidence gathered (the pending TODO_LIST row)                                                                                                                             | 2 subtrees / 98,718 files / newest 2026-10-01; row ticked DONE with pointer                                                              |
+| ClickHouse relocation row RETIRED on both surfaces per owner directive                                                                                                                          | storage.md row 156 + TODO_LIST row 1392 stamped                                                                                          |
+| crush-hot-db retention row updated with today's 73G tree measurement                                                                                                                            | storage.md row 169 UPDATE stamp                                                                                                          |
+| Self-harvest: 5 new rows + 3 UPDATE stamps + 1 tick + 1 retirement landed in TODO_LIST + domain libraries                                                                                       | `check-todo-system.sh`: "OK: TODO queue/library structure clean"                                                                         |
 
 ## b) PARTIALLY DONE
 
@@ -90,11 +91,12 @@ Backup answer: **NO current HDD-pool copy of /data.** btrbk-data has been delibe
 ## f) Up to 50 things to get done next (ranked by impact; routing tagged)
 
 **HARVESTED at authoring time → TODO_LIST + library** (1–5):
-1. Triage `~/.cache` regrowth: identify the per-project GOCACHE writer workflow, purge stale dirs, decide redirect-to-buildcache vs gc leg — Impact: Critical, Effort: M, Cleanup. *(queued)*
-2. Root-fs per-folder 1-by-1 review wave (`.local` 34G Trash-share, `.config` 15G, `go` 13G vs "nothing churning" claim, `.gotmp` 6.4G regrowth) — Impact: High, Effort: M, Cleanup. *(queued)*
-3. Verify journald retention vs the 7.8G Samsung journal subvol — Impact: Medium, Effort: S, Quality. *(queued)*
-4. Owner decision: `/data` filesystem/layout/mount-name redesign design doc — Impact: High, Effort: L, Feature. *(queued, decision)*
-5. dnsblockd growth sanity check (8.5G hot subvol, +3.7G/3w) — Impact: Medium, Effort: S, Bug-candidate. *(queued in services.md)*
+
+1. Triage `~/.cache` regrowth: identify the per-project GOCACHE writer workflow, purge stale dirs, decide redirect-to-buildcache vs gc leg — Impact: Critical, Effort: M, Cleanup. _(queued)_
+2. Root-fs per-folder 1-by-1 review wave (`.local` 34G Trash-share, `.config` 15G, `go` 13G vs "nothing churning" claim, `.gotmp` 6.4G regrowth) — Impact: High, Effort: M, Cleanup. _(queued)_
+3. Verify journald retention vs the 7.8G Samsung journal subvol — Impact: Medium, Effort: S, Quality. _(queued)_
+4. Owner decision: `/data` filesystem/layout/mount-name redesign design doc — Impact: High, Effort: L, Feature. _(queued, decision)_
+5. dnsblockd growth sanity check (8.5G hot subvol, +3.7G/3w) — Impact: Medium, Effort: S, Bug-candidate. _(queued in services.md)_
 
 **Owner decisions pending (evidence ready):**
 6. gcs-staging (24G): confirm the paperless merge landed → trash — Impact: Medium, Effort: S, Cleanup.
@@ -127,11 +129,11 @@ Backup answer: **NO current HDD-pool copy of /data.** btrbk-data has been delibe
 29. `/var/lib` root-owned tree visibility: monitor365-server ~39G is invisible to agent du; consider a root-run textfile collector for `/var/lib` top consumers — Impact: Medium, Effort: M, Monitoring.
 30. verify `/data/.Trash-1000` emptiness (0-read artifact?) — Impact: Low, Effort: S, Verification.
 31. Steam `compatdata` 2.5G re-probe (AGENTS.md claim carried from 2026-09-06) — Impact: Low, Effort: S, Verification.
-32. Docker-size doc conflict (AGENTS.md 15.5G@09-25 vs storage.md 10.3G@09-30): fold the newer figure everywhere at the next touch — Impact: Low, Effort: S, Documentation. *(AGENTS.md now carries the 09-30 figure)*
+32. Docker-size doc conflict (AGENTS.md 15.5G@09-25 vs storage.md 10.3G@09-30): fold the newer figure everywhere at the next touch — Impact: Low, Effort: S, Documentation. _(AGENTS.md now carries the 09-30 figure)_
 33. hermes subvol size unknown (perm-walled): fold into the owner-probe batch (question g.2) — Impact: Low, Effort: S, Verification.
 34. `.rescue/zz-test-*` fixture deletion needs the designed chattr -a cycle or a module-owned cleanup path (existing row documents the EPERM) — Impact: Low, Effort: S, Cleanup.
 35. Re-verify `~/go` composition (13G) against storage.md's "nothing churning" claim — covered by item 2, listed for visibility — Impact: Medium, Effort: S, Verification.
-36. Consider per-project `.cache` GC legs in the tq pool teardown (if the writer is tq/session tooling, purge at session close) — Impact: High, Effort: M, Tooling. *(feeds item 1)*
+36. Consider per-project `.cache` GC legs in the tq pool teardown (if the writer is tq/session tooling, purge at session close) — Impact: High, Effort: M, Tooling. _(feeds item 1)_
 
 (Rows 22–36: deliberately NOT harvested as queue rows yet — 22/23/27/28/29/36 graduate to the queue on your nod or at the next docs-health pass; the rest are sub-S verifications folded into items 1–2 scope.)
 

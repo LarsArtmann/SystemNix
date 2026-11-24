@@ -30,7 +30,7 @@
 
 ## §d TOTALLY FUCKED UP
 
-Nothing this session *broke* — it was read-only. But brutally honest findings:
+Nothing this session _broke_ — it was read-only. But brutally honest findings:
 
 1. **The system-level "fucked up": the box is one heavy build away from freeze #49.** Freeze ledger #46–48 are <48 h old; load hit 1292 at 19:50 with io PSI pinned at 99%; the fix for this exact class ("stagger resume, PSI-aware dispatch gating") was recommended in the 2026-09-29 report — **five weeks ago — and is still not mechanized**. The direnv/fish cache guards exist (ghost-system-adjacent: real, wired, working — I verified the env), but NOTHING gates lint/build concurrency across agent sessions. The fleet self-DDoS's the one buildcache disk.
 2. **My own probe error, recurring class:** the langserver count probe failed (`pgrep -c golangci-lint-langserver` → zero matches: process-name >15 chars needs `-f`) — the documented trap, hit anyway on first use. No false count SHIPPED (I cited only the `pgrep -c -f`-derived 8 lint runs + 5 linkers; the "6+ langservers" figure was explicitly left out), but the first-attempt failure is exactly the quote-scrutiny class AGENTS.md warns about (2026-10-26).
@@ -126,17 +126,17 @@ Grouped; items 1–8 are this session's direct follow-ups, 9–16 storm containm
 
 ## Evidence appendix (point-in-time)
 
-| Time | Probe | Result |
-| --- | --- | --- |
-| 19:48 | `uptime` | load 1248.12, up 16:31, 36 users |
-| 19:48 | `/proc/pressure/io` | some avg10=98.99 avg60=98.91; full avg10=69.37 |
-| 19:48 | `findmnt /mnt/buildcache` | systemd-1 autofs → `/dev/sdb1` ext4 `rw,noatime,lazytime,commit=120,data=writeback` |
-| 19:48 | `df -h /mnt/buildcache` | 220G total, 151G used, 58G avail (73%) |
-| 19:48 | `go env` | GOCACHE=/mnt/buildcache/go-build; GOMODCACHE=/mnt/buildcache/go-mod; GOTOOLCHAIN=auto |
-| 19:48 | `pgrep -c -f 'golangci-lint run'` | 8 |
-| 19:48 | `pgrep -c -f 'go/pkg/tool.*link'` | 5 (store paths: go-1.27.2 AND go-1.27.3) |
-| 19:48 | lint run ages (`ps etimes`) | ChastityAPI 48m, index 44m, go-auto-upgrade 41m, go-bilanz 7m, Zlota44 2m |
-| 19:48 | `pgrep -c golangci-lint-langserver` | FAILED (name >15 chars; needs `-f`) — exact count unestablished |
-| 19:50 | `uptime` + PSI | load 1291.96; io PSI some avg10=99.00 — storm persists/worsening |
+| Time  | Probe                               | Result                                                                                |
+| ----- | ----------------------------------- | ------------------------------------------------------------------------------------- |
+| 19:48 | `uptime`                            | load 1248.12, up 16:31, 36 users                                                      |
+| 19:48 | `/proc/pressure/io`                 | some avg10=98.99 avg60=98.91; full avg10=69.37                                        |
+| 19:48 | `findmnt /mnt/buildcache`           | systemd-1 autofs → `/dev/sdb1` ext4 `rw,noatime,lazytime,commit=120,data=writeback`   |
+| 19:48 | `df -h /mnt/buildcache`             | 220G total, 151G used, 58G avail (73%)                                                |
+| 19:48 | `go env`                            | GOCACHE=/mnt/buildcache/go-build; GOMODCACHE=/mnt/buildcache/go-mod; GOTOOLCHAIN=auto |
+| 19:48 | `pgrep -c -f 'golangci-lint run'`   | 8                                                                                     |
+| 19:48 | `pgrep -c -f 'go/pkg/tool.*link'`   | 5 (store paths: go-1.27.2 AND go-1.27.3)                                              |
+| 19:48 | lint run ages (`ps etimes`)         | ChastityAPI 48m, index 44m, go-auto-upgrade 41m, go-bilanz 7m, Zlota44 2m             |
+| 19:48 | `pgrep -c golangci-lint-langserver` | FAILED (name >15 chars; needs `-f`) — exact count unestablished                       |
+| 19:50 | `uptime` + PSI                      | load 1291.96; io PSI some avg10=99.00 — storm persists/worsening                      |
 
 **Sources:** live probes as tabled; `docs/status/2026-11-05_19-42_deploy-blocker-fixes-storm-gated-deploy-status.md` §e (inherited forensics, flagged as such); `docs/agents/go-ecosystem.md` (routing pre-read); `docs/agents/storage.md:111-125` (buildcache doctrine); `docs/todo/pipeline.md:217` (GOTOOLCHAIN watch); `docs/agents/stability.md` (freeze ledger, S-0035 probe set); `CHANGELOG.md:1526-1560` (cache-key fork + wrapper history). Prior series context: `docs/status/2026-09-29_23-14_autofs-recovery-deployed-journal-hot-gap-io-storm.md` (the 5-week-old stagger/PSI-gating recommendation, §f.56/§23).

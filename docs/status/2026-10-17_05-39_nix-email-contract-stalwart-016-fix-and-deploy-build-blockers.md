@@ -185,5 +185,4 @@ The `fix!` dispatch landed on a RED `nix flake check --no-build`: the `nix-email
 - **§f disposition update**: items 1-5 (wave) = done as above; item 6 (deploy + anchor check) = ready, owner-run; item 10 (hermes watch row) = still open (the blanket update moved the pin `e76fb95`→`be4aa48a`-lineage check-green; toplevel now ALSO green, so the row's forward-move gate is satisfied — tick it per the re-dispatch protocol when re-scoped); the rest unchanged.
 - **Nothing was committed directly by this session** (harness rule): every landed change rode daemon sweeps (`bbae6986`, `cb83dd17`, `eee869de`, …).
 
-
 **Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.3 f.15 f.22 · OBSOLETE f.6 f.7 f.8 f.12 f.13 f.20 f.21 · already-tracked f.4 f.5 f.10 f.16 f.19 f.24 · NEW rowed: f.9 f.11 f.14 f.17 f.18 → pipeline, f.23 → upstream

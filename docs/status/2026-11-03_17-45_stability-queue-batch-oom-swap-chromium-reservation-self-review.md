@@ -8,6 +8,7 @@ research into unrelated subsystems.
 ## Scope — what this report VERIFIED vs did NOT verify
 
 **Verified this session (command/artifact):**
+
 - Re-dispatch check FIRST: `git log --format=%B --grep 'Task-Queue-ID: 000001a1a2075a3a67fff7c8c8a100000000'`
   → empty at session start (fresh dispatch; end state: 4 footer commits, see §a).
 - hermes-agent clone read first-hand: `~/projects/hermes-agent/tools/process_registry.py` — scope argv sets
@@ -27,6 +28,7 @@ research into unrelated subsystems.
   questions recorded (`bd79f9e40f82e2dd`, `1286bf27ca80d6a4`); verdict recorded to the verdict file (842 bytes).
 
 **NOT verified (and why):**
+
 - The run-1 label-extraction failure (`grep -m1 '^--type='` + `cut` returned empty in-loop for EVERY pid
   while the standalone test worked) is UNROOTCAUSED — run 3 with `grep -o -- '--type='` produced clean
   labels and run 3 is the canonical evidence; the mystery is queued (harvest row, §f.1).
@@ -40,15 +42,15 @@ research into unrelated subsystems.
 
 ## a) FULLY DONE
 
-| Work | Commit(s) | Evidence |
-|------|-----------|----------|
+| Work                                                                                                                                         | Commit(s)                                                                               | Evidence                                                                                                                                                                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Item 1: swap-cap mechanics pinned + upstream row + rows annotated owner-pending + owner asked (options: 2 GiB / other / keep-max / drop-row) | footer marker `3b619de32`; content in `2794a3205` (see §d.1 for the attribution tangle) | TODO_LIST.md + docs/todo/stability.md memory.swap.max rows carry the BLOCKED annotation with the verified upstream fix shape (`_worker_memory_swap_max_bytes()` + `--property=MemorySwapMax=` at both argv sites); new row in docs/todo/upstream.md; tq question `bd79f9e40f82e2dd` |
-| Item 2: decision brief landed (three options' mechanics + falsifications) + rows annotated + owner asked (accept / fund-engineering) | `f7fbc8169` (clean, 3 files) | new section "Reservation-pressure OOM kills — stance decision pending (2026-11-03)" in docs/agents/stability.md; both rows carry the brief pointer; engineering read: ACCEPT is the only mechanically sound option; tq question `1286bf27ca80d6a4` |
-| Item 3: trigger check + point-bump pre-validation + evidence report + rows annotated trigger-not-reached | rows in `f0a17efb0` (clean, 2 files); report via daemon sweep `301bb7445` | docs/status/tasks/2026-11-03_17-02_chromium-156.8078.79-point-bump-reservation-sample.md: layout UNCHANGED at 156.0.8078.79; mechanism pin widened .73 → .73+.79; row stays open for the next MAJOR bump |
-| Self-harvest at authoring time (this report): scriptify-the-sampler row + wrapped-chromium-delta row | working tree (daemon will sweep) | new `[ready]` rows in TODO_LIST.md + docs/todo/stability.md (paired, no drift); check-todo-system OK |
-| Fix-on-sight: tq db decoy documented | working tree | new bullet in docs/agents/shell-devtools.md: `TQ_DB=/mnt/pool/services/tq/tq.db` (repo-root ./tasks.db is a stale Oct-10 decoy) |
-| Fix-on-sight: WRONG root cause in the sampling report corrected | working tree | the report's "$! raced chromium's fork pattern" claim replaced by the real, already-documented cause (mvdan/sh `$!` garbage expansion, shell-devtools.md) |
-| tq verdict recorded | verdict file | status parked-partial, 2/3 items landed+parked on owner, item 3 trigger-not-reached with pre-validation done |
+| Item 2: decision brief landed (three options' mechanics + falsifications) + rows annotated + owner asked (accept / fund-engineering)         | `f7fbc8169` (clean, 3 files)                                                            | new section "Reservation-pressure OOM kills — stance decision pending (2026-11-03)" in docs/agents/stability.md; both rows carry the brief pointer; engineering read: ACCEPT is the only mechanically sound option; tq question `1286bf27ca80d6a4`                                  |
+| Item 3: trigger check + point-bump pre-validation + evidence report + rows annotated trigger-not-reached                                     | rows in `f0a17efb0` (clean, 2 files); report via daemon sweep `301bb7445`               | docs/status/tasks/2026-11-03_17-02_chromium-156.8078.79-point-bump-reservation-sample.md: layout UNCHANGED at 156.0.8078.79; mechanism pin widened .73 → .73+.79; row stays open for the next MAJOR bump                                                                            |
+| Self-harvest at authoring time (this report): scriptify-the-sampler row + wrapped-chromium-delta row                                         | working tree (daemon will sweep)                                                        | new `[ready]` rows in TODO_LIST.md + docs/todo/stability.md (paired, no drift); check-todo-system OK                                                                                                                                                                                |
+| Fix-on-sight: tq db decoy documented                                                                                                         | working tree                                                                            | new bullet in docs/agents/shell-devtools.md: `TQ_DB=/mnt/pool/services/tq/tq.db` (repo-root ./tasks.db is a stale Oct-10 decoy)                                                                                                                                                     |
+| Fix-on-sight: WRONG root cause in the sampling report corrected                                                                              | working tree                                                                            | the report's "$! raced chromium's fork pattern" claim replaced by the real, already-documented cause (mvdan/sh `$!` garbage expansion, shell-devtools.md)                                                                                                                           |
+| tq verdict recorded                                                                                                                          | verdict file                                                                            | status parked-partial, 2/3 items landed+parked on owner, item 3 trigger-not-reached with pre-validation done                                                                                                                                                                        |
 
 ## b) PARTIALLY DONE
 
@@ -141,6 +143,7 @@ attribution story is the worst this session has produced:
 ## f) Things we should get done next (impact-sorted; NEW = authored this session, harvested)
 
 **NEW from this session (already landed as queue rows):**
+
 1. NEW: Scriptify the chromium reservation sampler (`scripts/chromium-reservation-sample.sh` + extraction
    selftest; root-cause the run-1 in-loop label failure) — turns the standing major-bump row into ONE
    command. (TODO_LIST + stability.md, harvested 17:45)
@@ -150,16 +153,16 @@ attribution story is the worst this session has produced:
 
 **Owner decisions already parked (block the most work):**
 4. Item 1: hermes swap-cap value — tq question `bd79f9e40f82e2dd` (2 GiB recommended / other / keep-max /
-   drop-row). Landing any answer needs upstream hermes-agent MemorySwapMax plumbing + push permission.
+drop-row). Landing any answer needs upstream hermes-agent MemorySwapMax plumbing + push permission.
 5. Item 2: system-wide stance on reservation-pressure OOM kills — tq question `1286bf27ca80d6a4`
-   (accept-cheap-kills recommended / fund-engineering).
+(accept-cheap-kills recommended / fund-engineering).
 6. (from the source report, still open) hermes tracing approach — fork vs patch queue vs upstream OTel PR.
 7. (from the source report) rollback tenure for the two remaining rev-pins (nixpkgs fe13242,
-   signoz-src 375b3f83) — forward re-float date.
+signoz-src 375b3f83) — forward re-float date.
 
 **Stability/OOM neighborhood (pre-existing rows this session read or depends on):**
 8. Pin the fetched chromium commit SHA beside the adj-300 citations in the containment audit (freshness
-   rule; my session's work leans on that audit).
+rule; my session's work leans on that audit).
 9. Top-5 total-vm textfile collector metric (or SigNoz VmSize rule) — cascade pre-announcement.
 10. Attribute session-74.scope's chromium + 2 chrome-headless spawns at Oct-28 10:15.
 11. Close the fastflowlm stc socket re-arm gap (re-stop-when-stopped guard or boot-scope socket mask).
@@ -177,16 +180,16 @@ attribution story is the worst this session has produced:
 listed for the owner to triage):**
 21. Amend or accept `2794a3205`'s mislabeled attribution + `3b619de32`'s stale body (§g.1).
 22. Row-disposition convention: tick-with-successor vs BLOCKED-append for completed-work-with-standing-
-    trigger rows (§g.2).
+trigger rows (§g.2).
 23. Whether the chromium sampler (§f.1) should additionally run as a version-aware timer instead of a
-    manual queue row (§g.3).
+manual queue row (§g.3).
 
 **Watch/awareness only (no action this session):**
 24. Parallel session's SUPERB masterplan v3 landed mid-session (555324398, "2,092 open rows
-    re-baselined") — outside my scope; plan-tombstone rule applies to its executors, not me.
+re-baselined") — outside my scope; plan-tombstone rule applies to its executors, not me.
 25. The daemon's heuristic sweeps absorbed this session's artifacts (item-1 rows in `2794a3205`, item-3
-    report in `301bb7445`, harvest edits pending sweep at report time) — consistent with the documented
-    shared-tree behavior; all attributions mapped in §a/§d.1.
+report in `301bb7445`, harvest edits pending sweep at report time) — consistent with the documented
+shared-tree behavior; all attributions mapped in §a/§d.1.
 
 ## g) Questions I cannot figure out myself
 

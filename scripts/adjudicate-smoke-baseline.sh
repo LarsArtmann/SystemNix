@@ -31,9 +31,9 @@ baseline="${state_dir}/smoke-fail-baseline.txt"
 log="${state_dir}/smoke-fail-baseline-adjudications.log"
 
 usage() {
-	echo "usage: adjudicate-smoke-baseline.sh list" >&2
-	echo "       adjudicate-smoke-baseline.sh remove <substring> --reason <why>" >&2
-	exit 64
+  echo "usage: adjudicate-smoke-baseline.sh list" >&2
+  echo "       adjudicate-smoke-baseline.sh remove <substring> --reason <why>" >&2
+  exit 64
 }
 
 mode="${1:-}"
@@ -41,46 +41,46 @@ mode="${1:-}"
 
 case "$mode" in
 list)
-	if [ ! -f "$baseline" ]; then
-		echo "no baseline file at ${baseline} (smoke has not FAILed yet — nothing to adjudicate)"
-		exit 0
-	fi
-	nl -ba "$baseline"
-	;;
+  if [ ! -f "$baseline" ]; then
+    echo "no baseline file at ${baseline} (smoke has not FAILed yet — nothing to adjudicate)"
+    exit 0
+  fi
+  nl -ba "$baseline"
+  ;;
 remove)
-	shift
-	pattern="${1:-}"
-	[ -n "$pattern" ] || usage
-	shift
-	[ "${1:-}" = "--reason" ] || usage
-	reason="${2:-}"
-	[ -n "$reason" ] || usage
+  shift
+  pattern="${1:-}"
+  [ -n "$pattern" ] || usage
+  shift
+  [ "${1:-}" = "--reason" ] || usage
+  reason="${2:-}"
+  [ -n "$reason" ] || usage
 
-	if [ ! -f "$baseline" ]; then
-		echo "no baseline file at ${baseline} — nothing to adjudicate"
-		exit 0
-	fi
+  if [ ! -f "$baseline" ]; then
+    echo "no baseline file at ${baseline} — nothing to adjudicate"
+    exit 0
+  fi
 
-	before=$(wc -l <"$baseline")
-	# grep exits 1 when nothing matches; that is a legitimate outcome here.
-	tmp="$(mktemp "${state_dir}/.smoke-baseline-adjudicate.XXXXXX")"
-	grep -vF -- "$pattern" "$baseline" >"$tmp" || true
-	after=$(wc -l <"$tmp")
+  before=$(wc -l <"$baseline")
+  # grep exits 1 when nothing matches; that is a legitimate outcome here.
+  tmp="$(mktemp "${state_dir}/.smoke-baseline-adjudicate.XXXXXX")"
+  grep -vF -- "$pattern" "$baseline" >"$tmp" || true
+  after=$(wc -l <"$tmp")
 
-	if [ "$after" -eq "$before" ]; then
-		rm -f "$tmp"
-		echo "no baseline line contains: ${pattern} (nothing removed)"
-		exit 1
-	fi
+  if [ "$after" -eq "$before" ]; then
+    rm -f "$tmp"
+    echo "no baseline line contains: ${pattern} (nothing removed)"
+    exit 1
+  fi
 
-	mv "$tmp" "$baseline"
-	removed=$((before - after))
-	printf '%s | removed %d line(s) matching: %s | reason: %s\n' \
-		"$(date '+%Y-%m-%dT%H:%M:%S%z')" "$removed" "$pattern" "$reason" >>"$log"
-	echo "removed ${removed} baseline line(s) matching: ${pattern}"
-	echo "rationale logged to: ${log}"
-	;;
+  mv "$tmp" "$baseline"
+  removed=$((before - after))
+  printf '%s | removed %d line(s) matching: %s | reason: %s\n' \
+    "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$removed" "$pattern" "$reason" >>"$log"
+  echo "removed ${removed} baseline line(s) matching: ${pattern}"
+  echo "rationale logged to: ${log}"
+  ;;
 *)
-	usage
-	;;
+  usage
+  ;;
 esac

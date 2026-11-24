@@ -11,16 +11,19 @@
 All five tasks reached `completed` in the queue (timestamps from tq.db, CET). Verification below is this session's own greps/probes against HEAD and the LIVE system, not a transcription of the tasks' self-reports.
 
 **1. Review-fix task 000001a2022ba9d94 (completed 11-22 15:14:45) — the finding IS fixed in tree.**
+
 - Finding (low): monitor365-server composed `serviceConfig` as a continuation-line `// ioTier.heavyDB` shallow merge, deviating from the documented `lib.mkMerge` pattern (lib/default.nix:509, docs/agents/systemd.md) — future `mkDefault`/`mkForce` priorities inside an ioTier fragment would be silently clobbered. Anchor text `// ioTier.heavyDB;`; rejected change commit afecf20d6f (2026-11-22 06:23, the monitor365 storm-wedge isolation).
 - Verified fixed: `rg '// ioTier' modules/` → zero hits; the mkMerge form is live at modules/nixos/services/monitor365.nix:612-634 and :1079-1096; fix commit **1f1517f8e** (2026-11-22 15:35:10, "fix(services): stop ioTier precedence loss and world-readable identity DB"). The same commit also fixed a world-readable summit-planner identity.db (`UMask=0077`) — a bonus beyond the finding.
 - **Attribution defect, see §d.1:** 1f1517f8e carries NO Task-Queue-ID footer, its message narrates the mic-monitor/media-atlas closeouts (not the review ticket), and its commit time (15:35:10) POSTDATES the task's recorded completion (15:14:45). The fix→ticket link exists only through this report.
 
 **2. Batch 000001a2039e8456 (5-item services batch, completed 11-22 17:04:18):**
+
 - **Forgejo mirror-health prune-notice signal — LANDED AND NOW VERIFIED LIVE.** Collector emits `forgejo_mirror_health_prune_candidates` (modules/nixos/services/_forgejo-scripts.nix:1602), Gatus presence anchor + "Forgejo Dead Mirror Candidates" check (modules/nixos/services/forgejo.nix:1816), fixture legs (flake/parts/checks/fixtures-forgejo.nix:449/460, asserting both the 0 and 1 renderings). Code rode daemon commit f0f45a573 (11-22 16:10); docs/tick commit 23df5f0da (11-22 16:35, footer). **This pass verified it live on evo-x2:** the node-exporter textfile carries `forgejo_mirror_health_prune_candidates 0` + `forgejo_mirror_health_scrape_errors 0`, and the RUNNING gatus config (store path 4bswlf1wq…) carries the anchor at line 2740. Row 539 ticked this pass.
 - **bank-sync verdict-only SCA classification** — landed on bank-sync master (bab992ad), per docs/todo/services.md:349; deploy still gated by the durable 67dd64526 pin (the deployed daemon still runs a31024c7, so the fix is NOT yet live — correctly rowed as pending, not claimed shipped).
 - Items 3–5 were `[blocked:user]` and stayed owner-gated by design: sync-token re-paste (see tick below — premise verified dead this pass), 4 orphaned setup PATs (count still 4), stale `gitea.db` fossil trash.
 
 **3. Batch 000001a204035b (5-item forgejo/catalog batch, completed 11-23 01:21:11):**
+
 - **architecture-catalog VM test** (tests/test-architecture-catalog.nix, footer commit 73365dc4f 11-23 01:01) — real-unit end-to-end legs; CAUGHT a real module bug: same-second sync runs collided on the generation stamp and `mv` nested the incoming tree inside the existing generation, silently keeping old content served. Module fix (`stamp="$(date +%Y%m%d-%H%M%S%3N)"`) rode daemon commit 1b885edc7 (11-22 20:27) with the rationale comment inline. Test-commit and fix-commit ordering is inverted across daemon sweeps (fix hit master ~4.5 h before the test commit that documents catching it) — content correct, narrative order artifactual (§d.2).
 - **%3N stamps verified live** (batch 3's item 1, row 540 ticked DONE 11-23 with live evidence: ms-suffixed generation dirs, `current` flipping hourly, live store-path grep). Re-confirmed this pass: `ls /var/lib/architecture-catalog/generations | tail` → 20261123-170000288 / 180000096 / 190000103; `current` → generations/20261123-190000103.
 - **setup-forgejo.sh loud-fail on empty FJ_SHA** — hub commit 9f71d41 (11-22 17:12), row 547 ticked (cross-repo work, correctly ticked with `repo:` evidence).
@@ -29,12 +32,14 @@ All five tasks reached `completed` in the queue (timestamps from tq.db, CET). Ve
 - Item 1 (verify prune signal post-deploy) was NOT verifiable at session time — no deploy carrying 23df5f0da had fired (the 00:48 attempt was pressure-refused). The session completed with that item honestly pending; the batch's boilerplate "Outcome: every item landed" over-claims (§d.5). Closed by THIS pass's live verification.
 
 **4. Batch 000001a205c8d363 (5-item batch, completed 11-23 15:46:18):**
+
 - **Runner job-lifecycle observability** — `log.level = "debug"` with the source-verified rationale (forgejo.nix:100-112; commits 005722287 footer + ca374713b daemon). Row 551's close-out also killed the journal-volume fear analytically (empty-fetch rounds log NOTHING even at debug; volume is job-proportional). **Live this pass:** the runner journal shows `level=debug` gc/poller lines since the 19:30 restart; the deploy-gated residual (step Run/Success/Failure lines during a REAL CI job) is still pending — no CI job has run since the restart (2 grep hits, both startup lines).
 - **Label-drift eval selftest** — commit aa61e386a (11-23 02:44, "eval selftest pinning runner label semantics").
 - **Overview outage row closed with recorded root cause** — a7ab7124e (15:19); the PMA runtime-dir kill-chain fix (c10d80f7d) confirmed live 46 days post-fix (:8083 → 200 direct AND through Caddy).
 - **crush-daily report-gap row closed** — 47d51e511 (15:25, footer): Go rewrite carries `--no-event-dates` backfill (verified in locked rev), flake app swapped to the Go binary, Python deleted, all 21 gap dates backfilled (305-672 KB each).
 
 **5. Batch 000001a208e36b699 (5-item services batch, completed 11-23 16:50:36)** — per its own closeout (docs/status/tasks/2026-11-23_16-24_…, read first per contract), independently re-verified here:
+
 - **Overview vHost Gatus probe — LIVE NOW.** Tree-side at session end; tonight's deploys carried it: the RUNNING gatus config line 3363 (`name: Overview vHost`, title-anchored body pat + status/latency conditions). The 2026-10-07 "outage invisible to every standing monitor" class is now covered. README endpoint count re-stamped 314→315 by the batch.
 - **post-deploy-check polkit slot-ownership leg** — landed (bus-socket guard → graphical-session gate → gdbus GetNameOwner + owning-PID PASS line), branch-verified; PASS branch still mock-proven only (needs a graphical session).
 - **docs/services/dms.md runbook** created + routed from docs/agents/desktop.md; **Oct 3 polkit requester dig closed evidence-dead** with an exhaustive absence sweep; **polkit prompt render** stays owner-gated ([blocked:user], correctly re-tagged so deploy waves stop dispatching it).
@@ -77,6 +82,7 @@ All five tasks reached `completed` in the queue (timestamps from tq.db, CET). Ve
 ## f) NEXT (honest, dedup-checked — 5 appended to TODO_LIST, cap 10)
 
 Appended this pass (5 of 10 cap, all dedup-checked):
+
 1. **Diagnose standing quotaboard :8791 refusal + decide the deploy-smoke treatment of session-scoped user services** (§d.3; SearXNG/bank-sync confirmed transient, quotaboard standing) → docs/todo/desktop.md.
 2. **Reviewfix footer-attribution rule** (§d.1) → docs/todo/pipeline.md.
 3. **[BLOCKED] Attribute tonight's 19:09/19:19 deploys** (owner-fired or session-fired) → docs/todo/pipeline.md.
@@ -110,13 +116,13 @@ Existing rows that own the window's natural follow-ups (deduped, NOT re-queued):
 
 ## Harvest ledger (TODO_LIST appends: 5 of 10 cap)
 
-| # | TODO_LIST row | Library twin |
-|---|---------------|--------------|
-| 1 | Diagnose standing quotaboard :8791 refusal + smoke treatment of session-scoped user services [ready] | docs/todo/desktop.md |
-| 2 | Reviewfix sessions must footer their fix commit (attribution rule) [ready] | docs/todo/pipeline.md |
-| 3 | Attribute tonight's 19:09/19:19 deploys — BLOCKED: owner or session? | docs/todo/pipeline.md |
-| 4 | Prune-candidates paging policy — BLOCKED: page on sustained nonzero? | docs/todo/monitoring.md |
-| 5 | Quotaboard expected-down during SSH-only periods? — BLOCKED: owner usage pattern | docs/todo/desktop.md |
+| # | TODO_LIST row                                                                                        | Library twin            |
+| - | ---------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1 | Diagnose standing quotaboard :8791 refusal + smoke treatment of session-scoped user services [ready] | docs/todo/desktop.md    |
+| 2 | Reviewfix sessions must footer their fix commit (attribution rule) [ready]                           | docs/todo/pipeline.md   |
+| 3 | Attribute tonight's 19:09/19:19 deploys — BLOCKED: owner or session?                                 | docs/todo/pipeline.md   |
+| 4 | Prune-candidates paging policy — BLOCKED: page on sustained nonzero?                                 | docs/todo/monitoring.md |
+| 5 | Quotaboard expected-down during SSH-only periods? — BLOCKED: owner usage pattern                     | docs/todo/desktop.md    |
 
 Ticks this pass (evidence-backed, the only other allowed edit): TODO_LIST:539 (prune signal verified live), TODO_LIST:538 (token re-paste verified-superseded — see below).
 
