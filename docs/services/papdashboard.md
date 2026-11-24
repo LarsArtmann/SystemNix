@@ -85,6 +85,16 @@ icon = null                   →  monogram fallback (registry tiles: eval WARNI
                                 the §16 pre-deploy gate blocks monograms for hand-written tiles)
 ```
 
+- **Local brand marks: `extraIcons`.** When a tile needs a logo the upstream pack
+  does not carry (e.g. the monitor365 mark), copy it from a Nix path into
+  `PAP_ICONS_DIR` with `services.papdashboard.extraIcons` — an attrset of
+  **file name → file path**. The attribute name is the served file name and must
+  keep its image extension (`"monitor365.svg"`): that is what the tile's `icon`
+  references and what PapDashboard's `/icons/` route matches. Prefer this over an
+  absolute URL — no runtime dependency on the linked service and no `img-src`
+  exception. Live example: the Monitor365 tile in `monitor365.nix`; its asset
+  (`assets/monitor365-logo.svg`) is mirrored from the monitor365 repo by
+  `scripts/logo.py --mirror ../SystemNix/assets/monitor365-logo.svg`.
 - The pack is a **fixed pin in this module** (`iconPackSrc`: homarr-labs/dashboard-icons
   rev + `nix-prefetch-url --unpack` hash) — not a flake input, so the flake-input pin audit
   does not cover it; bump the rev and hash together deliberately.
@@ -114,7 +124,8 @@ icon = null                   →  monogram fallback (registry tiles: eval WARNI
   unit env is what makes it part of the system closure, so the copy IS the missing-icon gate:
   a typo fails the toplevel build with the name and the pack path.
 - Two gates, both fail before a deploy can land a logo-less tab: eval-time (**icon FORM**;
-  `config.assertions` on `invalidIconTiles`) and build-time (**icon EXISTS** in the pack,
+  `config.assertions` on `invalidIconTiles`, plus `invalidExtraIconNames` for the
+  `extraIcons` keys) and build-time (**icon EXISTS** in the pack or in `extraIcons`,
   `dashboardIcons`).
 - Upstream PapDashboard mounts `GET /icons/` only when `PAP_ICONS_DIR` is set, serves it
   public + immutable-cached, and keeps the monogram in the DOM as the fallback layer — a lost
