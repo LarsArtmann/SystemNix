@@ -398,19 +398,41 @@ _: {
                 # sessionVariables for the systemd context.
                 "GOEXPERIMENT=jsonv2"
               ];
-              ExecStart = lib.escapeShellArgs [
-                (lib.getExe' cfg.package "tq")
-                "bootstrap"
-                "CV"
-                "SystemNix"
-                "go-taskqueue"
-                "--projects-dir"
-                "/home/${primaryUser}/projects"
-                "--model"
-                "zai/glm-5.3-flash"
-                "--verify"
-                "SystemNix=nix flake check --no-build"
-                "--no-run"
+              ExecStart = [
+                # Two invocations = two model tiers (auto-debug directive
+                # 2026-11-24): SystemNix — the repo every incident-minted
+                # fix task targets — runs the FULL glm-5.3 model so
+                # AI-debugged problems get the high-quality tier, while CV
+                # + go-taskqueue keep the cheap Flash pin for backlog
+                # harvesting. The daily budget remains the spend cap either
+                # way. Bootstrap converges each listed repo's .crushrc
+                # managed block idempotently; repos not named in an
+                # invocation are untouched by it.
+                (lib.escapeShellArgs [
+                  (lib.getExe' cfg.package "tq")
+                  "bootstrap"
+                  "CV"
+                  "go-taskqueue"
+                  "--projects-dir"
+                  "/home/${primaryUser}/projects"
+                  "--model"
+                  "zai/glm-5.3-flash"
+                  "--no-run"
+                ])
+                (lib.escapeShellArgs [
+                  (lib.getExe' cfg.package "tq")
+                  "bootstrap"
+                  "SystemNix"
+                  "--projects-dir"
+                  "/home/${primaryUser}/projects"
+                  "--model"
+                  "zai/glm-5.3"
+                  "--reasoning"
+                  "xhigh"
+                  "--verify"
+                  "SystemNix=nix flake check --no-build"
+                  "--no-run"
+                ])
               ];
               # Rails are repo-local git commits; read/write inside $HOME
               # is the point (upstream pool hardening class).
@@ -522,6 +544,51 @@ _: {
           ];
         };
 
+        # tq write API (upstream ADR-0008/ADR-0021): token-gated POST
+        # /api/v1/tasks + /api/v1/errors on loopback. THE ingestion surface
+        # of the auto-debug pipeline — gatus-alert-relay forwards gated
+        # failing health checks here as incident reports, the
+        # problems.<domain> beacon route feeds browser client errors, and
+        # the pool's incident policy mints hot-band (120) agent fix tasks
+        # from the recorded error.observed facts (regressions at machine
+        # band 150). Loopback-only by design: external producers ride the
+        # Caddy route, which injects the bearer token server-side.
+        systemd.services.tq-api = {
+          description = "tq write API (task enqueue + incident error reports)";
+          documentation = [ "https://github.com/larsartmann/go-taskqueue" ];
+          after = [ "tq-storage-dir.service" ];
+          wants = [ "tq-storage-dir.service" ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            # Error facts append to the SAME journal the pool and serve
+            # fold; WAL siblings need dir write even for this appender.
+            { ReadWritePaths = [ "/mnt/pool/services/tq" ]; }
+            (harden { MemoryMax = "192M"; })
+            (serviceDefaults { })
+            ioTier.background
+            {
+              User = primaryUser;
+              Group = "users";
+              # Token arrives via TQ_API_TOKEN from the root-owned
+              # tq-api-env template (the api flag defaults to that env).
+              # --read-model=false: serve owns the .readmodel.db fold lock;
+              # the write API needs no projection sidecar.
+              EnvironmentFile = [ config.sops.templates."tq-api-env".path ];
+              ExecStart = lib.escapeShellArgs [
+                (lib.getExe' cfg.package "tq")
+                "api"
+                "--addr"
+                "127.0.0.1:${toString ports.tqApi}"
+                "--db"
+                (toString cfg.dbPath)
+                "--read-model=false"
+              ];
+            }
+          ];
+        };
+
         # IO-attribution collector for the pool cgroup (discordsync-io-metrics
         # pattern): 60s oneshot writing tq_agent_pool_io.prom so a repeat of
         # the freeze-25 ~864 GB morning is attributable in one Prom query
@@ -626,6 +693,36 @@ _: {
             inherit (cfg) enable;
             vHost.layer = "none";
             monitored = true;
+          };
+          tq-api = {
+            inherit (cfg) enable;
+            # The problems.<domain> beacon vHost is HAND-WRITTEN in
+            # caddy.nix (Caddy-injected bearer token + CORS + beacon.js
+            # static — not expressible in the registry's vHost fan-out),
+            # so this entry claims the subdomain/DNS/monitoring without
+            # rendering a vHost itself.
+            subdomain = "problems";
+            vHost.layer = "none";
+            port = ports.tqApi;
+            monitored = true;
+            # API-only error sink: no user-facing page (beacon.js is a
+            # script asset) — tile-coverage opt-out with justification.
+            noDashboardTile = true;
+            checks = [
+              {
+                # 401 IS the healthy answer: the write API is
+                # token-gated on EVERY route including healthz (upstream
+                # ADR-0008 "no unauthenticated oracle") — 401 proves the
+                # process is alive AND auth still enforced; 000/5xx = the
+                # incident pipeline (gatus failures + client beacons →
+                # agent fix tasks) is dark.
+                name = "tq Write API";
+                group = "Development";
+                path = "/api/v1/healthz";
+                conditions = [ "[STATUS] == 401" ];
+                alert = "tq write API down or answering unauthenticated — the auto-debug incident pipeline is DARK (gatus failures and problems.home.lan beacons stop becoming agent fix tasks; relay logs 'tq-report=failed'). Check: journalctl -u tq-api -n 50; ss -ltn sport = :${toString ports.tqApi}.";
+              }
+            ];
           };
         };
       };

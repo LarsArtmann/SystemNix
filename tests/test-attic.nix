@@ -121,7 +121,17 @@ in
     #     when the daemon is down under a live pool.
     machine.succeed("mkdir -p /var/lib/atticd/storage")
     machine.systemctl("stop atticd.service")
-    machine.fail("systemctl restart atticd-bootstrap.service")
+    # The boot start + leg 9's restart already spent the unit's
+    # startLimitBurst=3 budget within its 300s window — without this reset
+    # the restart below is DENIED (start-limit-hit, 0.5s) and the script
+    # never runs, so the journal never sees the probe's error line.
+    machine.succeed("systemctl reset-failed atticd-bootstrap.service")
+    # --job-mode=ignore-dependencies isolates the probe behavior: a plain
+    # restart PULLS atticd back up via the unit's own wants= (observed in
+    # the first run — atticd "Started" mid-restart, probe answered, script
+    # died on the mock-sops env file instead), so the stopped-daemon wedge
+    # is unexpressable through the dependency graph.
+    machine.fail("systemctl restart --job-mode=ignore-dependencies atticd-bootstrap.service")
     machine.succeed("systemctl is-failed --quiet atticd-bootstrap.service")
     machine.succeed("journalctl -u atticd-bootstrap.service -b | grep -q 'did not become ready'")
   '';

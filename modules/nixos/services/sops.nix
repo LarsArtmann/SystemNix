@@ -416,6 +416,19 @@ in
                 restartUnits = [ "papdashboard.service" ];
               } [ "papdashboard_insights_webhook_url" ]
             )
+            // lib.optionalAttrs (svcEnabled "tq-agent-pool") (
+              # tq write API bearer token (systemd.services.tq-api): gates
+              # POST /api/v1/tasks + /api/v1/errors (the ADR-0021 incident
+              # pipeline the gatus-alert-relay sink and the
+              # problems.<domain> browser beacon feed). Consumers read it
+              # through the tq-api-env template (root-owned 0400, injected
+              # env — the tq-api / relay / caddy units never see the file).
+              mkSecrets "tq.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "tq-api.service" ];
+              } [ "tq_api_token" ]
+            )
             // lib.optionalAttrs (svcEnabled "discordsync") (
               mkSecrets "discordsync.yaml"
                 {
@@ -883,6 +896,25 @@ in
               restartUnits = [ "tq-agent-pool.service" ];
               content = lib.generators.toKeyValue { } {
                 TQ_PAP_API_KEY = config.sops.placeholder.papdashboard_api_key;
+              };
+            };
+            # tq-api-env: the write-API token shared by the three consumers
+            # systemd injects it for — tq-api itself (auth), gatus-alert-relay
+            # (incident sink auth) and caddy (problems.<domain> beacon route
+            # header_up). Root-owned 0400 in all three cases: only PID 1 and
+            # root services read it; tq-api's lars user gets it via
+            # EnvironmentFile injection, never the file.
+            "tq-api-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = [
+                "tq-api.service"
+                "gatus-alert-relay.service"
+                "caddy.service"
+              ];
+              content = lib.generators.toKeyValue { } {
+                TQ_API_TOKEN = config.sops.placeholder.tq_api_token;
               };
             };
           }
