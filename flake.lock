@@ -9889,11 +9889,11 @@
         "templ-components": "templ-components_8"
       },
       "locked": {
-        "lastModified": 1795545673,
-        "narHash": "sha256-FP++Ky+TAb+LVxC8HO+3vwg5FVMrjVzPCXzrSTxx+64=",
+        "lastModified": 1795545898,
+        "narHash": "sha256-hfkWQNyvCFXQJSFCE54i8trBNz8qiK7ED9xLMr/h61o=",
         "ref": "refs/heads/master",
-        "rev": "2e6a772c816bb667cbd23828fe34bd3851696ebb",
-        "revCount": 1774,
+        "rev": "235db2a4ab380395558e70ad682d3c176831a708",
+        "revCount": 1775,
         "type": "git",
         "url": "file:///home/lars/projects/overview"
       },
