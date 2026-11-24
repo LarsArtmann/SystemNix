@@ -46,3 +46,11 @@ This report and both queue-surface ticks first landed inside the formatter-swept
 heuristic daemon commit 2655f7281 (514 files, parallel-session changes included);
 this commit exists so the dispatch carries its own `Task-Queue-ID:` footer per the
 re-dispatch protocol step 4. No content change beyond this note.
+
+## Footer-repair note (2026-11-24 08:2x)
+
+The report, both queue-surface ticks, and this note's earlier attempts all landed via
+heuristic daemon commits (70b809da6 / 2655f7281 / later) with no task footer — session
+restarts killed the foreground commit attempts before hooks finished. This commit
+supplies the `Task-Queue-ID:` footer per re-dispatch protocol step 4. No content
+change beyond this note.
