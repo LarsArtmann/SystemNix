@@ -142,12 +142,18 @@
             ssh_dir="${cfg.stateDir}/.ssh"
             [ -d "$ssh_dir" ] || return 0
             find "$ssh_dir" -xdev -type f -exec chmod u=rwX,g=,o= {} + 2>/dev/null || true
-            # numeric 0700 + explicit `g-s`: on this kernel chmod preserves
-            # the dir setgid bit (2770 from the dir-walk → "2700") for both
-            # numeric and u/g/o symbolic forms; only an explicit s-symbol
-            # (or root) clears it
-            chmod 0700 "$ssh_dir" 2>/dev/null || true
+            # 2026-11-24 instrumentation: the VM test observed the dir left
+            # at 770 after this converge (setgid stripped but group-write
+            # kept) — capture WHY the 0700 chmod underconverges instead of
+            # swallowing its stderr.
+            if ! ssh_chmod_err=$(chmod 0700 "$ssh_dir" 2>&1); then
+              echo "hermes-perms: chmod 0700 on $ssh_dir failed: $ssh_chmod_err (mode now $(stat -c '%a' "$ssh_dir"))"
+            fi
             chmod g-s "$ssh_dir" 2>/dev/null || true
+            ssh_mode=$(stat -c '%a' "$ssh_dir" 2>/dev/null)
+            if [ "$ssh_mode" != "700" ]; then
+              echo "hermes-perms: .ssh underconverged: mode=$ssh_mode owner=$(stat -c '%U:%G' "$ssh_dir")"
+            fi
           }
 
           # Fast path must flag exactly what the heal's chown walk repairs —
@@ -176,6 +182,13 @@
             echo "hermes-perms: converged (fast path)"
             exit 0
           fi
+
+          # 2026-11-24 instrumentation: the guard takes the heal path on
+          # restarts #2+ with no visible drift trigger (VM test: restarts
+          # #2/#3 FAILED tree_converged, find returned empty in a debug
+          # run). Name the drift axis that tripped it before touching the
+          # guard: which entry is stray, or which root stat is off.
+          echo "hermes-perms: guard-drift probe: stray='${stray:-none}' root=$(stat -c '%U:%G %a' ${cfg.stateDir} 2>/dev/null)"
 
           echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
           # Never chown -R the whole stateDir: the read-only projects bind
