@@ -349,11 +349,7 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 
 func (p *Proxy) record(rec Record) {
 	rec.Model = modelName(rec.Model)
-	cost := p.cfg.CostFor(rec.Model)
-	billablePrompt := max(rec.PromptTokens-rec.CachedTokens, 0)
-	rec.CostUSD = (float64(billablePrompt)*cost.Input+
-		float64(rec.CachedTokens)*cost.CachedInput+
-		float64(rec.CompletionTokens)*cost.Output) / 1e6
+	p.cfg.Price(&rec)
 
 	p.registry.Record(rec)
 	if err := p.ledger.Append(rec); err != nil {

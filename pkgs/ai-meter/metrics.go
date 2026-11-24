@@ -153,6 +153,14 @@ func (r *Registry) MeteringError() {
 	r.meteringErrors++
 }
 
+// RestoreCost folds a replayed call into the cost counter alone. It runs
+// once per ledger entry at startup (Ledger.ReplayCosts), before any traffic.
+func (r *Registry) RestoreCost(rec Record) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.cost[costKey{rec.Client, rec.Upstream, rec.Model}] += rec.CostUSD
+}
+
 // Record folds one completed call into every metric family.
 func (r *Registry) Record(rec Record) {
 	r.mu.Lock()
@@ -218,7 +226,7 @@ func (r *Registry) Render() string {
 		a, c := costs[i], costs[j]
 		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && a.model < c.model)
 	})
-	b.WriteString("# HELP ai_meter_cost_usd_total Estimated spend in USD from the configured per-model cost table (0 for unknown and local models).\n")
+	b.WriteString("# HELP ai_meter_cost_usd_total Estimated spend in USD since the ledger began, priced at the CURRENT per-model cost table (replayed at every start, so a price row that lands late restates earlier usage; 0 for unknown and local models).\n")
 	b.WriteString("# TYPE ai_meter_cost_usd_total counter\n")
 	for _, k := range costs {
 		writeSeries(&b, "ai_meter_cost_usd_total", r.cost[k], "client", k.client, "upstream", k.upstream, "model", k.model)

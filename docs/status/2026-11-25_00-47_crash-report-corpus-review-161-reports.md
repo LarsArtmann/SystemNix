@@ -483,10 +483,9 @@ Historical reports were not edited.
 - Session artifacts (not in repo): `~/.cache/crash-review/` (`corpus_final.txt`, `batches/`,
   `extract/B01–B13.md`, `merged_all.md`, `stats_all.txt`, `todo-gate.log`, `findings.md`).
 
-## Appendix: corpus (161 files)
+## Appendix: corpus (161 files, script-generated from the corpus rule)
 
-<details>
-<summary>docs/status top level (79)</summary>
+### docs/status top level (89)
 
 ```
 2026-09-18_19-45_freeze-6-io-livelock-crash-recovery-readers-crush-migration-db-heal.md
@@ -580,10 +579,84 @@ Historical reports were not edited.
 2026-11-24_22-35_zombie-niri-black-screen-live-recovery-full-status.md
 ```
 
-</details>
+### docs/status/archived (68)
 
-The full list with tiers is `~/.cache/crash-review/corpus_final.txt` (session-local). The
-other 82 files: 77 under `docs/status/archived/` (2026-02-09 → 2026-09-18) and the 5
-`crash-analysis-*` documents plus `2026-05-11_10-58_SESSION-65-…` and `2026-06-23_03-25_…`
-outside the directory scan. The count per directory is script-derived and was not re-listed
-here by hand.
+```
+2026-02-09_01-38_KERNEL-PANIC-INVESTIGATION-AND-ZFS-REMOVAL.md
+2026-03-26_20-53_EMERGENCY-STATUS-REPORT.md
+2026-04-11_17-31_CS2-CRASH-FIX-GAMING.md
+2026-04-20_07-32_GPU-CRASH-INCIDENT-AND-SERVICE-FIXES.md
+2026-05-04_06-21_SYSTEMD-WATCHDOG-MASSACRE-FIX.md
+2026-05-04_22-53_CRASH-RECOVERY-DEFENSE-IN-DEPTH.md
+2026-05-06_07-54_SESSION-38-WATCHDOG-MANIFEST-HEALTHCHECK-SOPS-DEDUP.md
+2026-05-10_18-19_SESSION-58-WIFI-MPTCP-DNS-PANIC-HAGGELE.md
+2026-05-10_21-13_SESSION-61-CRASH-FORENSICS-GPU-BUDGET-RESILIENCE.md
+2026-05-11_10-58_SESSION-65-FULL-COMPREHENSIVE-STATUS-GPU-DEFENSE-DEPLOYED.md
+2026-05-11_23-35_SESSION-78-GPU-CRASH-DIAGNOSIS-FULL-STATUS.md
+2026-05-16_23-30_SESSION-23-DISPLAY-WATCHDOG-SELF-HEALING-FULL-STATUS.md
+2026-05-19_20-14_session-60-forgejo-watchdogsec-fix-comprehensive-audit.md
+2026-05-20_11-41_session-65-tmp-disk-exhaustion-niri-crash-diagnosis.md
+2026-05-24_00-55_SESSION-82-WATCHDOG-NO-REBOOT-GO-REPO-CLEANUP.md
+2026-05-24_04-57_SESSION-82-WATCHDOG-VENDOR-HASH-CASCADE-BOOT-SUCCESS.md
+2026-05-25_02-32_SESSION-89-POST-CRASH-FORENSICS-OOM-FIX.md
+2026-06-03_11-13_POST-CRASH-FORENSICS-RESILIENCE.md
+2026-06-10_19-18_SESSION-128-POST-GPU-CRASH-CASCADE-FIX-OVERVIEW-BUILD.md
+2026-06-23_03-25_oom-forensics-memory-strategy-disk-crisis.md
+2026-06-23_04-08_root-disk-emergency-mglru-committed-deploy-blocked.md
+2026-06-23_18-15_EMERGENCY-SHELL-RECOVERY-DOCKER-REBUILD-PREVENTION.md
+2026-07-14_14-35_btrfs-enospc-crash-boot-diagnosis.md
+2026-07-22_03-49_ssh-timeout-wdt-crash-diagnosis-and-bun-memory-limiter.md
+2026-07-22_19-16_helium-display-switch-crash-diagnosis-and-autostart.md
+2026-07-24_06-25_helium-empty-window-crash-loop-fix.md
+2026-07-27_16-41_homepage-bookmark-schema-crash-fix-and-lessons.md
+2026-07-28_21-21_discordsync-crash-loop-diagnosis-and-fix.md
+2026-07-29_09-24_discordsync-turso-403-crash-loop-monitoring-self-review.md
+2026-07-29_16-58_monitor365-cpu-burn-and-server-crash-fix-session.md
+2026-08-03_03-17_pocket-id-francis-crash-loop-fix.md
+2026-08-03_22-31_wdt-crash-user-1000-slice-memory-cap-broken.md
+2026-08-03_23-06_wdt-crash-diagnosis-build-blocked-nothing-deployed.md
+2026-08-04_00-03_crash-recovery-session-brutal-honest-review.md
+2026-08-04_00-32_display-watchdog-login-screen-false-positive-fix.md
+2026-08-04_01-20_crash-recovery-deploy-results-and-issues.md
+2026-08-04_21-59_monitor365-pool-deadlock-watchdog-fix.md
+2026-08-04_23-51_qlc-slc-cache-exhaustion-crash-root-cause.md
+2026-08-05_00-50_bug-fixes-auto-git-race-and-live-io-emergency.md
+2026-08-09_11-40_pma-death-loop-crash-analysis-and-fix.md
+2026-08-10_18-49_pma-page-cache-thrash-crash-fix.md
+2026-08-11_14-12_browser-history-crash-loop-wdt.md
+2026-08-11_14-49_browser-history-crash-loop-wdt-full-status.md
+2026-08-11_23-28_wdt-crash-postmortem-deploy-blockers.md
+2026-08-12_00-45_wdt-crash-startlimitbug-deploy-success.md
+2026-08-12_10-20_comprehensive-session-review.md
+2026-08-13_01-50_clickhouse-merge-tree-sanity-check-fix.md
+2026-08-14_18-29_buildcache-ssd-setup-status.md
+2026-08-15_01-34_monitor-aware-desktop-deployed.md
+2026-08-18_02-27_discordsync-di-crash-loop-outage-fix.md
+2026-08-18_08-15_niri-black-screen-root-cause-and-fix.md
+2026-08-18_12-37_niri-black-screen-self-review.md
+2026-08-18_13-51_black-screen-followup-execution-self-review.md
+2026-08-18_14-52_black-screen-followup-p1-follow-through.md
+2026-08-19_19-15_llama-rag-model-provisioning-fix.md
+2026-08-22_06-05_crash-forensics-nic-vanish-memory-guard-crash2.md
+2026-08-22_06-12_quick-wins-deploys-crash-self-review.md
+2026-08-22_06-20_kernel-freeze-2-guard-feedback-loop-psi-blindspot.md
+2026-08-22_06-24_self-review-freeze2-guard-hardening.md
+2026-08-22_06-41_STATUS-freeze2-guard-hardening-complete.md
+2026-08-24_08-00_crash3-balance-freeze-das-absent-io-diagnosis.md
+2026-08-31_16-50_crash-forensics-freeze-incident-3.md
+2026-08-31_17-48_freeze-incident-3-response-self-review.md
+2026-09-14_02-04_task-000001a09d2b6d9f9b5948caf0c822613521.md
+2026-09-14_11-19_first-real-reboot-postboot-flm-revert-llama-regression-io-storm.md
+2026-09-14_13-54_freeze-4-diagnosis-llama-rearm-io-storm.md
+2026-09-15_10-45_freeze-5-diagnosis-io-psi-livelock-13h-storm-git-repair.md
+2026-09-18_15-50_freeze-5-llama-spin-io-storm-mid-deploy.md
+```
+
+### Outside docs/status (4)
+
+```
+docs/archive/crash-analysis-2026-06-15.md
+docs/archive/crash-analysis-2026-08-11.md
+docs/crash-analysis-2026-06-26.md
+docs/crash-analysis-2026-08-09.md
+```
