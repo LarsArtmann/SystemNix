@@ -192,17 +192,27 @@ let
     }
     {
       # 2026-11-24 model split (auto-debug directive): SystemNix — the repo
-      # every incident-minted fix task targets — bootstraps the FULL
-      # glm-5.4 flagship @ xhigh with its nix verify gate, while CV +
-      # go-taskqueue keep the Flash pin (repo-wide pin until the upstream
-      # per-incident model seam: docs/todo/upstream.md). Thinking is a MODEL
-      # declaration (--thinking always in the global crushrc), not a slot
-      # flag, so the bootstrap line carries effort only.
-      name = "bootstrap-model-split-systemnix-full-others-flash";
+      # every incident-minted fix task targets — runs the FULL glm-5.4
+      # flagship, CV + go-taskqueue keep the Flash pin (repo-wide pin until
+      # the upstream per-incident model seam: docs/todo/upstream.md).
+      # SystemNix's line is repo-owned: thinking is switched by the SLOT's
+      # `--think` in crush v0.102.0, which tq bootstrap's template cannot
+      # render (it re-renders the managed block on every deploy and would
+      # drop the flag), so the slot line lives in .crushrc instead and the
+      # SystemNix invocation deliberately carries no --model.
+      name = "bootstrap-model-split-systemnix-repo-owned-others-flash";
       pass =
-        lib.hasInfix "--model zai/glm-5.4 --reasoning xhigh" (execStartText bootstrap)
-        && lib.hasInfix "--model zai/glm-5.3-flash" (execStartText bootstrap)
-        && lib.hasInfix "--verify" (execStartText bootstrap);
+        let
+          starts = bootstrap.serviceConfig.ExecStart;
+          flashInvocation = builtins.elemAt starts 0;
+          systemnixInvocation = builtins.elemAt starts 1;
+        in
+        !lib.hasInfix "--model" systemnixInvocation
+        && lib.hasInfix "--verify SystemNix=nix flake check --no-build" systemnixInvocation
+        && lib.hasInfix "--model zai/glm-5.3-flash" flashInvocation
+        && lib.hasInfix "model large zai/glm-5.4 --think --reasoning-effort xhigh" (
+          builtins.readFile ../.crushrc
+        );
     }
     {
       # Name match, not identity: overrideAttrs (2026-10-02) changes the

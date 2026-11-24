@@ -15,17 +15,25 @@ window). **Since the 2026-09-19 TODO split, SystemNix's `TODO_LIST.md` is
 the DISPATCH QUEUE only** (agent-actionable `[ready]` one-liners; the full
 entries + blocked/watch/decision items live in `docs/todo/*.md` libraries —
 see AGENTS.md → "TODO System"). Blocked items are deliberately outside the
-harvest so agents stop being dispatched at sudo/push/browser-gated work. The model is pinned per-repo by the `.crushrc` managed block the
-`tq-bootstrap` oneshot ensures at every deploy and commits locally (never
-pushes): **SystemNix → `zai/glm-5.4` (flagship) @ xhigh** (2026-11-24 split,
-upgraded from glm-5.3 the same day — incident-minted fix tasks target
+harvest so agents stop being dispatched at sudo/push/browser-gated work. The model is pinned per-repo by each repo's `.crushrc`, which the
+`tq-bootstrap` oneshot converges at every deploy and commits locally (never
+pushes): **SystemNix → `zai/glm-5.4` (flagship) + `--think` @ xhigh** (2026-11-24
+split, upgraded from glm-5.3 the same day — incident-minted fix tasks target
 SystemNix and get the big model; spend stays capped by `daily-budget = 30`),
-**CV + go-taskqueue → `zai/glm-5.3-flash` @ xhigh**. Thinking is not a slot
-flag in either tier: it rides the model declaration in the global crushrc
-(`model add … --thinking always`, crush-config repo), which survives slot
-routing, so the managed block only carries the reasoning effort. SystemNix
-carries an explicit verify gate (`--verify SystemNix=nix flake check
---no-build`); go-taskqueue keeps its own `.tq-verify`.
+**CV + go-taskqueue → `zai/glm-5.3-flash` @ xhigh**.
+
+Two mechanisms, deliberately: CV/go-taskqueue's pin is rendered INSIDE the
+managed block (`tq bootstrap --model …`), while SystemNix's slot line is
+repo-owned in `.crushrc` — thinking is switched by the slot's `--think` in
+crush v0.102.0 (the global crushrc's `model add … --thinking always` does NOT
+reach the request; `--can-reason true` even rewrites `--thinking` to
+`toggleable`, `internal/shellconfig/model.go`), and the bootstrap template
+cannot render `--think`, so a block-written line would silently drop it on
+every deploy. Consequence: `tq doctor`'s crush-pin check WARNs "managed block
+pins no --reasoning-effort" for SystemNix — accepted, tracked as an upstream
+`--think`/extra-slot-flags row in `docs/todo/upstream.md`. SystemNix carries
+an explicit verify gate (`--verify SystemNix=nix flake check --no-build`);
+go-taskqueue keeps its own `.tq-verify`.
 
 Dead-lettered tasks and budget exhaustion alert through the PapDashboard
 bridge (`alert-url` poolSetting + `TQ_PAP_API_KEY` from the dedicated
@@ -234,7 +242,7 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 **Modules:** house `modules/nixos/services/tq-agent-pool.nix` over upstream `inputs.go-taskqueue.nixosModules.default` — units `tq-agent-pool` (harvest + headless crush agents over CV/SystemNix/go-taskqueue TODO_LISTs), `tq-serve` (read-only dashboard, `tq.home.lan` Layer 2, `ports.tq` 8100), `tq-storage-dir` (pool-gated subvol), `tq-bootstrap` (seeds `.tq-verify`/`.crushrc` rails, commits them, never pushes). Journal on `/mnt/pool/services/tq/tq.db` (btrbk-pool snapshotted); CLI on PATH with `TQ_DB` session var. Runbook incl. the round-9 manual-pool cutover: `docs/services/tq.md`.
 
 - **Pool unit hardening is upstream-owned and deliberately looser than `harden{}`**: `ProtectSystem=full`, NO ProtectHome restriction, `KillSignal=SIGINT` + `KillMode=process` + `TimeoutStopSec=45min` (in-flight agents must finish; a shared drain deadline strands tasks in `running` forever). Never wrap the pool in `harden{}` (ProtectHome=read-only kills every agent at first repo write); the serve unit IS hardened (ReadWritePaths covers SQLite WAL/SHM for the read-only dashboard).
-- **Runs as the primary user** (browser-history-agent precedent): agents commit in `~/projects` with that user's git identity + crush config. Model pinned per-repo by the `.crushrc` managed block (SystemNix: `zai/glm-5.4` @ xhigh, thinking via the global crushrc model declaration; CV/go-taskqueue: `zai/glm-5.3-flash` @ xhigh) — a pool-level `--model` would RESET reasoning effort (upstream bootstrap.go comment); budget 30/day + max-per-tick 3 cap spend.
+- **Runs as the primary user** (browser-history-agent precedent): agents commit in `~/projects` with that user's git identity + crush config. Model pinned per-repo by each repo's `.crushrc` (SystemNix: `zai/glm-5.4 --think` @ xhigh, repo-owned line; CV/go-taskqueue: `zai/glm-5.3-flash` @ xhigh, managed block) — a pool-level `--model` would RESET reasoning effort (upstream bootstrap.go comment); budget 30/day + max-per-tick 3 cap spend.
 - **PapDashboard bridge key rides a DEDICATED sops template** (`tq-agent-pool-env`, root-owned): agent payloads inherit the pool env, so sharing `papdashboard-env`/`gatus-env` would leak other services' secrets into every agent process tree.
 - **Flake input flipped to `github:LarsArtmann/go-taskqueue?ref=master` (2026-09-18, deployed gen 784)** — the interim `git+file:?rev=1a4eb480` pin is GONE: upstream push landed, CI can fetch, `nix flake lock --update-input go-taskqueue` works (live `tq 0.3.0, go1.27.1`). `go-nix-helpers` NOT followed (bank-sync vendorHash FOD trap). vendorHash refresh dances happen UPSTREAM (`nix build .#tq` in the quick-go batch surfaces drift pre-deploy).
 - **pool.conf typos fail loudly** at unit start (upstream design: unknown key = error, never silent default) → start-limit + onFailure alert. Misbehavior runbook (stop → `tq dlq` → rescue/cancel), rollback, and watermarks: `docs/services/tq.md`. **2026-10-07 incident, upgrade of the rule:** this is not just about typos — every poolSettings key is VERSION-COUPLED to the locked tq binary. Landing a key for a future tq (the `done-preflight` gate went in 2026-10-06 23:57, "takes effect at the next input bump") crash-looped the pool at the very next deploy (02:01 `unknown key "done-preflight"`, 5 restarts → start-limit-hit, service-health-check red via its `systemctl --failed` catch-all). Gate keys land in the SAME commit as the flake.lock bump that ships them — never earlier. Key removed same day; re-add queued in the post-push consumption row (TODO_LIST.md → docs/todo/upstream.md).

@@ -39,18 +39,31 @@ models, LSPs, and the verification workflow for changing any of it.
 Two slots resolve in this order: rc statement > picker-persisted store state >
 catalog default. The rc statements are therefore the only durable pins.
 
-| Slot    | Scope             | Model                                                | Why                                                                                                                                                                         |
-| ------- | ----------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `small` | host (all repos)  | `zai/glm-4.7-flash`                                  | Summarization/compaction only; cheap, non-thinking, inside the ai-meter. Pinned in `platforms/nixos/users/home.nix` (`extraRc`, meter-guarded)                                |
-| `large` | per repo          | SystemNix: `zai/glm-5.4` @ `xhigh`                   | The repo every incident-minted fix task targets — flagship tier. Pinned by the `.crushrc` tq-bootstrap managed block (`modules/nixos/services/tq-agent-pool.nix`), not by hand |
-| `large` | per repo          | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh`     | Backlog harvesting — cheap tier; same managed-block mechanism                                                                                                               |
+| Slot    | Scope            | Model                                            | Why                                                                                                                                                                            |
+| ------- | ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `small` | host (all repos) | `zai/glm-4.7-flash`                              | Summarization/compaction only; cheap, non-thinking, inside the ai-meter. Pinned in `platforms/nixos/users/home.nix` (`extraRc`, meter-guarded)                                   |
+| `large` | per repo         | SystemNix: `zai/glm-5.4 --think` @ `xhigh`       | The repo every incident-minted fix task targets — flagship tier. Repo-owned line in `.crushrc` (kept out of the tq managed block; see below)                                    |
+| `large` | per repo         | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh` | Backlog harvesting — cheap tier; pinned by the `.crushrc` tq-bootstrap managed block (`tq bootstrap --model …`), which re-renders on every deploy                               |
 
-**Thinking is a MODEL declaration, not a slot flag.** `model add zai/glm-5.4 …
---thinking always` (crush-config repo) makes every request to that model carry
-thinking, and it survives slot routing — so the `.crushrc` slot line only
-carries `--reasoning-effort xhigh` (max on this machine). Do not add `--think`
-to the managed block expecting durability: `tq bootstrap` re-renders that block
-from its own template on every deploy and would drop the flag.
+**Thinking is switched by the SLOT's `--think`, not by the model declaration**
+(probe-verified 2026-11-24, crush v0.102.0, z.ai through the ai-meter): a `model
+large zai/glm-5.4 --reasoning-effort xhigh` line with `model add … --thinking
+always` in the global rc still sends `"thinking": {"type": "disabled"}`
+(logged request body); adding `--think` to the slot line flips it to
+`{"type": "enabled"}`. The declaration cannot carry it either: `--can-reason
+true` runs AFTER the flags and rewrites `reasoning.thinking` to `toggleable`
+(`internal/shellconfig/model.go`), so `--thinking always` never survives next
+to it.
+
+Consequence for the tq managed block: its template renders only
+`model large <model> --reasoning-effort <effort>`, so a block-written
+SystemNix line would drop `--think` on every deploy. SystemNix therefore owns
+its slot line OUTSIDE the managed block (the block is appended at EOF, so
+earlier statements never win, and `stripManagedBlock` leaves outside content
+untouched), and the SystemNix bootstrap invocation carries no `--model` — which
+makes `tq doctor`'s crush-pin check WARN "managed block pins no
+--reasoning-effort" for SystemNix (accepted; upstream `--think`/extra-slot-flags
+row in `docs/todo/upstream.md`).
 
 ## Adding a Provider Key
 

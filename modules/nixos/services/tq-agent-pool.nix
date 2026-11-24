@@ -16,8 +16,9 @@
 #     the sole external entry point — the dashboard renders task payloads
 #     and error tails, hence SSO, never Layer 0
 #   - tq-bootstrap oneshot seeds the dogfood rails per repo (.tq-verify +
-#     .crushrc managed block pinning the repo's model — glm-5.4 @ xhigh for
-#     SystemNix, glm-5.3-flash @ xhigh for CV/go-taskqueue — + autonomy,
+#     .crushrc autonomy block, model pins where the template can express them —
+#     glm-5.3-flash @ xhigh for CV/go-taskqueue; SystemNix's glm-5.4 @ xhigh
+#     line lives in its repo-owned .crushrc so it can carry `--think` —
 #     committed locally, never pushed) — idempotent, runs at deploy
 #   - Dead letters + budget exhaustion alert via the PapDashboard bridge
 #     (TQ_PAP_API_KEY from the shared papdashboard sops key, dedicated
@@ -213,9 +214,10 @@ _: {
 
           # Calibrated from the live round-9 dogfood window (2026-09-08):
           # the manually-run pool that validated review/status semantics.
-          # Model comes from each repo's .crushrc managed block (pinned by
-          # the bootstrap oneshot) — a pool-level --model would reset
-          # reasoning effort (bootstrap.go comment).
+          # Model comes from each repo's .crushrc (managed block pins for
+          # CV/go-taskqueue; SystemNix's own slot line, which carries
+          # --think) — a pool-level --model would reset reasoning effort
+          # (bootstrap.go comment).
           poolSettings = lib.mkDefault {
             projects-dir = "/home/${primaryUser}/projects";
             repos = "CV,SystemNix,go-taskqueue";
