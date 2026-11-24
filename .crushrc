@@ -1,7 +1,10 @@
-# statix on this host has no LSP mode (`statix lsp` is not a subcommand), so
-# crush's auto-LSP for nix files burns its init timeout in every session
-# (900+ failures in .crush/logs/crush.log, still failing 2026-09-11).
-# Explicit declaration with --disabled overrides the auto entry.
+# statix has no LSP mode (`statix lsp` is not a subcommand). Crush <= ~v0.99
+# auto-started it for .nix files and burned the init timeout every session
+# (900+ failures, last seen 2026-09-11). Re-verified 2026-11-24 on v0.102.0
+# via an isolated no-override probe (fake HOME, .nix file viewed, read_files
+# proof): crush no longer attempts statix at all. Entry kept as inert
+# insurance against a powernap-catalog re-introduction — no upstream issue
+# to file (bug already gone at current version).
 lsp add statix --disabled true
 # >>> tq bootstrap (managed) >>>
 permissions allow view ls grep glob edit multiedit write bash fetch download todos
