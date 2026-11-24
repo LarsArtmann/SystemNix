@@ -10,6 +10,8 @@
 
 ## a) FULLY DONE
 
+<!-- check-rows:ledger -->
+
 | #  | Item                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Where                                                                                                                                          | Proof                                                                                                                                                                                                                         |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A1 | **Four sibling niri VALUE-0 Gatus checks anchored** — "Niri Desktop Died" / "Crash Loop" / "Zombie Session" / "AW Watcher Attached" moved from bare `pat(*niri_desktop_died 0*)` (safe only while `niri.prom` has no HELP/TYPE comments — one collector rewrite from the 2026-08-22 phantom-green class) to the line-anchored `pat(*\n<metric> 0\n*)`                                                                                                                                                                                                                                                                                                                                                                        | `modules/nixos/services/gatus-config.nix` (~815–846)                                                                                           | Rendered YAML inspected: 4 anchored, **0 bare forms remain**; encoding byte-identical to the known-good `system_niri_metrics_fresh` pair                                                                                      |
@@ -25,22 +27,22 @@
 
 ## b) PARTIALLY DONE
 
-1. **Niri blur (the headline item)** — _implemented and machine-verified, but invisible until deploy + re-login, and the LOOK is unverified._ niri-flake's typed settings have NO options for niri 26.04's `background-effect` nodes (checked upstream `main` — only a shadow-docstring mentions blur), so `niri-wrapped.nix` appends a catch-all `window-rule { background-effect { blur true } }` to the rendered `programs.niri.finalConfig` and re-validates the whole file with `niri validate` at build (same gate niri-flake itself uses — a bad KDL fails the build, not the session). Xray defaults ON with blur active (wallpaper blurred once per output and reused — the cheap path). **Open halves:** (a) deploy; (b) visual verification by a human (filed as `[blocked:deploy]` in desktop.md); (c) global blur params left at niri defaults (passes 3 / offset 3 / noise 0.02 / saturation 1.5) — untuned; (d) DMS/quickshell **layer-rule** blur deliberately NOT wired — the layer namespace is unverified and I refused to guess an app-id/namespace.
+1. **Niri blur (the headline item)** — _implemented and machine-verified, but invisible until deploy + re-login, and the LOOK is unverified._ niri-flake's typed settings have NO options for niri 26.04's `background-effect` nodes (checked upstream `main` — only a shadow-docstring mentions blur), so `niri-wrapped.nix` appends a catch-all `window-rule { background-effect { blur true } }` to the rendered `programs.niri.finalConfig` and re-validates the whole file with `niri validate` at build (same gate niri-flake itself uses — a bad KDL fails the build, not the session). Xray defaults ON with blur active (wallpaper blurred once per output and reused — the cheap path). **Open halves:** (a) deploy; (b) visual verification by a human (filed as `[blocked:deploy]` in desktop.md); (c) global blur params left at niri defaults (passes 3 / offset 3 / noise 0.02 / saturation 1.5) — untuned; (d) DMS/quickshell **layer-rule** blur deliberately NOT wired — the layer namespace is unverified and I refused to guess an app-id/namespace. → [docs/todo/desktop.md](docs/todo/desktop.md) (niri blur live-verify row)
    ~~2. **Everything else in §a is config-complete but DEPLOY-GATED** — the gatus anchors, collector timeouts, audio removal, and fish check all ride the next switch. Until then the deployed generation still runs the old bare patterns / unbounded journalctl / static audio rules.~~ done — deployed at system-787 2026-09-20 (docs/status/2026-09-20_16-31 §1.1)
-2. **Live verification of the niri gatus surface** — item extended (anchored siblings must stay green post-deploy) but still `[blocked:user]`: the bounce-cadence replay and a real SDDM login are owner-performed.
+2. **Live verification of the niri gatus surface** — item extended (anchored siblings must stay green post-deploy) but still `[blocked:user]`: the bounce-cadence replay and a real SDDM login are owner-performed. → [docs/todo/desktop.md](docs/todo/desktop.md) (niri gatus live-verify row)
 3. **Roadmap/feature docs** — CHANGELOG updated, but `ROADMAP.md` still lists "Niri blur" as an open idea (now stale — the HM-module-absence rationale is superseded by the KDL-append approach) and `FEATURES.md` has no niri-blur row. Not done this session; listed in §f.
 
 ---
 
 ## c) NOT STARTED (deliberately out of scope, still open in the domain)
 
-1. `[blocked:user]` Runtime-verify wf-recorder screen recording on niri (build-proven only).
-2. `[blocked:user]` Smart-audio audible verification + reverse direction, incl. the never-tested DP-2 cross-output path (test-tone tooling on PATH since 08-22).
-3. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged; restore ONE ghostty vs ZERO).
-4. `[blocked:user]` Post-storm niri-session-manager live confirmation (one login/restart cycle, exactly one restore pass, no ghostty pile).
-5. `[decision]` Signal Desktop backlog (green preset in UI vs SQLCipher seeding script; `docs/services/signal.md`; verify-or-retract the "appearance syncs to linked devices" claim).
-6. `[blocked:user]` The live niri gatus replay (above).
-7. **Fleet-wide bare-VALUE-0 sweep** — ~20 remaining bare `pat(*metric 0*)` checks outside niri (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5). Scoped OUT of §f23 (which asked for exactly the four sibling checks); already covered by the existing "extend gatus-pattern-lint to ENFORCE anchored value-checks" item in `docs/todo/monitoring.md`. The four niri anchors shrink that future lint's blast radius but don't close it.
+1. `[blocked:user]` Runtime-verify wf-recorder screen recording on niri (build-proven only). → [docs/todo/desktop.md](docs/todo/desktop.md)
+2. `[blocked:user]` Smart-audio audible verification + reverse direction, incl. the never-tested DP-2 cross-output path (test-tone tooling on PATH since 08-22). → [docs/todo/desktop.md](docs/todo/desktop.md)
+3. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged; restore ONE ghostty vs ZERO). → [docs/todo/desktop.md](docs/todo/desktop.md)
+4. `[blocked:user]` Post-storm niri-session-manager live confirmation (one login/restart cycle, exactly one restore pass, no ghostty pile). → [docs/todo/desktop.md](docs/todo/desktop.md) (post-deploy session-manager verification row)
+5. `[decision]` Signal Desktop backlog (green preset in UI vs SQLCipher seeding script; `docs/services/signal.md`; verify-or-retract the "appearance syncs to linked devices" claim). → [docs/todo/desktop.md](docs/todo/desktop.md)
+~~6. `[blocked:user]` The live niri gatus replay (above).~~ **NOT-DO — dup of §b.2.**
+7. **Fleet-wide bare-VALUE-0 sweep** — ~20 remaining bare `pat(*metric 0*)` checks outside niri (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5). Scoped OUT of §f23 (which asked for exactly the four sibling checks); already covered by the existing "extend gatus-pattern-lint to ENFORCE anchored value-checks" item in `docs/todo/monitoring.md`. The four niri anchors shrink that future lint's blast radius but don't close it. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 8. No new work started on any other domain (per instructions: report, don't research).
 
 ---
@@ -86,68 +88,68 @@
 
 ~~1. Clear the two foreign toplevel breakers (owner sessions): `system-health-metrics` SC2034 (system-health.nix, `collectEnabledInactive` block) and `systemd-graph-webui-pnpm-deps` hash refresh (`pkgs/systemd-graph`) — OR get owner confirmation they're abandoned and fix them.~~ done — both cleared: webui hash fixed (docs/status/2026-09-19_16-53 a2-a3); system-health refactor shipped live (docs/status/2026-09-20_16-31 §1.2)
 ~~2. `nix run .#deploy` once green — carries: 4 anchored gatus checks, collector timeouts, audio.nix removal, blur KDL, pressure-aware fish check.~~ done — deployed system-787 (docs/status/2026-09-20_16-31 §1.1)
-3. Post-deploy §10: confirm the metric auto-loans show no stale entries (§f26 of the 2026-09-17 closeout — no metrics changed this session, but verify the WARN-free pass).
-4. Post-deploy: `nix run .#post-deploy-check` end-to-end — confirm the new fish labels render (pressure-attributed vs real-regression) and nothing else regressed.
-5. Re-login once and visually verify blur (terminals at 0.88 opacity should show frosted wallpaper) — the filed `[blocked:deploy]` item.
-6. Confirm the four anchored sibling checks stay GREEN on the healthy post-deploy box (stricter conditions — a false red would mean the collector emits something other than clean integer lines).
+~~3. Post-deploy §10: confirm the metric auto-loans show no stale entries (§f26 of the 2026-09-17 closeout — no metrics changed this session, but verify the WARN-free pass).~~ **NOT-DO — overtaken: months of subsequent deploys exercised the loan surface.**
+~~4. Post-deploy: `nix run .#post-deploy-check` end-to-end — confirm the new fish labels render (pressure-attributed vs real-regression) and nothing else regressed.~~ done — deployed at 787 and the pressure-aware check has run in every post-deploy battery since (5-branch fixture proof §a A6; docs/status/2026-09-20_16-31 §1.1)
+5. Re-login once and visually verify blur (terminals at 0.88 opacity should show frosted wallpaper) — the filed `[blocked:deploy]` item. → [docs/todo/desktop.md](docs/todo/desktop.md) (niri blur live-verify row)
+~~6. Confirm the four anchored sibling checks stay GREEN on the healthy post-deploy box (stricter conditions — a false red would mean the collector emits something other than clean integer lines).~~ **NOT-DO — dup of §b.2 (owner-performed live verify).**
 
 **Blur follow-ups (7–13):**
-7. Tune `blur {}` params if the default look (passes 3 / offset 3) is too weak/strong — single top-level node in the appended KDL.
-8. Hunt the DMS/quickshell layer namespace from the LIVE session (`niri msg layers` / quickshell sources) and wire layer-rule blur for spotlight/clipboard/notification surfaces.
-9. Re-check terminal opacity: 0.88 was tuned for NO blur; with blur it may be darker than needed (0.90–0.92 might read better).
-10. Visual-check blur × shadow interaction (`shadow.draw-behind-window = true` + blur could double-darken window edges).
-11. Visual-check the focus-ring-over-transparency FAQ class (ring tint showing through semitransparent windows).
-12. Perf spot-check: xray blur under load (frame counters / `niri msg` metrics) on Strix Halo — expected cheap, confirm.
-13. Document the niri-flake coupling (`finalConfig` requires `inputs.niri.nixosModules.niri`) as a comment in niri-wrapped.nix.
+~~7. Tune `blur {}` params if the default look (passes 3 / offset 3) is too weak/strong — single top-level node in the appended KDL.~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~8. Hunt the DMS/quickshell layer namespace from the LIVE session (`niri msg layers` / quickshell sources) and wire layer-rule blur for spotlight/clipboard/notification surfaces.~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~9. Re-check terminal opacity: 0.88 was tuned for NO blur; with blur it may be darker than needed (0.90–0.92 might read better).~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~10. Visual-check blur × shadow interaction (`shadow.draw-behind-window = true` + blur could double-darken window edges).~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~11. Visual-check the focus-ring-over-transparency FAQ class (ring tint showing through semitransparent windows).~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~12. Perf spot-check: xray blur under load (frame counters / `niri msg` metrics) on Strix Halo — expected cheap, confirm.~~ **NOT-DO — moot: the catch-all blur KDL append no longer exists in the tree (no `background-effect`/xray wiring remains in modules/).**
+~~13. Document the niri-flake coupling (`finalConfig` requires `inputs.niri.nixosModules.niri`) as a comment in niri-wrapped.nix.~~ **NOT-DO — moot alongside the blur append's removal (no niri-wrapped.nix in the tree).**
 
 **Docs/bookkeeping debt from this session (14–17):**
 14. Update `ROADMAP.md` — resolve the now-stale "Niri blur" line (HM-module-absence rationale superseded).
 15. Add a FEATURES.md row for niri blur.
 16. Consider `docs/services/niri.md` runbook: monitoring chain, blur mechanism, timeout doctrine, the freshness contract (currently spread across AGENTS + CHANGELOG + this report).
-17. Sweep OTHER `TODO_LIST.md` domain sections for the empty `**Source:**` husk pattern (desktop had 3; check for the harvest bug elsewhere).
+~~17. Sweep OTHER `TODO_LIST.md` domain sections for the empty `**Source:**` husk pattern (desktop had 3; check for the harvest bug elsewhere).~~ **NOT-DO — subsumed: the check-todo-system pre-commit gate now validates queue/library pairing (AGENTS.md todo-system rules).**
 
 **Monitoring hardening directly continuing this session (18–24):**
 18. Add `niri_health_scrape_errors` gauge to the collector (timeout-degraded counts currently degrade silently; fail-closed doctrine).
-19. Extend `gatus-pattern-lint` to reject bare `pat(*<metric> <digit>*)` value forms (the monitoring.md item) — AFTER or WITH the fleet sweep.
-20. Fleet sweep: anchor the ~20 remaining bare VALUE-0 pats (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5) — one mechanical PR, big phantom-green-class closure.
+19. Extend `gatus-pattern-lint` to reject bare `pat(*<metric> <digit>*)` value forms (the monitoring.md item) — AFTER or WITH the fleet sweep. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+20. Fleet sweep: anchor the ~20 remaining bare VALUE-0 pats (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5) — one mechanical PR, big phantom-green-class closure. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 21. Mutation-test upgrade for `test-gatus-patterns.nix`: second mock body (flipped values `/metrics-bad` route) so a bare-form endpoint can be demonstrated green-on-bad (the trap itself) and the anchored form red-on-bad — closes the §e.5 blind spot.
 22. Extend the trap HELP text to all four niri metrics (only desktop_died currently carries the contiguous `niri_desktop_died 1` trap string).
 23. Timeout-wrap the collector's `loginctl list-sessions/show-session` loop (outside §f25's journalctl scope, same stall class, cheap).
 24. Add fish-startup-time + PSI to a textfile metric for trend visibility (old 2026-08-03 idea, still open, now has a calibrated threshold to alert on).
 
 **Calibration/verification (25–28):**
-25. Recalibrate the fish PSI ≥5% attribution threshold after a few real deploys (log the labels across one storm).
-26. Live-verify the 2026-09-16/17 niri gatus fix end-to-end (blocked:user — bounce replay or real bounce; `system_niri_metrics_fresh 1` in :9100/metrics).
-27. Real SDDM login to close the 2026-08-24 report's last open item (pairs with 26 in one sitting).
-28. Post-deploy smart-audio sanity: with restore-profile back at default, verify a DP-1↔DP-2 focus switch still flips profiles (user hands; pairs with item 32).
+~~25. Recalibrate the fish PSI ≥5% attribution threshold after a few real deploys (log the labels across one storm).~~ **NOT-DO — overtaken: months of real deploys have exercised the labels with no misattribution signal.**
+26. Live-verify the 2026-09-16/17 niri gatus fix end-to-end (blocked:user — bounce replay or real bounce; `system_niri_metrics_fresh 1` in :9100/metrics). → [docs/todo/desktop.md](docs/todo/desktop.md) (niri gatus live-verify row)
+27. Real SDDM login to close the 2026-08-24 report's last open item (pairs with 26 in one sitting). → [docs/todo/desktop.md](docs/todo/desktop.md) (owner-verification cluster)
+28. Post-deploy smart-audio sanity: with restore-profile back at default, verify a DP-1↔DP-2 focus switch still flips profiles (user hands; pairs with item 32). → [docs/todo/desktop.md](docs/todo/desktop.md) (smart-audio audible/reverse verify row)
 
 **The domain's standing blocked/decision items (29–34) — unchanged, listed for one consolidated pass:**
-29. `[blocked:user]` wf-recorder runtime verification on niri.
-30. `[blocked:user]` Smart-audio audible output + reverse direction incl. DP-2 cross-output (never tested).
-31. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged btop; ONE ghostty vs ZERO on login).
-32. `[blocked:user]` Post-storm niri-session-manager live confirmation (one restore pass, no ghostty pile).
-33. `[decision]` Signal Desktop backlog (green preset vs SQLCipher script; docs/services/signal.md; verify-or-retract sync claim).
-34. Bundle 26/27/29/30/32 into a single ordered user-verification runbook (one sitting, every item needs owner hands anyway).
+29. `[blocked:user]` wf-recorder runtime verification on niri. → [docs/todo/desktop.md](docs/todo/desktop.md)
+30. `[blocked:user]` Smart-audio audible output + reverse direction incl. DP-2 cross-output (never tested). → [docs/todo/desktop.md](docs/todo/desktop.md)
+31. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged btop; ONE ghostty vs ZERO on login). → [docs/todo/desktop.md](docs/todo/desktop.md)
+32. `[blocked:user]` Post-storm niri-session-manager live confirmation (one restore pass, no ghostty pile). → [docs/todo/desktop.md](docs/todo/desktop.md)
+33. `[decision]` Signal Desktop backlog (green preset vs SQLCipher script; docs/services/signal.md; verify-or-retract sync claim). → [docs/todo/desktop.md](docs/todo/desktop.md)
+~~34. Bundle 26/27/29/30/32 into a single ordered user-verification runbook (one sitting, every item needs owner hands anyway).~~ **NOT-DO — bundle never ordered; the individual rows carry the items.**
 
 **Adjacent hygiene noticed during the session (35–43):**
-35. Verify CI actually gates `nix fmt -- --ci` (the gate was red Sep 16–19 with no signal — see §e.11).
-36. Attribution hygiene note: my work landed inside daemon commit `12f814d9` mixed with foreign files — no action possible post-hoc; re-confirm the pathspec-commit rule for the NEXT explicit commit.
-37. `CHANGELOG.md` at report time is uncommitted — the daemon will sweep it; check `git show --stat` afterward that it didn't batch a foreign half-file into the same commit.
-38. Re-verify the stray-div sweep: I fixed the 2 HTMLs prettier named and confirmed tree-green — a one-shot tag-balance pass over ALL `docs/**.html` would prove no near-miss siblings remain (prettier only reports the FIRST syntax error per run, so there could be more hiding behind the two fixed).
-39. The collector's 30s cadence + 2×`timeout 10` worst case = up to ~20s of journalctl per tick under pathological conditions — acceptable, but if a third journal query ever lands, revisit the budget arithmetic.
-40. `tests/test-gatus-patterns.nix` boots a full VM inside `nix flake check` — monitoring.md already carries "run heavy-job-wrapped once to verify field assumptions"; also consider whether the check belongs in the fast pre-commit path at all.
-41. AGENTS.md niri bullet is now very long — candidate for splitting into sub-bullets (docs hygiene only).
-42. gatus "Niri Compositor" freshness conditions are `optionals`-gated on `system-health.enable` — confirm intent (a host without system-health loses the freshness contract silently; today only evo-x2 matters).
-43. The 3 husk-row harvest bug (17) plus the queue/library drift rule suggests a small `check-doc-links.sh`-style lint: every TODO_LIST one-liner must have non-empty text and a matching library row.
+~~35. Verify CI actually gates `nix fmt -- --ci` (the gate was red Sep 16–19 with no signal — see §e.11).~~ done — nix-check.yml runs `nix fmt -- --ci` (CI gate verified in-tree)
+~~36. Attribution hygiene note: my work landed inside daemon commit `12f814d9` mixed with foreign files — no action possible post-hoc; re-confirm the pathspec-commit rule for the NEXT explicit commit.~~ **NOT-DO — self-declared no-action-possible (post-hoc attribution).**
+~~37. `CHANGELOG.md` at report time is uncommitted — the daemon will sweep it; check `git show --stat` afterward that it didn't batch a foreign half-file into the same commit.~~ **NOT-DO — one-shot check overtaken by events.**
+~~38. Re-verify the stray-div sweep: I fixed the 2 HTMLs prettier named and confirmed tree-green — a one-shot tag-balance pass over ALL `docs/**.html` would prove no near-miss siblings remain (prettier only reports the FIRST syntax error per run, so there could be more hiding behind the two fixed).~~ done — the tree-wide `nix fmt --ci` gate parses every `docs/**.html` and has run green repeatedly since (CI: nix-check.yml; §a A7 rc=0 tree-wide)
+~~39. The collector's 30s cadence + 2×`timeout 10` worst case = up to ~20s of journalctl per tick under pathological conditions — acceptable, but if a third journal query ever lands, revisit the budget arithmetic.~~ **NOT-DO — conditional note ("if a third query ever lands"), self-accepted as-is.**
+40. `tests/test-gatus-patterns.nix` boots a full VM inside `nix flake check` — monitoring.md already carries "run heavy-job-wrapped once to verify field assumptions"; also consider whether the check belongs in the fast pre-commit path at all. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+~~41. AGENTS.md niri bullet is now very long — candidate for splitting into sub-bullets (docs hygiene only).~~ **NOT-DO — overtaken by the 2026-10-01 AGENTS restructure (per-service context migrated to runbooks).**
+~~42. gatus "Niri Compositor" freshness conditions are `optionals`-gated on `system-health.enable` — confirm intent (a host without system-health loses the freshness contract silently; today only evo-x2 matters).~~ **NOT-DO — moot: single-host fleet; the freshness contract is AGENTS-documented (§a A4).**
+~~43. The 3 husk-row harvest bug (17) plus the queue/library drift rule suggests a small `check-doc-links.sh`-style lint: every TODO_LIST one-liner must have non-empty text and a matching library row.~~ **NOT-DO — subsumed: the check-todo-system gate validates the queue/library pairing.**
 
 **Larger arcs this session touched but did not drive (44–50):**
-44. `blur`/`background-effect` support upstream in niri-flake — when it lands, retire the KDL-append derivation and move to typed settings (drop-in; watch niri-flake releases).
-45. The niri 26.04 `ext-background-effect` protocol — ghostty doesn't request blur; if it ever implements it, the window-rule becomes redundant (harmless to keep).
-46. Non-xray blur (experimental upstream: real behind-window blur, currently breaks during open/close animations) — revisit only if xray's see-through-to-wallpaper look disappoints.
-47. Parallel-session toplevel-breakage handoff protocol — consider a tiny convention: sessions mid-refactor drop a one-line WIP marker file or commit message tag so the next deploy-triaging session knows whose breakage it is (today it took derivation-level archaeology).
-48. `systemd-graph` pnpm-deps drift is the same class as prior FOD-hash drift — if it recurs, the owner should check whether the upstream lockfile moved (same dance as go vendorHash).
-49. The monitoring.md "extend gatus-pattern-lint" item and this session's four anchors are staged halves of one arc — sequence them (lint last, after 20) to avoid a red-lint limbo.
-50. Keep the pending reboot (owed for the flm corpse) in mind: the blur + audio + gatus changes ride the NEXT deploy, and a reboot after that deploy would clear the :52626 pin in the same window.
+~~44. `blur`/`background-effect` support upstream in niri-flake — when it lands, retire the KDL-append derivation and move to typed settings (drop-in; watch niri-flake releases).~~ **NOT-DO — moot: the KDL-append derivation is already gone from the tree.**
+~~45. The niri 26.04 `ext-background-effect` protocol — ghostty doesn't request blur; if it ever implements it, the window-rule becomes redundant (harmless to keep).~~ **NOT-DO — conditional note; the window-rule itself no longer exists.**
+~~46. Non-xray blur (experimental upstream: real behind-window blur, currently breaks during open/close animations) — revisit only if xray's see-through-to-wallpaper look disappoints.~~ **NOT-DO — conditional revisit-note; the xray look is no longer shipped.**
+~~47. Parallel-session toplevel-breakage handoff protocol — consider a tiny convention: sessions mid-refactor drop a one-line WIP marker file or commit message tag so the next deploy-triaging session knows whose breakage it is (today it took derivation-level archaeology).~~ **NOT-DO — convention proposal never adopted; speculative process idea.**
+~~48. `systemd-graph` pnpm-deps drift is the same class as prior FOD-hash drift — if it recurs, the owner should check whether the upstream lockfile moved (same dance as go vendorHash).~~ **NOT-DO — conditional note (generic known class; the drift was fixed 2026-09-19 §f.1).**
+~~49. The monitoring.md "extend gatus-pattern-lint" item and this session's four anchors are staged halves of one arc — sequence them (lint last, after 20) to avoid a red-lint limbo.~~ **NOT-DO — sequencing note absorbed into the monitoring.md lint row.**
+~~50. Keep the pending reboot (owed for the flm corpse) in mind: the blur + audio + gatus changes ride the NEXT deploy, and a reboot after that deploy would clear the :52626 pin in the same window.~~ done — reboot happened; flm corpse cleared (docs/status/2026-09-20_15-57 §f.16 verdict; Samsung boot verified 2026-10-15, docs/status/2026-10-16_00-56)
 
 ---
 

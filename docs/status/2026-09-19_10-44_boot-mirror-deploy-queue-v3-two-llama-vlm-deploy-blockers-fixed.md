@@ -6,6 +6,8 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 
 ## (a) Snapshot
 
+<!-- check-rows:ledger -->
+
 | What                                | Where                                                                                                                                                                                                                      | Status                                      |
 | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | Boot-mirror code                    | committed `260f86ef` (09-18), byte-intact vs HEAD (re-verified 10:05: boot-mirror.nix/activate script/pre-reboot-check untouched; flake/config/deploy.sh gained only parallel-session lines, our markers grep-verified)    | DONE                                        |
@@ -38,7 +40,7 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 
 ~~1. Item 8 (reboot + BootCurrent verification) — user-gated by design.~~ done — DONE 2026-10-15: Samsung live boot drive, decode-verified (docs/todo/storage.md:42)
 ~~2. CHANGELOG entry + plan-doc checklist ticks — deliberately sequenced AFTER deploy/activation so they record real outcomes (generation number, BootOrder).~~ done — landed (docs/status/2026-09-20_15-30 M6)
-3. Post-deploy §15 mirror-freshness assert + system-health mirror-age metric (plan-doc items 13/14 — optional hardening, unchanged stance).
+3. Post-deploy §15 mirror-freshness assert + system-health mirror-age metric (plan-doc items 13/14 — optional hardening, unchanged stance). → [docs/todo/storage.md](docs/todo/storage.md) (boot-mirror trigger-health row covers the sync-freshness class)
 
 ## (e) What I fucked up / got wrong (self-review)
 
@@ -60,20 +62,20 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 ~~4. pre-reboot-check again → §11 FAIL-grade green~~ done — 23/0 (docs/status/2026-09-20_15-30 M5)
 ~~5. CHANGELOG entry (boot-mirror + both llama-vlm fixes + deploy rc 12/13 doctrine)~~ done — 2 entries (docs/status/2026-09-20_15-30 M6)
 ~~6. Plan-doc ticks 6, 7, 9 (leave 8 unchecked until reboot)~~ done — (docs/status/2026-09-20_15-30 M6)
-7. Ask user: reboot timing
+~~7. Ask user: reboot timing~~ done — reboot happened 2026-10-15; Samsung live boot drive decode-verified (docs/status/2026-10-16_00-56)
 ~~8. Post-reboot: `bootctl status` Current Boot Loader PARTUUID `023f66c0-…`, pre-reboot-check green, QLC fallback intact~~ done — verified 2026-10-15 (docs/todo/storage.md:42)
-9. Watch first nightly sync for drift alerts
+~~9. Watch first nightly sync for drift alerts~~ **NOT-DO — dup of the M8/F21 night-watch class (§15-57 c.2): overtaken; the sync trigger-defect class is tracked in docs/todo/storage.md.**
 10. Optional: deliberate firmware-menu QLC fallback boot test
 11. ESP growth watch (configurationLimit 50 × mirrored kernels)
 12. Optional §15 mirror-freshness post-deploy assert
 13. Optional system-health mirror-age metric
-14. Root `@` off QLC (separate task — question 2)
-15. llama-vlm models still absent from `/data` — owner decision (download paths are in configuration.nix e4b/cap entries); until then the sockets accept + backends fail on connect (safe, but the feature is dark)
-16. Tell the llama-vlm owning session about BOTH fixes (types + ExecStart) so they don't re-break them
+14. Root `@` off QLC (separate task — question 2) → [docs/todo/storage.md](docs/todo/storage.md) (Samsung-as-root feasibility watch row)
+15. llama-vlm models still absent from `/data` — owner decision (download paths are in configuration.nix e4b/cap entries); until then the sockets accept + backends fail on connect (safe, but the feature is dark) → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (llama-vlm live-verification + soak row)
+~~16. Tell the llama-vlm owning session about BOTH fixes (types + ExecStart) so they don't re-break them~~ **NOT-DO — overtaken: both fixes have lived in-tree untouched since 2026-09.**
 17. Consider a check-lint for list-shaped ExecStart (systemd-shape-audit candidate: `builtins.isList ExecStart` with >1 element on non-oneshot units is almost always the argv mistake — §12 catches it late, an eval-time audit would catch it at flake check)
-18. The stale `/tmp/.systemnix-deploy.lock` PID content (2008816) is cosmetic — flock is free; deploy.sh's liveness check handles it; no action
-19. If deploy exit-4s on `boot-mirror-sync` start: fix module, re-queue (known recoverable risk from the plan doc)
-20. If rc=13 recurs: another session is deploying the same tree — profile-anchoring check decides wait-vs-done
+~~18. The stale `/tmp/.systemnix-deploy.lock` PID content (2008816) is cosmetic — flock is free; deploy.sh's liveness check handles it; no action~~ **NOT-DO — self-declared no-action (cosmetic; flock governs).**
+~~19. If deploy exit-4s on `boot-mirror-sync` start: fix module, re-queue (known recoverable risk from the plan doc)~~ **NOT-DO — conditional contingency, overtaken by the deploy having landed clean.**
+~~20. If rc=13 recurs: another session is deploying the same tree — profile-anchoring check decides wait-vs-done~~ **NOT-DO — conditional contingency, overtaken.**
 
 ## Questions I could NOT figure out myself
 
