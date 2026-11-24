@@ -76,6 +76,15 @@ let
 
   firstToken = str: builtins.head (lib.splitString " " str);
 
+  # ExecStart may be a list (oneshot allows multiple commands — the
+  # 2026-11-24 bootstrap model split made it two invocations).
+  execStartText =
+    unit:
+    if builtins.isList unit.serviceConfig.ExecStart then
+      builtins.concatStringsSep "\n" unit.serviceConfig.ExecStart
+    else
+      unit.serviceConfig.ExecStart;
+
   cases = [
     {
       name = "pool-binary-is-package-bin-tq";
@@ -165,16 +174,33 @@ let
     }
     {
       # Regression guard for the 2026-09-08 tolerance fix: bootstrap is a
-      # purely local oneshot — network-online must NOT come back.
+      # purely local oneshot — network-online must NOT come back. The
+      # mnt-pool.mount ordering edge joined with the 2026-11-24 mount-gating
+      # wave (ConditionPathIsDirectory wrong-skip guard, module comment).
       name = "bootstrap-after-storage-dir-only-no-network-online";
-      pass = bootstrap.after == [ "tq-storage-dir.service" ];
+      pass = bootstrap.after == [
+        "tq-storage-dir.service"
+        "mnt-pool.mount"
+      ];
     }
     {
       name = "bootstrap-runs-as-primary-user-no-run";
       pass =
         bootstrap.serviceConfig.User == "lars"
-        && lib.hasInfix "--no-run" bootstrap.serviceConfig.ExecStart
-        && lib.hasSuffix "/bin/tq" (firstToken bootstrap.serviceConfig.ExecStart);
+        && lib.hasInfix "--no-run" (execStartText bootstrap)
+        && lib.hasSuffix "/bin/tq" (firstToken (execStartText bootstrap));
+    }
+    {
+      # 2026-11-24 model split (auto-debug directive): SystemNix — the repo
+      # every incident-minted fix task targets — bootstraps the FULL
+      # glm-5.3 @ xhigh with its nix verify gate, while CV + go-taskqueue
+      # keep the Flash pin (repo-wide pin until the upstream per-incident
+      # model seam: docs/todo/upstream.md).
+      name = "bootstrap-model-split-systemnix-full-others-flash";
+      pass =
+        lib.hasInfix "--model zai/glm-5.3 --reasoning xhigh" (execStartText bootstrap)
+        && lib.hasInfix "--model zai/glm-5.3-flash" (execStartText bootstrap)
+        && lib.hasInfix "--verify" (execStartText bootstrap);
     }
     {
       # Name match, not identity: overrideAttrs (2026-10-02) changes the
