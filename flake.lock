@@ -9888,11 +9888,11 @@
         "templ-components": "templ-components_8"
       },
       "locked": {
-        "lastModified": 1795547022,
-        "narHash": "sha256-inDQZHBqnlWjn56hL2H7ohFpzWjk9PNkk164N2G0pnI=",
+        "lastModified": 1795547251,
+        "narHash": "sha256-lCe/jHe0lMeLyMG3x1v9APSZmEpviMw9l41I3lipsdA=",
         "ref": "refs/heads/master",
-        "rev": "33ff7708dc75a51c1e59c518b585ff637c92854b",
-        "revCount": 1777,
+        "rev": "983392ab22fd1f911d4fb4d4c43b29292e010479",
+        "revCount": 1780,
         "type": "git",
         "url": "file:///home/lars/projects/overview"
       },
@@ -10362,11 +10362,11 @@
     "project-discovery-sdk_9": {
       "flake": false,
       "locked": {
-        "lastModified": 1794945532,
-        "narHash": "sha256-BY08JlfC9VQxGiIROm98RCMS70by0Q6Pa6NH0VZBSYM=",
+        "lastModified": 1795393711,
+        "narHash": "sha256-7004bAeMaXnCORmdVRQeKNug8p2CwHPTDOCvuiTh4ho=",
         "ref": "master",
-        "rev": "2eb0e635eb5705079eb0fcf05e4fc96bdee129c9",
-        "revCount": 1438,
+        "rev": "0cd5a3c4302a22068d668ee1236a2b329ad35164",
+        "revCount": 1442,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
