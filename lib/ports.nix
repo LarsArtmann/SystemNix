@@ -215,6 +215,12 @@
         # go-taskqueue — read-only tq serve dashboard (services.tq-agent-pool)
         tq = 8100;
 
+        # go-taskqueue — token-gated tq write API (services.tq-agent-pool,
+        # systemd.services.tq-api): task enqueue + incident error reports
+        # (ADR-0021 /api/v1/errors; the gatus-alert-relay sink and the
+        # problems.home.lan browser beacon post here). Loopback-only.
+        tqApi = 8112;
+
         # Miniflux — self-hosted RSS reader (services.miniflux), loopback-only;
         # Caddy proxies rss.home.lan to it.
         miniflux = 8101;

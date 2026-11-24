@@ -59,18 +59,18 @@ func (c *collector) forward(_ []byte, endpoint, _ string) { c.sent = append(c.se
 // --- parsing ---
 
 func TestParseAlert(t *testing.T) {
-	ep, state, ok := parseAlert(triggerBody("Monitoring/Swap Metrics"))
+	ep, state, _, ok := parseAlert(triggerBody("Monitoring/Swap Metrics"))
 	if !ok || ep != "Monitoring/Swap Metrics" || state != stateTriggered {
 		t.Fatalf("trigger parse: ok=%v ep=%q state=%v", ok, ep, state)
 	}
-	ep, state, ok = parseAlert(resolveBody("Productivity/InboxClean"))
+	ep, state, _, ok = parseAlert(resolveBody("Productivity/InboxClean"))
 	if !ok || ep != "Productivity/InboxClean" || state != stateResolved {
 		t.Fatalf("resolve parse: ok=%v ep=%q state=%v", ok, ep, state)
 	}
-	if _, _, ok := parseAlert([]byte(`{"content":"garbage"}`)); ok {
+	if _, _, _, ok := parseAlert([]byte(`{"content":"garbage"}`)); ok {
 		t.Fatal("garbage must not parse")
 	}
-	if _, _, ok := parseAlert([]byte(`not json`)); ok {
+	if _, _, _, ok := parseAlert([]byte(`not json`)); ok {
 		t.Fatal("non-json must not parse")
 	}
 }
