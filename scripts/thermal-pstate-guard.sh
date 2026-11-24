@@ -22,7 +22,7 @@ STATE_DIR="${STATE_DIR:-/var/lib/thermal-pstate-guard}"
 TEXTFILE_OUT="${THERMAL_GUARD_TEXTFILE_OUT:-/var/lib/prometheus-node-exporter/textfile_collectors/thermal-pstate-guard.prom}"
 SENSORS_SPEC="${THERMAL_GUARD_SENSORS:-k10temp=95/80 nvme=70/60 amdgpu=90/75 acpitz=85/70}"
 ENTER_TICKS="${THERMAL_GUARD_ENTER_TICKS:-2}"
-EXIT_TICKS="${THERMAL_GUARD_EXIT_TICKS:-12}"
+EXIT_TICKS="${THERMAL_GUARD_EXIT_TICKS:-30}"
 # Second rung (freeze-16/17 autopsy, 2026-10-14 task queue): guided alone
 # held 96-99 C through both crash boots — when heat persists at/above the
 # enter threshold for deepEnterTicks MORE ticks while already guided, cap
@@ -287,16 +287,16 @@ tick() {
         echo "$now" >"$THROTTLE_LOG_EPOCH_FILE"
       fi
     elif [ "$cool" -eq 1 ]; then
-      if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
-        restore_freq
-        log "DEEP THROTTLE DROP: scaling_max_freq restored (cool band reached)"
-      fi
       exit_streak=$((exit_streak + 1))
       echo "$exit_streak" >"$EXIT_STREAK_FILE"
       if [ "$exit_streak" -ge "$EXIT_TICKS" ]; then
         if write_sysfs active "$PSTATE_ROOT/status"; then
           restore_performance "$SNAPSHOT_FILE"
           rm -f "$SNAPSHOT_FILE"
+          if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
+            restore_freq
+            log "DEEP THROTTLE DROP: scaling_max_freq restored (cool dwell completed, exiting guided)"
+          fi
           echo active >"$MODE_FILE"
           echo 0 >"$EXIT_STREAK_FILE"
           restores=$((restores + 1))
@@ -307,12 +307,11 @@ tick() {
         fi
       fi
     else
-      # Middle band: below high but above low — heat has broken; drop the
-      # deep cap (if applied) but stay guided; dwell resets, silent.
-      if [ -e "$FREQ_SNAPSHOT_FILE" ]; then
-        restore_freq
-        log "DEEP THROTTLE DROP: scaling_max_freq restored (heat broke below the high threshold)"
-      fi
+      # Middle band (below high, above low): the restore dwell resets and
+      # an applied deep cap stays. One sub-threshold tick is the cap doing
+      # its job, not a cooled box: releasing on it re-heated the die to
+      # 96-99 C within 10 s (the 2026-11-24 sawtooth, 84 of 86 caps in one
+      # boot released after a single cool tick).
       echo 0 >"$EXIT_STREAK_FILE"
     fi
   else
@@ -429,24 +428,29 @@ run_selftest() {
   grep -q '^thermal_pstate_guard_deep_throttled 1$' "$fixture/textfile/guard.prom"
   assert_eq "metric-deep-throttled" "$?" "0"
 
-  # 5. Middle band (85C, above low 80): heat broke — deep cap dropped,
-  # still guided; dwell resets.
+  # 5. Middle band (85C, above low 80) while capped: the deep cap is HELD
+  # (a single sub-threshold tick is the cap working, not a cooled box),
+  # still guided; the restore dwell resets.
   echo 85000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
-  assert_eq "middle-band-drops-deep-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
+  assert_eq "middle-band-holds-deep-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
   assert_eq "middle-band-stays" "$(cat "$fixture/pstate/status")" "guided"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "middle-band-resets" "$(cat "$fixture/state/exit-streak")" "0"
   assert_eq "middle-band-stays-2" "$(cat "$fixture/pstate/status")" "guided"
-  assert_eq "deep-cap-still-off" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
+  assert_eq "deep-cap-still-on" "$(cat "$fixture/cpufreq/policy1/scaling_max_freq")" "2400000"
 
-  # 6. Cool x3: restores active + snapshotted governor.
+  # 6. Cool x3: the cap survives the dwell ticks and the maxima return
+  # together with the active mode on the third.
   echo 70000 >"$fixture/hwmon/hwmon3/temp1_input"
   env "${env_common[@]}" bash "$0" tick
+  assert_eq "cool-tick-1-holds-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "exit-debounce-holds" "$(cat "$fixture/pstate/status")" "guided"
+  assert_eq "cool-tick-2-holds-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
   env "${env_common[@]}" bash "$0" tick
   assert_eq "exit-restores-active" "$(cat "$fixture/pstate/status")" "active"
+  assert_eq "exit-restores-max-freq" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
   assert_eq "governor-restored" "$(cat "$fixture/cpufreq/policy0/scaling_governor")" "performance"
   assert_eq "epp-restored" "$(cat "$fixture/cpufreq/policy0/energy_performance_preference")" "performance"
   assert_eq "restores-1" "$(cat "$fixture/state/restores")" "1"
@@ -489,6 +493,56 @@ run_selftest() {
   assert_eq "blind-no-change" "$(cat "$fixture/pstate/status")" "active"
   grep -q '^thermal_pstate_guard_sensors_missing 1$' "$fixture/textfile/blind.prom"
   assert_eq "blind-metric" "$?" "0"
+
+  # 11. Deep-episode release dwell end to end (the 2026-11-24 CPU Thermal
+  # Alert sawtooth: cap, one cool tick, release, re-heat to 96-99 C within
+  # 10 s). A cool tick broken by a middle-band dip releases nothing and
+  # resets the dwell; only EXIT_TICKS consecutive cool ticks exit guided
+  # and restore the maxima.
+  echo 60000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  echo 96000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-enter-guided" "$(cat "$fixture/pstate/status")" "guided"
+  assert_eq "dwell-trips-2" "$(cat "$fixture/state/trips")" "2"
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-cap-applied" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  assert_eq "dwell-deep-trips-2" "$(cat "$fixture/state/deep-trips")" "2"
+  echo 70000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-cool-1-holds-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  assert_eq "dwell-cool-1-exit-streak" "$(cat "$fixture/state/exit-streak")" "1"
+  echo 85000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-dip-holds-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  assert_eq "dwell-dip-resets" "$(cat "$fixture/state/exit-streak")" "0"
+  echo 70000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-two-cool-holds" "$(cat "$fixture/pstate/status")" "guided"
+  assert_eq "dwell-two-cool-holds-cap" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "dwell-third-cool-exits" "$(cat "$fixture/pstate/status")" "active"
+  assert_eq "dwell-exit-restores-max-freq" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
+  assert_eq "dwell-exit-removes-freq-snapshot" "$([ -e "$fixture/state/max-freq.snapshot" ] && echo yes || echo no)" "no"
+  assert_eq "dwell-restores-2" "$(cat "$fixture/state/restores")" "2"
+
+  # 12. External override while capped: the operator's mode wins and the
+  # adoption drops the cap, so a cap never outlives its guided mode.
+  echo 96000 >"$fixture/hwmon/hwmon3/temp1_input"
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "adopt-while-capped" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "2400000"
+  echo active >"$fixture/pstate/status"
+  echo schedutil >"$fixture/cpufreq/policy0/scaling_governor"
+  env "${env_common[@]}" bash "$0" tick
+  assert_eq "adopt-drops-cap-policy0" "$(cat "$fixture/cpufreq/policy0/scaling_max_freq")" "4000000"
+  assert_eq "adopt-drops-cap-policy1" "$(cat "$fixture/cpufreq/policy1/scaling_max_freq")" "4000000"
+  assert_eq "adopt-removes-freq-snapshot" "$([ -e "$fixture/state/max-freq.snapshot" ] && echo yes || echo no)" "no"
 
   if [ "$failures" -gt 0 ]; then
     echo "SELFTEST FAILED: $failures assertion(s)" >&2

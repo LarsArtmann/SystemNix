@@ -23,7 +23,8 @@
 #             held 96-99 C through BOTH crash boots; when heat persists at
 #             or above the high threshold for deepEnterTicks MORE ticks in
 #             guided, scaling_max_freq is capped per policy to
-#             deepCapPercent of its snapshot (restored when heat breaks)
+#             deepCapPercent of its snapshot, held until the same cool
+#             dwell exits guided)
 #
 # A written gate ("NO heavy builds") was violated within the hour it was
 # written (freeze-14's death-minute nix burst) — this guard is the enforcement
@@ -88,8 +89,8 @@ _: {
 
         exitTicks = lib.mkOption {
           type = lib.types.int;
-          default = 12;
-          description = "Consecutive all-cool ticks before restoring active (dwell; a mid-band excursion resets the counter). Default 2 min at the default cadence";
+          default = 30;
+          description = "Consecutive all-cool ticks before restoring active (dwell; a mid-band excursion resets the counter). Default 5 min at the default cadence: the 2-min dwell re-armed the ceiling spiral (the 2026-11-24 CPU Thermal Alert sawtooth), and the same dwell is what releases a deep-trip frequency cap";
         };
 
         deepEnterTicks = lib.mkOption {
