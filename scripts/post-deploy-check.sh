@@ -566,8 +566,6 @@ else
   report_skip "SearXNG - search endpoint not reachable"
 fi
 
-check_local "Attic cache" "8200" "/" "200" 2>/dev/null || true
-
 # FastFlowLM: FULL end-to-end through the public socket-activated port. This is
 # the only check that can catch a dead :52625 (the 2026-08-18 incident: the
 # proxy ExecStart'd a binary nixpkgs doesn't build → exit 127 → start-limit-hit
@@ -2164,14 +2162,16 @@ if [ -f "$_hm_vars" ]; then
 else
   _polkit_problems=" hm-session-vars.sh not found;"
 fi
-_qqc_aborts=$(journalctl --user --since "-24 hours" --grep 'is not installed' --no-pager --output cat 2>/dev/null | grep -c 'module' || true)
-if [ "${_qqc_aborts:-0}" -gt 0 ]; then
-  _polkit_problems="${_polkit_problems} ${_qqc_aborts} QQC2 'module ... is not installed' abort(s) in last 24h (the 2026-08-18 polkit crash-loop class);"
+_qqc_lines=$(journalctl --user --since "-24 hours" --grep 'is not installed' --no-pager --output short-iso 2>/dev/null | grep 'module' || true)
+_qqc_count=$(printf '%s' "$_qqc_lines" | grep -c . || true)
+if [ "${_qqc_count:-0}" -gt 0 ]; then
+  _qqc_last=$(printf '%s' "$_qqc_lines" | tail -1)
+  _polkit_problems="${_polkit_problems} ${_qqc_count} 'module ... is not installed' journal line(s) in the last 24h; newest: ${_qqc_last};"
 fi
 if [ -z "$_polkit_problems" ]; then
   report_pass "Desktop - polkit dialog render sanity (Qt style env resolvable, no QQC2 aborts)"
 else
-  report_fail "Desktop - polkit render:${_polkit_problems} auth dialogs may fail to open (check qt.platformTheme/style in home.nix vs deployed Qt plugins)"
+  report_fail "Desktop - polkit render:${_polkit_problems}"
 fi
 
 # Desktop: polkit agent SLOT OWNERSHIP (2026-10-04 race aftermath — §f.2 of
@@ -2601,8 +2601,8 @@ fi
 #
 # Deliberate exceptions: a unit whose file resolves to /dev/null is MASKED
 # (wireplumber / network-local-commands under niri) and is counted, not
-# failed. Description= is deliberately NOT asserted: six enabled units from
-# upstream modules carry none (atticd, mandb, prometheus-node-exporter,
+# failed. Description= is deliberately NOT asserted: five enabled units from
+# upstream modules carry none (mandb, prometheus-node-exporter,
 # taskchampion-sync-server, netbird-evox2-login, linger-users), so asserting
 # it would fire on every deploy for reasons unrelated to this class.
 echo ""
