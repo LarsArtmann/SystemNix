@@ -157,3 +157,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Probe `qmd pull --progress` under the qmd-gpu wrapper (model downloads still work through the patched env)** **Source:** same report §f.40
 - [ ] [blocked:user] **Index SystemNix itself as a qmd collection (GPU-cheap now)** — owner call on scope (repo docs only vs whole tree) **Source:** same report §f.29
 - [ ] [decision] **Could fastflowlm (NPU runtime) ever serve qmd's models** — likely no (llama.cpp GGUF path vs NPU runtime, different model-format chain); record the verdict so the question stops recurring **Source:** same report §f.34
+- [ ] [ready] **crush gemini upstream 402 (single request, this boot)** — account billing/plan state check at the gemini upstream **Source:** docs/status/2026-11-24_21-07_ai-meter-home-lan-viewer-deploy-and-fleet-fod-repair.md §f.7
