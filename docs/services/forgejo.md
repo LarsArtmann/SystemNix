@@ -713,6 +713,31 @@ across the switch (`pgrep -f act_runner` before/after) and
 `journalctl -u buildcache-usb-recovery --since -10min` must show
 `buildcache healthy (/mnt/buildcache) - no teardown` instead of a mount stop.
 
+### Reliability posture (2026-11-24 "make it more reliable" wave)
+
+The availability model is convergence, not redundancy: ONE runner unit on
+evo-x2 (labels `[native]`, capacity 2), no second runner on any host — "at
+least 1 available" has a single point of failure by design. Three layers
+bound the dark windows:
+
+| Layer                                                                    | Covers                                                          | Worst-case gap |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------- | -------------- |
+| `Restart=always` + `RestartSec=5s` (mkForce over the v13 module's plain on-failure, forgejo.nix serviceConfig) | In-place deaths incl. clean exit (on-failure missed exit-0 deaths) | ~5 s           |
+| `forgejo-runner-ensure` timer, 1-min cadence (was 5 min)                 | Manual/stop-propagated stops (Restart NEVER fires for those)     | ~75 s          |
+| `recoveryRestartUnits` buildcache row                                    | Real remounts (converged inside the recovery run itself)         | same-run       |
+
+Job survival across restarts: `runner.shutdown_timeout=60s` (was `0s`) lets
+short tasks finish on a restart SIGTERM instead of being force-cancelled;
+`TimeoutStopSec=120s` outlives the drain so the graceful wait is never cut to
+SIGKILL. Long host-mode nix builds still die at a switch stop — a bigger
+drain would stall every deploy, retries belong at the CI level. By-design
+dark windows that remain: the per-switch restart inside every switch
+transaction (~3 min live, gen-1029 23:38:29→23:41:48) and the boot-time
+`After=forgejo.service` ordering (the token ExecStartPre needs the forgejo
+API). Deliberate downtime still = MASK the unit — the 1-min ensure
+deliberately does not fight a mask (each tick's start fails loudly in the
+journal; a plain `stop` gets re-converged within ~1 min).
+
 ## Token-API & Actions semantics (setup-forgejo classes, 2026-10-11/12)
 
 Facts pinned from the 03:46/05:05/05-37 sessions (source + journal verified), so

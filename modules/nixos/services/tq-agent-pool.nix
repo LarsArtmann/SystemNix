@@ -410,6 +410,16 @@ _: {
                 # way. Bootstrap converges each listed repo's .crushrc
                 # managed block idempotently; repos not named in an
                 # invocation are untouched by it.
+                #
+                # SystemNix gets NO --model: its large-slot line (with the
+                # `--think` that actually enables reasoning at request build
+                # time — see .crushrc) is repo-owned, because this template
+                # cannot render --think and a block-written line would
+                # silently drop it on every deploy. Consequence: tq doctor's
+                # crush-pin check WARNs "managed block pins no
+                # --reasoning-effort" for SystemNix — accepted, and the
+                # upstream row (docs/todo/upstream.md) tracks a --think /
+                # extra-slot-flags flag for bootstrap.
                 (lib.escapeShellArgs [
                   (lib.getExe' cfg.package "tq")
                   "bootstrap"
@@ -422,20 +432,15 @@ _: {
                   "--no-run"
                 ])
                 # GLM-5.4 (2026-11-24): z.ai's Loop-Transformer flagship.
-                # Thinking is NOT a slot flag here — it is declared on the
-                # model in the global crushrc (`model add zai/glm-5.4 …
-                # --thinking always`, crush-config repo), which survives
-                # slot routing; the managed block carries only the effort.
+                # Model + thinking live in the repo's .crushrc (see above);
+                # this invocation only keeps the rails: autonomy block,
+                # verify gate, metrics-off.
                 (lib.escapeShellArgs [
                   (lib.getExe' cfg.package "tq")
                   "bootstrap"
                   "SystemNix"
                   "--projects-dir"
                   "/home/${primaryUser}/projects"
-                  "--model"
-                  "zai/glm-5.4"
-                  "--reasoning"
-                  "xhigh"
                   "--verify"
                   "SystemNix=nix flake check --no-build"
                   "--no-run"

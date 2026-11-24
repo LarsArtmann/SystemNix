@@ -6,14 +6,18 @@
 # insurance against a powernap-catalog re-introduction — no upstream issue
 # to file (bug already gone at current version).
 lsp add statix --disabled true
-# Repo default model is pinned by the managed block below (tq-bootstrap
-# service, modules/nixos/services/tq-agent-pool.nix — re-rendered on every
-# deploy, so edit it there, not here). Thinking is enabled at the MODEL
-# declaration in the global crushrc (crush-config:
-# `model add zai/glm-5.4 ... --thinking always`), which survives slot
-# routing; the slot line therefore carries only the reasoning effort.
+# Repo default model for interactive sessions AND pool agents, owned HERE and
+# deliberately NOT inside the managed block below: tq bootstrap's template
+# renders `model large <model> --reasoning-effort <effort>` only, but thinking
+# in crush v0.102.0 is switched by the SLOT's `--think` — probe-verified
+# 2026-11-24 against z.ai (`"thinking": {"type": "disabled"}` without it,
+# `{"type": "enabled"}` with it); the global crushrc's `model add … --thinking
+# always` does NOT reach the request, and `--can-reason true` additionally
+# rewrites `--thinking` to `toggleable` (internal/shellconfig/model.go). The
+# block sits at EOF, so an outside-the-block slot line is never overridden.
+# GLM-5.4 = z.ai Loop-Transformer flagship; xhigh = max effort on this box.
+model large zai/glm-5.4 --think --reasoning-effort xhigh
 # >>> tq bootstrap (managed) >>>
 permissions allow view ls grep glob edit multiedit write bash fetch download todos
 option metrics false
-model large zai/glm-5.4 --reasoning-effort xhigh
 # <<< tq bootstrap (managed) <<<
