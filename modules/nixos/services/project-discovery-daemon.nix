@@ -118,8 +118,10 @@
           admin = {
             package =
               lib.mkDefault
-                (inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin).overrideAttrs
-                { vendorHash = "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY="; };
+                (
+                  (inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin).overrideAttrs
+                    { vendorHash = "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY="; }
+                );
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };
