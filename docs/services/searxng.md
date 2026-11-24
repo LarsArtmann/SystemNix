@@ -21,5 +21,18 @@
 - **Port 8889** (not 8888 — SigNoz OTel collector owns 8888).
 - **Engine init never retried** — Engines that fail network during `init()` at boot stay permanently disabled. DNS-gate `mkDnsGate` in `ExecStartPre` ensures DNS is ready.
 - **`formats = [ "html" ]`** — Blocks JSON API (403). Deliberate privacy hardening. Test in HTML mode.
+- **Streaming exploration CLOSED 2026-11-24 (task 000001a20e33): SearXNG cannot stream — upstream
+  REJECTED the feature** ([searxng/searxng#5891](https://github.com/searxng/searxng/issues/5891),
+  "Streaming/Progressive search results", closed not-planned by maintainer return42: progressive
+  output conflicts with the merge/re-rank-across-engines design; "made for end-user"). No SSE /
+  chunked / WebSocket output exists or is planned (2026 state, no PRs). All AI-consumption paths
+  (MCP servers, mcp-searxng et al.) poll `/search?format=json` and get one-shot results.
+  **Live probe 2026-11-24:** `GET /healthz` → 200; `GET /search?q=…&format=json` → **403** (the
+  `formats = ["html"]` hardening working as designed). If agent (hermes/tooling) search consumption
+  is ever wanted, the ONLY path is enabling `search.formats += ["json"]` in the module settings —
+  an owner decision because it reverses deliberate hardening (JSON responses bypass the HTML UI's
+  rate-limiter posture; external exposure is already SSO-gated via protectedVHost, LAN is open, so
+  the JSON surface would be LAN-readable). No streaming follow-up is possible; the decision row
+  lives in TODO_LIST.md.
 - **`autocomplete = "duckduckgo"`** — Google leaked every keystroke.
 - **XFF health-check noise is benign** — `/healthz` is exempt from limiter.
