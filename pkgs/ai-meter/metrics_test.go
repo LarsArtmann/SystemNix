@@ -11,12 +11,19 @@ func TestCallMovesItsInFlightMark(t *testing.T) {
 
 	call.SetModel("glm-5.3")
 	call.SetModel("glm-5.3") // idempotent
-	call.SetModel("")        // an absent model is "none", never a blank label
 
 	want := `ai_meter_active_requests{client="crush",upstream="zai",model="glm-5.3"} 1` + "\n" +
 		`ai_meter_active_requests{client="crush",upstream="zai",model="none"} 0` + "\n"
 	if got := r.Render(); !strings.Contains(got, want) {
 		t.Fatalf("in-flight mark not moved to its model:\n%s", got)
+	}
+
+	// An absent model is "none", never a blank label.
+	call.SetModel("")
+	want = `ai_meter_active_requests{client="crush",upstream="zai",model="glm-5.3"} 0` + "\n" +
+		`ai_meter_active_requests{client="crush",upstream="zai",model="none"} 1` + "\n"
+	if got := r.Render(); !strings.Contains(got, want) {
+		t.Fatalf("in-flight mark not moved to model none:\n%s", got)
 	}
 
 	call.End()

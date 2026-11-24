@@ -339,8 +339,8 @@ func TestInFlightGaugeSplitsByUpstreamAndModel(t *testing.T) {
 	responses := make(chan *http.Response, 3)
 	send := func(path, body string) {
 		req, _ := http.NewRequest(http.MethodPost, proxy.URL+path, strings.NewReader(body))
-		req.Header().Set("Content-Type", "application/json")
-		req.Header().Set("Authorization", "Bearer test-key-1")
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer test-key-1")
 		go func() { responses <- do(req) }()
 	}
 	send("/v1/alpha/chat/completions", `{"model":"m1"}`)
