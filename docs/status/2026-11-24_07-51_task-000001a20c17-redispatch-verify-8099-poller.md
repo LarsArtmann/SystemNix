@@ -39,3 +39,10 @@ budget. Closed as "verified, verdict unchanged".
 
 Residue: post-deploy tile-flip verification stays on the existing blocked:deploy
 rider rows (TODO_LIST 3814/3822) — not this item's scope.
+
+## Footer-repair note (2026-11-24 07:5x)
+
+This report and both queue-surface ticks first landed inside the formatter-swept
+heuristic daemon commit 2655f7281 (514 files, parallel-session changes included);
+this commit exists so the dispatch carries its own `Task-Queue-ID:` footer per the
+re-dispatch protocol step 4. No content change beyond this note.
