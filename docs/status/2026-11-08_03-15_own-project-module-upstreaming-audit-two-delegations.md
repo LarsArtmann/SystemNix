@@ -50,7 +50,7 @@ crm (543-line SystemNix module) · media-atlas (908) · papdashboard (968 — on
 - No deploy performed (module-structure change; both affected services: mr-sync-dashboard live — next deploy picks it up; nsfw-classifier currently owner-disabled in the tree).
 - CHANGELOG entry added; integration-registry.md reference-implementation list updated to include the two new delegates; 4 follow-up rows harvested to docs/todo/upstream.md; all worktrees (~/.cache/systemnix-pre/-verify/-proof) removed, scratch JSON/logs cleaned.
 
-## §f Direct follow-ups (self-harvested at authoring time)
+## f) Direct follow-ups (self-harvested at authoring time)
 
 1. **cvagent upstream capability merge** — fold the SystemNix deployment model (curated repo list, mesh-export target, AI model/baseurl/daily-cap, run-as primaryUser, 90min budget) into `Code-To-CV-Agent/nix/module.nix` options, then delegate `modules/nixos/services/cvagent.nix`; today the two `services.cvagent` namespaces collide and both cannot import. [blocked:push] → docs/todo/upstream.md
 2. **hermes delegation** — push hermes-agent (HEAD 686193c0 unpushed, contains `nix/nixosModules.nix`), probe-build, re-lock past 0ea6ea9, then delegate the 1076-line `hermes.nix` (biggest remaining extraction; upstream module shares options/renderers with its HM module). [blocked:push] → docs/todo/upstream.md

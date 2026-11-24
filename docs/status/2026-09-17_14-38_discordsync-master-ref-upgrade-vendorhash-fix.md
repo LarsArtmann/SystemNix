@@ -47,15 +47,15 @@
 
 | # | Item                                             | Evidence                                                                                                                                                                                                          |
 | - | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Branch-ref conversion of the `discordsync` input | `flake.nix` `github:LarsArtmann/DiscordSync?ref=master`; lock `original.ref` = `master` via python sorted-keys round-trip (1-line diff, `locked` byte-identical)                                                  |
-| 2 | Upstream vendorHash staleness FIXED              | DiscordSync `df1a2bf0`: `vendorHash.nix` → `sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw=`; `flake.nix` cqrs-lint hash → `sha256-02HmHaC+cYkdn2xPtX6v9YDgu7XQejslulnmFyNS8HY=`; pushed `c3494bd6..df1a2bf0` |
-| 3 | SystemNix lock lifted to real master HEAD        | `nix flake lock --update-input discordsync --refresh` → `df1a2bf070f0148a1d7892932aa247cf9446b491`                                                                                                                |
-| 4 | Upstream probe green at HEAD                     | `nix build github:LarsArtmann/DiscordSync/master#default.goModules --refresh` → store path at `discordsync-df1a2bf`                                                                                               |
-| 5 | Package builds from OUR lock                     | `f.inputs.discordsync.packages.x86_64-linux.default` → `/nix/store/xbd8n0r2…-discordsync-df1a2bf`                                                                                                                 |
-| 6 | `nix flake check --no-build`                     | "all checks passed" (evo-x2 eval accepts the +131-commit upstream module)                                                                                                                                         |
-| 7 | Upstream delta screen (interface level)          | `nixos-module.nix` diff is purely ADDITIVE: new `tursoSyncMonthlyBudgetBytes` option (int, default 2500000000 = 2.5 GB/month Turso sync breaker) + one env mapping                                                |
-| 8 | Doctrine updates                                 | `flake.nix` comment rewritten to post-fix doctrine; AGENTS.md pin-policy bullet flipped to FIXED+LIFTED; NAR-hash/daemon-cache bullet amended with the **`--refresh` no-sudo bypass** (live-verified)             |
-| 9 | Tree state                                       | Clean; all session artifacts daemon-committed (HEAD era `517c48b0`)                                                                                                                                               |
+| ~~1~~ done — branch-ref conversion live in flake.nix (?ref=master) + lock original.ref=master (in-report evidence) | ~~Branch-ref conversion of the `discordsync` input~~ | ~~`flake.nix` `github:LarsArtmann/DiscordSync?ref=master`; lock `original.ref` = `master` via python sorted-keys round-trip (1-line diff, `locked` byte-identical)~~ |
+| ~~2~~ done — upstream df1a2bf0 vendorHash fixes pushed c3494bd6..df1a2bf0 (in-report evidence) | ~~Upstream vendorHash staleness FIXED~~ | ~~DiscordSync `df1a2bf0`: `vendorHash.nix` → `sha256-Zu9kdtqb6Af4OjWGNrYySHOgr69PqKEzGLmAnnSv7aw=`; `flake.nix` cqrs-lint hash → `sha256-02HmHaC+cYkdn2xPtX6v9YDgu7XQejslulnmFyNS8HY=`; pushed `c3494bd6..df1a2bf0`~~ |
+| ~~3~~ done — lock lifted to df1a2bf0 (in-report evidence) | ~~SystemNix lock lifted to real master HEAD~~ | ~~`nix flake lock --update-input discordsync --refresh` → `df1a2bf070f0148a1d7892932aa247cf9446b491`~~ |
+| ~~4~~ done — upstream goModules probe green at discordsync-df1a2bf (in-report evidence) | ~~Upstream probe green at HEAD~~ | ~~`nix build github:LarsArtmann/DiscordSync/master#default.goModules --refresh` → store path at `discordsync-df1a2bf`~~ |
+| ~~5~~ done — package build from OUR lock green (in-report evidence) | ~~Package builds from OUR lock~~ | ~~`f.inputs.discordsync.packages.x86_64-linux.default` → `/nix/store/xbd8n0r2…-discordsync-df1a2bf`~~ |
+| ~~6~~ done — nix flake check --no-build all-green (in-report evidence) | ~~`nix flake check --no-build`~~ | ~~"all checks passed" (evo-x2 eval accepts the +131-commit upstream module)~~ |
+| ~~7~~ done — nixos-module.nix delta verified additive (tursoSyncMonthlyBudgetBytes + env map) | ~~Upstream delta screen (interface level)~~ | ~~`nixos-module.nix` diff is purely ADDITIVE: new `tursoSyncMonthlyBudgetBytes` option (int, default 2500000000 = 2.5 GB/month Turso sync breaker) + one env mapping~~ |
+| ~~8~~ done — doctrine edits landed (flake.nix comment + AGENTS.md pin-policy + cache-bust bullet) | ~~Doctrine updates~~ | ~~`flake.nix` comment rewritten to post-fix doctrine; AGENTS.md pin-policy bullet flipped to FIXED+LIFTED; NAR-hash/daemon-cache bullet amended with the **`--refresh` no-sudo bypass** (live-verified)~~ |
+| ~~9~~ done — tree clean; session artifacts daemon-committed, era 517c48b0 (in-report evidence) | ~~Tree state~~ | ~~Clean; all session artifacts daemon-committed (HEAD era `517c48b0`)~~ |
 
 ## b) PARTIALLY DONE
 
@@ -64,18 +64,18 @@
 | #                                                                          | Item                               | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | -------------------------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~~1~~ done — deployed: docs/status/2026-09-18_05-58 (discordsync 5fe2af13) | ~~**THE DEPLOY**~~                 | ~~Pre-deploy: 62 passed / 19 warnings / 0 failed — blocked ONLY by the memory-pressure gate (IO PSI some avg10 60% + disk busy 102%, real storm from parallel sessions building `.#installer-standin-initrd` + linkers + golangci-lint + 10-core zstd). My PSI-wait retry chain had a field-parsing bug (gated avg60, not avg10) and was KILLED before misfiring; no deploy fired (profile still `781-link`, zero switch processes). **Deployed discordsync binary is still c0604e4-era.**~~ |
-| 2                                                                          | `packages.cqrs-lint` upstream      | FOD hash fixed (green), but the package build still fails AFTER the FOD: `updates to go.mod needed` — go-cqrs-lite `cmd/cqrs-lint` module inconsistency with DiscordSync's locked input pins. Diagnosed, NOT fixed (needs tidy/tag upstream or a package drop — owner decision). SystemNix does not consume it.                                                                                                                                                                              |
-| 3                                                                          | Post-deploy verification           | Not run (blocked on deploy): post-deploy-check, deployed-rev probe, Gatus checks, `TURSO_SYNC_MONTHLY_BUDGET_BYTES` in the rendered unit, `/run/current-system` anchoring.                                                                                                                                                                                                                                                                                                                   |
-| 4                                                                          | Content review of the +131 commits | Stat-level only (206 files, +10,057/−2,686; turso-sync views, monitoring/alerts.yml +43, web churn). Not reviewed line-by-line.                                                                                                                                                                                                                                                                                                                                                              |
-| 5                                                                          | The 2026-09-16 pin-portfolio       | The now-proven probe→fix→lift protocol applies to the 6 remaining "pins KEPT" repos (signoz-src, signoz-collector-src, library-policy, go-auto-upgrade, overview, projects-management-automation) — none touched this session.                                                                                                                                                                                                                                                               |
+| 2 **→ [docs/todo/upstream.md](docs/todo/upstream.md)** | `packages.cqrs-lint` upstream | FOD hash fixed (green), but the package build still fails AFTER the FOD: `updates to go.mod needed` — go-cqrs-lite `cmd/cqrs-lint` module inconsistency with DiscordSync's locked input pins. Diagnosed, NOT fixed (needs tidy/tag upstream or a package drop — owner decision). SystemNix does not consume it. |
+| ~~3~~ done — post-deploy smoke 98 PASS / 1 baseline-known FAIL in the 2026-09-18 deploy cluster: docs/status/2026-09-18_05-58_github-auto-assign-deploy-lock-war-resolution.md | ~~Post-deploy verification~~ | ~~Not run (blocked on deploy): post-deploy-check, deployed-rev probe, Gatus checks, `TURSO_SYNC_MONTHLY_BUDGET_BYTES` in the rendered unit, `/run/current-system` anchoring.~~ |
+| ~~4~~ **NOT-DO — one-shot content review of the +131 delta; it went live 2026-09-18 (deploy 5fe2af13) and the review window passed — live-service state owned by docs/services/discordsync.md.** | ~~Content review of the +131 commits~~ | ~~Stat-level only (206 files, +10,057/−2,686; turso-sync views, monitoring/alerts.yml +43, web churn). Not reviewed line-by-line.~~ |
+| ~~5~~ done — pin portfolio landed 2026-09-16..18: four flips in docs/status/2026-09-18_05-45_flake-inputs-master-flip-wave.md + signoz pair post-migration-review (docs/todo/upstream.md:38 ALL RESOLVED) | ~~The 2026-09-16 pin-portfolio~~ | ~~The now-proven probe→fix→lift protocol applies to the 6 remaining "pins KEPT" repos (signoz-src, signoz-collector-src, library-policy, go-auto-upgrade, overview, projects-management-automation) — none touched this session.~~ |
 
 ## c) NOT STARTED
 
-1. Upstream repair of go-cqrs-lite `cmd/cqrs-lint` (tidy → tag → re-pin in DiscordSync → re-derive hash) — or dropping `packages.cqrs-lint` from DiscordSync's flake.
-2. VendorHash drift prevention upstream: DiscordSync's flake already ships a "Fast vendorHash drift check" (`flake.nix:463`) — it was never wired to anything that runs (CI presumably dead in the hosted-minutes class, unverified). Stale hashes will recur otherwise.
-3. DiscordSync CI status verification + documentation in its repo AGENTS.md (CV precedent).
-4. `docs/services/discordsync.md` runbook covering the new breaker option and its interplay with our local-first Turso stance (nothing written beyond AGENTS.md/flake.nix this session).
-5. VM-test coverage for the discordsync module incl. the new option (existence of a discordsync VM test not even checked).
+1. Upstream repair of go-cqrs-lite `cmd/cqrs-lint` (tidy → tag → re-pin in DiscordSync → re-derive hash) — or dropping `packages.cqrs-lint` from DiscordSync's flake. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
+2. VendorHash drift prevention upstream: DiscordSync's flake already ships a "Fast vendorHash drift check" (`flake.nix:463`) — it was never wired to anything that runs (CI presumably dead in the hosted-minutes class, unverified). Stale hashes will recur otherwise. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
+3. DiscordSync CI status verification + documentation in its repo AGENTS.md (CV precedent). **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
+~~4. `docs/services/discordsync.md` runbook covering the new breaker option and its interplay with our local-first Turso stance (nothing written beyond AGENTS.md/flake.nix this session).~~ done — docs/services/discordsync.md landed (runbook: breaker semantics, alerts mirror, local-first Turso stance)
+~~5. VM-test coverage for the discordsync module incl. the new option (existence of a discordsync VM test not even checked).~~ done — discordsync VM test module now exists: tests/test-discordsync-immich-shape.nix (option-level coverage not separately verified)
 
 ## d) TOTALLY FUCKED UP
 
@@ -87,12 +87,12 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Deploy-completion doctrine:** a gated deploy must have an attended owner or an alerting completion path — never a background loop that can expire silently (and whose instrumentation must itself be verified before arming).
-2. **One-runbook bump protocol:** write the full probe→fix→lift→verify→deploy chain as a single AGENTS.md block instead of scattered bullets (this session executed it correctly only by stitching bullets).
-3. **No-sudo paths first:** check the tool's banned-command list before privileged attempts; `--refresh` is now the documented cache-bust (AGENTS.md amended).
-4. **Commit-message authorship under daemon races:** when the daemon commits my staged work, `--amend` BEFORE pushing restores authorship; add that to the daemon-race rules.
-5. **Gate instrumentation testing:** my retry wrapper's parsing bug is exactly the `comm`/collation class of "the tool around the gate lies". A tiny selftest for PSI parsers would prevent recurrence.
-6. **Upstream drift prevention:** stale vendorHashes are a RECURRING class (CV, DiscordSync, 6 more repos). The probe step should be automated (flake check or scheduled probe) rather than discovered at bump time.
+~~1. **Deploy-completion doctrine:** a gated deploy must have an attended owner or an alerting completion path — never a background loop that can expire silently (and whose instrumentation must itself be verified before arming).~~ **NOT-DO — doctrine never canonized; the one-off PSI-wait chain was killed in-session and deploys run through the concurrent-deploy flock guard (scripts/deploy.sh:63).**
+~~2. **One-runbook bump protocol:** write the full probe→fix→lift→verify→deploy chain as a single AGENTS.md block instead of scattered bullets (this session executed it correctly only by stitching bullets).~~ done — consolidated bump ritual lives in docs/agents/integration-registry.md Consuming LarsArtmann Flakes (probe-before-lock codified at :137)
+~~3. **No-sudo paths first:** check the tool's banned-command list before privileged attempts; `--refresh` is now the documented cache-bust (AGENTS.md amended).~~ **NOT-DO — superseded: the --refresh/--update-input era is gone — AGENTS.md:136 documents nix flake update <input> + rev re-read; probe-before-lock codified (docs/agents/integration-registry.md:137).**
+~~4. **Commit-message authorship under daemon races:** when the daemon commits my staged work, `--amend` BEFORE pushing restores authorship; add that to the daemon-race rules.~~ done — daemon-race discipline codified: AGENTS.md:115 (verify staged content AND HEAD identity before amending)
+~~5. **Gate instrumentation testing:** my retry wrapper's parsing bug is exactly the `comm`/collation class of "the tool around the gate lies". A tiny selftest for PSI parsers would prevent recurrence.~~ done — PSI parser fixtures landed: scripts/test-psi-percent-semantics.sh (drives the real emitter with real /proc/pressure shape)
+6. **Upstream drift prevention:** stale vendorHashes are a RECURRING class (CV, DiscordSync, 6 more repos). The probe step should be automated (flake check or scheduled probe) rather than discovered at bump time. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
 
 ## f) NEXT (ordered, session-grounded)
 
@@ -104,46 +104,47 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 ~~4. Verify Gatus DiscordSync checks go green and stay green through one sync cycle.~~ done — deploy cluster done: docs/status/2026-09-18_05-58
 ~~5. Confirm `TURSO_SYNC_MONTHLY_BUDGET_BYTES=2500000000` rendered in the deployed unit (new env).~~ done — deploy cluster done: docs/status/2026-09-18_05-58
 ~~6. Anchoring check: `/run/current-system` matches the numbered profile (exit-4 skip class) — profile was `781-link` pre-deploy.~~ done — deploy cluster done: docs/status/2026-09-18_05-58
-7. Decide explicit `tursoSyncMonthlyBudgetBytes` for our config vs the 2.5 GB default (interacts with the local-first Turso stance).
+~~7. Decide explicit `tursoSyncMonthlyBudgetBytes` for our config vs the 2.5 GB default (interacts with the local-first Turso stance).~~ **NOT-DO — moot while Turso sync is local-only (free-plan blocked) — the governing upgrade-vs-local-only decision is encoded DECISION-PENDING in docs/services/discordsync.md.**
 
 **Upstream DiscordSync follow-ups**
-8. Content-review the +131 commits (capture pipeline, DLQ, backfill changes) before/after go-live; daemon messages hide everything.
-9. Map the upstream `monitoring/alerts.yml` additions (+43 lines) to our Gatus/SigNoz surfaces where relevant.
-10. Review the turso-sync dashboard view changes (`internal/web/turso_sync_view_test.go` +116) for UI impact.
-11. Fix `packages.cqrs-lint`: tidy go-cqrs-lite `cmd/cqrs-lint`, tag, re-pin, re-derive hash — OR drop the package (owner decision; it feeds DiscordSync's verifyScript health-score gate).
-12. Verify DiscordSync CI status; document dead-CI in its AGENTS.md (CV precedent) if confirmed.
-13. Wire the existing "Fast vendorHash drift check" (`flake.nix:463`) into CI or a scheduled probe so stale hashes cannot recur silently.
+~~8. Content-review the +131 commits (capture pipeline, DLQ, backfill changes) before/after go-live; daemon messages hide everything.~~ **NOT-DO — one-shot review of the +131 delta; window passed (delta live since the 2026-09-18 deploy) — live concerns owned by docs/services/discordsync.md.**
+~~9. Map the upstream `monitoring/alerts.yml` additions (+43 lines) to our Gatus/SigNoz surfaces where relevant.~~ done — monitoring/alerts.yml additions mirrored into _signoz-alerts.nix, 5 rules deployed+live (docs/services/discordsync.md:65)
+~~10. Review the turso-sync dashboard view changes (`internal/web/turso_sync_view_test.go` +116) for UI impact.~~ **NOT-DO — one-shot UI review of a stale +116 delta (2026-09-17 base); window passed — current web surface owned by docs/services/discordsync.md.**
+11. Fix `packages.cqrs-lint`: tidy go-cqrs-lite `cmd/cqrs-lint`, tag, re-pin, re-derive hash — OR drop the package (owner decision; it feeds DiscordSync's verifyScript health-score gate). **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
+12. Verify DiscordSync CI status; document dead-CI in its AGENTS.md (CV precedent) if confirmed. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
+13. Wire the existing "Fast vendorHash drift check" (`flake.nix:463`) into CI or a scheduled probe so stale hashes cannot recur silently. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
 
 **Pin portfolio (protocol now proven)**
-14. Apply probe→fix→lift to the 6 remaining broken pins: library-policy, go-auto-upgrade, overview, projects-management-automation (hash-refresh chores); signoz-src + signoz-collector-src (migration-review — schema-migrator runs on service start).
-15. go-taskqueue: flip the interim `git+file` input to `github:…?ref=master` once the missing rev is pushed (CI is dark for it).
+~~14. Apply probe→fix→lift to the 6 remaining broken pins: library-policy, go-auto-upgrade, overview, projects-management-automation (hash-refresh chores); signoz-src + signoz-collector-src (migration-review — schema-migrator runs on service start).~~ done — wave landed 2026-09-16..18: four flips in docs/status/2026-09-18_05-45_flake-inputs-master-flip-wave.md + signoz pair post-migration-review (docs/todo/upstream.md:38 ALL RESOLVED)
+~~15. go-taskqueue: flip the interim `git+file` input to `github:…?ref=master` once the missing rev is pushed (CI is dark for it).~~ done — input flipped: flake.nix:629 carries github:LarsArtmann/go-taskqueue?ref=master
 
 **Docs & doctrine**
-16. Consolidate the bump runbook into one AGENTS.md block (see e2).
-17. Sweep AGENTS.md for remaining `--update-input` mentions missing the `--refresh` caveat.
-18. Write `docs/services/discordsync.md` (breaker semantics, local-first interplay, bump discipline incl. `--refresh`).
-19. Check for a discordsync VM test; add coverage for the new option if a test module exists.
-20. TODO_LIST entries: cqrs-lint upstream task, pin-portfolio sweep, vendorHash-drift prevention.
+~~16. Consolidate the bump runbook into one AGENTS.md block (see e2).~~ done — consolidated ritual: docs/agents/integration-registry.md Consuming LarsArtmann Flakes (probe-before-lock :137)
+~~17. Sweep AGENTS.md for remaining `--update-input` mentions missing the `--refresh` caveat.~~ done — AGENTS.md:136 documents the --update-input silent-no-op gotcha + the modern nix flake update form
+~~18. Write `docs/services/discordsync.md` (breaker semantics, local-first interplay, bump discipline incl. `--refresh`).~~ done — docs/services/discordsync.md landed (breaker semantics, local-first interplay, bump discipline)
+~~19. Check for a discordsync VM test; add coverage for the new option if a test module exists.~~ done — discordsync VM test exists: tests/test-discordsync-immich-shape.nix
+20. TODO_LIST entries: cqrs-lint upstream task, pin-portfolio sweep, vendorHash-drift prevention. **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
 
 **Watch-items noticed this session**
-21. Next upstream daemon churn on DiscordSync master will move HEAD past `df1a2bf0` — probe with `--refresh` before any future bump (hash may go stale again, same class).
-22. The lock's internal templ-components subtree moved (`c35bdf5` → `8a046c4`) with the lift — root input is separate; spot-verify no other consumer pinned the old subtree.
-23. `tq-redesign` manual process (PID 229432) still flagged by deploy.sh's double-pool guard — complete the cutover per `docs/services/tq.md`.
-24. Parallel-session build storms keep blocking deploys fleet-wide (3 status files today) — consider routing their builds through `heavy-job` (workload-admission) per doctrine.
-25. Consider a lightweight scheduled upstream-probe check here (staleness discovered at bump time is the recurring pain).
+~~21. Next upstream daemon churn on DiscordSync master will move HEAD past `df1a2bf0` — probe with `--refresh` before any future bump (hash may go stale again, same class).~~ done — discipline codified as probe-before-lock (docs/agents/integration-registry.md:137); the --refresh mechanism itself superseded by nix flake update (AGENTS.md:136)
+~~22. The lock's internal templ-components subtree moved (`c35bdf5` → `8a046c4`) with the lift — root input is separate; spot-verify no other consumer pinned the old subtree.~~ **NOT-DO — one-shot spot-verify; window passed — templ-components re-pinned and tag-trained repeatedly since (docs/todo/upstream.md:183).**
+~~23. `tq-redesign` manual process (PID 229432) still flagged by deploy.sh's double-pool guard — complete the cutover per `docs/services/tq.md`.~~ done — tq pool cutover complete, round-9 manual pool retired — docs/services/tq.md:59,177 (tq-agent-pool live)
+24. Parallel-session build storms keep blocking deploys fleet-wide (3 status files today) — consider routing their builds through `heavy-job` (workload-admission) per doctrine. **→ [docs/todo/stability.md](docs/todo/stability.md)**
+~~25. Consider a lightweight scheduled upstream-probe check here (staleness discovered at bump time is the recurring pain).~~ **NOT-DO — superseded: probing moved to bump time (probe-before-lock, docs/agents/integration-registry.md:137); no scheduled prober was ever built.**
 
 _(Stopped at 25 — the remaining items would be padding; the above is the complete set this session actually surfaced.)_
 
 ## g) Questions I cannot figure out myself
 
-1. **Deploy timing:** should I retry the deploy as soon as PSI drains (even if the parallel session's build is still running), or hold until the parallel `installer-standin-initrd` work is fully finished? I can observe pressure, not intent — and three sessions were deploy-blocked today, so "quiet" may not arrive soon.
+~~1. **Deploy timing:** should I retry the deploy as soon as PSI drains (even if the parallel session's build is still running), or hold until the parallel `installer-standin-initrd` work is fully finished? I can observe pressure, not intent — and three sessions were deploy-blocked today, so "quiet" may not arrive soon.~~ **NOT-DO — deploy landed 2026-09-18 (docs/status/2026-09-18_05-58: discordsync 5fe2af13); timing question moot.**
 2. **cqrs-lint disposition:** fix it properly in go-cqrs-lite (tidy → tag → re-pin → re-hash; it feeds DiscordSync's verifyScript health-score gate) or drop `packages.cqrs-lint` from DiscordSync's flake entirely?
-3. **Upstream history hygiene:** leave `df1a2bf0`'s heuristic daemon message as-is (my vote — rewriting pushed master is worse), or add a follow-up DiscordSync commit documenting the fix rationale in its repo docs/AGENTS.md?
+3. **Upstream history hygiene:** leave `df1a2bf0`'s heuristic daemon message as-is (my vote — rewriting pushed master is worse), or add a follow-up DiscordSync commit documenting the fix rationale in its repo docs/AGENTS.md? **→ [docs/todo/upstream.md](docs/todo/upstream.md)**
 
 ---
 
 ## Appendix: session artifact map
 
+<!-- check-rows:ledger -->
 | Artifact                        | Location                                                                                               |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Input URL (branch-ref governed) | `flake.nix` `discordsync` block (comment carries the full post-fix doctrine)                           |

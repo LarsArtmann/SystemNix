@@ -61,7 +61,7 @@ Two exit-4 ripples at activation (NOT this class, queued separately):
 - pocket-id-provision failed minting the OpenCloud Web client secret → opencloud start-limit-hit (pre-existing opencloud-pilot surface; provisioner retry at 07:20 failed the same way).
 - The runner was gracefully STOPPED at 07:18:39 by the deploy's token-regen ripple (forgejo-generate-token re-ran in the provisioner loop; the pending start leg was likely lost in the exit-4 retry transaction) and sat dead until manually restarted 07:33 — active/running since. The §21 runner canary added tonight would have flagged exactly this at the next deploy; attribution of the one-legged stop (ci-watchdog vs deploy token flow) queued.
 
-## f. Follow-ups (self-harvested)
+## f) Follow-ups (self-harvested)
 
 - **Reboot-verify** (owner): one planned reboot must show ZERO `deleted to break ordering cycle` lines, the runner pulled via forgejo.service.wants, and `systemd-analyze critical-chain` placing gated probes under late-applications, not multi-user. → HARVESTED into the rescoped [blocked:user] row in docs/todo/services.md (single row, cites this report).
 - **CI nightly negative-tests.yml** will run the full harness including the new group — no separate row (existing pipeline owns it).

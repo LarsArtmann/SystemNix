@@ -39,7 +39,7 @@
 3. **Hash fixes must cite the locked rev they target** (now embodied in cv.nix comments): the strand flaps between upstream states; a hash without its rev citation is unfalsifiable when the lock moves.
 4. **The quiescence gate treats untracked files as dirty** — conservative and probably right (auto-discovery evaluates untracked modules); keep, but document the semantics in the productized script.
 
-## f. Next (sorted)
+## f) Next (sorted)
 
 1. Determine the 23:31 foreign deploy's outcome: anchor-by-number (`readlink /run/current-system` vs newest `system-N-link` BY NUMBER); if it landed ≥957 → skip to verification; if it died → re-arm v3 (`bash ~/.cache/oc-e3-deploy8-sequencer.sh`), it now retries cleanly.
 2. Disarm the stale predecessor sequencer: `/run/current-system/sw/bin/kill 2530517` (only after (1) — it may be mid-battery).

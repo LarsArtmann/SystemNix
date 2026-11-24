@@ -56,7 +56,7 @@
 6. **Every live-verified fix gets a render pin same-session** — the crowdsec-render check caught two of my own regressions before deploy; extending that pattern to the caddy mode override (done) should be the default.
 7. **The crowdsec journal accumulates ~90+ error lines per restart while any 0600 log file exists** — the mode fix + timer silences it; consider a gatus/SigNoz "acquisition tail errors" counter so this class pages instead of lurking.
 
-## §f NEXT — up to 50 things to get done (grouped, highest impact first)
+## f) NEXT — up to 50 things to get done (grouped, highest impact first)
 
 **This wave's tail (blocked only on the running deploy):**
 

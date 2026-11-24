@@ -47,7 +47,7 @@ Nothing this session *broke* — it was read-only. But brutally honest findings:
 5. **Bound the lint fleet:** concurrent-run cap and/or shared lint-cache verification across repos (48-minute single lint runs are the user-visible symptom).
 6. **Make the pre-read a habit, not luck:** `ls -t docs/status/ | head` + a PSI probe BEFORE any build-adjacent diagnosis (both cost seconds; both were afterthoughts this session).
 
-## §f Up to 50 things we should get done next
+## f) Up to 50 things we should get done next
 
 Grouped; items 1–8 are this session's direct follow-ups, 9–16 storm containment, 17–26 cache/toolchain hygiene, 27–32 process/docs, 33–50 pointers to already-tracked adjacent rows noticed during this session (pointers only — no re-research done).
 

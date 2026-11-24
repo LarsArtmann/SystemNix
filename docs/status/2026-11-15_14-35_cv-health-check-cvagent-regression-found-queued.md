@@ -133,7 +133,7 @@ live systemd/busctl/journal/cgroup/HTTP probes. No other research.
    productized `scripts/post-deploy-check.sh` (with its CV legs) is the durable surface and
    should run once the wave drains (§f.2), not a second hand-rolled pass.
 
-## §f UP TO 50 THINGS TO GET DONE NEXT (new = harvested this session into TODO_LIST + services.md; existing = already queued, cited not duplicated)
+## f) UP TO 50 THINGS TO GET DONE NEXT (new = harvested this session into TODO_LIST + services.md; existing = already queued, cited not duplicated)
 
 **New this session (harvested, commit pending below):**
 1. [new→services.md] Verify gen-1013 anchor equality (`readlink /run/current-system` == newest

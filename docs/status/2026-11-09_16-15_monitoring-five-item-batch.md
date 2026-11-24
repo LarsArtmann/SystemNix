@@ -34,7 +34,7 @@ Ran `scripts/post-deploy-check.sh` against live (2026-11-09 ~15:58): generation 
 
 Result: **PASS 169 / FAIL 4 / SKIP 4 / WARN 15 / STORM-SUSPECT 0** at io avg10 71% (storm-building band). The 4 FAILs ALL match the previous run's baseline (advisory exit 1): Health Hub /readyz 503 (remote dark), Offsite Borg tripwire binary not executable, tq-agent-pool 256% CPU (harvest burst), node-exporter journal 505/min. The batch's requested legs are green: SigNoz impersonation PASS (Pocket ID sole auth boundary), auth-gateway vHost 200s across the wave (banksync/tq/etc.), SigNoz coverage traces_missing 0. Log preserved at ~/.cache/pdc-1558.log (volatile — contents narrated here).
 
-## f. Follow-ups (deliberately NOT harvested as queue rows beyond what TODO_LIST already carries)
+## f) Follow-ups (deliberately NOT harvested as queue rows beyond what TODO_LIST already carries)
 
 1. The new ingest gauges need a post-deploy probe (`system_papdashboard_ingest_reachable 1` + timestamp in the textfile) once the deploy lands — existing row at docs/todo/monitoring.md line 37 (the 2026-10-28 ingest-probe batch verify) covers the family; folded there rather than duplicated.
 2. README line 18 "52 alert rules" vs the gatus-286 stamp: rule-count stamping is enforced by doc-counts already; no action.

@@ -71,7 +71,7 @@
 2. PSI-calm window: the owed flake check + /data re-baseline (existing rows).
 3. The unharvested-§f backlog is 203 and growing (each parallel session adds a report) — the batch-harvest rows are the structural fix.
 
-## §f harvest note (self-harvest at authoring)
+## f) harvest note (self-harvest at authoring)
 
 - **Rowed below in this pass:** SigNoz paneling for node_vm_top_vmsize_bytes (monitoring); the sops-nix config.assertions crash as a probe-pattern quirk row (pipeline).
 - **Covered by existing rows, not duplicated:** flake-check leg, /data re-baseline, stale-deploy-claims sweep, storage-ledger prerequisites.

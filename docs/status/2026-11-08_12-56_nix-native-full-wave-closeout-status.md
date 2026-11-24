@@ -49,7 +49,7 @@
 4. **The tracked-files trap** (new part file invisible to eval until `git add`) cost a cycle — a devshell alias `nixadd <file>` or an eval-time hint when a `flake/parts/**` file exists untracked would close it.
 5. **T8/T10's plan premises were stale** — the planning session verified them at PLAN time but a prior wave had already migrated the code. A `git log --since` freshness note per V-row in future plans would flag premises older than the last wave.
 
-## §f NEXT (up to 50, ranked; queue-harvested rows marked Q)
+## f) NEXT (up to 50, ranked; queue-harvested rows marked Q)
 
 1. **Re-fire the deploy** (tree green, drift real) → post-deploy: live `/etc/systemnix/integration-manifest.json` probe, full battery on the DEPLOYED gen (the true end-to-end proof — loader consuming the live file), anchor check (`readlink /run/current-system` vs newest `system-N-link` by NUMBER), then push. *(this session, gated on instructions/PSI)*
 2. **D4 cache-name single-source — OWNER DECISION** (Q: existing [decision] row, refreshed): typed per-name model + generated fragments + drift gates vs accepting parity-guarded coupling; ~half a day on protection code.

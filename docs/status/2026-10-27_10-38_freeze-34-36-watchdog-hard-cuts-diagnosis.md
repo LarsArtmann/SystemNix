@@ -96,7 +96,7 @@ Both terminate with the same discriminators as #36: mid-traffic journal end, no 
 - **The thermal guard's effectiveness criterion is a boot-level test, not a spot check.** #36 is the first boot that _fails_ it cleanly (452 cycles, all ≥95 °C). Treat `thermal_pstate_guard_deep_trips_total` per boot as the deficit metric — a five-digit counter delta in one boot is the physical-fix alarm, not a tuning knob.
 - **A watchdog reset is evidence of starvation _duration_ (≥30 s unscheduled), not of a single culprit.** Screen-starvation and IO-starvation both starve PID 1; both were present.
 
-## f. Follow-ups (harvested)
+## f) Follow-ups (harvested)
 
 1. **`[blocked:user]` cooling inspection** — baits 15–17 appended to `docs/todo/stability.md:117`; criterion-level deficit proven; no heavy builds/flake checks until inspected (this session deliberately ran NO `nix build` / `nix flake check`).
 2. **`[ready]` shed-load escalation rung** — evidence extended on `docs/todo/stability.md:238`: cap-to-60 % cycles 452×/boot, so the third rung must _remove load_, not merely lower clocks.

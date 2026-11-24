@@ -34,7 +34,7 @@ Guard zones 2/3/4/5 fired ZERO trips in 10:00–11:00 (zone3's combo — PSI avg
 - **f.3 — bun exposure is now double-covered:** the systemd-run overlay (8G cap) for wrapped runs + bun-memory-watchdog (2026-10-10, SIGKILL ≥16 GiB VmRSS) for plain runs. The 10-03 giant predates the watchdog. No new config work justified by this triage.
 - **f.4 — Journal retention cannot answer 9-day-old questions.** journald vacuum dropped 10-03 entirely; every future OOM/freeze triage must harvest the journal SAME-DAY or rely on SigNoz series. Reinforces the crash-autopsy.sh queue item.
 
-## f. Follow-ups
+## f) Follow-ups
 
 - f.1 → queued: census memory-collector durability ring (local textfile last-N fallback) — TODO_LIST.md + docs/todo/stability.md.
 - f.4 → already tracked (crash-autopsy.sh row, 10-11 queue).

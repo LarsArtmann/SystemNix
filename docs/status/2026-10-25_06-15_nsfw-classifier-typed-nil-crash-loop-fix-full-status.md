@@ -35,7 +35,7 @@
 
 `printf 'GET /readyz … Host: nsfw.home.lan' | openssl s_client -quiet -connect 192.168.1.150:443 -servername nsfw.home.lan` → **HTTP/1.1 200 OK**, JSON `"status":"pass"`, `"version":"61a5257"`, 12/12 checks pass (Classifier, Runtime, Config, all six stores, skin/face/exposed, Listener), pairing token served (extension auto-re-pair contract intact). gatus probes 200 every 30s since 06:05:21 (245–345µs ≪ 500ms bar); Caddy traffic (`client_ip=192.168.1.150`) answering 200; zero panics since 05:43.
 
-## f. Direct follow-ups — harvested at authoring time
+## f) Direct follow-ups — harvested at authoring time
 
 1. **MIGraphX kernel cache never persists** (every start recompiles: 22 min warm-cache under load, 74m50s calm-cold; the runbook's "~2min cached under /var/cache" claim never held — cache dir has never existed). → `docs/todo/services.md` new [ready] row + TODO_LIST queue one-liner.
 2. **cbor undecodable-event WARN flood** at hydration (per-event WARN lines every boot; skip+count+sample, `/metrics` counter). → services.md new [ready] row + queue.

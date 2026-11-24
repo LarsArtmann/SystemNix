@@ -46,7 +46,7 @@
 4. Flip `services.google-sync.enable = true` (platforms/nixos/system/configuration.nix — drive-paperless rides the same flip) + `nix run .#deploy` (after the go-standard break clears).
 5. Verify: mirror seed (`journalctl -u google-sync -f`, 48h budget, `/mnt/pool/backups/google-drive*`), then hourly ingest (`journalctl -u drive-paperless`) — expect a LONG paperless OCR/AI consumption tail; watch paperless_tasks + the ingest freshness alerting.
 
-## f. Self-harvested follow-ups (landed in TODO_LIST + docs/todo/services.md at authoring time)
+## f) Self-harvested follow-ups (landed in TODO_LIST + docs/todo/services.md at authoring time)
 
 1. **[ready] drive-paperless end-to-end VM test** (real DRF, not stubs; test-paperless.nix co-import pattern) — f.1 row in queue + services.md.
 2. **[ready] Post-deploy battery for the go-live flip** (timers render, token mint result=success, first journal lines, backup_all_healthy row) — f.2 row.

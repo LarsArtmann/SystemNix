@@ -31,7 +31,7 @@ Anchor clean (current-system == newest gen, hf6a5dssk). cv 200 (zero SIGSEGVs). 
 
 SearXNG engine-init fail, Offsite Borg tripwire binary (getExe/meta.mainProgram), buildcache-gc 1250 lines/min journal rate, tq dlq/fold warns, monitor365-server 1.69 M MemoryHigh watermark hits.
 
-## f. Follow-ups (all self-harvested at authoring time)
+## f) Follow-ups (all self-harvested at authoring time)
 
 - **Calm-gate + memory-guard phantom blindness** → queued [ready] in TODO_LIST.md + docs/todo/stability.md (device-truth crosscheck leg for maintenance-entry-gate; also blocks the guard's io-PSI<20 restore bar indefinitely while ghostty windows are open).
 - **Subvol creation script coverage** (users/lars/tmp + golangci-lint) → queued [ready] in TODO_LIST.md + docs/todo/storage.md.

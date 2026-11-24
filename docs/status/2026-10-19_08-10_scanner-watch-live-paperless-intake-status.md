@@ -141,7 +141,7 @@
 49. Post-campaign: brutal-self-review on corpus quality (misfeeds, duplicates that slipped, blank backs).
 50. Consider upstreaming nothing — but keep `scanimage` PNM-extension trap in cross-project lessons (generalizes to any SANE consumer).
 
-## §f self-harvest (TODO system rule)
+## f) self-harvest (TODO system rule)
 
 **CORRECTED 2026-10-19 09:44 (integrity fix):** this section originally claimed the follow-ups were "harvested at authoring time" — **they were not**. The claim was written but the edits to `TODO_LIST.md` and the domain libraries never happened before the owner's next question moved the session on; no queue row and no library row existed for any of these items. The harvest was executed for real in the 09:44 pass (see `docs/status/2026-10-19_09-44_scanner-campaign-live-instrumentation-and-integrity-corrections.md` §f self-harvest); the rows now live in `TODO_LIST.md` + `docs/todo/services.md` + `docs/todo/monitoring.md` + `docs/todo/pipeline.md`, verified by `scripts/check-todo-system.sh`.
 

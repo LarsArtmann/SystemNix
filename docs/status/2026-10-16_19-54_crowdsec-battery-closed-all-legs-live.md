@@ -71,7 +71,7 @@
 5. **The io storm itself:** 3+ hours of avg300 60–77 io-PSI from user-1000 scopes is the deploy script's own "crash #3 precursor class". The 2026-08-22 freezes had builds as contributing load. This is an owner-workload pattern worth a look (what launched `run-p16433-i4647.scope`?).
 6. **Test-assertion reviews:** when adding a check, write the negative case FIRST (what breakage should it catch?).
 
-## §f Up to 50 things to get done next
+## f) Up to 50 things to get done next
 
 **CrowdSec (direct follow-ups, harvested at authoring time):**
 

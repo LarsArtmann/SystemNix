@@ -118,7 +118,7 @@ What is **not** done: `/run/current-system` (`f5jnwk4z`) has **no profile genera
 9. **Instrument the pressure gate's phantom branch.** It currently blames "io_uring CQ-waiter / corpse pile" while the top-attributed cgroups were two idle `poll()` TUIs (`nvtop`, `iotop-c`). Wrong attribution costs hours; the message should also print the `full` vs `some` split and the top D-task command lines.
 10. **Note the ambient load in every deploy decision**: 20 concurrent `crush -y` sessions is the real reason PSI never dropped below 20 % for 3 h.
 
-## §f NEXT (up to 50, this session's scope and directly-noticed adjacent work)
+## f) NEXT (up to 50, this session's scope and directly-noticed adjacent work)
 
 **Anchor / deploy**
 1. Repair the `f5jnwk4z` anchor (`nix build --profile` + `switch-to-configuration boot`) — cheapest possible fix for today's reboot hazard.

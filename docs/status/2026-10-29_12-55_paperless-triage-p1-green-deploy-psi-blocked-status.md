@@ -104,7 +104,7 @@ Post-deploy smoke list lives in paperless.md §Decision-triage gate.
   icontains" from memory; the filters.py read (CHAR_KWARGS dict-form)
   was the actual proof. Read the source before theorizing.
 
-## §f Follow-ups (self-harvest ledger)
+## f) Follow-ups (self-harvest ledger)
 
 1. **DEPLOY + post-deploy smoke** (paperless-triage go-live + T6 live
    heal + `grep ensured` verify) — already harvested: services.md row

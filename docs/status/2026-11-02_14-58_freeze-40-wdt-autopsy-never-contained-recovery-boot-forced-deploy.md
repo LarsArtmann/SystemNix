@@ -58,7 +58,7 @@ Freeze #40 — **Branch C (storm-leading: IO livelock whole-boot, thermal + a la
 
 **Didn't:** the `DEPLOY_FORCE_PRESSURE=1` override — used at 12:11 (survived) and 14:19 (dead 9 min after switch); it is now load-bearing in two death windows today. The guard's pause patterns — 66/66 no-match trips while a HEADLESS SYSTEM UNIT cold-loaded 110 GB off the QLC; the pattern-extension row has terminal evidence for the fourth consecutive storm boot. `systemctl stop` containment — strikes: gen-968, gen-969, and now boot-time re-arm (11:35:53, no deploy in flight) — stops don't survive reboots either.
 
-## §f NEXT (self-harvested at authoring time — queue + library rows landed with this report)
+## f) NEXT (self-harvested at authoring time — queue + library rows landed with this report)
 
 1. **[blocked:user] Deploy re-arm vs owner containment policy row UPDATE** — gains freeze #40: 4th strike, NEW VECTOR (boot-time timer start at boot-second 8, no deploy needed), and the 14:19 `DEPLOY_FORCE_PRESSURE=1` gen-971 forced switch 9 min pre-death. Recommendation hardened: mask `llama-chat-ensure.timer` + `llama-chat.service` (config-disable alternative: `llama-chat.enable = false` — needs a deploy, which needs a calm window).
 2. **llama-chat restart storm-gating row UPDATE** — gains the freeze-#40 boot-open (5 × 13-min cold-load failures before convergence) and the 4th-boot re-arm; the loop is now boot-opening, not just night-recurring.

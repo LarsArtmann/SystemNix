@@ -48,7 +48,7 @@
 5. **The tracked-files trap + index-lock waits cost ~15 min combined** — expected in this tree, but the plan marker specifically should be committed FIRST at a quiet moment (it sat on disk 38 min before riding the sprint commit; the tombstone only guards once committed — a second executor could have started T-007 in that window).
 6. **Self-review timing**: this review caught a deploy-breaking bug 90 minutes after "done". A 2-minute rendered-unit render would have caught it at build time. Cheap final-pass checklists per artifact class (unit → render ExecStart; config → render file; script → shellcheck+run) should be muscle memory before the sprint commit, not after the owner asks.
 
-## f. NEXT (up to 50; ordered by impact, session-derived + live lanes)
+## f) NEXT (up to 50; ordered by impact, session-derived + live lanes)
 
 1. Owner Q1: deploy train decision (relay + flm decoupling + kernel shims + forgejo-runner + DNS unification + T-002/T-004 alerts all stacked, deploy-gated).
 2. Post-deploy battery for the relay: healthz probe (wired), first-boot grace observation, `relay decision=` journal lines present, mute-list 13 in the startup log.

@@ -112,7 +112,7 @@
 
 **Not counted toward 50 — explicitly out of scope this session:** anything beyond the daemon×SigNoz question (no fleet-wide OTEL census, no ClickHouse health audit, no parallel-session forensics).
 
-## §f Harvest record (status-report self-harvest doctrine)
+## f) Harvest record (status-report self-harvest doctrine)
 
 Harvested NOW into both surfaces (queue one-liner + domain library, no drift):
 - **H1** `[ready]` → monitoring.md + TODO_LIST: monitoring.md ClickHouse logs recipe update (JSON-path form + Variant trap + heredoc-backtick rule). *Deliberately not fixed inline: report-then-wait instruction.*

@@ -42,7 +42,7 @@
 3. **Formatters: only ever the repo formatter** (`nix fmt` / `.#formatter.$(uname -m)`); floating `nix shell nixpkgs#alejandra` is a landmine the hook comment already documented — I stepped on it anyway.
 4. **Staggered fallback builds are cheap insurance:** a second detached `nix build` blocked on a drv lock costs one eval and converts "killer timer fires mid-build = restart from zero" into "automatic takeover at higher -j". Worth institutionalizing for any >1h build racing a known-risk window.
 
-## §f) Next (session-derived, ranked — up to 50, actual: 16)
+## f) Next (session-derived, ranked — up to 50, actual: 16)
 
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 

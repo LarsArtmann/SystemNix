@@ -106,7 +106,7 @@
 
 ---
 
-## §f harvest note (per AGENTS.md TODO System)
+## f) harvest note (per AGENTS.md TODO System)
 
 - **Rowed this session already:** items 3, 4, 5 (vm-top pre-deploy leg + SigNoz panel; prune-script dual-count) — landed in TODO_LIST + monitoring/pipeline twins at 02:33.
 - **Covered by existing rows, not duplicated:** 1, 2, 6 (deploy-gated canaries), 9, 12, 14–16.

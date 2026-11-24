@@ -53,7 +53,7 @@
 7. **TODO single-line row edits** — I used three different mechanisms (multiedit, sed→tmp→awk-splice, cat >>) across this session because of daemon mtime races; a row-edit helper (or extending prune-done-todos.sh) would remove the fragility.
 8. **§21's -30min fixed window** — under slow builds the switch can fall outside it; derive the window from the deploy-start timestamp the script already knows.
 
-## f. NEXT (session-derived, deduped, ~28 real items — no filler)
+## f) NEXT (session-derived, deduped, ~28 real items — no filler)
 
 **Deploy/boot verification**
 

@@ -40,7 +40,7 @@ Single-sprint session (owner SUPERB directive as license; owner-gated items unto
 
 The relay is eval-green and INERT until deploy. At deploy: relay unit starts, gatus re-renders with the relay webhook, boot-grace mutes the deploy-window churn by construction. Post-deploy asserts already wired: the `Gatus Alert Relay` healthz probe in post-deploy-check.sh (`9111/healthz` 200 + "forwarded" in body). First live boot after deploy = free end-to-end verification of the boot-grace leg.
 
-## f. Follow-ups (self-harvested — all queued)
+## f) Follow-ups (self-harvested — all queued)
 
 1. pma-commits dead-string probe (monitoring.md, queued this session) — P0-adjacent phantom-green risk.
 2. node_load1 zero-in-selector root-cause (monitoring.md, queued this session).

@@ -16,6 +16,8 @@ Profile anchored (system-787, three-way). Everything committed (`541fab97`) and 
 
 ## What actually happened this session
 
+<!-- check-rows:ledger -->
+
 | Time  | Event                                                                                                                                                                                                                                                                                           |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 15:10 | Resumed; state gather revealed the parallel session had fixed cv-server at 14:08 (`fc49dbe5` — the `-perm -u+w` fast-path fix, exactly the e.1 patch my 13:58 report proposed) and anchored system-786 → 787. My queue v7 had self-stopped at 14:00 (rc=3, NEW failure: Bank-Sync) — by design. |
@@ -67,9 +69,9 @@ the SPAWNER (a hermes cron worker scope, per the 13:58 report) was never investi
 nobody knows if killing PIDs 805159/805161 is durable or if the next cron fire respawns
 them. Also: these rogues hold llama-vlm's ports 8127/8128 — llama-vlm stays dark partly
 because of them (connection noted at 13:58, not chased this session).
-2. **Gatus check states**: CV group + "llama-rag-dark" RED-on-rogues inferred from metrics
+2. **Gatus check states**: CV group + "llama-rag-dark" RED-on-rogues inferred from metrics → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 and journal (`/health` 200 live) — the Gatus API itself is OIDC-gated and was not queried.
-3. **Browser History quiet-day 503**: root-caused (previous session), upstream issue filed,
+3. **Browser History quiet-day 503**: root-caused (previous session), upstream issue filed, → [docs/todo/services.md](docs/todo/services.md)
 agent-side gate fixed — but the live heal (a 200 on real browsing) is unproven; nobody
 browsed yet.
 ~~4. **Smoke baseline**: pre-reboot-check reports "4 known FAIL(s)" — I never enumerated them~~ done — enumerated: baseline 2 known-FAILs, both identified (docs/status/2026-09-20_19-47 §b)
@@ -82,9 +84,9 @@ refreshes the baseline).
 ~~1. **M7/F18–F20**: user reboot + post-reboot proof (`bootctl status` PARTUUID `023f66c0-…`,~~ done — reboot happened; Samsung boot verified 2026-10-15 (docs/todo/storage.md:42; docs/status/2026-10-16_00-56)
 pre-reboot-check green from booted state, QLC fallback second, optional firmware-menu
 fallback boot test).
-2. **M8/F21**: first-nightly drift watch (post-23:00 boot-mirror-sync re-run, no drift, df
+~~2. **M8/F21**: first-nightly drift watch (post-23:00 boot-mirror-sync re-run, no drift, df~~ **NOT-DO — one-shot night-watch overtaken by events; the boot-mirror-sync trigger-defect class was later root-caused and carries the standing remedy (docs/todo/storage.md boot-mirror rows).**
 stable) — not scheduled/reminded anywhere.
-3. **Routing debt — parked items live only in prose**: the go-build hot-cache relocation gap
+~~3. **Routing debt — parked items live only in prose**: the go-build hot-cache relocation gap~~ done — 12 parked items routed into domain libraries, check-todo-system OK (docs/status/2026-09-20_19-47 §a.11)
 (HM-symlink canonicalization), the deploy.sh hardening items (Zone-6 trip-recency gate,
 in-deploy anchoring assertion, exit-4 failed-unit dump, heal-summary journal), and the
 lint/audit candidates (readiness-gate `-sf` rejection, FOWNER-vs-chmod, mountPoint-vs-
@@ -92,11 +94,11 @@ HM-symlink eval assertion) were NOT routed into `docs/todo/*.md` libraries. The 
 15:02 reports both carry them; the todo system does not.
 ~~4. **Regression tests for my two script fixes** — shellcheck (pre-commit) covers the SC1087~~ done — lsblk PARTNUM→PARTN fixture shipped + green in tests/test-scripts.nix (docs/status/2026-09-20_19-47 §a.12)
 class now, but `PARTNUM`→`PARTN` is a runtime-lsblk-column class no static check catches;
-`scripts/test-scripts.nix` fixture not written.
+`tests/test-scripts.nix` fixture not written.
 ~~5. **CV recurrence question** (parallel session's b.2): does the upstream content sync~~ done — answered: cp -r propagates 0555; upstream chmod fix on master (docs/status/2026-09-20_19-47 §a.10)
 preserve store modes (`cp -a`) so the drift re-materializes every sync? CV repo copy flags
 not checked.
-6. **M9–M12 pool**: llama-vlm model downloads (owner), ExecStart list-shape audit, optional
+6. **M9–M12 pool**: llama-vlm model downloads (owner), ExecStart list-shape audit, optional → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (M9 llama-vlm), [docs/todo/storage.md](docs/todo/storage.md) (M11 freshness, M12 root-`@`); M10 audit stays on §f.31
 mirror-freshness hardening, root-`@` off QLC investigation.
 ~~7. **Handoff side-questions lost**: the 11:06 root nixpkgs-lock bump provenance + 04:17~~ done — answered (docs/status/2026-09-20_19-47 §a.9)
 reboot ownership attribution questions (handoff step 13) were never surfaced to the user.
@@ -152,26 +154,26 @@ reboot ownership attribution questions (handoff step 13) were never surfaced to 
 ~~1. **REBOOT** — the armed mirror's first real boot. Everything is audited green; nothing to~~ done — first Samsung boot verified 2026-10-15 across ≥2 boots (docs/todo/storage.md:42)
 prepare. (Rollback: firmware menu F8/F11/F12 → QLC `Linux Boot Manager`, or `efibootmgr -o` QLC-first.)
 ~~2. Post-reboot: `bootctl status | grep -i partuuid` → expect `023f66c0-…` (F18).~~ **NOT-DO — NOT-DO — dup of §c.1 (F18 proof).**
-3. Post-reboot: `nix run .#pre-reboot-check` from the booted state → exit 0 (F19).
-4. Post-reboot: confirm QLC entry still second in BootOrder (F20, optional menu test).
-5. Decide the rogue llamas: `sudo kill 805159 805161` (they hold 8848/8849 + llama-vlm's
+~~3. Post-reboot: `nix run .#pre-reboot-check` from the booted state → exit 0 (F19).~~ done — check routinely run from booted states in later sessions (docs/status/2026-10-15_05-20; docs/status/2026-10-16_23-48)
+~~4. Post-reboot: confirm QLC entry still second in BootOrder (F20, optional menu test).~~ done — BootOrder `000C`-first across ≥2 boots with following entries intact (docs/status/2026-10-16_00-56 table row 2)
+~~5. Decide the rogue llamas: `sudo kill 805159 805161` (they hold 8848/8849 + llama-vlm's~~ done — spawner journal-proven as hermes cron `ed3fc8b089d7` (daily 05:40, rogues IDLE); kill decision handed to the user queue (docs/status/2026-09-20_19-47 §a.8 + §b user item 2)
 8127/8128) — or leave if a hermes cron job is legitimately using them (see g.1).
 ~~6. InboxClean re-consent (16-day outage): flip the Google OAuth client to "In production"~~ done — 2026-10-04: production flip + ceremony, main connected (docs/status/2026-10-04_08-32 §a.1)
 FIRST, then run the `inboxclean auth` runbook (docs/services/ docs) for `main` (+ verify
 `work` still healthy).
-7. Bank-Sync SCA approval: `bank-sync sca approve` (clears the degraded statements/transfers
+7. Bank-Sync SCA approval: `bank-sync sca approve` (clears the degraded statements/transfers → [docs/todo/services.md](docs/todo/services.md) (bank-sync sentinel row carries `bank_sync_sca_approval_pending 1`, owner-gated)
 fallback AND stops the sync-errors counter flap that produced the 14:00 smoke failure).
 
 **This-session follow-ups (agent-executable):**
 ~~8. Enumerate the current smoke-baseline FAIL set by name; re-baseline on the next deploy.~~ **NOT-DO — NOT-DO — dup of §b.4.**
-9. Watch tonight's 23:00+ boot-mirror-sync run (M8/F21): journal + df + no drift alert.
-10. Verify browser-history `/health` flips 200 after the user's first real browsing session.
+~~9. Watch tonight's 23:00+ boot-mirror-sync run (M8/F21): journal + df + no drift alert.~~ **NOT-DO — dup of §c.2 (overtaken night-watch; standing remedy tracked in docs/todo/storage.md).**
+10. Verify browser-history `/health` flips 200 after the user's first real browsing session. → [docs/todo/services.md](docs/todo/services.md) (browser-history OAuth2/dashboard live-verify rows)
 ~~11. Investigate the rogue-llama SPAWNER (hermes cron worker scope at 05:40): which job, is it~~ **NOT-DO — NOT-DO — dup of §b.1.**
 recurring, does it need the embedding server — root-cause before/after the kill decision.
 ~~12. Route the un-routed parked items into `docs/todo/{storage,stability,services,monitoring}.md`:~~ done — 12 items routed into domain libraries, check-todo-system OK (docs/status/2026-09-20_19-47 §a.11)
 go-build relocation gap; deploy.sh Zone-6 trip-recency gate; in-deploy anchoring assertion;
 exit-4 failed-unit dump; cv-state-perms heal-summary journal; smoke-baseline last-seen stamps.
-13. Write the lsblk-column fixture test (PARTNUM class) + a build-the-app-derivation check for
+~~13. Write the lsblk-column fixture test (PARTNUM class) + a build-the-app-derivation check for~~ done — lsblk fixture landed (`tests/test-scripts.nix` `lsblk-column-names`); the flake-app build-check half was explicitly descoped 2026-09-20 (docs/status/2026-09-20_19-47) and remains unbuilt
 flake apps (scripts/test-scripts.nix / flake check).
 ~~14. Check the CV repo content-sync copy flags (`cp -a`?) — answers whether the perms drift~~ **NOT-DO — NOT-DO — dup of §c.5.**
 re-materializes every sync (parallel session's b.2) and whether an upstream post-copy
@@ -179,13 +181,13 @@ chmod is the durable fix.
 ~~15. Post-reboot: verify `hot-user-caches-go-build-bootstrap` runs green and the subvol mounts~~ **Won't implement — moot — entry removed 2026-09-20 (15-02 addendum §Q2).**
 (parallel session's b.3 residual: 0755 → 0700).
 ~~16. Post-reboot: confirm the flm EADDRINUSE corpse is gone (:52626 released), flm smoke heals.~~ done — corpse GONE — freeze-#5 hard reset cleared :52626 (docs/status/2026-09-20_16-31 §1.4)
-17. Post-reboot: `bootctl` random-seed/entries sanity on BOTH ESPs; watch `/boot` vs
+~~17. Post-reboot: `bootctl` random-seed/entries sanity on BOTH ESPs; watch `/boot` vs~~ done — two-ESP mirror state verified and the expected `bootctl` signature documented as normal (docs/status/2026-10-16_00-56 table row 4)
 `/boot-mirror` entry count through the next generation.
-18. Sweep Gatus CV group + llama-rag-dark checks green/red-as-expected post-reboot.
-19. Watch `cv-backup` tonight (03:30 pool receive lands).
+~~18. Sweep Gatus CV group + llama-rag-dark checks green/red-as-expected post-reboot.~~ done — `llama_rag_dark` shipped in modules/nixos/services/llama-rag.nix and the dark-guard live-verified detecting the 2 rogues (docs/status/2026-09-19_17-47 §a1)
+~~19. Watch `cv-backup` tonight (03:30 pool receive lands).~~ **NOT-DO — one-shot night-watch overtaken: backup freshness is continuously monitored (backup-coordination + Gatus `backup_all_healthy`, modules/nixos/services/backup-coordination.nix).**
 ~~20. Observe `cv-scan` at the 18:23 tick — proves the CV stack end-to-end post-heal.~~ done — green (docs/status/2026-09-20_19-47 §a.15)
-21. inboxclean: after user re-consent, confirm `main` cursor advances past 5152620.
-22. DiscordSync/immich go-live key paste (standing user-gated item from the libraries).
+~~21. inboxclean: after user re-consent, confirm `main` cursor advances past 5152620.~~ done — cursor past 5152620 confirmed post-restart (docs/status/2026-10-04_08-32 post-deploy item 5, marked landed)
+22. DiscordSync/immich go-live key paste (standing user-gated item from the libraries). → [docs/todo/services.md](docs/todo/services.md) (key handling superseded by the landed key-converger consolidation row)
 
 **Deploy-stability improvements (route to owning session / TODO):**
 ~~23. deploy.sh: refuse deploys when Zone-6 trips advanced in the last 60 min (exit 12).~~ done — landed (docs/status/2026-09-20_16-52 §a.8)
@@ -202,21 +204,21 @@ chmod is the durable fix.
 cv-state-perms class generalized; parallel session's f.22).
 
 **Samsung / storage follow-ups:**
-33. First-weekly mirror observation after several generations (entry growth, df trend).
-34. llama-vlm model downloads decision (M9/F23 — feature dark until the GGUFs land AND the
+33. First-weekly mirror observation after several generations (entry growth, df trend). → [docs/todo/storage.md](docs/todo/storage.md) (boot-mirror rows track mirror health long-term)
+34. llama-vlm model downloads decision (M9/F23 — feature dark until the GGUFs land AND the → [docs/todo/ai-stack.md](docs/todo/ai-stack.md) (llama-vlm live-verification + soak row)
 rogue 8127/8128 listeners are gone).
-35. Root `@` off QLC investigation (M12 — separate Pareto doc, owner-gated).
-36. hot-db waves (crush → pocket-id → postgres → forgejo → dnsblockd/papdashboard) —
+35. Root `@` off QLC investigation (M12 — separate Pareto doc, owner-gated). → [docs/todo/storage.md](docs/todo/storage.md) (Samsung-as-root feasibility watch; old `@nix` already deleted)
+36. hot-db waves (crush → pocket-id → postgres → forgejo → dnsblockd/papdashboard) — → [docs/todo/storage.md](docs/todo/storage.md) (hot-db Phase-2 row: five user sudo windows, one per wave)
 owner-gated migrations per the Phase-2 plan.
 ~~37. Old dead `@nix` subvol deletion on the QLC (tracked in docs/todo/storage.md).~~ done — deleted 2026-09-20 — 605G→545G, ~60G freed (docs/status/2026-09-20_16-26 §a.2)
 
 **Monitoring / verification debt:**
-38. Add a Gatus/check for "boot-mirror-sync freshness" (or system-health mirror-age metric —
+38. Add a Gatus/check for "boot-mirror-sync freshness" (or system-health mirror-age metric — → [docs/todo/storage.md](docs/todo/storage.md) (the skipped-sync class WAS observed: boot-mirror-sync.path deaf row)
 M11, only if the skipped-sync class is ever observed).
-39. Verify the gatus-pattern lint + §10 gate stay green with the new `llama_rag_dark` metrics.
+~~39. Verify the gatus-pattern lint + §10 gate stay green with the new `llama_rag_dark` metrics.~~ done — `llama_rag_dark` in modules/nixos/services/llama-rag.nix, gatus-patterns + gatus-coverage-audit checks registered (tests/default.nix), dark-guard live-verified on the rogues (docs/status/2026-09-19_17-47 §a1)
 40. Post-reboot: run one deliberate QLC-fallback boot from the firmware menu (F20 optional
 half — proves the rollback path physically).
-41. Confirm the 4-report-deep smoke baseline chain (11:53 → 14:00 → next) actually shrinks:
+~~41. Confirm the 4-report-deep smoke baseline chain (11:53 → 14:00 → next) actually shrinks:~~ **NOT-DO — one-shot Sep-20 chain long overtaken; the persistent fail-baseline lives on in scripts/post-deploy-check.sh.**
 CV-era fails must drop out after the 14:08 heal.
 42. File/track the upstream browser-history heartbeat implementation (issue #26) — SystemNix
 gate stays any-status meanwhile.
@@ -224,7 +226,7 @@ gate stays any-status meanwhile.
 **Attribution / bookkeeping:**
 ~~43. Ask the user about the 11:06 nixpkgs lock-bump provenance + 04:17 reboot ownership (the~~ done — answered (docs/status/2026-09-20_19-47 §a.9)
 lost handoff questions — attribution only, both moot for correctness now).
-44. Fold the 13-58/15-02/15-30/15-57 report chain into the next docs-health harvest pass.
+~~44. Fold the 13-58/15-02/15-30/15-57 report chain into the next docs-health harvest pass.~~ **NOT-DO — subsumed by the standing docs-health archive ritual (docs/status/archived/ ingest).**
 
 ## g) QUESTIONS (cannot resolve from this sandbox)
 

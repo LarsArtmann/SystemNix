@@ -1388,6 +1388,30 @@ _: {
                   alerts = discordAlert "Niri is running with NO graphical session (headless zombie) — it will block the next SDDM login with 'A niri session is already running' (2026-08-18 black-screen class). Recover: reboot, or as the user: systemctl --user stop niri.service niri-session-manager.service. Root cause: something pulled graphical-session.target into the user-manager boot transaction — the session-boot-audit eval guard should have caught it at eval time.";
                 })
                 (mkHttpCheck {
+                  name = "Polkit Agent Slot";
+                  group = "Monitoring";
+                  # 2026-10-04 polkit report §f.11: DMS registers the
+                  # org.freedesktop.PolicyKit1.AuthenticationAgent name once at
+                  # startup and never retries — the live Oct 3→04 state was a
+                  # graphical session with an UNOWNED slot (GUI auth silently
+                  # dead) while every render-sanity signal stayed green. The
+                  # polkit-agent-metrics user collector owns the probe; this
+                  # check asserts (line-anchored, phantom-green doctrine): the
+                  # slot IS owned, the probe itself did not die, and the
+                  # session line is present (a degraded textfile fails the
+                  # presence leg). owned=1 also covers the legitimate
+                  # no-graphical-session case, so SSH-only periods stay green.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\npolkit_agent_session_active *)"
+                    "[BODY] == pat(*\npolkit_agent_slot_owned 1\n*)"
+                    "[BODY] == pat(*\npolkit_agent_probe_errors 0\n*)"
+                  ];
+                  alerts = discordAlert "Polkit agent slot UNOWNED while a graphical session is active — GUI auth (sudo/polkit prompts) silently goes nowhere. The DMS agent registers once at startup and never retries. Recover: as the user: systemctl --user restart dms, or log out and back in. Probe broken instead? journalctl --user -u polkit-agent-metrics -n 30";
+                })
+                (mkHttpCheck {
                   name = "Memory Guard Backup Starved";
                   group = "Monitoring";
                   # Line-anchored VALUE-0 form (niri pattern): the guard always

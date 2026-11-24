@@ -36,7 +36,7 @@ The plan's shape — "on backend-not-listening → immediate 503 {reason: cold-l
 - Full `nix flake check --no-build` NOT run (same foreign eval red — it aborts at the host toplevel). Compensating verification: every touched surface narrow-evaled green (both guards' ExecStartPre, proxyConn ExecStart, leak-metrics ExecStart, the check derivation, the app), the check + mutation legs + live smokes all green. The pre-commit's eval leg on my commits would hit the same foreign red — committed with `--no-verify` + this justification if it persists at commit time (precedent 73145250).
 - T5's `bind-blocked` reason + a rogue-while-enabled GAUGE (dark-guard parity for the enabled era): deliberately not built — new-metric+new-check+new-negative-test is a full guard of its own; the journal line + ai-stack-status cover observation today.
 
-## f. Follow-ups (self-harvested — landed in TODO_LIST.md + libraries at authoring time)
+## f) Follow-ups (self-harvested — landed in TODO_LIST.md + libraries at authoring time)
 
 1. [blocked:deploy] Berth-patterns live verification cluster (anchor → post-deploy → ai-stack-status → gatus Leaked-Instances green) — docs/todo/services.md. [harvested]
 2. [decision] LIVE hermes rogue reranker on :8849 (kill vs bless) — docs/todo/ai-stack.md. [harvested]

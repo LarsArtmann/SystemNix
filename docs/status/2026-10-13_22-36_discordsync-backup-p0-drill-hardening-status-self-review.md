@@ -62,7 +62,7 @@ Found the P0 (dump gap now 12+ days on the ONLY backup of the unsnapshotted hot-
 7. **Trash session artifacts immediately after last use** (clone, scratch, out-links) — I did the drill file, missed the clone.
 8. **When a report lands mid-session, diff its claims against queue rows** — the report's §8.1/§8.4 lessons mapped 1:1 onto our dump-leg gaps within minutes; a standing "apply new report to open rows" step would have found the 11-night streak even faster.
 
-## §f UP TO 50 THINGS TO GET DONE NEXT
+## f) UP TO 50 THINGS TO GET DONE NEXT
 
 _Session follow-ups (this work):_
 

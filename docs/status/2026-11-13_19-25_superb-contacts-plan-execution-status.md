@@ -174,7 +174,7 @@ verdict as a pointer comment — the demo provision unit is green again
 (eval + rebuild gate verified: fresh ndjson carries zero AddressBook ops).
 VM torn down (PID killed, port 18080 released).
 
-### §f items 1–10, executed
+## f) items 1–10, executed
 
 | # | Item | Outcome |
 | - | ---- | ------- |

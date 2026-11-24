@@ -47,7 +47,7 @@
 5. **Skill trigger descriptions**: how-to-golang's description ("Go performance") pulled it for a box-level build-cache question it doesn't own — a one-line description scoping note for the skill-creator backlog would prevent future false-positive loads.
 6. **Session-spanning reboot awareness**: the session outlived the boot; every earlier probe number was pre-reboot state. Point-in-time means point-in-BOOT — new boot, re-probe before building on old numbers.
 
-## §f Up to 50 things we should get done next
+## f) Up to 50 things we should get done next
 
 **Tier 1 — new this window (cache advisory + reboot)**
 

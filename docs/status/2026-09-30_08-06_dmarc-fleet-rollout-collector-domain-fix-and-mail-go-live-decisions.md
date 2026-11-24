@@ -340,7 +340,7 @@ session; leave flagged.
 50. Celebrate when the first aggregate report lands in
 `/var/lib/parsedmarc/reports` — then tighten policies with real data.
 
-### f-harvest ledger (self-harvest rule, 2026-09-30)
+## f) harvest ledger (self-harvest rule, 2026-09-30)
 
 Direct follow-ups landed in TODO systems at authoring time: items **13 + 14**
 → the domains repo `TODO_LIST.md` DMARC-rollout row (ordering warning + RFC

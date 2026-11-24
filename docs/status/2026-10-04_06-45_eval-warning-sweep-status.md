@@ -54,6 +54,6 @@ Bisect method for the two hidden aliases and crm: `NIX_ABORT_ON_WARN=1 nix eval 
 - Queued [ready] one-liners: dead-guard refresh (existed). (zfs pin queued then dropped same day — void.)
 - Deliberately NOT harvested: none — every §d item is either queued above or was already tracked (catalog/caddy/llama-vlm are live module audit output, not work items).
 
-## f. Memory
+## f) Memory
 
 The NIX_ABORT_ON_WARN hunting technique, the standalone-vs-follows input-eval discrepancy, orphan lock-node archaeology, and the extendModules warning-isolation pattern are recorded in `docs/agents/nix-flakes.md` → "Hunting eval warnings to their source (2026-10-04)".

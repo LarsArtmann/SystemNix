@@ -41,7 +41,7 @@ pre-pulled, so the switch will be short once pressure drains.
    `config.services.caddy.virtualHosts` + global `access.log` — new services
    auto-tracked. A first-draft bug (`access-access.log.log`) was caught in
    rendered-output verification and fixed BEFORE deploy.
-7. **Enablement** in `configuration.nix`; module `git add`ed (tracked-files
+7. **Enablement** in `configuration.nix`; module staged via `git add` (tracked-files
    trap avoided).
 8. **Verification that could run**: focused evals green (ExecStart, registry
    checks JSON, sops template content incl. fixed LOGPARSER list, env

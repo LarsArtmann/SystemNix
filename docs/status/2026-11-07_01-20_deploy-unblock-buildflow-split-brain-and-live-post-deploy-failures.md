@@ -203,7 +203,7 @@ The 00:43 deploy (`/var/log/systemnix-deploys/2026-11-07_00-43-13.log`) built an
 
 ---
 
-## §f harvest note (self-harvest obligation, per AGENTS.md TODO System)
+## f) harvest note (self-harvest obligation, per AGENTS.md TODO System)
 
 - **Already rowed before this report was written:** item 18 (twin-surface divergence audit) → `docs/todo/pipeline.md` + a `TODO_LIST.md` queue line; item 13 (pin-wave LIFT) → `docs/todo/upstream.md`. Both are cited from this report's §a.10.
 - **Deliberately not harvested yet:** items 1-12 and 14-17 are **live-system repairs and re-verification whose order depends on the answer to question g.3** (repair-first vs re-deploy-first). Queueing them now would dispatch agents at a repair sequence the owner has not chosen, and a wrong order re-runs activation against the very busy-Go-cache condition that is currently breaking `home-manager-lars.service`. They are therefore recorded here only, and will be harvested in one batch once g.3 is answered.

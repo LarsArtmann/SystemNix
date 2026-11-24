@@ -38,7 +38,7 @@ No kills, no SIGSTOPs, no systemctl mutations (2026-10-07 standing rule: measure
 2. **Answer the 19:50 §g questions** (PSI-dispatch-gate location; GOTOOLCHAIN local-vs-auto) — freeze #49 is the second freeze those unanswered questions have cost.
 3. Consider a lint-fleet concurrency cap (flock wrapper in the direnv guard, max 2 fleet-wide) — 48-minute single lint runs and 8-way concurrency on one USB disk is the recurring storm seed.
 
-## §f Follow-ups (harvested to TODO_LIST + docs/todo/stability.md)
+## f) Follow-ups (harvested to TODO_LIST + docs/todo/stability.md)
 
 1. Re-run the pending deploy when calm (row queued; carries another session's validated tree — verify anchor after).
 2. Lint-fleet concurrency cap via direnv/flock (row queued [ready]).

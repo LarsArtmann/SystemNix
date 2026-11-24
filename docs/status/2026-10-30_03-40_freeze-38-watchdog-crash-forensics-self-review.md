@@ -53,7 +53,7 @@
 4. **Storm-aware probing discipline:** at high PSI/load, probes stay read-only-cheap; heavy triage (CH queries, evidence pulls, VM builds) queues for calm windows — followed late here (correctly deferring the pull) but only AFTER adding load with broad journal sweeps during a 92-load bootstorm.
 5. **Docs pre-read must include domain libs, not just status reports:** reading docs/agents/stability.md BEFORE answering would have prevented §d.1 and §d.5 outright.
 
-## §f Next tasks (harvested at authoring — see TODO_LIST.md + domain libs)
+## f) Next tasks (harvested at authoring — see TODO_LIST.md + domain libs)
 
 1. **[ready] Calm-window `crash-triage.sh` run for freeze #38** — full per-boot verdict + censuses, IO-PSI-gated window. (Critical, S) → stability
 2. **[ready] `boot-evidence-pull.sh` + commit evidence file for `b0d70d7…`** — pre-vacuum gate at journal 7.9/8 G; next deploy blocks until this lands. (Critical, S) → stability

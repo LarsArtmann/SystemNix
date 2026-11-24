@@ -45,7 +45,7 @@
 3. **One canonical train owner.** Four parallel sessions have now independently built/monitored the same toplevel (checks.lint/build/format + two toplevel runs + a bare `nix build .`). The flock guard protects the DEPLOY, but nothing protects the BUILD from duplicated multi-hour work. The `--keep-going` enumeration doctrine should name a single owner (or a detached shared build) per deploy window.
 4. **Status-verdict hygiene on resume:** "RUNNING with zero errors" from a prior session is not evidence of anything until the process is confirmed alive — check `ps` before trusting any inherited in-flight claim (this session's first act generalized correctly, but the lesson belongs in the resume protocol).
 
-## §f) Next (session-derived, ranked)
+## f) Next (session-derived, ranked)
 
 1. **Diagnose the googleapis failure class** (nixpkgs clickhouse 26.8.x, `external/googleapis` ExternalProject, "opening directory … scheduler/v1: No such file or directory") — flake or systematic; check nixpkgs issue tracker + the clickhouse cmake external project; decide retry vs `--keep-failed` inspection vs drv patch. HARRVESTED → TODO_LIST + docs/todo/services.md.
 2. **Watch attempt #3 (769592, `/tmp/toplevel-myverdict3.log`) THROUGH the googleapis window (~12:00-12:45)** — with a detached watcher this time; on same-way death, execute item 1's verdict immediately.

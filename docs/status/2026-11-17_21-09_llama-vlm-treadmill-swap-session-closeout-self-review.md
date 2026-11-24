@@ -48,7 +48,7 @@
 7. **Capture-once discipline extended to journal tails**: three separate `-u` tails this session; batch them into one capture per unit per window.
 8. **The S-0035 probe set should self-validate**: add a "print total-ranked MiB before the rate join" line so a broken join is visible immediately (and fix probe 3, see §f.9).
 
-## f. NEXT QUEUE (harvest-dispositioned; sources: this session unless noted)
+## f) NEXT QUEUE (harvest-dispositioned; sources: this session unless noted)
 
 1. `[blocked:deploy]` **Deploy both stacked fix waves in the first IO-PSI some avg10 < 20 sustained window** (refuse mode + idle-check widening + `MemorySwapMax=48G` + `.prom` publish gate + mem census); existing rows 48/322 own it — this session added verify leg 3 (cap stays resident on a probe day).
 2. `[blocked:deploy]` **Post-deploy verify battery**: (a) one real `WAIT-BUDGET-REFUSED` line with clients queued; (b) boot-transaction coexistence; (c) cap residency under 10-min probes (row 48).

@@ -44,7 +44,7 @@
 4. **The moving CH floor is now a deadline, not a fact** (harvested into the freshness row): Oct 6–10 attribution must happen this week or premise-correct; tonight's S-0033 was the last comfortable window for the early-October regime.
 5. Parallel-session coupling cost ~45 min tonight (foreign lock-float eval block + daemon sweeping in-flight files + checker red on their rows). The plan-execution quiescence checks worked as designed, but consider checking `git log --oneline -3` before starting any eval-gated step (cheap, would have predicted the block).
 
-## §f UP TO 50 THINGS NEXT (self-harvested at authoring time — all map to EXISTING open rows; nothing new minted)
+## f) UP TO 50 THINGS NEXT (self-harvested at authoring time — all map to EXISTING open rows; nothing new minted)
 
 1. **Row 82 redo:** smartd liveness via the correct seam (`services.system-health.extraMonitoredServices` at top level, or the integration-registry route) — the only unfinished leg; `-d removable`/by-id already live.
 2. **Row 83:** Gatus condition for `memory_emergency_guard_psi_episodes` (rate vs threshold; backup_starred sibling pattern).

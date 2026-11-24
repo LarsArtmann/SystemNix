@@ -44,7 +44,7 @@
 4. **Harvest rows, not notes**: the smoke-ledger staleness was noticed in the addendum prose first — observations that imply work must land as queue rows at the same moment.
 5. **Probe text is code**: when a contract flips, the probes written to verify it must be re-derived from the NEW contract, not copy-pasted from the old one.
 
-## §f — Next items (harvested at authoring time)
+## f) — Next items (harvested at authoring time)
 
 1. **Re-baseline the smoke known-failures ledger** — overview + papdashboard entries healed; ledger stale (subset-advisory masks it). HARVESTED (pipeline.md).
 2. Confirm gatus `llama.cpp Chat` green post-convergence (401-gated — replay conditions or owner glance). HARVESTED (monitoring.md).

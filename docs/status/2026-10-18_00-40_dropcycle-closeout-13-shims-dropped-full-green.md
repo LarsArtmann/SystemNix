@@ -78,7 +78,7 @@ The owner-authorized drop-cycle is **DONE and green**: all 13 consumer-side vend
 - e4. **Post-push verification as a step**: an upstream commit isn't done when pushed — it's done when its CI (where CI exists) is green. The CI-restoration row remains the systemic fix; until then, `gh run list` after each push.
 - e5. **The treadmill's real root** is unchanged: consumer shims exist because upstream masters ship dep churn without hash refreshes. Today's closeout was only possible because siblings had done the upstream half — the fleet converges only when CI-restoration makes that automatic.
 
-## §f TOP NEXT TASKS (up to 50 allowed; 22 grounded — the rest would be filler; existing-row items are pointed at, not duplicated)
+## f) TOP NEXT TASKS (up to 50 allowed; 22 grounded — the rest would be filler; existing-row items are pointed at, not duplicated)
 
 | #  | Task                                                                                                                                                                                                                                  | Impact   | Effort | Category |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |

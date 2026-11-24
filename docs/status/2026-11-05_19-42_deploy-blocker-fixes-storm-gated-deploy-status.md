@@ -39,7 +39,7 @@ Decision: a poller waits for io PSI some avg10 < 20 across 3 consecutive minutes
 
 **Parallel-session flag (per shared-tree discipline):** `platforms/nixos/users/home.nix` carries a zed desktop-file rename (`zed.desktop` → `dev.zed.Zed.desktop`, 5 mimetype rows) NOT authored by this session — it will ride the deploy; left untouched.
 
-## §f Follow-ups
+## f) Follow-ups
 
 1. **The deploy itself** (this session, when the poller fires): carries the flm-disable containment, media-atlas WatchdogSec removal, monitor365 tmpfiles mkBefore, crush_events chmod, the §16 self-heal, quotaboard wiring, and the parallel zed rename. This session executes it if the storm drains in-session.
 2. **Post-deploy verify battery** (same): anchor discipline (newest `system-N-link` by NUMBER vs `readlink /run/current-system`; full nh/stc process-tree drain), `node_textfile_scrape_error 0` + `crush_events_lines_total` present on :9400, fastflowlm socket+units gone, `ss` :52625 closed.

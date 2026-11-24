@@ -72,7 +72,7 @@ Nothing is broken: toplevel exit 0, all checks passed, zero active shims. The ho
 - e4. **FOD rev-staleness guard** — three live instances today (cv ×2, fir ×1).
 - e5. **The fleet is shim-free — keep it that way**: the next `nix flake update` blanket move will re-stale upstream-pinned hashes wherever upstream lags; the CI-restoration row remains the only durable closure.
 
-## §f TOP NEXT TASKS (up to 50 allowed; 20 grounded — filler would be noise; existing rows cited, not duplicated)
+## f) TOP NEXT TASKS (up to 50 allowed; 20 grounded — filler would be noise; existing rows cited, not duplicated)
 
 | #  | Task                                                                                                                                                           | Impact   | Effort | Category |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |

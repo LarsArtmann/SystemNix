@@ -38,7 +38,7 @@
 2. **My fish one-liner didn't run in fish** (`do/done`, `read -r`) — I gave the fish translation only after the user hit the error; should have led with it on a fish-default box.
 3. **Glob-expansion sudo trap in my fish snippet** — fish expands `*` as the calling user BEFORE sudo; entries dir is 0700 → "No matches for wildcard". The `sudo bash -c` version I'd already provided was the right answer; I let the user hit the failure first.
 4. **Stale capacity stat shipped**: first HTML version said "≈35.6 TB / 20+ subvols / 3-2-½" — mixed decimal/TiB sloppiness and cryptic labels. Fixed to 35.5 TB (32.4 TiB) / 19 (now 18) / "2 of 3 copies" only after the "is that the BEST?" challenge. Should never have shipped.
-5. **multiedit vs python-splice freshness**: my first edit batch failed on "modified since read" (the splice had touched mtime). Cost: one round trip. Should have re-`view`ed immediately after any out-of-band write.
+5. **multiedit vs python-splice freshness**: my first edit batch failed on "modified since read" (the splice had touched mtime). Cost: one round trip. Should have re-read with `view` immediately after any out-of-band write.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -130,7 +130,7 @@
 2. **House pattern DECIDED: self-contained, inline the JS.** The html-report-kit skill's own doctrine is "single file, zero dependencies, no CDN"; mermaid-class artifacts extend it by inlining (~3.6 MB). Codified in AGENTS.md → "Big self-contained HTML reports" (inline-never-CDN, one-per-topic supersede-don't-accumulate, never-format + always verify via the new script). Canonical bundle preserved OUT of /tmp at `~/.local/state/systemnix/mermaid-v11.17.2.min.js` (the /tmp copy was already eaten by the tmp cleaner).
 3. **Old visualization marked SUPERSEDED** — in-file banner added (`2026-08-31_samsung-disk-layout-visualization.html`, links the successor); verify script PASSes on both files (6/6 and 0-declared).
 
-### §f follow-ups executed this round
+## f) follow-ups executed this round
 
 - **#45 formatter** — answered above.
 - **#46 `scripts/verify-html-diagrams.sh`** — WRITTEN + tested: PASS on both artifacts (new 6/6 SVGs/0 bombs/anchors OK), negative-probe FAILs correctly (unrendered diagram + broken anchor), and it self-caught the zero-match-grep-under-pipefail silent-death class in its own first draft (fixed with `|| true` guards).

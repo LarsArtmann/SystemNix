@@ -131,7 +131,7 @@ _: {
       );
 
       # The secret-carrying env file MUST NOT go through the nixpkgs module's
-      # environmentFile option: the paperless-manage wrapper bash-`source`s
+      # environmentFile option: the paperless-manage wrapper bash-`source`s # format:allow
       # that file, and bash strips the inner quotes of a raw JSON value
       # (VAR={"a":"b"} → {a:b}, verified empirically) — the corrupted value
       # then fails json.loads inside Django settings and breaks every manage

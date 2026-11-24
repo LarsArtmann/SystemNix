@@ -156,7 +156,7 @@ Nothing broke live — no service, no data, no config regression. But the proces
 
 ---
 
-## f-harvest record (doctrine: self-harvest direct follow-ups)
+## f) harvest record (doctrine: self-harvest direct follow-ups)
 
 - §f 1 + 2–9 → **harvested**: `[ready]` row in `TODO_LIST.md` + matching entry in `docs/todo/services.md` ("verify OpenCloud web apps live on the next deploy").
 - Excalidraw path (§f 23–28) → **already harvested** as the `[watch]` row in `docs/todo/services.md` (this session).

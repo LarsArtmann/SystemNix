@@ -49,7 +49,7 @@ Method: read-only sqlite against `/var/lib/private/gatus/gatus.db` (schema: `end
 2. **Disk Space Critical (root 93%)** — owner reclaim decisions pending (gcs-staging 24G, docker residue ~10G, sitzung Trash ~6.6G).
 3. **dnsblockd flip** — now holding hostage: forgejo-github-sync green, the allowlist freshness check, and the canonicalRepos push-mirror attach.
 
-## f. Owner questions (unchanged from 03-56 report, now with more unpushed work)
+## f) Owner questions (unchanged from 03-56 report, now with more unpushed work)
 
 (a) **Push?** — 40+ unpushed commits now (deploy fixes, restic fix, README restamp, parallel waves' work: nsfw rework, mirror-repair closeouts, nix-native plan). (b) **Purge ~6.6G sitzung Trash?** (irreversible). (c) **dnsblockd flip now?** `sudo systemctl start forgejo-flip@dnsblockd.service` — the flip unblocks 2 red checks + the github-sync unit.
 

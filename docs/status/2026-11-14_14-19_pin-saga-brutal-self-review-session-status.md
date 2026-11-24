@@ -54,7 +54,7 @@
 7. **Proof budgeting on freeze days**: plan the ladder up front (this session: 5 toplevels, 1 would-plus-2-probes have sufficed).
 8. **Arithmetic passes review**: any duration/count cited in committed prose gets a one-line verification (36 vs 31).
 
-## f. NEXT (up to 50 — session-scoped candidates, NOT yet queued except where marked)
+## f) NEXT (up to 50 — session-scoped candidates, NOT yet queued except where marked)
 
 **Owner-gated / decisions**
 1. Deploy HEAD (green tree, stale running gen) + full post-deploy battery (anchor, §17 sweep, §19, smoke) — freeze-day timing call.
@@ -102,7 +102,7 @@
 2. **Float policy**: the lock-float gate's retirement (your 2026-11-11 directive) is exactly what let four fleet inputs float onto broken revs in 26 h. Accept break-on-float as the cost of "plain update" (we eat enumeration cycles like today's), or reinstate something lightweight — e.g. a post-float `--no-build` eval probe, or expected-locks for FOD-sensitive inputs only?
 3. **health-hub**: the input disappeared from the lock during the 13:2x fixwave while `flake.nix` still mentions health-hub three times (comments). Was removing that input deliberate (input-graph diet), or collateral I should flag to the owning session?
 
-## f-harvest ledger (per the self-harvest rule)
+## harvest ledger (per the self-harvest rule)
 
 - Harvested NOW: §f #6–#9 (two rows → TODO_LIST.md + docs/todo/pipeline.md, tick-and-commit in this pass) + §f #25 (CHANGELOG fix, same commit).
 - Deliberately NOT harvested: §f #1–#5, #10–#30 — owner triage requested ("WAIT FOR INSTRUCTIONS"); the report IS the backlog until you pick.

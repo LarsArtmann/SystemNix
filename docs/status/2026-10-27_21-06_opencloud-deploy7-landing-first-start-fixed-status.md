@@ -50,7 +50,7 @@
 3. **The daemon sweeping unproven registry rows disarms the drift gate** (bcaa65167 class; recurred TWICE tonight: 18:29 and 20:55). float-register's red-path registry revert races the ~10-min daemon. Consider: daemon path-exclusion for `flake/expected-locks.nix`, or a "proven-through" hash stamp the ceremony sets and the audit checks.
 4. **ocis port no-ops deserve a module-level assert**: PROXY_HTTP_ADDR and NATS_PORT are both ignored by the 7.2.4 binary; the nixpkgs module's `port` option silently misleads. An eval-time comment/assert in our wrapper (or the ports.nix comments, now landed) is the pragmatic mitigation.
 
-## f. Next (sorted; NOT harvested into TODO_LIST — owner stop-directive supersedes; harvest on resume)
+## f) Next (sorted; NOT harvested into TODO_LIST — owner stop-directive supersedes; harvest on resume)
 
 1. Decide + implement the gitea-runner gate: `ConditionPathExists = [ "/var/lib/forgejo/.subvol-migrated" ]` on `gitea-runner-evo\x2dx2-ensure` (+ RequiresMountsFor) OR `forgejo-family-condition-audit.exemptUnits` with reason — per the audit message's own two options (§g.1).
 2. Re-run the direct keep-going proof to green (cv rebuild + gitea-runner gate fix are the only known deltas).

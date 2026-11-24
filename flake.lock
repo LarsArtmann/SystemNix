@@ -1374,11 +1374,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795408461,
-        "narHash": "sha256-WeZEs81YqazBP7EIGCvQZQ6155qs3H7Ys8ox/AFCmmc=",
+        "lastModified": 1795479445,
+        "narHash": "sha256-JVUcHm4QQoP0T7e3ZpmUZB5VDfFg6pOLKFM03jrGtwI=",
         "owner": "Artmann-Technologies",
         "repo": "docs-gates",
-        "rev": "adfa9c80a74bdba3ea1bd1cc37fdb1b016109f9f",
+        "rev": "7a2d69b63a3f70d0449bdeb4da3c9b138786a968",
         "type": "github"
       },
       "original": {
@@ -6379,7 +6379,9 @@
           "nsfw-classifier",
           "nixpkgs"
         ],
-        "treefmt-nix": "treefmt-nix"
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
       },
       "locked": {
         "lastModified": 1795093082,
@@ -8562,11 +8564,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1795475920,
-        "narHash": "sha256-D5616FR/W3w8dbibwG6OeprGdx52TbdaPSXH6kIDQBE=",
+        "lastModified": 1795483304,
+        "narHash": "sha256-LNzv42dlZLDznFIFmGiL79CevlfVpn/pqPChmoYF/Ig=",
         "ref": "refs/heads/master",
-        "rev": "d190875fc1a561bd8166f38fa434afbf3d414ec5",
-        "revCount": 4820,
+        "rev": "cafa8395a32ae72e62de03ceb6457099e4857a07",
+        "revCount": 4834,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -8579,16 +8581,16 @@
     "monitor365-ui-sdk": {
       "flake": false,
       "locked": {
-        "lastModified": 1795469732,
-        "narHash": "sha256-uGDlIIChOI3sUyuKqKZ502SHW+SDLMNfhTEToFOItXs=",
-        "ref": "refs/tags/v0.3.0",
-        "rev": "2e102cbb0c8eabf8680a5d5e0d6bec518d6e6c5b",
-        "revCount": 73,
+        "lastModified": 1795480041,
+        "narHash": "sha256-FyWylK4Nb2QUOyCgSk9fhl5Cx5zy4+5+GBv4DagzWwY=",
+        "ref": "refs/tags/v0.4.0",
+        "rev": "dab7337925b1b8d9302ea20da27512a0a4fa43be",
+        "revCount": 74,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365-ui-sdk"
       },
       "original": {
-        "ref": "refs/tags/v0.3.0",
+        "ref": "refs/tags/v0.4.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365-ui-sdk"
       }
@@ -10529,7 +10531,7 @@
         "timesheets": "timesheets",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix_2",
+        "treefmt-nix": "treefmt-nix",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
@@ -11445,28 +11447,6 @@
       }
     },
     "treefmt-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nsfw-classifier",
-          "go-nix-helpers",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1795017206,
-        "narHash": "sha256-WSBJcYjPRxGetDNxVzKnRPs1TQasQQlAC25W/S4W6YE=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "0ba5d67225c3f5c88eb134e1a665a379bfd3bea9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

@@ -50,7 +50,7 @@
 4. **Negative-test new eval guards in the SAME session** that adds them (extendModules injection pattern — cheap, prevents shipping a guard that never fires or false-fires).
 5. **Daemon-batched commits: verify with `git show --stat` AND amend-forward** when the topic label misattributes the work.
 
-## §f — Next items (harvested per policy; 1–6 are the deploy chain, 7–10 are new durable items)
+## f) — Next items (harvested per policy; 1–6 are the deploy chain, 7–10 are new durable items)
 
 1. Unblock evo-x2 eval: parallel session's inboxclean lock bump (`nix flake lock --update-input inboxclean`) or owner decision — HARVESTED (Q1 + services.md row).
 2. Eval battery ×4 (RuntimeDirectory, ExecStartPost, overview deps, flake check --no-build --keep-going) — HARVESTED (services.md row).

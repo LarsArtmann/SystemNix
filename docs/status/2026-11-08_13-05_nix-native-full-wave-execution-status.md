@@ -49,7 +49,7 @@ Deferred at time of writing: a PARALLEL session's `nix build .#checks.x86_64-lin
 2. **D4 cache-name single-source (OWNER DECISION)** — `docs/todo/pipeline.md` [decision] row refreshed 2026-11-08 with the verified 3-surface inventory + costs; deliberately NOT executed (protection code, no plan recommendation). Harvested: stays as the existing [decision] row.
 3. **Not harvested (deliberately):** none — every §f item below maps to an existing row or this report.
 
-## §f Direct follow-ups (self-harvested at authoring time)
+## f) Direct follow-ups (self-harvested at authoring time)
 
 1. ~~Land the deploy~~ — tracked in §d/§e row 1, deliberately a this-session obligation, not a queue row.
 2. D4 → the existing refreshed [decision] row (pipeline.md, single-source cache names) — no new row needed.

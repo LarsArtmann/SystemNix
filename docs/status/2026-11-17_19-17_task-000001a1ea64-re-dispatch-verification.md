@@ -75,7 +75,7 @@ Surfaces updated together: `TODO_LIST.md` one-liner + `docs/todo/services.md` ro
 **Remaining (sudo-only, non-harvestable): full enumeration** — total segment count, bytes, and any
 OTHER leftover corrupt segs. Only an owner shell or privileged terminal can list the dir now.
 
-## §f sweep statement (step 3)
+## f) sweep statement (step 3)
 
 Scope: item-derived obligations of THIS batch's Source pointers (task-000001a1ea32 closeout §b/§passing,
 2026-11-08 §f.24, papdashboard journal-noise row). The prior fire's own §f list (footer commit b4d360f91 +

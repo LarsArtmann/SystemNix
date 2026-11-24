@@ -59,7 +59,7 @@
 4. **Remote-shell probes must use commands the shell supports** (StorageBox restricted shell: `ls`, `help`, `df` via sftp; no `true`).
 5. **r.jina.ai reader proxy is the working route for JS-SPA docs** (docs.hetzner.com returns empty to plain fetch) — record for future Hetzner doc needs.
 
-## §f NEXT (ranked, ≤50 — 37 real items)
+## f) NEXT (ranked, ≤50 — 37 real items)
 
 1. Answer the owner's borg-vs-BTRFS incremental question (prose; no research needed)
 2. Read/kill job 037 → pool/backups hog identification

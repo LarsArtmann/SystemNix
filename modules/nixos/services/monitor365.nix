@@ -424,6 +424,7 @@
       imports = [
         inputs.monitor365.nixosModules.monitor365
         inputs.monitor365.nixosModules.monitor365-server
+        inputs.monitor365.nixosModules.monitor365-graphical-helper
       ];
 
       config = lib.mkMerge [
@@ -493,7 +494,41 @@
                   discard_events_before = "2026-10-27T00:00:00Z";
                 };
               };
+
+              # 2026-11-23 live-fix session: graphical-session collectors are
+              # OFF agent-side. The agent runs as the monitor365 system user
+              # and cannot read the Wayland socket (/run/user/<uid> is 0700)
+              # even with the correct display-env snapshot — grim,
+              # wl-clipboard and xprintidle all fail there. Screenshots are
+              # owned by the graphical helper (below) running inside the
+              # user session; clipboard/afk have no helper counterpart yet
+              # and logged an error every cycle. fs_event watches nothing
+              # (empty watch_paths are refused at registration — pure warn
+              # noise, live TOML had watch_paths = []); camera stays off on
+              # this host (privacy default; /dev/video* is the OBS OUTPUT
+              # node, which cannot capture — 2026-11-12 incident).
+              collectors = {
+                screenshots.enabled = false;
+                clipboard.enabled = false;
+                afk_status.enabled = false;
+                fs_event.enabled = false;
+                camera.enabled = false;
+              };
             };
+          };
+
+          # ── Graphical helper (2026-11-23) ─────────────────────────
+          # Runs INSIDE the primary user's session (systemd --user unit,
+          # starts with graphical-session.target) where the Wayland socket
+          # is readable. Connects to the agent IPC socket (0660 + owned by
+          # monitor365-ipc), forwards ScreenshotEvents into the agent
+          # pipeline, and receives TriggerScreenshot broadcasts when the
+          # agent-side screenshots collector is disabled (the three-way arm
+          # in the agent's sse_sync). deviceId must equal the agent's
+          # settings.device.id — both default to the hostname.
+          services.monitor365-graphical-helper = {
+            enable = true;
+            deviceId = config.networking.hostName;
           };
         })
 

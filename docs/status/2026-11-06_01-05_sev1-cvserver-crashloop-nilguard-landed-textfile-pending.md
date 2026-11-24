@@ -34,7 +34,7 @@
 | SystemNix eval (lock audit) | RED at session start → GREEN after the parallel 00:49 float-register commit |
 | Deploy-needed probe | repo drv dmhrdgi3 ≠ deployed deriver 89ysb14 ⇒ real drift, deploy pending |
 
-## §f Follow-ups — harvest record
+## f) Follow-ups — harvest record
 
 All follow-ups are gate-blocked, so per the queue header ("blocked … → library only") they are **deliberately NOT in TODO_LIST.md**; the domain library rows are updated in the same session (upstream.md):
 

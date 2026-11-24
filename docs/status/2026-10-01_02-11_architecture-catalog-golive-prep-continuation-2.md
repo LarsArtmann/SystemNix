@@ -277,7 +277,7 @@ Forgejo 401s anonymous probes)
    per-session judgment under the existing gates the intended steady
    state? I cannot see other sessions' priorities or deadlines.
 
-## §f disposition (harvest doctrine)
+## f) disposition (harvest doctrine)
 
 Durable new asks harvested AT AUTHORING: textfile retention, automation-
 verdict persistence, degenerate-artifact guard, unattended-deploy policy

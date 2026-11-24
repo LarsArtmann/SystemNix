@@ -32,7 +32,7 @@ dbus-1 / man-paths / mandb / polkit unit drvs appear in the run-4 enumeration as
 
 - **Run 5 (toplevel keep-going on the round-3 tree, this session's independent run): GREEN — rc=0, zero errors, cv legs build at 066f76c** (~/.cache/cv-lift-keepgoing5.log + .rc, 2026-11-14 ~14:0x). Combined with the rollback-deploy session's own keepgoing-post4.log green reproduction, the round-3 pin state is double-verified: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` passes end-to-end at HEAD's lock.
 
-## f. Follow-ups
+## f) Follow-ups
 
 - ~~The 3 fleet-input re-float rows~~ queued then REMOVED same session (§c correction: the fixwave re-locked past the broken revs; run 5 green) — the enumeration lives in §c as history.
 - CV upstream ask (guard-green go.sum + templ-1100 g-c-s bump + vendorHash re-bake in one commit; expected got IX/nWy4A… if nothing else moves) → owned by the rollback-deploy session's round-3 surfaces; NOT duplicated here.

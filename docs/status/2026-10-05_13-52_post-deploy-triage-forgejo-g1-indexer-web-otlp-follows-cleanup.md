@@ -82,7 +82,7 @@ Nothing destructive was done. But two real hazards were confirmed and one near-m
 
 ---
 
-## §f — UP TO 50 THINGS TO GET DONE NEXT
+## f) — UP TO 50 THINGS TO GET DONE NEXT
 
 **P0 — this incident**
 

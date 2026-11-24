@@ -47,7 +47,7 @@
 5. **Stale micro-comment I knowingly left** — nsfw-classifier.nix still says "LIST form — signoz-coverage walks serviceConfig.Environment as a list" while the walker actually normalizes strings too (I read the walker mid-session). List remains the convention, but the comment's justification is now wrong; I had the fact in hand and didn't propagate it. Small split-brain-by-omission.
 6. **Daemon-commit formatting discipline** — format per file-batch, before the ~10-min daemon window, not at session end.
 
-## §f NEXT (session-scoped, harvested to queue + services.md unless noted)
+## f) NEXT (session-scoped, harvested to queue + services.md unless noted)
 
 1. [ready] Deploy the session's config (onFailure paging + gatus conditions + alert string) — then verify gatus green on the new conditions. _(deploy-gated)_
 2. [ready] Fix the stale "walker walks as a list" comment in nsfw-classifier.nix (walker normalizes str+list; list is convention, not walker requirement).

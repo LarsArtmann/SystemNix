@@ -51,7 +51,7 @@
 6. **CI failure paging must not depend on a human noticing red** — 6 days silent because one env secret is unset. Any armed-but-inert alert path deserves a "secret set?" assertion at eval/deploy time (hub-side follow-up).
 7. **The freshness alert should name its real probes** (stamp + `ci-log.sh`), not a journal path that goes blind in a day.
 
-## §f WHAT WE SHOULD GET DONE NEXT (≤50, grouped; ★ = harvested this session, ✓ = pre-existing row referenced)
+## f) WHAT WE SHOULD GET DONE NEXT (≤50, grouped; ★ = harvested this session, ✓ = pre-existing row referenced)
 
 **Immediate — this incident's tail (owner-gated):**
 1. ★ **Push the hub fix**: `git -C ~/projects/eventcatalog-hub push origin master` — unblocks everything below (hub TODO canonical row + services.md mirror row, [blocked:user]).

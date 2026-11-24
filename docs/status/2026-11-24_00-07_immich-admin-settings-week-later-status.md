@@ -84,28 +84,28 @@ The skill guidance says a large N is a brainstorm, not a commitment list. I stop
 
 **EPHEMERAL — act on next interaction, no row:**
 3. Read the RIGHT-NOW deploy's outcome (`/var/log/systemnix-deploys/2026-11-23_23-59-48.log` tail + generation-anchor check) — it carries the pushed master tip; verify `readlink /run/current-system` == newest `system-N-link` per anchor discipline once it exits.
-4. Note tonight's storm tail (1m load 28, 15m 102) resolved itself; if a freeze/PSI row ever cites this window, boot 0 started 21:13:15 (previous boot ended 21:12:17).
+4. Note tonight's storm tail (1m load 28, 15m 102) resolved itself; if a freeze/PSI row ever cites this window, boot 0 started 21:13:15 (previous boot ended 21:12:17). <!-- fresh:skip: deliberately not harvested - point-in-time storm observation for freeze forensics; freeze rows carry their own boot evidence -->
 
 **ALREADY ROWED — re-verified open tonight (pointers, do not re-add):**
 5. Quotaboard availability contract + deploy-smoke treatment of session-scoped user services *(TODO_LIST 3898, BLOCKED on owner answer)*
-6. Attribute the 19:09/19:19 deploys *(TODO_LIST 3896, BLOCKED on owner answer)*
+6. Attribute the 19:09/19:19 deploys *(TODO_LIST 3896, BLOCKED on owner answer)* <!-- fresh:skip: represented verbatim at TODO_LIST.md:3896 (BLOCKED on owner answer) -->
 7. Prune-candidates paging policy *(TODO_LIST 3897, BLOCKED on owner answer)*
 8. Reviewfix sessions must stamp Task-Queue-ID footers on fix commits *(TODO_LIST 3895)*
 9. Standing quotaboard :8791 connection-refusal *(TODO_LIST 3894)*
 10. browser-history-agent rejected-visit loop upstream *(TODO_LIST 3893 — 62+ failures, P0 pages)*
-11. project-discovery-daemon OTEL terminal state *(TODO_LIST 3892)*
+11. project-discovery-daemon OTEL terminal state *(TODO_LIST 3892)* <!-- fresh:skip: represented verbatim at TODO_LIST.md:3892 -->
 12. project-discovery degraded-health gatus leg *(services.md 1264)*
-13. audiblesync progressCmd flip decision *(services.md 1263)*
+13. audiblesync progressCmd flip decision *(services.md 1263)* <!-- fresh:skip: represented verbatim at docs/todo/services.md:1263 -->
 14. Undated `library.json` weekly-archive verify (next run 2026-11-29 05:01) *(services.md 1262 — time-boxed, do before Saturday)*
 15. Parked audiblesync lock float deploy *(services.md 1261)*
 16. journal-serve cold-boot SQLITE_BUSY race *(services.md 1260)*
 17. Immich runbook probe-permission matrix *(services.md ~1187)*
-18. Takeout ingest reconcile: state both count semantics *(services.md ~1184)*
+18. Takeout ingest reconcile: state both count semantics *(services.md ~1184)* <!-- fresh:skip: represented at docs/todo/services.md:1204 + TODO_LIST.md:3707 (line pointer in text was stale) -->
 19. Migrate drive-paperless onto `services.immich.apiKeys` *(services.md ~632)*
 20. Catalog 21-subdomain eval warning *(services.md ~380)*
 21. Pocket ID auto-rotation deploy + apply-flip mechanics *(services.md ~389-390)*
 22. Client-secrets consumers ↔ pocket-id cycles (stale-secret class) *(services.md ~1142)*
-23. CI nix-check + VM-test leg cluster *(pipeline.md ~1129)*
+23. CI nix-check + VM-test leg cluster *(pipeline.md CI cluster rows: branching-flow SSH 44, nix-check watch 48, compat 49, actionlint 50, RO-PAT 73, selftest carrier 108)* <!-- fresh:skip: represented as the CI cluster in docs/todo/pipeline.md -->
 24. Re-anchor the four dump legs *(services.md ~911)*
 25. tq-agent-pool start in the first sub-30% PSI window *(services.md ~745 — tonight's declining load may be that window; the 15m avg still >30% at 00:07)*
 
@@ -113,7 +113,7 @@ The skill guidance says a large N is a brainstorm, not a commitment list. I stop
 26. Post-deploy battery leg asserting the four rendered config values — no failing signal exists yet; queue it when a settings regression ever bites (§c4). 
 27. DB-era settings audit — file-ownership predates this session; blast radius is not this week's work (§c3).
 28. Runbook semantics notes (deleteDelay=3650 ≈ purge-off; trash-365 snapshot interplay) — sub-5-min doc append; do on sight at the next immich touch (§c5).
-29. Single-source the mail domain literal across mail-relay/immich/pocket-id — real split-brain seed, but a refactor with zero current failure; ROADMAP-grade.
+29. Single-source the mail domain literal across mail-relay/immich/pocket-id — real split-brain seed, but a refactor with zero current failure; ROADMAP-grade. <!-- fresh:skip: routed to ROADMAP.md Theme 4 (single-source the mail sender-domain literal, verified 8-module duplication) -->
 30. Immich→relay send-counter observability (immich has no per-surface mail metric; only the relay queue gauge exists) — weak value while zero notifications fire; revisit if email becomes load-bearing (e.g. album invites).
 
 ## g) Questions I can NOT figure out myself

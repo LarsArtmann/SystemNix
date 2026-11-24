@@ -102,7 +102,7 @@ The `fix!` dispatch landed on a RED `nix flake check --no-build`: the `nix-email
 
 ---
 
-## §f TOP NEXT TASKS (ranked; the dispatch allowed up to 50 — 24 grounded items below; padding to 50 would be filler, and the quality guide routes vague fill to ROADMAP)
+## f) TOP NEXT TASKS (ranked; the dispatch allowed up to 50 — 24 grounded items below; padding to 50 would be filler, and the quality guide routes vague fill to ROADMAP)
 
 | #  | Task                                                                                                                                                                                                               | Impact   | Effort | Category |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | -------- |

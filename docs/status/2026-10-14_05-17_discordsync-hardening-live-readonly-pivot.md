@@ -55,7 +55,7 @@ The parallel session's deploy train took the hardening + restore-drill LIVE over
 4. **Root-cause before resilience**: the failed-run → add-retries → failed-again loop (timeout fix 10-11, reschedule 10-12, catch-up windows 10-13) consumed three nights against an unroot-caused error. The cheap decisive probes (sidecar ownership) should have run on night one — they were blocked by sudo, but ASKING for one owner-run `ls -la` on 10-13 would have beaten three design iterations.
 5. **Parallel deploy trains moot open questions** — always re-probe live state (journal, deployed unit symlinks) at session/report boundaries; it took one `journalctl` + one `ls` to learn more tonight than in the whole prior evening.
 
-## §f UP TO 50 THINGS TO GET DONE NEXT
+## f) UP TO 50 THINGS TO GET DONE NEXT
 
 | #  | Task                                                                                                                                                                                                                                                     | Impact   | Effort    | Category           | Surface                          |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- | ------------------ | -------------------------------- |

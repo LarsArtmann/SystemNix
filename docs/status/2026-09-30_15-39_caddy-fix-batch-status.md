@@ -144,7 +144,7 @@ hosts; the VM test passes. Nearest candidates, honestly labeled:
    service log LOCATIONS deserve the same storage-doctrine sweep the session
    DBs got (harvested below).
 
-## §f Up to 50 things to get done next
+## f) Up to 50 things to get done next
 
 Sorted by impact; `H` = harvested this report (direct follow-up), `D` =
 dispositioned brainstorm/ROADMAP fuel (not harvested — see Harvest Log).

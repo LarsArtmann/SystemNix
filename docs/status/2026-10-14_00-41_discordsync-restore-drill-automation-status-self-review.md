@@ -69,7 +69,7 @@ Closed every non-gated handoff item: owed lints clean, clone trashed, gates conf
 7. **Prior lesson re-validated, keep applying**: "newest artifact missing is a failure signal on sight" — the corpse listing was re-read with that lens this session and matched expectations exactly; the pattern is earning its keep.
 8. **Self-harvest rule worked under time pressure**: the stopped-timer gap went report-observation → `[ready]` row + queue one-liner in the same authoring pass. Keep the rule at authoring time, never deferred to a later pass.
 
-## §f UP TO 50 THINGS TO GET DONE NEXT
+## f) UP TO 50 THINGS TO GET DONE NEXT
 
 Ranked by impact; surface status noted (row = already on a TODO/library surface; new rows were self-harvested at authoring time).
 

@@ -24,7 +24,7 @@
 3. `09:17` rc=12 — PSI gate refused (io some avg10 66%, real storm; NOT overriding — the forced-deploy WDT class). My storm-watcher then burned 2h on a malformed probe (`grep '^io ' /proc/pressure/io` matches NOTHING — the file's lines start with `some`/`full`; empty readings are never evidence, self-inflicted trap, now recorded).
 4. A parallel session's 10:13 deploy (rc=3 after 4553s — post-check D-state-phantom warnings on the storm, nothing audible) evaluated the tree AFTER my commit and **switched my wave** as gen 1012. Anchor verified; no further deploy owed (drv-equality: the wave content is the running system).
 
-## §f Direct follow-ups (self-harvested at authoring time)
+## f) Direct follow-ups (self-harvested at authoring time)
 
 1. **[watch] Owner eyeballs dash.home.lan** for exactly ONE "AudibleSync" Media tile (render is eval-proven + §16-gate-passed; the human check is the acceptance). → TODO_LIST + docs/todo/services.md
 2. **[ready] audiblesync tracker adoption:** healthz reports `books:0` — the owner tracks no books yet in the new WebUI; if that's unexpected (he HAS books on disk), the Local-files page naming-mismatch row (already queued, services.md) is the likely cause. No new row — it strengthens the existing one. → noted on the existing row

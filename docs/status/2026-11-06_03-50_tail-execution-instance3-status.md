@@ -32,7 +32,7 @@
 1. The docs-gates audit-all replay takes >15 min under storm (first two attempts unbounded; only the `timeout 900` form completed) — consider a `--audit-since` window or precomputed index if the corpus keeps growing.
 2. `check-todo-system.sh` (191 reports) and docs-gates (12,628 items) measure DIFFERENT units of the same backlog — one line in each tool's output naming the other's counter would prevent future unit confusion in rows.
 
-## §f Up to 50 things we should get done next
+## f) Up to 50 things we should get done next
 
 *(self-harvested at authoring — every obligation landed in an existing surface this session; no new rows minted)*
 

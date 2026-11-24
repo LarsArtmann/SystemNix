@@ -53,7 +53,7 @@ Tests: full suite green (build, bot, web after golden refresh for templ-componen
 - `nix run .#float-register`: no drift (registry == lock). Eval probe of evo-x2 toplevel: green.
 - **Toplevel keep-going build: GREEN (rc=0, zero hash mismatches)** after two shim waves — 7 consumer shims re-pasted with first-hand spec/got pairs: golangci-lint-auto-configure, journal (×3 surfaces), discordsync, crm, library-policy, project-dependency-graph, bank-sync (×2 surfaces, the parallel session's 12ca5df2 float), plus a NEW cv shim (the parallel session's 2c25d0a3 float; upstream-baked hash stale under our graph).
 
-## f. Follow-ups (harvested)
+## f) Follow-ups (harvested)
 
 - go-nix-helpers mkPreparedSource explicit-subModules /v4-dir fix + consumer sweep (crm/pma/inboxclean) → docs/todo/upstream.md [ready].
 - file-and-image-renamer vendor/ refresh (waits on the live cmdguard session) → docs/todo/upstream.md [watch].

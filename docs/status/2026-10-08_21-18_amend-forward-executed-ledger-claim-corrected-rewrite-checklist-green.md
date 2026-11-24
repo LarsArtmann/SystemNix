@@ -39,7 +39,7 @@
 3. **Assumptions about commits need `git show` — always.** A 1-file heuristic commit's file identity is one command away; guessing from position is unforced error.
 4. The daemon-race discipline (assert lineage count, atomic chain, verify contents) worked exactly as designed under live-daemon conditions — keep it.
 
-## §f — Next items
+## f) — Next items
 
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 

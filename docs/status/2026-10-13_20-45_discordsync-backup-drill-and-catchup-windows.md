@@ -36,7 +36,7 @@ Eval: `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPat
 
 IO PSI `some avg60` was 53-60% all session (Zone storm). A switch mid-storm is the freeze-amplifier class, and the deploy-concurrency guard exists precisely because a storm-window switch also ships parallel sessions' in-flight tree. The hardening rides the next quiescent deploy window.
 
-## §f Follow-ups (harvested at authoring)
+## f) Follow-ups (harvested at authoring)
 
 1. Verify the dump on the next deploy's windows (03:45, then 05:15 if missed) — UPDATED in TODO_LIST + storage.md row 45 (was: tonight-only).
 2. Identify the silent lock holder once the backfill hypothesis is testable (post-deploy or post-drain journal correlation) — folded into row 45's verify item.

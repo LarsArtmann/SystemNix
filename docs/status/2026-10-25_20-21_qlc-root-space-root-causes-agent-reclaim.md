@@ -86,7 +86,7 @@ Method: freshness probe first (`find <tree> -newermt <cutoff>` + dir mtimes; any
 5. **E5 — btrbk burst-snapshot policy** (C5): why catch-up fired 5x on Oct 23; each burst extends pin windows.
 6. **E6 — THE LEAK FIX (highest leverage):** move the Go cache home to the **Samsung hot tier** (380G free, internal NVMe, never flaps — doctrine-C `+C` subvol pattern, same as M12) OR add mount-alive conditional guards to the four leak sites. Then: repoint, let caches regrow in the right place, trash the ~96G QLC trees after builds quiesce. Owner design call — the redirects encode two real outage classes (ENOSPC 2026-09-22, pruned-index 2026-10-14) and must not be naively reverted onto a buildcache that is itself at 87%.
 
-## §f Harvest (self-harvest rule)
+## f) Harvest (self-harvest rule)
 
 - E1, E2, E3, E4, E5, E6 + the pin-window verification → `docs/todo/storage.md` rows (this date).
 - Drain verification (time-gated) → `TODO_LIST.md` queue row.

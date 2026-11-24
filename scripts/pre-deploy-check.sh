@@ -210,7 +210,7 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION
   fi
 
   # 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
-  # modules/ that is not `git add`ed yet makes EVERY evo-x2 eval fail with
+  # modules/ that is not staged via `git add` yet makes EVERY evo-x2 eval fail with
   # "attribute missing" while the file sits visibly on disk (aborted a deploy
   # 2026-08-27). Concurrent-session trees are especially prone: another agent
   # writes the module and imports it before staging it.

@@ -77,7 +77,7 @@ SUPERSEDED-POINTED: completed and superseded same-hour by docs/status/2026-10-18
 - e3. **CI-restoration** — both of today's upstream pushes (`853c9161`, `f3f0b82`) landed without CI verification; file-and-image-renamer may not even HAVE CI. The systemic row remains the fix.
 - e4. **Re-lock-then-verify ordering** as written doctrine (one sentence in go-ecosystem.md next to the pdd two-round note). Harvested (§h).
 
-## §f TOP NEXT TASKS (up to 50 allowed; 20 grounded — filler would dilute; existing rows cited not duplicated)
+## f) TOP NEXT TASKS (up to 50 allowed; 20 grounded — filler would dilute; existing rows cited not duplicated)
 
 | #  | Task                                                                                                                                                                                              | Impact                     | Effort | Category |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------ | -------- |

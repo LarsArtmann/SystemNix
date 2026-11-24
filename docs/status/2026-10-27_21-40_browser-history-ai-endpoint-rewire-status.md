@@ -30,7 +30,7 @@ Path verification (crush client key → `/v1/llama-chat`) timed out at 120s — 
 3. Restore `fastflowlm.socket` (manual start = the guard's designed unblock after RESTORE CAPPED) so PMA/paperless-gpt/enricher wake paths return; expect the guard to re-sacrifice on the next trip — that is the design.
 4. Owner first-use smoke (summary + one chat turn) — the standing `[blocked:user]` row, premise updated to the new path.
 
-## §f Follow-up harvest (done at authoring time)
+## f) Follow-up harvest (done at authoring time)
 
 - `[ready]` SigNoz TTFT alert for llama-chat starvation — monitoring.md + queue ✅
 - `[decision]` interactive-inference CPU floor — ai-stack.md ✅

@@ -51,7 +51,7 @@ PSI io some avg10 = **92%**, load 112–143, `ld.mold`/`compile`/`golangci-lint`
 - quotaboard has NO CI (dms-paste had the same gap at extraction; queued below).
 - The plugin polls unauthenticated loopback HTTP — fine for a single-user desktop; must NOT gain a vHost.
 
-## f. Follow-ups (self-harvested at authoring time)
+## f) Follow-ups (self-harvested at authoring time)
 
 1. **Deploy + live-verify quotaboard** → `docs/todo/desktop.md` + `TODO_LIST.md` as [blocked:deploy] (PSI storm at authoring time; checklist in the row).
 2. **Wire provider keys via sops + `services.quotaboard.environmentFile`** → [blocked:user] in desktop.md (owner provides `ZAI_API_KEY`/`SYNTHETIC_API_KEY`).

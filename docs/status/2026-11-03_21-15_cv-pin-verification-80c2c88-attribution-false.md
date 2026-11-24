@@ -75,7 +75,7 @@ between panics, intermittent `find opportunities` timeouts against crm :8091.
 6. `TODO_LIST.md` — queue one-liner for the same row (edited both, no drift).
 7. `CHANGELOG.md` — correction entry.
 
-## f. Follow-ups (self-harvested at authoring)
+## f) Follow-ups (self-harvested at authoring)
 
 - **Harvested:** the upstream cv fix row (docs/todo/upstream.md + TODO_LIST.md) — the pin
   LIFT condition depends on it.

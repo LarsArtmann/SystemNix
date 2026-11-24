@@ -44,7 +44,7 @@ First activation (parallel session's deploy, 22:19): `crowdsec-setup` → `cscli
 - `cscli` delete flag: raw GitHub source read (v1.8.1 delete.go) — NOT runtime-verified (needs the LAPI up).
 - `nix flake check --no-build`: all-pass AFTER the fix patch (22:4x). pre-deploy §11: passed standalone once (20:5x), then repeatedly voided (tree mutations) or blocked (storms).
 
-## f. Direct follow-ups (self-harvested at authoring time)
+## f) Direct follow-ups (self-harvested at authoring time)
 
 1. **[watch] CrowdSec live verification** — once gen lands the c41a21ad toplevel: service active, `ss -ltn` shows 8082+6061, `cscli metrics` shows BOTH acquis sources parsing (lapi_tokens/api_alerts > 0; caddy entries parsed), gatus `CrowdSec` green, machine-repair no-op on second boot. Queued: **TODO_LIST.md** + `docs/todo/services.md` (service-specific checks live in services.md per routing).
 2. **[decision] `*:6060` pprof listener identification + exposure** — root-side `ss -ltnp`, then bind-loopback/kill/register decision. Queued: **docs/todo/security.md**.

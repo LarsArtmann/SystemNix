@@ -63,7 +63,7 @@ The audits fixed, the gate walk then failed on layers the pasted run never reach
 3. **Daemon-race mixing remains the norm** — 2 of my 3 sweeps landed mixed with foreign files; only README/FEATURES got a clean commit. The PATHSPEC-commit option exists but needs explicit go-ahead (never commit without the owner's word); worth a standing decision from the owner on whether fix-wave authors should always PATHSPEC-commit.
 4. **Tier decisions are judgment calls with no review trail beyond the code comment** — A1's BE/5 choice is reasoned in-file but nowhere ratifiable. If the owner disagrees, the fix is a one-line change; the comment makes it findable.
 
-## §f Next tasks (evidence-backed; ordered by impact)
+## f) Next tasks (evidence-backed; ordered by impact)
 1. **Deploy evo-x2** — carries the nats BE/5 tier + NATS gatus check to the live host (gen-1005 lacks both, proven §A5). Coordinate with the parallel arc first.
 2. **Post-deploy verify** — `grep IOScheduling /etc/systemd/system/nats.service` (expect best-effort/5); gatus journal clean parse (the 2026-11-02 duplicate panic class); NATS JetStream endpoint green on the dashboard.
 3. **PATHSPEC-commit attribution cleanup decision** — §e-3; needs owner word either way.

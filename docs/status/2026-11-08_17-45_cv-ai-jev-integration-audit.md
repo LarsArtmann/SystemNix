@@ -129,7 +129,7 @@ current candidates or purge the test cohort) — without this nothing else matte
 (2) provision funnel-side LLM keys so approved sends are actually superb; (3) deploy the
 locked cvagent fix; (4) decide telephone: plan it or retire it from the goal statement.
 
-## §f Follow-ups (self-harvested)
+## f) Follow-ups (self-harvested)
 
 1. → TODO_LIST `[decision]` "Funnel send-path LLM keys" + docs/todo/services.md — §b.2.
 2. → TODO_LIST `[decision]` "Stale approval queue / zero sends" + docs/todo/services.md — §b.3.

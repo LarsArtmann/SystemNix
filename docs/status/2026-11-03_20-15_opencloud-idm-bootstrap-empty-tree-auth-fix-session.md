@@ -39,7 +39,7 @@ Data-loss audit: zero. The DB held ONLY config-derived seed data — no user was
 5. The 18:37 deploy's exit-3 smoke failure was I/O PSI (storm class), not opencloud — no smoke regression of mine.
 6. journald retention: nothing of the Oct 26 boots survives, so the ORIGINAL bootstrap failure error line is unrecoverable; the upstream code path makes the diagnosis independent of it (deterministic mechanism, complete file evidence).
 
-## f. Self-harvest (at authoring time)
+## f) Self-harvest (at authoring time)
 
 - `[watch]` first-login confirm → services.md (+ recorded in runbook owner-hands). Harvested.
 - `[ready]` upstream verify-and-file → services.md + TODO_LIST queue. Harvested.

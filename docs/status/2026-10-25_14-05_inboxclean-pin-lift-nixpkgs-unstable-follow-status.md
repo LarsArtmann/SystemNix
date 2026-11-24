@@ -37,7 +37,7 @@
 
 - **rc=0** (`~/.cache/lockfloat/inboxclean-lift-toplevel-proof.log`): toplevel `nixos-system-evo-x2-26.11.20261015.fe13242.drv` (root pin intact in the name) built through `activate.drv` with `--keep-going`; the log carries 6 inboxclean references, all realized — `inboxclean-c63bf28_fish-completions.drv`, `unit-inboxclean-web.service.drv`, `unit-inboxclean-sync.service.drv` (the main package store path `a0aghv75zhgq…inboxclean-c63bf28` was cache-hit from the §e.1 scoped build). Zero errors in-log. Run under a sustained io storm (some avg60 ~58%) — build verdicts unaffected, only slower.
 
-## f. Follow-ups
+## f) Follow-ups
 
 - **[watch] Collapse `nixpkgs-unstable` back to the root follow** when the `fe13242` pin lifts and ships go ≥ 1.27.3 — one root nixpkgs instance is the goal; drop condition lives in the flake.nix comment. Harvested to TODO_LIST + docs/todo/pipeline.md.
 - **[ready] hermes-agent same-pattern lift candidate** — point `hermes-agent.inputs.nixpkgs` at `nixpkgs-unstable` (unstable patchelf carries #672 → the patchelfFixed patch should apply), verify the hermes-python-source IFD + pm-ripgrep/pm-node builds, then drop the pin + allowlist row. Harvested with the wholesale-instance caveat baked in.

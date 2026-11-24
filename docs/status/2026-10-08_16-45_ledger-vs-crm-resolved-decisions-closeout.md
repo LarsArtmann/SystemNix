@@ -120,7 +120,7 @@ Tree clean; the multi-RPID draft intact at `docs/drafts/2026-10-08_multi-rpid-we
 - identity.db "no users yet" remains file-level inference (WAL 0 B + mtime
   unchanged) — the sqlite-count check stays on the existing watch row.
 
-## §f Follow-ups (self-harvested at authoring time)
+## f) Follow-ups (self-harvested at authoring time)
 
 - Row 285 (CV durable checkpoint) is now FULLY dispatchable — it was already
   queued; its "rides the cv lock decision" clause updated in both surfaces.

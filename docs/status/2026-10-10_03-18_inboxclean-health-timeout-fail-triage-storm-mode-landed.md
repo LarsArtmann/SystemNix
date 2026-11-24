@@ -45,7 +45,7 @@ Deferred: `nix flake check --no-build` eval not re-run this session (storm + par
 - The auto-commit daemon swept this session's edits mid-flight: `26ee62f3` (lib), `f2727291` (main script v1 + tests), `95e84b71` (main script v2 fix). Contents verified via `git show --stat`; the final `M scripts/post-deploy-check.sh` diff is the v2 correction on top.
 - A parallel session (npm/buildcache) edited `TODO_LIST.md` (rows ~71-74), `flake.lock` (crm input `bcaf689`→`2db45bb6`), and `docs/todo/services.md` in `0ecad207`. Not mine, not touched; my row edits in the same files were disjoint-line exact-match edits after re-reading.
 
-## f. Direct follow-ups (harvest status)
+## f) Direct follow-ups (harvest status)
 
 1. **Timeout-fix row** → CLOSED both surfaces + CHANGELOG (§b). Harvested by closure.
 2. **Storm-mode row** → CLOSED both surfaces + CHANGELOG (§c). Harvested by closure.

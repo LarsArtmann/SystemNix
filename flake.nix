@@ -1328,6 +1328,9 @@
     nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
     nsfw-classifier.inputs.nixpkgs.follows = "nixpkgs";
     nsfw-classifier.inputs.treefmt-nix.follows = "treefmt-nix";
+    # treefmt-nix also arrives NESTED under nsfw-classifier's own go-nix-helpers
+    # (eval-only dep — the journal.inputs.go-nix-helpers precedent).
+    nsfw-classifier.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     # offline-banner is module-only consumption for this flake (eval-safe,
     # no FOD builds ride its inputs) — both edges follow root.
     offline-banner.inputs.nixpkgs.follows = "nixpkgs";

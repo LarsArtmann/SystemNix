@@ -37,7 +37,7 @@ Both are unsolicited AI-run filings → owner must review/send (verify-before-fi
 - llama-chat-side services cycle pids mid-experiment (3290688 → 4161668 → 731372 for :8850; 694380 → 1953501 for :8848) — probes must re-resolve pids at start and verify liveness at end (`llama_still_alive` check added to probe3.sh).
 - nvtop master dlopen needs `libdrm_amdgpu.so.1` at runtime; building via `nix-shell -p cmake ncurses libdrm pkg-config gcc systemd` works, running needs `LD_LIBRARY_PATH` pointing at the non-dev libdrm output.
 
-## §f Follow-ups (self-harvested at authoring)
+## f) Follow-ups (self-harvested at authoring)
 
 1. **Send the amd-gfx thread reply** → `[blocked:user]` row in docs/todo/upstream.md (owner sends mail; agents never send).
 2. **File the nvtop release-request issue** → `[blocked:user]` row in docs/todo/upstream.md (owner posts; gh create command included in the row).

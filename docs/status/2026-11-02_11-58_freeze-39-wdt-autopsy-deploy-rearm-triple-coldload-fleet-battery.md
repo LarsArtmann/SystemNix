@@ -58,7 +58,7 @@ Freeze #39 — **Branch C (combined storm + thermal ceiling), SP5100 hardware-wa
 
 **Didn't:** thermal-pstate-guard — 2477 ENTERs meets its own deficit-masking criterion ("≥95 °C through a whole boot even with deep_throttled==1"); memory-emergency-guard — 1090 trips with a 100 % no-match final window (pattern-blind to model cold-loads and user-scope builds; the queued pattern-extension and "disarmed"-SEV1 rows now carry terminal evidence); **deploys as re-arm vectors** — gen-968 (01:04) and gen-969 (08:12) each re-armed owner-stopped containment, the second into an already-fatal morning storm.
 
-## §f NEXT (self-harvested at authoring time — queue + library rows landed with this report)
+## f) NEXT (self-harvested at authoring time — queue + library rows landed with this report)
 
 1. **[blocked:user] Deploy re-arm vs owner containment policy** — QUEUED (TODO_LIST + `docs/todo/stability.md`): stc cannot re-arm a MASK, only a stop; owner call on masking the Oct-31 containment batch (at minimum `llama-chat-ensure.timer`) vs a deploy-time re-arm warning vs accept. Third strike of the freeze-4 rule.
 2. **llama-chat restart storm-gating row UPDATE** — the existing [ready] row gains freeze #39 as its terminal outcome (night 3 of the cold-load loop ended the boot).

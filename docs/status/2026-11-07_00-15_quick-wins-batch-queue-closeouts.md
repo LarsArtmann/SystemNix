@@ -28,7 +28,7 @@
 2. **Near-miss of the correction-claim rule:** my first DONE note for row 28 claimed the report was "deleted from the tree / existed in git history" — a wrong premise (it never landed). Caught during close-out review and corrected in place on the same surface.
 3. **PSI discipline held:** docs-first sequencing; evals deferred behind PSI polls; io PSI avg10 swung 60→22→31→86 across the session (parallel-session build load). The du re-baseline and the full flake check were NOT run into the storm.
 
-## §f Follow-ups (self-harvest at authoring)
+## f) Follow-ups (self-harvest at authoring)
 
 - **f.1 QUEUED** (TODO_LIST + docs/todo/pipeline.md): annotate the phantom 02-10 io-psi citation in the two HISTORICAL reports (2026-10-14_05-03 §2 + 2026-10-15_03-29 §2) — CHANGELOG left as-is (append-only).
 - **f.2 Deliberately not harvested:** full `nix flake check --no-build` was PSI-deferred (io avg10 86% at decision time) — the pre-commit hook is the standing enforcement and runs it at commit time; the evo-x2 toplevel eval (rc=0) covers both module edits on their only consumer host.

@@ -57,7 +57,7 @@
 5. **Root-nixpkgs un-follow [decision]** — go-cqrs-lite joins erraudit/go-humanize-linter/library-policy/md-go-validator/project-meta/vision-review-agent/go-health-dashboard/crm in the followers class; upstream pastes decay on every root toolchain bump until the lock edge is cut.
 6. **Capture discipline** — any long-running gate/build command writes to a named file FIRST (`> /tmp/<name>.log 2>&1`), never pipes through tail/grep as the primary sink. Write it into CONTRIBUTING's deploy-runbook section if not already there.
 
-## §f UP TO 50 THINGS WE SHOULD GET DONE NEXT
+## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
 **Directly from this session (new):**
 

@@ -49,7 +49,7 @@ Verification discipline that made this cheap: local **emulated aarch64** (`nix b
 | niri layer | namespace `systemnix:offline-banner` unchanged by the bump (wrapper untouched); layer check rides the post-deploy smoke of the a5673f7 switch |
 | Deep-night caveat | 0 icmp flaps 02:30→04:5x — the ladder's verdict under the real evening flap window is still owed (upstream TODO row) |
 
-## f. Harvest (all landed this session)
+## f) Harvest (all landed this session)
 
 **offline-banner repo** (pushed `e652a3c`, `b47022d`, `d2599e8`): AGENTS hard rules ×3 (resolve-don't-grep rendered PATH; recompute leg state from raw counters; exact journal counts only at deterministic positions + always poll state reads) · TODO_LIST: live-proof row closed on proven legs, + evening-window observation, + waybar degraded-widget wiring, + vm-smoke additive-key asserts, + website sync row; sticky-dwell row DONE (`b47022d`) · FEATURES: ledger row → 🟢 (live append), + atomic-write row, + PATH-gate row, sound row honest 🟡 · **new gates**: `waybar-consumer` check (12 fabricated-state fixtures — the 2026-11-05 manual battery scripted) + probe-transitions sticky-dwell (dwell=0) scenario.
 

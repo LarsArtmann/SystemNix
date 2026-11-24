@@ -26,6 +26,6 @@ The landed fix is CORRECT and is now **proven by execution**: `checks.x86_64-lin
 - `TODO_LIST.md`: the one-liner is ABSENT — pruned/removed by the parallel queue passes between 01:13 and 05:06 (the file's own terminal state for done items; the done-library-entry pairing holds). Nothing re-added: a done row must not persist in the queue.
 - `docs/todo/stability.md` row 30: `[x]` DONE, now extended with the re-fire-3 execution evidence (VM green + the sibling ordering bug + fix commit).
 
-## §f sweep scope statement (protocol clause b)
+## f) sweep scope statement (protocol clause b)
 
 Scope: ITEM-DERIVED obligations of `…2026-09-29_01-45…md` §e.2 only. Its one direct follow-through (eval-time stray-unit lint) is already a `[ready]` row in `docs/todo/stability.md` (line 72). The §f table's other rows (f.1/f.2-3/f.4/f.9/f.11/f.12/f.17) were harvested by the prior fires and live as their own queue/library rows — not re-swept here. NEW follow-up harvested this fire: the "authored-but-never-executed VM scenarios" class → queue row + `docs/todo/pipeline.md` library entry (the guard test is the proof case: a scenario sat unexecuted for ~1 day and its first run was red).

@@ -49,7 +49,7 @@
 7. **The deploy log does not record WHO fired it** — caller banner (user/session/terminal) would have closed §b.1 for free; deploy-attribution sessions currently need forensics.
 8. **The structural storm legs stay deferred behind the same owner question** — third consecutive session. My tier-2 fix protects against the deploy JOINING storms; nothing yet shrinks the storms (§g.2).
 
-## §f Up to 50 things we should get done next
+## f) Up to 50 things we should get done next
 
 NOT harvested this pass (owner: report-then-wait). Items 1–3 overlap rows already landed this session (marked).
 

@@ -50,7 +50,7 @@
 - Daemon commits swept my files twice mid-session (29615ab95 = my flip+sops pair, clean; 48008e3e6 = my docs MIXED with the foreign `_forgejo-scripts.nix`) — no amend-forward on the mixed commit; all content is properly messaged via this report + CHANGELOG.
 - Deploy storms: 5 deploy attempts across ≥2 sessions on nh's lock today (mine: 1 refusal; theirs: 2 refusals + 1 shellcheck failure + 1 success). Shared-claim-file row already queued by the parallel session (pipeline.md tail).
 
-## f. Follow-ups (self-harvested at authoring time)
+## f) Follow-ups (self-harvested at authoring time)
 
 1. **Console redirect URI + Workspace GSC access + Connect** → queued `[blocked:user]` in TODO_LIST.md + docs/todo/services.md (the one owner ask; §c above).
 2. **Investigate the deploy anchor gap: why did a code-0 deploy leave profile+boot-default on a 4h-stale generation?** → queued `[ready]` in docs/todo/pipeline.md. Suspects: nh profile-set step skipped/failed silently post-switch; or a cross-session activation interleave (the flock serializes deploy.sh, but a second `nh os switch` outside deploy.sh would not be blocked). Every future deploy's verify already checks this (anchor discipline), but a code-0 exit lying about the anchor is a deploy-infra bug worth a root cause.

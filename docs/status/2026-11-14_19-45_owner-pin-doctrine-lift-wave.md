@@ -52,7 +52,7 @@ rows — the existing row was EXTENDED (source citation updated to this report �
   anchored); all 4 legs PASS incl. pristine-tree control eval.
 - AGENTS.md critical rule + docs/agents/nix-flakes.md pin-policy doctrine paragraph added.
 
-## §f Verification + self-harvest
+## f) Verification + self-harvest
 
 - evo-x2 pristine toplevel eval green (negative-test control); `nix flake check --no-build` rc=0;
   §11 vendor-freshness PASS ("all deploy go-modules FODs cached"); inputpin 4/4; invoices + CV

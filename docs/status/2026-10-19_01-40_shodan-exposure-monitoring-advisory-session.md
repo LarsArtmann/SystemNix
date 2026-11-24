@@ -129,7 +129,7 @@ Brainstorm list (session-derived only, per instruction) — sorted by impact wit
 | 49 | Raw re-verify pricing/limits before any purchase (closes §b.2)                                  |
 | 50 | One review pass over both answers' claims when implementation starts (verification decay check) |
 
-## §f harvest record (direct follow-ups only)
+## f) harvest record (direct follow-ups only)
 
 Harvested at authoring time into `TODO_LIST.md` (`### monitoring` queue) + `docs/todo/monitoring.md` (library), no drift:
 

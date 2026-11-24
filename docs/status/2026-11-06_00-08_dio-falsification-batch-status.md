@@ -59,7 +59,7 @@ The batch's central premise — "llama.cpp 0.6.0 LM=dio SIGABRTs mid-load under 
 7. **Mega-ticks are getting heavy** — the item-1 tick is a ~2,000-char single line; consider capping tick verdicts at ~3 sentences + pointing at the report narrative (house style currently allows the long form; both items 2/3 from the prior session are equally long).
 8. **Reproduction cmdlines should be lifted verbatim from coredumpctl `Command Line:`** — matching host/port/flags exactly (port 18849 for the repro) made the comparison airtight.
 
-## §f NEXT (grounded in this session + its direct neighbors; ≤50)
+## f) NEXT (grounded in this session + its direct neighbors; ≤50)
 
 Markers: **[Q]** queued this session (queue + library, both surfaces), **[X]** existing open row spotted while working, **[I]** idea from this session, not yet queued, **[O]** owner decision (see §g).
 
@@ -91,7 +91,7 @@ Markers: **[Q]** queued this session (queue + library, both surfaces), **[X]** e
 
 Items 26-50 deliberately not fabricated: this session's honest discovery set is the 25 above; padding the list with unrelated queue rows would violate the "report what you noticed" scope.
 
-## §f self-audit (harvest table)
+## self-audit (harvest table)
 
 | Direct follow-up from THIS session | Surface |
 | --- | --- |

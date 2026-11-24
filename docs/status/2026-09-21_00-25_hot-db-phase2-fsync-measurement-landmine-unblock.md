@@ -95,7 +95,7 @@ entries.discordsync = {
 
 **RPO pre-req discovered (wave 2):** the PG cluster's paperless database has NO pg_dump (immich + miniflux do; paperless rides the document_exporter manifest). After the cluster leaves `@` snapshot coverage the exporter becomes the only paperless DR path — wire a paperless pg_dump job or record the owner decision that importer-based restore suffices (queued in storage.md).
 
-## f. Landmine guard defect + fix (this run)
+## f) Landmine guard defect + fix (this run)
 
 `hot-db.nix` rejected ANY btrbk string/attr-name matching a blanket `hot/` pattern — written before forgejo's Set-B leg existed. With `btrbk.instances."forgejo"` legitimately snapshotting `hot/forgejo` (snapshots.nix:334), `services.hot-db.enable = true` + ANY entry = eval failure ("BTRFS LANDMINE") on every host — Phase 2 was unimplementable. Fix: per-ENTRY matching only (an entry's mountpoint path or its `hot/<name>` subvol string), which is exactly the invariant that matters (a nodatacow ENTRY must never be snapshotted; a COW sibling subvol with its own leg is sanctioned). `tests/test-hot-db-assertions.nix` gained the coexistence case (`subvolume."hot/forgejo"` in a btrbk instance must NOT trip) and the entry-subvol case keeps firing; `nix flake check --no-build` green after the change.
 

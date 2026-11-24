@@ -72,7 +72,7 @@ EXECUTED at b09923a6a). Plan:
   state (their go-generate + a sandbox bug) and auto-rewrote ci.yml pinning;
   the work landed via daemon sweep instead — noted, not fought.
 
-## §f Self-harvest (landed this pass)
+## f) Self-harvest (landed this pass)
 
 - 14 queue rows ticked with evidence + 1 partial note
   (3283890b7): upstream.md 252/394/419/420, services.md 440/1194/1195/1196,

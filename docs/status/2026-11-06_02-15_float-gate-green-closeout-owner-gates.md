@@ -49,7 +49,7 @@ A parallel session ran its own float recovery concurrently: a mid-proof ~1000-li
 - **Pushes:** mr-sync (v0.5.2 release prep in flight at 00:44) and go-cqrs-lite (mid-churn by the upgrade wave) remain unpushed — both now carry `[blocked:push]` upstream.md rows with lift conditions. monitor365 + overview pushes DONE this session per the owner's "fix it upstream" directive.
 - **Prune `--apply`** (312 rows) — owner-visible, reconcile T26 WARNs first.
 
-## §f Follow-ups (self-harvested)
+## f) Follow-ups (self-harvested)
 
 1. mr-sync push + lift → HARVESTED: docs/todo/upstream.md [blocked:push] row (2026-11-06).
 2. go-cqrs-lite push + shim retirement → HARVESTED: upstream.md [blocked:push] row.

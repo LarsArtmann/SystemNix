@@ -54,7 +54,7 @@
 6. **Deploy-time co-rider accounting**: the daemon batched the parallel session's discordsync/deploy.sh/post-deploy-check.sh edits into the same commit train my go-live rode. Deploy sweeps the tree as-is — flagged, and the owner should know the generation will carry both sessions' work.
 7. **The pma vendorHash treadmill is now 4 re-stales in 9 days** (10-26, 10-28, 11-02, 11-03). Each is mechanical, but it burns a float-register cycle every lock float. Worth either an upstream nudge (bake the got hash at release time) or a deliberate rev-pin with a documented LIFT condition (§f.26).
 
-## §f. What we should get done next (this workstream + session-learned)
+## f) What we should get done next (this workstream + session-learned)
 
 **Immediate go-live chain (owner-gated steps marked 🧑):**
 1. 🧑 Paste the r2 pubkey into StorageBox → SSH Keys (auth probe still `Permission denied`).

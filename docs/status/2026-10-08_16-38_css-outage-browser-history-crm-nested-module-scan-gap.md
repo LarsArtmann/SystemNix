@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-08 ~14:00–16:45 · **Scope:** `history.home.lan`, `crm.home.lan` (both unstyled in the browser) · **Verdict:** FIXED and live-verified (both vHosts serve real Tailwind with zero uncovered page classes).
 
-## f. Follow-ups
+## f) Follow-ups
 
 Harvested at authoring time (see the queue rows + domain entries cited below):
 

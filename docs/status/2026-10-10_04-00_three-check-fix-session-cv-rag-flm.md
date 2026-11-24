@@ -93,7 +93,7 @@ zone ever fired; the waves were pure IO/CPU stacking); a 07:2x transient wave
 recovered within minutes — the box is riding exactly the episodic pattern the
 trip-recency gate exists for.
 
-## §f Follow-ups (self-harvest)
+## f) Follow-ups (self-harvest)
 
 1. **Deploy the staged fixes at the first io-avg10 <20 window**:
    `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` (pressure gates still enforce

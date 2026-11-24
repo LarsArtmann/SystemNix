@@ -67,7 +67,7 @@ restore-their-sources; their files verified intact on disk.
 3. Optional: apologies/dedupe contact for the ~20 duplicate-mailed
    recruiters (owner judgment; a `[decision]` if wanted).
 
-## f. Direct follow-ups — ALL harvested
+## f) Direct follow-ups — ALL harvested
 
 1. Quota-reset acceptance probe → TODO_LIST + services.md (ready) ✔
 2. 165-row re-dispatch (recipient re-extraction / portal-apply routing /

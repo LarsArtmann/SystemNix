@@ -451,6 +451,87 @@ _: {
                 })
               ];
             };
+
+            # Polkit agent SLOT-OWNERSHIP collector (2026-10-04 polkit report
+            # §f.11): DMS registers org.freedesktop.PolicyKit1.AuthenticationAgent
+            # once at startup and NEVER retries, so a deploy that touches the
+            # race (niri-flake-polkit removal, dms restart) can leave a
+            # graphical session with an UNOWNED agent slot — GUI auth silently
+            # dead until a human hits a prompt. Runs as a USER unit (same scope
+            # as niri-health-metrics) so the probe talks to its OWN session bus
+            # — no machined proxy, no PAM-session burst, no root-vs-user-bus
+            # DAC question. Session-aware like the post-deploy desktop probe
+            # (scripts/post-deploy-check.sh): no graphical session → owned=1
+            # is legitimate (SSH-only); only session-active + unowned pages.
+            polkit-agent-metrics = {
+              description = "Polkit agent slot-ownership metrics for node_exporter textfile";
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  ExecStart =
+                    let
+                      polkitMetricsScript = pkgs.writeShellApplication {
+                        name = "polkit-agent-metrics";
+                        runtimeInputs = [
+                          pkgs.glib
+                          pkgs.systemd
+                          pkgs.coreutils
+                          pkgs.gawk
+                          pkgs.gnugrep
+                        ];
+                        text = ''
+                          OUT="/var/lib/prometheus-node-exporter/textfile_collectors/polkit.prom"
+                          TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                          mkdir -p "$TEXTFILE_DIR"
+                          # mktemp per run: fixed .tmp names collide with stale
+                          # foreign-owned leftovers in this sticky 1777 dir
+                          # (niri.prom 2026-09-04 live class).
+                          TMP="$(mktemp "$TEXTFILE_DIR/polkit.prom.XXXXXX")"
+                          chmod 644 "$TMP"
+                          trap 'rm -f "$TMP"' EXIT
+
+                          session=0
+                          if systemctl --user is-active --quiet graphical-session.target; then
+                            session=1
+                          fi
+
+                          errors=0
+                          owned=1
+                          if [ "$session" -eq 1 ]; then
+                            # gdbus exits nonzero on the unowned-name error —
+                            # absorb it and decide from the parsed owner, so
+                            # "no owner" and "probe broke" stay separate
+                            # signals (errors=1 pages on probe death; owned=0
+                            # pages on the dead-agent state).
+                            owner="$(gdbus call --session --dest org.freedesktop.DBus \
+                              --object-path /org/freedesktop/DBus \
+                              --method org.freedesktop.DBus.GetNameOwner \
+                              org.freedesktop.PolicyKit1.AuthenticationAgent 2>/dev/null \
+                              | grep -oE 'uint32 [0-9]+' | awk '{print $2}')" || errors=1
+                            if [ "$errors" -eq 0 ] && [ -z "$owner" ]; then
+                              owned=0
+                            fi
+                          fi
+
+                          {
+                            echo "polkit_agent_slot_owned $owned"
+                            echo "polkit_agent_session_active $session"
+                            echo "polkit_agent_probe_errors $errors"
+                          } > "$TMP"
+
+                          mv "$TMP" "$OUT"
+                        '';
+                      };
+                    in
+                    "${polkitMetricsScript}/bin/polkit-agent-metrics";
+                }
+                (harden {
+                  CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
+                  MemoryMax = "128M";
+                  ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+                })
+              ];
+            };
           };
 
           timers = {
@@ -470,6 +551,16 @@ _: {
               timerConfig = {
                 OnBootSec = "30s";
                 OnUnitActiveSec = "30s";
+              };
+            };
+
+            polkit-agent-metrics = {
+              description = "Collect polkit agent slot-ownership metrics every 5m";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "2min";
+                OnUnitActiveSec = "5min";
+                AccuracySec = "30s";
               };
             };
           };

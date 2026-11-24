@@ -24,17 +24,17 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 
 ## b) PARTIALLY DONE
 
-1. **VM test `crush-hot-db`** — everything except the run: correct attr found, proven unbuilt locally, CI proven signal-less, calm-window automation built and exercised, exact batch command recorded (`heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db`). The run itself waits on a calm window that never came (see d.5).
+~~1. **VM test `crush-hot-db`** — everything except the run: correct attr found, proven unbuilt locally, CI proven signal-less, calm-window automation built and exercised, exact batch command recorded (`heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db`). The run itself waits on a calm window that never came (see d.5).~~ done — the VM test RAN 2026-11-12 — `checks.x86_64-linux.crush-hot-db` executed and exposed the pre-existing guard-blindness exactly as predicted (docs/status/2026-11-12_22-05_nixos-module-collection-w3a-landed-live-guard-regression-found-status.md §b)
    ~~2. **Deploy batch** — tree is ready and verified, but not deployed (owner authority + storm). It carries: crush-hot-db upgrade (per-project guard, failure paging, dry-run, tripwire), boot-mirror chain, MemoryHigh ceilings (row 73), 2-day WARN boundary (row 74), plus other sessions' landed work (treefmt HTML excludes, d2 overlay fix, hot-db Phase-2). First deploy also triggers the first per-project-guard migrate (`legal-cases` → Samsung).~~ done — deployed — crush-hot-db guard live since the 09-22 generation (docs/status/2026-10-01_13-42 §a.2)
-2. **Decision records** — landed, then self-review caught wrong timestamps (11:40 vs actual ~13:55) — corrected in storage.md + the §h report during THIS pass (see d.1).
+~~2. **Decision records** — landed, then self-review caught wrong timestamps (11:40 vs actual ~13:55) — corrected in storage.md + the §h report during THIS pass (see d.1).~~ done — corrections landed same pass; decision text lives at docs/todo/storage.md:80 (OWNER DECISION 2026-09-21 ~13:55)
 
 ## c) NOT STARTED (in-scope, known)
 
-1. The other 3 small rows the previous session dropped: shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6); `pool-subvols-ensure` declarative oneshot (item 5); device-constants lib consolidation (item 4).
-2. Row 79 (conditional 04:00 btrbk retry window) — deliberately NOT started (owner rejected-for-now; revisit if tonight's window also dies).
-3. TODO pruning pass ([x] rows → CHANGELOG) — inherited debt, not touched.
+1. The other 3 small rows the previous session dropped: shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6); `pool-subvols-ensure` declarative oneshot (item 5); device-constants lib consolidation (item 4). **→ docs/todo/storage.md**
+~~2. Row 79 (conditional 04:00 btrbk retry window) — deliberately NOT started (owner rejected-for-now; revisit if tonight's window also dies).~~ **NOT-DO — owner rejected-for-now, recorded in the living row (docs/todo/storage.md:80 "row 79 stays rejected-for-now").**
+~~3. TODO pruning pass ([x] rows → CHANGELOG) — inherited debt, not touched.~~ **NOT-DO — standing docs-health duty, not per-report work — TODO_LIST.md header mandates pruning `[x]` rows to CHANGELOG at every pass.**
    ~~4. Post-storm `df /` re-measurement (the +25G growth attribution is still reasoned, not measured).~~ done — measured: 570G/81% at 2026-09-21 00:35 (docs/status/2026-09-20_16-26 §h #48)
-4. btrbk-root 23:00 outcome check + Sep 22 00:28 verify result — time-gated to tomorrow.
+4. btrbk-root 23:00 outcome check + Sep 22 00:28 verify result — time-gated to tomorrow. **→ docs/todo/storage.md**
 
 ## d) TOTALLY FUCKED UP (honest list; all bounded)
 
@@ -60,35 +60,35 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 ## f) NEXT (ranked; ~24 real items — not padded to 50)
 
 ~~1. Fix owner-decision timestamps (DONE during this self-review — listed for the record)~~ done — completed during the self-review pass (this file §a.7 + line text)
-2. **User: create NIX_GITHUB_RO_TOKEN** (fine-grained PAT, Contents:Read-only) + `gh secret set` → revive CI (g.1)
+2. **User: create NIX_GITHUB_RO_TOKEN** (fine-grained PAT, Contents:Read-only) + `gh secret set` → revive CI (g.1) **→ docs/todo/pipeline.md**
 ~~3. **User: deploy in a calm window** (`nix run .#deploy`) — batch: crush-hot-db upgrade, boot-mirror, MemoryHigh ceilings, WARN boundary, other sessions' work~~ done — deployed 2026-09-22 generation (docs/status/2026-10-01_13-42 §a.2)
-4. **Batch the VM test into that window:** `heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db` — first execution of the rewritten test; failure = previous session's bug
+~~4. **Batch the VM test into that window:** `heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db` — first execution of the rewritten test; failure = previous session's bug~~ done — the VM test ran 2026-11-12 and found the predicted previous-session bug (guard-blindness; docs/status/2026-11-12_22-05 §b — "failure = previous session's bug" vindicated)
 ~~5. Post-deploy: verify first per-project-guard migrate (journal `skip <project>: live crush session holds it open`; `legal-cases/.crush` becomes a symlink; `crush-hot-db-migrate` monitored in system-health) — runbook in docs/services/crush.md~~ done — verified 2026-09-29: journal skip lines live, 279 symlinks, legal-cases root-caused blocked (docs/status/2026-09-29_01-25)
-6. Post-deploy: confirm row 73/74 live (`systemctl show btrbk-root -p MemoryHigh,OOMScoreAdjust`; next verify run journals the boundary WARN only when stale)
-7. Tomorrow: check the 23:00 btrbk-root outcome + the Sep 22 00:28 verify verdict (FAIL expected if storm ate it — by-design Discord page)
-8. **Identify the 42h storm's driver** (cheap IO-delta probes); if it's resumable readers, apply freeze-6 stop rules
-9. Consider the owed reboot (flm corpse classes, D-state pile, restore-cap loop) — `nix run .#pre-reboot-check` is ready; owner decision on timing
-10. If tonight's window dies: revisit row 79 (conditional 04:00 retry) with the owner
-11. Shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6)
-12. `pool-subvols-ensure` declarative oneshot (item 5)
-13. Device-constants lib consolidation — pool by-ids live in 3 places (item 4)
-14. TODO pruning pass: [x] rows → CHANGELOG (incl. this round's, once they flip)
+~~6. Post-deploy: confirm row 73/74 live (`systemctl show btrbk-root -p MemoryHigh,OOMScoreAdjust`; next verify run journals the boundary WARN only when stale)~~ done — both rows live in tree: snapshots.nix:817/855/874 (MemoryHigh "4G") + snapshots.nix:1350 (2-day WARN boundary); deploy landed per §b.2 (docs/status/2026-10-01_13-42 §a.2)
+7. Tomorrow: check the 23:00 btrbk-root outcome + the Sep 22 00:28 verify verdict (FAIL expected if storm ate it — by-design Discord page) **→ docs/todo/storage.md**
+8. **Identify the 42h storm's driver** (cheap IO-delta probes); if it's resumable readers, apply freeze-6 stop rules **→ docs/todo/monitoring.md**
+9. Consider the owed reboot (flm corpse classes, D-state pile, restore-cap loop) — `nix run .#pre-reboot-check` is ready; owner decision on timing **→ docs/todo/stability.md**
+~~10. If tonight's window dies: revisit row 79 (conditional 04:00 retry) with the owner~~ **NOT-DO — owner rejected-for-now stands (docs/todo/storage.md:80); no re-fire on record.**
+11. Shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6) **→ docs/todo/storage.md**
+12. `pool-subvols-ensure` declarative oneshot (item 5) **→ docs/todo/storage.md**
+13. Device-constants lib consolidation — pool by-ids live in 3 places (item 4) **→ docs/todo/storage.md**
+~~14. TODO pruning pass: [x] rows → CHANGELOG (incl. this round's, once they flip)~~ **NOT-DO — standing docs-health duty (TODO_LIST.md header prune doctrine), not per-report work.**
 ~~15. Post-storm `df /` re-measurement — attribute the +25G properly~~ **NOT-DO — NOT-DO — dup of §c.4.**
-16. Fix row 16's stale "reserve STILL PENDING" tail (metric says present since Sep 13)
-17. Owner decision: big-mermaid-HTML carriers — keep in-repo (current pattern) vs. out-of-repo bundle at `~/.local/state` + script-injection (g.3)
+16. Fix row 16's stale "reserve STILL PENDING" tail (metric says present since Sep 13) **→ docs/todo/storage.md**
+~~17. Owner decision: big-mermaid-HTML carriers — keep in-repo (current pattern) vs. out-of-repo bundle at `~/.local/state` + script-injection (g.3)~~ done — DECIDED + landed: canonical mermaid bundle kept OUT of repo at `~/.local/state/systemnix/` (docs/CONTRIBUTING.md:472-473, owner-ratified 2026-09-21)
 18. Wire `verify-html-diagrams.sh` into pre-commit for `docs/planning/*.html` (inherited item 28 — the formatter-incident tripwire at hook time)
-19. Confirm Gatus alert DELIVERY for the reserve check (inherited item 29)
-20. Fold new live facts (migration ran, reserve present, boot-mirror) into the 2026-09-20 viz's drifted claims (inherited item 25)
-21. Cap concurrent agent sessions during guard-active windows (freeze-6 rule; enforceable via the crush-session metrics)
-22. Storm postmortem: archive the Zone-6 trip-counter growth for the 2026-09-20/21 storm (trip count, churn-stop log) once it ends
-23. The 2026-09-20 16:26 report §f items 15–44 remain the authoritative backlog (nothing invalidated this round)
+19. Confirm Gatus alert DELIVERY for the reserve check (inherited item 29) **→ docs/todo/storage.md**
+~~20. Fold new live facts (migration ran, reserve present, boot-mirror) into the 2026-09-20 viz's drifted claims (inherited item 25)~~ done — live facts folded: the 2026-09-20 viz now carries a SUPERSEDED banner (grepped in docs/planning/2026-09-20_15-17_disk-layout-current-and-target.html this pass)
+21. Cap concurrent agent sessions during guard-active windows (freeze-6 rule; enforceable via the crush-session metrics) **→ docs/todo/stability.md**
+~~22. Storm postmortem: archive the Zone-6 trip-counter growth for the 2026-09-20/21 storm (trip count, churn-stop log) once it ends~~ **NOT-DO — time-gated postmortem whose window passed — the storm ended and its trip-counter history is carried in the freeze-autopsy series + the Zone-6 trip-rate row (docs/todo/monitoring.md:28).**
+~~23. The 2026-09-20 16:26 report §f items 15–44 remain the authoritative backlog (nothing invalidated this round)~~ **NOT-DO — pointer-only line — no work of its own; the 2026-09-20 16:26 backlog remains in that report.**
 24. Previous session's never-run-VM-test landmine generalizes: any rewritten-but-unbuilt check should carry a `[blocked:calm]` queue row with the exact build command, so the next session doesn't re-derive it (this report records it for crush-hot-db)
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
-1. **Will you create the NIX_GITHUB_RO_TOKEN now?** (fine-grained PAT, Contents: Read-only, then `gh secret set NIX_GITHUB_RO_TOKEN -R LarsArtmann/SystemNix`). I cannot mint tokens or write repo secrets on your behalf. Until it exists, CI stays dark and every check verification must burn local IO on this storm-bound box — including the crush-hot-db VM test that could otherwise have run remotely today.
-2. **Is the 42h IO storm known/accepted churn, or should an agent actively hunt and stop its drivers?** I can identify them with cheap probes, but stopping user-visible workloads (crush sessions, your builds, parallel agents) exceeds my authority; the guard only contains flm/churn units, not the readers themselves. If you know it's your own workload, I'll leave it alone; if not, say the word and I'll investigate + propose stops.
-3. **HTML blob policy:** the 2026-09-20 viz now costs a ~200k-line blob in every future git revision (the mermaid bundle rides in-file per the ratified pattern). Keep big carriers in-repo as ratified, or move the shared mermaid bundle out-of-repo (`~/.local/state/systemnix/mermaid-*.js`, artifacts script-inject at build/verify time) and supersede the current file once? The ratified pattern is workable either way — this is a repo-growth-vs-simplicity trade only you can set.
+1. **Will you create the NIX_GITHUB_RO_TOKEN now?** (fine-grained PAT, Contents: Read-only, then `gh secret set NIX_GITHUB_RO_TOKEN -R LarsArtmann/SystemNix`). I cannot mint tokens or write repo secrets on your behalf. Until it exists, CI stays dark and every check verification must burn local IO on this storm-bound box — including the crush-hot-db VM test that could otherwise have run remotely today. **→ docs/todo/pipeline.md**
+2. **Is the 42h IO storm known/accepted churn, or should an agent actively hunt and stop its drivers?** I can identify them with cheap probes, but stopping user-visible workloads (crush sessions, your builds, parallel agents) exceeds my authority; the guard only contains flm/churn units, not the readers themselves. If you know it's your own workload, I'll leave it alone; if not, say the word and I'll investigate + propose stops. **→ docs/todo/monitoring.md**
+~~3. **HTML blob policy:** the 2026-09-20 viz now costs a ~200k-line blob in every future git revision (the mermaid bundle rides in-file per the ratified pattern). Keep big carriers in-repo as ratified, or move the shared mermaid bundle out-of-repo (`~/.local/state/systemnix/mermaid-*.js`, artifacts script-inject at build/verify time) and supersede the current file once? The ratified pattern is workable either way — this is a repo-growth-vs-simplicity trade only you can set.~~ done — DECIDED + landed: out-of-repo canonical bundle per docs/CONTRIBUTING.md:472-473 (same disposition as §f.17)
 
 ---
 

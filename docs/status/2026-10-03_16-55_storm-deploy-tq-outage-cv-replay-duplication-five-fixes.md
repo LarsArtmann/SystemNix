@@ -31,7 +31,7 @@ Guard trips #1773–#1778+ all day, every build/deploy/battery feeding avg60 >40
 
 `crm-server` receives its machine API token as a **plain ExecStart argument** — systemd expands `${API_TOKEN}` from the EnvironmentFile into argv before exec, so the resolved token is visible in `ps`/`/proc/*/cmdline` to every local user (`modules/nixos/services/crm.nix`). The sops hygiene is otherwise correct (token reaches PID1 via EnvironmentFile). The app reads `apiToken` ONLY from the `-api-token` flag (`/home/lars/projects/crm/cmd/crm-server/main.go:482` — no env fallback, no file flag), so the fix needs a cr-repo change (env read or `-api-token-file`) + rev bump. Queued [blocked:user] alongside the CV fix.
 
-## f. Follow-ups (self-harvested at authoring time)
+## f) Follow-ups (self-harvested at authoring time)
 
 1. [blocked:user, services.md] crm-server: take the API token from env/file instead of the `-api-token` flag (cr repo change) so SystemNix can drop it from ExecStart argv — §e.
 2. [ready, TODO_LIST] Post-anchoring-deploy verify batch: tq-serve/tq-agent-pool up (pool-usb-recovery converge), paperless-gpt-token mint result=success, `system_*`/`paperless_tasks_*` metrics present on :9100, `/run/current-system` anchored to the newest profile (reboot no longer reverts), activation exit 0.

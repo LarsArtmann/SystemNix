@@ -121,7 +121,7 @@ probes).
   at the next 02:30 window; the `Hot Tier Mounted` check goes green once
   the collector's first textfile lands).
 
-## f. Follow-ups harvested
+## f) Follow-ups harvested
 
 1. storage.md row 34 updated in place (VEHICLE READY, remaining = the five
    user windows). ✓ at authoring

@@ -46,7 +46,7 @@ The proof error was the LAST link of a chain, not the disease:
 - docs/services/monitor365.md: ship-path line updated with the push/float/guard-bug state.
 - docs/todo/monitoring.md: `[watch]` row added — T09 drain disarm (tighten compaction 365/365 → defaults, delete drain_filter) after drain completion.
 
-## f. Follow-ups (harvest state)
+## f) Follow-ups (harvest state)
 
 1. **Commit the staged green-proven registry rows + deploy gen-956** (`DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`; anchor discipline: wait for the full nh process tree, compare newest generation BY NUMBER, verify `readlink /run/current-system`; post-deploy checks; the 2026-10-25 quiescence heat-check applies — root-level lock files in the mtime sweep). NOT harvested into TODO_LIST: user-gated by this report's wait directive; it is the immediate next command, not backlog.
 2. **T09 drain disarm** — harvested (docs/todo/monitoring.md watch row, this session).

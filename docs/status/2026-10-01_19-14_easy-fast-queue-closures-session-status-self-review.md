@@ -119,7 +119,7 @@ _(Standing larger pools deliberately not re-enumerated: master-plan P3 quiet-win
 2. **Queue pacing:** this session found 5 of 6 "easy" items already-landed-but-unclosed (4 closed, trio filed). Pause fresh dispatches for a systematic premise-verification sweep over open `[ready]` rows first, or keep item-by-item?
 3. **Heuristic-commit convention (concrete instance of the standing §g2 row):** two of my pushed commits carry daemon heuristic messages though they contain exactly my files. AGENTS.md says "amend-forward, never reset"; CONTRIBUTING sanctions the soft-reset repair; both are now moot post-push. Going forward: squash-before-push as standing practice, or cite-hash as the accepted convention?
 
-## §f SELF-HARVEST (authoring-time, per the AGENTS.md TODO contract)
+## f) SELF-HARVEST (authoring-time, per the AGENTS.md TODO contract)
 
 - **Harvested:** §f.1 (the `95944afb` trio close-out) → `[ready]` row in TODO_LIST + docs/todo/storage.md, landed this session. §f.4 (truncation-safe probes + `rg -r` footgun) → CONTRIBUTING verification conventions clause, landed at authoring (2026-10-01 clause, false-sweep class).
 - **Deliberately not harvested:** §f.5 (CHANGELOG prune) is a standing docs-health-pass contract, not a new ask. §f.6 (DR-runbook library-row drift) is an instance of the DONE-state-pairing class already owned by the queued check-todo-system v2 row. §f.3 items are the §g questions themselves (blocked on owner answers). Tier 1-2 rows (§f.7-50) are pre-existing queue/library rows — restated here for prioritization, not new asks; re-adding them would duplicate the libraries this session's closures just converged.

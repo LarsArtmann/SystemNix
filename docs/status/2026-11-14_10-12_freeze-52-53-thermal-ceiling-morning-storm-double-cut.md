@@ -59,7 +59,7 @@ Boot 0's 09:46:26Z forensic bundle (`/var/tmp/io-psi-forensics-20261114T084622Z/
 | memory-emergency-guard | 2031 no-match trips — structurally powerless against TTY/agent-session drivers (known #50 finding, unchanged) |
 | pstore | EMPTY (no panic record — consistent with instant-cut family) |
 
-## §f Follow-ups (self-harvested into TODO_LIST.md + docs/todo/stability.md at authoring time)
+## f) Follow-ups (self-harvested into TODO_LIST.md + docs/todo/stability.md at authoring time)
 
 - **[f.1] crm-server by-phone read-volume storm** (§c) — [ready] row: root-cause the ~500 KB/request read amplification (crm repo cache/index fix) + extend the alarm to read volume. **Harvested** → TODO_LIST + stability.md.
 - **[f.2] deploy-build thermal entry gate** — [ready] row: refuse NEW deploy attempts (exit-12 class, pre-build) while k10temp sits in the ≥95 °C sustained band (thermal-pstate-guard's 6-hot-tick shape); 8 attempts burned 15–25 min each at the ceiling today, all failed anyway. **Harvested** → TODO_LIST + stability.md.

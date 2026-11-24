@@ -63,7 +63,7 @@
 5. **The e4b vision slowness deserves a follow-up config experiment** (`-np`/slots or a dedicated single-slot instance) rather than a verdict — it's one flag away from measurable; recorded as a watch item instead of investigated (time-boxed correctly, but it's the loose end I'd revisit first).
 6. **QMD/status hygiene**: this report self-harvests §f (rule); the harvest landed as TODO edits in-session for the already-done items, and the NEW follow-ups below go in with this report.
 
-## §f) Up to 50 things next (session-derived, ranked)
+## f) Up to 50 things next (session-derived, ranked)
 
 > **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 

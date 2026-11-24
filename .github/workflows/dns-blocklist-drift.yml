@@ -1,0 +1,63 @@
+name: DNS blocklist hash drift
+
+# Nightly guard against the HaGeZi mirror SRI-hash drift class
+# (docs/status/2026-10-03_02-25_hagezi-hash-drift-deploy-unblock.md):
+# the HaGeZi GitLab-mirror main branch is UNPINNED by design, so the
+# `hash = "sha256-..."` lines in platforms/common/dns-blocklists.nix
+# silently drift and every drift hard-fails the toplevel build at
+# DEPLOY time — which killed deploys on 2026-10-01, 10-03, 10-14 and
+# twice on 2026-10-16.
+#
+# Loop semantics: run `scripts/dns-update.sh --hashes-only` nightly
+# (--hashes-only so an auto-commit never bundles the unrelated
+# StevenBlack commit-pin advance). A hash diff auto-commits and pushes
+# directly; a green tree is a no-op. Drift therefore lands as a green
+# commit the owner can deploy, instead of a failed deploy window.
+#
+# The auto-commit does NOT build the toplevel (the refreshed hashes ARE
+# the build fix — validation happens in nix-check.yml on the push, which
+# runs the full `nix flake check` including the build-time fetch of the
+# updated lists; a bad hash there opens a normal CI failure).
+
+on:
+  schedule:
+    # Nightly 04:30 UTC — staggered away from flake-update (Mon 06:00)
+    # and nixpkgs-compat (daily ~03:00).
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh-hashes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+
+      - name: Run the offline selftest first
+        run: bash scripts/dns-update.sh --selftest
+
+      - name: Refresh blocklist SRI hashes
+        run: bash scripts/dns-update.sh --hashes-only
+
+      - name: Auto-commit hash drift
+        run: |
+          if git diff --quiet -- platforms/common/dns-blocklists.nix; then
+            echo "No drift — nothing to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add platforms/common/dns-blocklists.nix
+          git commit -m "chore: refresh dns blocklist SRI hashes (HaGeZi mirror drift)
+
+          Nightly drift guard (dns-blocklist-drift.yml): the unpinned
+          HaGeZi GitLab-mirror main branch moved; refreshed all list
+          hashes via scripts/dns-update.sh --hashes-only so the next
+          deploy's toplevel build fetches clean."
+          git push

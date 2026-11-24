@@ -56,7 +56,7 @@
 5. **Shared admin DRF token** — drive-paperless and bank-sync both mint `drf_create_token admin`; rotation couples them and attribution is muddled. A dedicated paperless API user per consumer is the better model (paperless supports it; small upstream-ish change).
 6. **Journal design is append-forever** — no compaction, and the per-candidate `grep -qxF` is O(journal) (fine at 100k lines, untested beyond). A client-side sha256 + API dedup pre-check would also avoid wasted uploads for cross-account duplicates (server rejects them anyway, but the read IO is spent).
 
-## f. NEXT (prioritized; ~1h items unless marked)
+## f) NEXT (prioritized; ~1h items unless marked)
 
 **P0 — before anything else:**
 

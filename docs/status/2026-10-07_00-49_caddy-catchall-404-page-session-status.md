@@ -127,7 +127,7 @@
 
 _Evidence: sandbox probe outputs in-session (caddy 2.11.4, port 18099, 3× 404 + fixture body); `checks.x86_64-linux.cloud-domain` build success `/nix/store/sp8jl6gmfsk0q0xr64h55faixjkf3wnb-cloud-domain-test`; caddy.nix:67/467/485; gatus-config.nix:406-414; post-deploy-check.sh:177; test-cloud-domain.nix:92-112; dns-blocker-config.nix:124-131._
 
-## §f harvest disposition (close-out 2026-10-07 02:0x)
+## f) harvest disposition (close-out 2026-10-07 02:0x)
 
 - **Queued** (TODO_LIST.md + matching library, both surfaces edited): §f.17 → services, §f.18 → services, §f.20 → services, §f.21 → services, §f.39 → monitoring; §g.3 (commit-message repair) → pipeline `[decision]`. §f.16 was MERGED into the existing `:8099 poller` row (services library §f.3) instead of a duplicate — same unknown service; my probe adds the serves-HTML evidence.
 - **Done in this close-out** (no queue entry): §f.1-14 executed in order (rendered-Caddyfile eyeball, flake check, standalone lint incl. the repo-pinned treefmt — the unpinned `nixpkgs#alejandra` 4.0.0 churn this induced was reverted, committed state is canon-clean; docs; pathspec commit `34211ef4`); §f.22 spot-swept (only the fixed comment matched); §f.30 confirmed (freeze-21 files intact across `4fba14c3`/`e49624eb`/`83225904`); §f.32 done (debug recipe line in the caddy.md 404 section); §f.37 verified — no allowlist enumerates probe hostnames; §f.38 verified — no `alerts.home.lan` deep links in papdashboard/platforms.

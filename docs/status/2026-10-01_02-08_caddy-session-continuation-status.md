@@ -120,7 +120,7 @@ check, alerts explicit redirect, per-vhost roll bounds, etc.).
    needs a queueing-time spot-check habit (or lint), or false premises keep
    riding the queue into future sessions.
 
-## §f Things to get done next (continuation-specific; the 15-39 §f table remains the caddy backlog)
+## f) Things to get done next (continuation-specific; the 15-39 §f table remains the caddy backlog)
 
 | # | Item                                                                                                                                                                                                                                                                          | Impact  | Effort | Cat               |
 | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------ | ----------------- |

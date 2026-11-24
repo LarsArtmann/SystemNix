@@ -44,7 +44,7 @@ _Session-wide (already documented in prior reports, consolidated):_
 3. **Standing directives have expiry ambiguity:** "push now" was answered for one lineage; I extended it to two later commits (reasonable, but a one-line "pushing the closure commits under your standing directive" would have made the interpretation explicit).
 4. Session-wide: the claims-before-checks pattern had THREE instances tonight — the counter-rule that finally worked was "the owner's directive forced the read". Build that forcing function in: no claim about a file/endpoint/rule without a same-session read/probe of THAT thing.
 
-## §f — Next items
+## f) — Next items
 
 Exactly §c's list — all already queued with sources on both surfaces; nothing new to harvest from this segment (the closures are committed; §b1 needs no row).
 

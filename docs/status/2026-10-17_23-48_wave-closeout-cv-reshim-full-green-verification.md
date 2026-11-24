@@ -71,7 +71,7 @@ The 2026-10-17 deploy wave is **CLOSED**: all 15 build failures resolved (11 has
 - e3. **The shim treadmill is now REAL-TIME**: cv needed three shim generations in one day because the owning repo's session ships while SystemNix builds. The CI-restoration row is the fix; until then, every "fix the fleet" session racing the fleet's own sessions will burn re-shims.
 - e4. **A live shim ledger** — one generated surface (grep the shim patterns) listing every active consumer-side vendorHash shim + its drop condition, so the paste-upstream-push-re-drop backlog is dispatchable as a fleet.
 
-## §f TOP NEXT TASKS (up to 50 allowed; 20 grounded — the rest would be filler; most durable items already live in existing rows and are pointed at, not duplicated)
+## f) TOP NEXT TASKS (up to 50 allowed; 20 grounded — the rest would be filler; most durable items already live in existing rows and are pointed at, not duplicated)
 
 | #  | Task                                                                                                                                                                                                                                                                         | Impact   | Effort | Category |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |

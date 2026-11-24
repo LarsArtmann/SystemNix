@@ -39,7 +39,7 @@ curl -s -H "X-API-Key: $(…cv-env CV_API_KEY…)" localhost:8098/api/pipeline/c
 journalctl -u cv-server --since "-30 min" | grep -c "opportunity not found"              # 0
 ```
 
-## f. Follow-ups (self-harvested at authoring time)
+## f) Follow-ups (self-harvested at authoring time)
 
 1. **CV upstream: classify notes-fold `deal.not_open` as skip-not-error** (1,234 replay WARNs per boot onto CRM-closed deals; syncErrors counter grows by that class every restart) → TODO_LIST + docs/todo/upstream.md.
 2. **crm upstream: fold-level marker-form stream normalization** (any future full replay re-forks prefixed views until fixed) → crm repo TODO_LIST (landed there) + noted in SystemNix crm.md.

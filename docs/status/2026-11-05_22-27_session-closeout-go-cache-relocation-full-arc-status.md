@@ -44,7 +44,7 @@
 5. **AGENTS.md memory candidates**: the env-var↔guard coupling; the float-red incident + recovery pointer; "point-in-time means point-in-BOOT" (21-43 §e.6).
 6. **The storm's root fix is still unowned** — owner declined the PSI gate; the builder-cap half of the storage watch row remains open; freezes will recur without one of the two.
 
-## §f Up to 50 things we should get done next
+## f) Up to 50 things we should get done next
 
 **Urgent / blocking (1–5)**
 

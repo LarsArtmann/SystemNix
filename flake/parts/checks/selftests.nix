@@ -98,6 +98,19 @@
           touch $out
         '';
 
+        # dns-update.sh offline extraction/hash-lookup selftest (the
+        # 2026-10-01 pin-extraction corruption class): proves the SHIPPED
+        # extract_sb_pin + find_hash_line against fixtures. The --selftest
+        # mode exits before the network/pin-advance path BY CONSTRUCTION
+        # (selftest-modes-exit-first), so the check is hermetic. Wired with
+        # the 2026-10-16 dns-blocklist drift-automation row: the nightly
+        # dns-blocklist-drift.yml workflow runs the same script's
+        # --selftest before its network pass.
+        dns-update-selftest = pkgs.runCommand "dns-update-selftest" { } ''
+          ${pkgs.bash}/bin/bash ${root}/scripts/dns-update.sh --selftest
+          touch $out
+        '';
+
         # usb-flap-metrics collector fixture selftest (2026-10-24): state
         # resume, delta math, rolling-window pruning, threshold flip, and
         # the fail-closed probe, driven through a stub journalctl against
