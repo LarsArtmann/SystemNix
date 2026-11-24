@@ -166,18 +166,6 @@ in
     bound.start()
     bound.wait_for_unit("hermes.service")
 
-    # 0. build-time import smoke (hermes 08-14 §e.6 + 08-21 §f.13): the
-    #    console script must import the whole CLI package cleanly. The
-    #    extras-drift class (a removed extra named in the module overlay)
-    #    already fails eval loudly, but a BROKEN RUNTIME IMPORT (upstream
-    #    packaging drift that survives eval) only shows on exec — catch it
-    #    at build time, not on a live gateway start.
-    ver = bound.succeed(
-        "runuser -u hermes -- env HOME=/home/hermes HERMES_MANAGED=true "
-        "hermes --version"
-    )
-    assert ver.strip(), f"hermes --version produced no output: {ver!r}"
-
     # 2. env vars present
     env = unit_env(bound)
     assert "TERMINAL_CWD=/home/hermes/workspace" in env, f"TERMINAL_CWD missing: {env}"
@@ -347,6 +335,22 @@ in
         "runuser -u hermes -- systemd-run --user --scope --quiet "
         "--unit=hermes-vm-scope-probe-neg --collect -- /bin/true"
     )
+
+    # 10. build-time import smoke (hermes 08-14 §e.6 + 08-21 §f.13): the
+    #     console script must import the whole CLI package cleanly. The
+    #     extras-drift class (a removed extra named in the module overlay)
+    #     already fails eval loudly, but a BROKEN RUNTIME IMPORT (upstream
+    #     packaging drift that survives eval) only shows on exec — catch it
+    #     at build time, not on a live gateway start. Runs LAST on the
+    #     bound node: the version exec touches the stateDir (2026-11-24:
+    #     it tripped the perms-heal guard when placed first — restart #2
+    #     took the heal path and the 'fixing ownership' == 1 pin broke),
+    #     and every perms marker assert is already satisfied by then.
+    ver = bound.succeed(
+        "runuser -u hermes -- env HOME=/home/hermes HERMES_MANAGED=true "
+        "hermes --version"
+    )
+    assert ver.strip(), f"hermes --version produced no output: {ver!r}"
 
     # --- bare node: projectsDir = null => no bind, no env ---------------
     bare.start()
