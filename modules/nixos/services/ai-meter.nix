@@ -14,6 +14,9 @@
 # Surfaces:
 #   :8107  proxy (loopback, per-client Bearer keys required)
 #   :8108  admin (Prometheus /metrics + /health; scraped by SigNoz)
+#   ai-meter.home.lan  static viewer embedding the SigNoz ai-meter
+#                      dashboard (registry vHost.root; frameAncestors on
+#                      the signoz entry allows the iframe)
 #
 # Secrets doctrine:
 #   - UPSTREAM provider keys: sops-declared COPIES owned by the ai-meter

@@ -10,8 +10,16 @@ Every OpenAI-compatible AI call on the host flows through one loopback proxy tha
 | ------- | ------------------------- | ----------------------------------------------------------------------------------- |
 | Proxy   | `ai-meter` (8107)         | `/v1/<upstream>/<path>` — per-client Bearer key required; `/health` unauthenticated |
 | Admin   | `ai-meter-metrics` (8108) | Prometheus `/metrics` (scraped by SigNoz), `/health`                                |
+| Viewer  | — (`ai-meter.home.lan`)   | Static page embedding the SigNoz ai-meter dashboard (Layer 2 protected, LAN bypass) |
 
-Both loopback-only. No vHost — deliberately: the proxy is infrastructure, not a user surface.
+The proxy + admin planes are loopback-only (infrastructure, not a user surface).
+"How to view the meter" = `https://ai-meter.home.lan` (embeds the SigNoz
+"AI Meter — Routed AI Calls" dashboard in an iframe; the signoz registry entry
+allows that origin via `vHost.frameAncestors`, which drops the global
+X-Frame-Options for signoz only). The dashboard's SigNoz UUID is pinned as
+`dashboardId` in `modules/nixos/services/ai-meter.nix`; the "ai-meter
+dashboard" gatus check fails loud if a dashboard recreation mints a new id
+(lookup command in that comment).
 
 ## Routing
 
