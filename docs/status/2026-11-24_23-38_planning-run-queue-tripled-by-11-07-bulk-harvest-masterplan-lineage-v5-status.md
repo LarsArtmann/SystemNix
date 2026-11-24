@@ -335,7 +335,7 @@ Pts = result points from A.1. Depends lists plan tasks; "owner" marks tasks that
 | M36 | Gate run: titles unique, no `- [ ]` shape, pairing unaffected | 12 | T06 | agent |
 | M37 | AGENTS.md Session Discipline: one sentence "read the NOW block before claiming work"; commit | 12 | T06 | agent |
 | M38 | Re-verify the 4 captures still lack a rescue (grep the lines; rebuild only in a PSI-calm window) | 12 | T07 | agent |
-| M39 | Apply the rescue per site: explicit reassignment where an empty value breaks the next guard, else `|| true` | 12 | T07 | agent |
+| M39 | Apply the rescue per site: explicit reassignment where an empty value breaks the next guard, else append the shell `\|\| true` rescue | 12 | T07 | agent |
 | M40 | Rebuild the check green; confirm no sibling session is editing the 3 files; tick the row by title | 12 | T07 | agent |
 | M41 | `audiblesync-backup-dir`: confirm the cause (`User=root`, empty bounding set, directory owned by `audible-sync`); locate the owning module | 12 | T08 | agent |
 | M42 | Fix in the owning module (`AmbientCapabilities` for `CAP_FOWNER`, or a tmpfiles rule instead of chmod); upstream patch if the module is upstream | 12 | T08 | agent |
