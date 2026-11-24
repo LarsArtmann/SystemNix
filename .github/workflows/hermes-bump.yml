@@ -1,0 +1,89 @@
+name: hermes pin-lift probe
+
+on:
+  schedule:
+    # Weekly, Mondays 05:00 UTC (before the 06:00 nixpkgs-compat run)
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+jobs:
+  lift-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            # NIX_GITHUB_RO_TOKEN: see nix-check.yml — GITHUB_TOKEN cannot read
+            # the owner's other private repos; 32 github:-type lock nodes need it.
+            access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Probe whether the hermes-agent rev-pin can lift
+        id: probe
+        continue-on-error: true
+        run: |
+          # hermes-agent is DELIBERATELY REV-PINNED in flake.nix (current pin
+          # 21ae0e12, 2026-11-12) because upstream tips broke eval/build three
+          # times (2026-10-02 IFD, 2026-10-07 TS1484, 2026-11-09/12 nested
+          # patchelf). A bare `nix flake update hermes-agent` is a SILENT
+          # NO-OP against the URL pin, so this probe overrides the input to
+          # the live upstream main tip and evals the whole flake against it.
+          # This is the EVAL leg of the pin's documented LIFT condition
+          # (flake.nix hermes-agent comment): eval-green on the floated rev
+          # means the lift CANDIDATE exists — the toplevel build proof
+          # (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`,
+          # keep-going) still happens at the forward move, never in CI.
+          nix flake lock --override-input hermes-agent github:NousResearch/hermes-agent/main --no-use-registries
+
+          rev=$(nix eval --impure --json --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); in lock.nodes.hermes-agent.locked.rev or "unknown"' 2>/dev/null | tr -d '"')
+          echo "candidate_rev=$rev" >> "$GITHUB_OUTPUT"
+
+          nix flake check --no-build
+
+      - name: Create lift-candidate issue when the probe is GREEN
+        # Expected state while the pin is in force: the probe FAILS (upstream
+        # tip still poisons eval) and this step is skipped — no issue spam.
+        # A GREEN probe means upstream's nested patchelf packaging re-synced
+        # and the pin's eval blocker is gone: raise the forward-move signal.
+        if: steps.probe.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const rev = '${{ steps.probe.outputs.candidate_rev }}';
+            const date = new Date().toISOString().split('T')[0];
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'hermes-pin-lift',
+              state: 'open'
+            });
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: `Still eval-green on upstream main (${date}, candidate rev \`${rev}\`).`
+              });
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `hermes-agent pin lift candidate (${date}, rev ${rev})`,
+              body: [
+                'The weekly hermes-agent pin-lift probe evaluated the WHOLE flake green',
+                'against upstream `main` (' + '`' + rev + '`' + ') — the eval leg of the pin\'s LIFT',
+                'condition (flake.nix hermes-agent comment, pin from 2026-11-12) has cleared.',
+                '',
+                '**Action required (forward-move protocol, never a bare update):**',
+                '1. Move the lock to the candidate rev (`nix flake lock --override-input hermes-agent github:NousResearch/hermes-agent/' + rev + ' --no-use-registries`, then drop the override by updating the flake.nix URL or removing the pin).',
+                '2. Prove with `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` — this is the LIFT gate; eval-green alone is NOT enough (the 2026-10-07 TS1484 break was build-phase).',
+                '3. Deploy per the normal wave, then lift the pin in flake-input-pin-audit.nix allowlist terms.',
+                '',
+                'Context: docs/services/hermes.md "Bump cadence & pin policy".',
+                '[View workflow run](' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
+              ].join('\n'),
+              labels: ['hermes-pin-lift', 'infra']
+            });

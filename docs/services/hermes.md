@@ -216,6 +216,40 @@ into OnFailure alerting. Space from the old dir frees as `@` snapshots expire
   for four days. Fixed by exec-preserving chmod (`u=rwX,g=rwX,o=`) plus a
   heal for already-stripped binaries; regression-tested in the VM test.
 
+## Bump cadence & pin policy (decision 2026-11-24, closes the 08-21 §f.2/§f.23/§f.26 row)
+
+- **Pin policy** (supersedes the 2026-08-21 owner-gated question "track main vs
+  `?ref=` release tags"): track upstream `main` via a FLOATING lock; never pin
+  release tags. The break classes (2026-10-02 IFD eval, 2026-10-07 TS1484
+  buildPhase, 2026-11-09/12 nested patchelf eval) are rev-specific, not
+  tag-boundary-specific, so tags buy nothing — instead the response to a broken
+  tip is an INCIDENT-DRIVEN lock rev-pin of the last proven rev with a documented
+  LIFT condition in the flake.nix hermes-agent comment (precedents: e76fb95
+  2026-10-07, 0329638c 2026-10-25, 21ae0e12 2026-11-12). Forward moves are
+  proof-gated: bump → `nix build
+  .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going`
+  green → only then deploy. NEVER blanket-update over a broken tip (the
+  daemon/owner blanket updates caused all three incidents).
+- **Cadence**: weekly automated EVAL probe (`.github/workflows/hermes-bump.yml`,
+  Mondays 05:00 UTC) overrides the input to upstream main and evals the whole
+  flake — the eval leg of the current pin's LIFT condition. A green probe raises
+  a `hermes-pin-lift` issue naming the candidate rev; the toplevel proof still
+  happens at the forward move (CI is deliberately eval-only — the TS1484 class
+  is build-phase and only the proof gate catches it). No scheduled
+  bump-and-deploy: the FOD-heavy toplevel makes CI builds impractical and the
+  deploy-window forward-move is the proven safe shape. DELIBERATELY not a
+  `nix flake update hermes-agent` workflow: against the URL rev-pin that command
+  is a silent no-op (the dead-early-warning trap nixpkgs-compat.yml documents).
+- **v0.21.0 release-notes re-read (§f.26): DONE 2026-09-12.** The curated
+  v0.21.0 behavior changes were read against our wiring during the lock-forward
+  analysis of `79445a496` (this doc's "Restart-safe cron dispatch" section —
+  the `systemd-run --user --scope` cron wrap + the three SystemNix fixes:
+  declarative linger, pinned uid 975 + XDG_RUNTIME_DIR, `/bin/true` tmpfiles;
+  verdict "nothing server-relevant" for the remainder). The env-bridge commit
+  `31561e37` (TERMINAL_CWD/write-path watch) was blessed as an ancestor at the
+  2026-11-12 re-pin. Three further bump windows since v0.21.0 each carried a
+  notes-equivalent review in the flake.nix hermes comment trail.
+
 ## Related
 
 - Workspace rules: `<stateDir>/workspace/AGENTS.md` (delivered once)
