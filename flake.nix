@@ -981,7 +981,14 @@
       # APIs), stale app.css rebuilt, vendorHash re-probed — lock-free probe
       # green at f90c9a73. Floats on ?ref=refs/heads/master; bumps flow via
       # `nix flake lock --update-input overview --refresh`.
-      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master";
+      # git+file INTERIM (2026-11-24, project-meta/go-taskqueue precedent):
+      # under the 2786a2a nixpkgs root the extraBuildAttrs asset preBuild
+      # leaked store paths into the vendor FOD ("fixed-output derivations
+      # must not reference store paths"); guarded locally pending owner
+      # push. Flip back to
+      # git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master
+      # after the push lands and re-float.
+      url = "git+file:///home/lars/projects/overview";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
