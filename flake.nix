@@ -224,13 +224,12 @@
     };
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
-    # ROLLBACK 2026-11-18 FOD-storm wave: tip b77dc243 fails the build-time
-    # templ-freshness gate (12+ stale *_templ.go under internal/server/views/
-    # — upstream's daemon-rewrite wave, 6c722224 era, committed the views
-    # without regenerating; templ regen is upstream's push-gated fix). Lock
-    # node rolled back verbatim to 9fe62ce7 (the 08:13 deploy's clean-build
-    # rev, narHash sha256-4W+5ChN2Qq5NTlGd8LmJz…) until upstream regenerates;
-    # re-float then.
+    # ROLLBACK LIFTED 2026-11-24: the 2026-11-18 rollback (tip b77dc243 failed
+    # the templ-freshness gate) re-floated per its own LIFT condition — upstream
+    # regenerated: tip 29bd8068 (css artifacts regen 9054067c at tailwind 4.3.5,
+    # 2026-11-24 02:01) builds BOTH packages green first-hand (#dnsblockd and
+    # #dnsblockd-base, the templ+css freshness gates included) after 316
+    # unpushed commits landed upstream (pushed 2026-11-24, deploy-blocked wave).
     dnsblockd = {
       url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=refs/heads/master";
     };
