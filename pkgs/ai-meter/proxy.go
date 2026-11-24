@@ -76,15 +76,15 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p.registry.Begin()
-	defer p.registry.End()
+	call := p.registry.BeginCall(client.Name, upstream.Name)
+	defer call.End()
 
 	if isMeteredPath(subPath) && r.Method == http.MethodPost {
-		p.serveMetered(w, r, client, upstream, subPath, nil)
+		p.serveMetered(w, r, call, client, upstream, subPath, nil)
 		return
 	}
 	if genai, ok := ParseGenAIPath(subPath); ok && r.Method == http.MethodPost {
-		p.serveMetered(w, r, client, upstream, subPath, &genai)
+		p.serveMetered(w, r, call, client, upstream, subPath, &genai)
 		return
 	}
 	p.servePassthrough(w, r, client, upstream, subPath)
@@ -130,7 +130,7 @@ func isMeteredPath(subPath string) bool {
 	return false
 }
 
-func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string, genai *GenAIRequest) {
+func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call, client Client, upstream Upstream, subPath string, genai *GenAIRequest) {
 	start := time.Now()
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxMeteredBodyBytes+1))
@@ -159,6 +159,7 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, client Clie
 		info.Stream = genai.Stream
 		info.GenAI = true
 	}
+	call.SetModel(info.Model)
 
 	forwardBody := InjectStreamUsage(body, info, p.cfg.InjectStreamUsage)
 
@@ -323,7 +324,7 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		p.record(Record{Client: client.Name, Upstream: upstream.Name, Model: "none", Status: http.StatusBadGateway, Path: r.URL.Path, UsageMissing: true, DurationMS: time.Since(start).Milliseconds()})
+		p.record(Record{Client: client.Name, Upstream: upstream.Name, Model: modelNone, Status: http.StatusBadGateway, Path: r.URL.Path, UsageMissing: true, DurationMS: time.Since(start).Milliseconds()})
 		writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
 		return
 	}
@@ -338,7 +339,7 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 	p.record(Record{
 		Client:       client.Name,
 		Upstream:     upstream.Name,
-		Model:        "none",
+		Model:        modelNone,
 		Status:       resp.StatusCode,
 		Path:         r.URL.Path,
 		DurationMS:   time.Since(start).Milliseconds(),
@@ -347,6 +348,7 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 }
 
 func (p *Proxy) record(rec Record) {
+	rec.Model = modelName(rec.Model)
 	cost := p.cfg.CostFor(rec.Model)
 	billablePrompt := max(rec.PromptTokens-rec.CachedTokens, 0)
 	rec.CostUSD = (float64(billablePrompt)*cost.Input+

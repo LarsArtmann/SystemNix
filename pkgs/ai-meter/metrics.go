@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+// modelNone is the model label of a call that names no model: a passthrough
+// route (model listing, uploads), a body that is not JSON, or the window
+// before the request body has been read.
+const modelNone = "none"
+
+// modelName maps an absent model to modelNone so "no model" has exactly one
+// label value across every metric family and the ledger.
+func modelName(model string) string {
+	if model == "" {
+		return modelNone
+	}
+	return model
+}
+
 // Record is one completed AI call — the unit of both the metrics registry
 // and the JSONL ledger.
 type Record struct {
@@ -43,8 +57,8 @@ type Registry struct {
 	secondsCount map[durKey]float64
 	ttftSum      map[durKey]float64
 	ttftCount    map[durKey]float64
+	inflight     map[inflightKey]float64
 
-	active         float64
 	unauthorized   float64
 	meteringErrors float64
 	startTime      time.Time
@@ -55,6 +69,7 @@ type tokenKey struct {
 	client, upstream, model, kind string
 }
 type costKey struct{ client, upstream, model string }
+type inflightKey struct{ client, upstream, model string }
 type durKey struct {
 	client, upstream, model string
 	stream                  bool
@@ -69,22 +84,58 @@ func NewRegistry() *Registry {
 		secondsCount:  map[durKey]float64{},
 		ttftSum:       map[durKey]float64{},
 		ttftCount:     map[durKey]float64{},
+		inflight:      map[inflightKey]float64{},
 		startTime:     time.Now(),
 	}
 }
 
-// Begin marks a request as in flight.
-func (r *Registry) Begin() {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.active++
+// Call is one request's in-flight mark. BeginCall issues it, SetModel moves
+// it once the request names its model, and End clears it. A Call belongs to
+// the single goroutine serving that request and is never reused after End.
+type Call struct {
+	registry *Registry
+	key      inflightKey
 }
 
-// End clears the in-flight mark.
-func (r *Registry) End() {
+// BeginCall marks a request as in flight under its client and upstream. The
+// model is modelNone until SetModel names it. Keys are never removed, so an
+// idle series keeps exposing 0 instead of disappearing between scrapes.
+func (r *Registry) BeginCall(client, upstream string) *Call {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.active--
+	call := &Call{registry: r, key: inflightKey{client: client, upstream: upstream, model: modelNone}}
+	r.inflight[call.key]++
+	return call
+}
+
+// SetModel moves the in-flight mark to the series of the request's model.
+func (c *Call) SetModel(model string) {
+	if c.registry == nil {
+		return
+	}
+	r := c.registry
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	next := inflightKey{client: c.key.client, upstream: c.key.upstream, model: modelName(model)}
+	if next == c.key {
+		return
+	}
+	r.inflight[c.key]--
+	r.inflight[next]++
+	c.key = next
+}
+
+// End clears the in-flight mark. Calling it again, or after SetModel, is a
+// no-op, so the gauge can never be decremented below its true value.
+func (c *Call) End() {
+	if c.registry == nil {
+		return
+	}
+	r := c.registry
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.inflight[c.key]--
+	c.registry = nil
 }
 
 // Unauthorized counts rejected client authentications.
@@ -211,9 +262,19 @@ func (r *Registry) Render() string {
 		writeSeries(&b, "ai_meter_ttft_seconds_count", r.ttftCount[k], "client", k.client, "upstream", k.upstream, "model", k.model)
 	}
 
-	b.WriteString("# HELP ai_meter_active_requests Requests currently in flight.\n")
+	flights := make([]inflightKey, 0, len(r.inflight))
+	for k := range r.inflight {
+		flights = append(flights, k)
+	}
+	sort.Slice(flights, func(i, j int) bool {
+		a, c := flights[i], flights[j]
+		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && a.model < c.model)
+	})
+	b.WriteString("# HELP ai_meter_active_requests Requests currently in flight by client, upstream and model ('none' until the request body names one, and for routes that carry none).\n")
 	b.WriteString("# TYPE ai_meter_active_requests gauge\n")
-	writeSeries(&b, "ai_meter_active_requests", r.active)
+	for _, k := range flights {
+		writeSeries(&b, "ai_meter_active_requests", r.inflight[k], "client", k.client, "upstream", k.upstream, "model", k.model)
+	}
 
 	b.WriteString("# HELP ai_meter_unauthorized_total Rejected client authentications.\n")
 	b.WriteString("# TYPE ai_meter_unauthorized_total counter\n")
