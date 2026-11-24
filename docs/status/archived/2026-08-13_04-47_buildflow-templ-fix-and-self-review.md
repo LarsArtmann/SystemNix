@@ -45,8 +45,8 @@ All work attempted was completed. The 7 pre-existing deploy failures (Overview, 
 
 1. ~~**AGENTS.md gotcha entry** — Did NOT add a `*_templ.go` gitignore gotcha to SystemNix's AGENTS.md. This is the same class of bug as the "Go vendorHash mismatches are FOD" entry and deserves documentation.~~ done at `43e11db3`
 2. ~~**Global `~/.config/git/ignore` fix** — The global gitignore at line 69 still has `*_templ.go`. I only fixed the repo-local `.gitignore` in samber-do-auditlog. Every OTHER LarsArtmann repo on this machine that uses templ will silently ignore generated files unless they force-add them. This is a systemic risk (see section d).~~ done at `43e11db3` (removed from `platforms/common/programs/git.nix`, follow-up session)
-3. ~~**v0.9.0 tag retraction** — The v0.9.0 tag is still "poisoned" (missing `live/fragments_templ.go`). Anyone who pins to v0.9.0 will hit this bug. Did not retract it or annotate it.~~ done at `f8ea2f4` (upstream `samber-do-auditlog`: `retract v0.9.0` + tagged v0.9.2)
-4. ~~**`emeet-pixyd` repo** — Has the SAME bug: `templates_templ.go` exists on disk but is NOT tracked by git. If this repo is ever consumed by a Nix build that vendors from source, it will fail identically. Not fixed (out of scope but noted).~~ done at `6ee6c3c` (upstream force-add)
+3. ~~**v0.9.0 tag retraction** — The v0.9.0 tag is still "poisoned" (missing `live/fragments_templ.go`). Anyone who pins to v0.9.0 will hit this bug. Did not retract it or annotate it.~~ done (commit `f8ea2f4` in samber-do-auditlog) (upstream `samber-do-auditlog`: `retract v0.9.0` + tagged v0.9.2)
+4. ~~**`emeet-pixyd` repo** — Has the SAME bug: `templates_templ.go` exists on disk but is NOT tracked by git. If this repo is ever consumed by a Nix build that vendors from source, it will fail identically. Not fixed (out of scope but noted).~~ done (commit `6ee6c3c` in emeet-pixyd) (upstream force-add)
 
 ### From previous session (ClickHouse merge_tree fix)
 
@@ -113,7 +113,7 @@ Only `buildflow` imports the `live` package. The `library-policy` and `projects-
 
 3. ~~**Check for systemic patterns** — The `*_templ.go` gitignore issue is not unique to samber-do-auditlog. When a generated-file-gitignore bug is found, check ALL repos that use that generator. Found 3 repos with templ, 2 with issues.~~ done — full sweep in follow-up session (`2026-08-13_05-48` §a)
 
-4. ~~**Retract or annotate broken tags** — v0.9.0 is permanently broken for Nix consumers. A `git tag -d v0.9.0 && git push --delete` or at minimum a note in the release would prevent future pinning to the broken tag. Go module retraction (`// retract v0.9.0` in go.mod) is the idiomatic way.~~ done at `f8ea2f4` (retract directive + v0.9.2)
+4. ~~**Retract or annotate broken tags** — v0.9.0 is permanently broken for Nix consumers. A `git tag -d v0.9.0 && git push --delete` or at minimum a note in the release would prevent future pinning to the broken tag. Go module retraction (`// retract v0.9.0` in go.mod) is the idiomatic way.~~ done (commit `f8ea2f4` in samber-do-auditlog) (retract directive + v0.9.2)
 
 5. ~~**Verify pre-deploy-check metric allowlists work** — The previous session added a Monitor365 metric allowlist to `pre-deploy-check.sh`. The deploy showed Monitor365 is still unreachable. Did not verify the allowlist logic actually downgrades correctly.~~ done (moot) — Monitor365 currently disabled; the metrics probe skips conditionally
 
@@ -141,9 +141,9 @@ Only `buildflow` imports the `live` package. The `library-policy` and `projects-
 ### High (prevents future build failures)
 
 7. ~~**Fix global `~/.config/git/ignore`** — Remove `*_templ.go` from line 69. This is a systemic risk for ALL templ-using repos.~~ done at `43e11db3`
-8. ~~**Fix `emeet-pixyd` untracked `templates_templ.go`** — Same bug as samber-do-auditlog. Active.~~ done at `6ee6c3c`
-9. ~~**Fix `storbi` untracked root-level templ files** — `hello_templ.go`, `layout_templ.go` not tracked.~~ done at `2322979`
-10. ~~**Retract or annotate samber-do-auditlog v0.9.0 tag** — Add `// retract v0.9.0` to go.mod or delete the tag.~~ done at `f8ea2f4`
+8. ~~**Fix `emeet-pixyd` untracked `templates_templ.go`** — Same bug as samber-do-auditlog. Active.~~ done (commit `6ee6c3c` in emeet-pixyd)
+9. ~~**Fix `storbi` untracked root-level templ files** — `hello_templ.go`, `layout_templ.go` not tracked.~~ done (commit `2322979` in storbi)
+10. ~~**Retract or annotate samber-do-auditlog v0.9.0 tag** — Add `// retract v0.9.0` to go.mod or delete the tag.~~ done (commit `f8ea2f4` in samber-do-auditlog)
 11. ~~**Revert signoz.nix formatting churn** — Commit `116051ee` has 822 lines of alejandra churn. Destroys git blame.~~ **Won't implement — alejandra pre-commit re-formats any revert; churn is permanent** (`2026-08-13_05-48` §b.1)
 12. ~~**Add eval-time vendorHash smoke test** — `nix build .#buildflow --dry-run` in CI to catch compilation errors at PR time.~~ done (superseded) — pre-deploy vendorHash check #11 at `7afab3f8` covers the deploy path
 13. ~~**Add AGENTS.md gotcha for templ-generated files** — Document the `*_templ.go` gitignore trap.~~ done at `43e11db3`

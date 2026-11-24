@@ -29,7 +29,7 @@
 ~~1. **The deploy itself** — the single gate everything in this window sits behind (owner/queue authority question, see g.1).~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
 2. **Restore drills** — paperless `pg_restore` into a scratch cluster (nothing analogous exists for paperless), restic one-file restore smoke, the older twenty/manifest drill (pre-existing storage item).
 3. **The mountPoint-vs-HM-symlink eval-time guard** (autofs-in-autofs at unit load — the hot-user-caches go-build class) — library row ready, never built.
-4. **The SHA-citation verifier script** (`scripts/verify-status-citations.sh`, from review-fix task 1 §f.3) — now doubly motivated by d.1. → TODO_LIST.md:987 (scripts/verify-status-citations.sh row, open)
+4. **The SHA-citation verifier script** (scripts/verify-status-citations.sh, from review-fix task 1 §f.3) — now doubly motivated by d.1. → TODO_LIST.md:987 (scripts/verify-status-citations.sh row, open)
 ~~5. **The `~/.npm` convergence** (103M stale real-dir fallback found by the sweep, deliberately not acted on in-run) and the `~/tmp/go-lint` (1.8G live) reclamation path — both filed, neither built.~~ done — ~/.npm symlink → /mnt/buildcache/npm (home.nix:480, 2026-10-10) + go-lint tmpfs fallback (home.nix:505)
 6. **The wide storage backlog** (Borg offsite leg implementation, ClickHouse backup, /data repair chain, SSD-2 tenant, boot-mirror activation) — untouched, correctly out of these five tasks' scope.
 

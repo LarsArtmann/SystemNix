@@ -49,7 +49,7 @@ The blocker (buildcache-init chown crash-loop) is fixed and verified end-to-end;
 ~~6. signoz.home.lan 404 (auth-gateway WARN, carried over multiple sessions).~~ done — zero signoz mentions in oauth2-proxy journal since 2026-08-16; SigNoz web UI shipped (web.enabled, 2026-08-16 21-25 report)
 7. quickshell 1 journal error line; fish startup flapping (58↔127↔260ms across deploys). ← open — quickshell + File-Renamer WARNs TODO_LIST Priority 3; fish flapping untracked
 ~~8. buildcache eviction policy — **usage already 69% and climbing; Go/golangci-lint caches have NO size cap** (`go clean -cache` is manual); the 85% Gatus alert will eventually become a permanent red with no auto-remedy.~~ done — `services.buildcache.gc` weekly Sun 05:00 (ioTier.maintenance): npm verify, pnpm prune, stale rust targets, `go clean -cache` at ≥90%; deploy.sh runs gc post-switch (2026-08-15/16 verified)
-9. First-boot VM test for the buildcache module (automount + conditions + absent-drive path). ← open — TODO_LIST Priority 3 (`tests/test-buildcache.nix`); the absent-drive path WAS exercised live 2026-08-16 (flap storm + recovery service) → docs/todo/pipeline.md (tests/test-buildcache.nix row, open)
+9. First-boot VM test for the buildcache module (automount + conditions + absent-drive path). ← open — TODO_LIST Priority 3 (tests/test-buildcache.nix); the absent-drive path WAS exercised live 2026-08-16 (flap storm + recovery service) → docs/todo/pipeline.md (tests/test-buildcache.nix row, open)
 ~~10. Monitor365 smoke-check gating on `enable` (5 recurring FAILs per deploy are pure noise from the deliberate disable).~~ done — post-deploy-check.sh gates on unit presence (SKIP when disabled, lines 181-187)
 
 ## d) TOTALLY FUCKED UP (honest ledger)

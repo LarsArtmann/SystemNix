@@ -98,8 +98,8 @@ I did EXACTLY this on all 261 archived files. I added a `> **RESOLVED**` banner 
 Not a single numbered item in any of the 261 reports was struck through with `~~item~~ done at hash`. The correct format is:
 
 ```markdown
-1. ~~Fix warmup store pollution~~ done at `a7b8159`
-2. ~~Fix estimateJSONSize~~ done at `a7b8159`, `fe81dd2`
+1. ~~Fix warmup store pollution~~ done (commit `a7b8159` in DiscordSync)
+2. ~~Fix estimateJSONSize~~ done (commit `a7b8159` in DiscordSync), `fe81dd2`
 3. Add negative tests ← untouched = still open
 ```
 

@@ -205,7 +205,7 @@ audits share one truth).
 ~~19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let~~ done at `upstream vendorHash baked`, `consumer shims dropped (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
 SystemNix DROP the override).
 ~~20. dnsblockd upstream CHANGELOG + transport-selection test.~~ done at `upstream v0.9.3 tag carries OTLP + cached-/health fixes (docs/todo/upstream.md dnsblockd housekeeping)`
-21. `tests/test-signoz-coverage.nix` (removed in `f5feb77d7`) (eval-assertion + generated-registry **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists tests/test-signoz-coverage.nix**
+21. tests/test-signoz-coverage.nix (removed in `f5feb77d7`) (eval-assertion + generated-registry **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists tests/test-signoz-coverage.nix**
 shape; mock CH optional).
 ~~22. Collector: emit `signoz_traces_expected` for enforced entries only, or~~ **Won't implement — double-count stays documented-in-runbook; decision ask stale.**
 keep documented double-count (currently documented in runbook).

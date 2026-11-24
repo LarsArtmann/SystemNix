@@ -100,7 +100,7 @@
 5. ~~**PMA `overrideModAttrs` anti-pattern** — still present, blocked on git tags for submodules~~ **DONE (Session 106)** — published go-output submodule tags, removed overrideModAttrs, updated vendorHash
 6. **Convert `/data` BTRFS from toplevel to `@data` subvolume** — enables /data snapshots
 7. ~~**Gatus health checks for all services** — only partial coverage~~ **DONE (Session 104)** — added Monitor365 Server TCP check (26 endpoints). Hermes has no HTTP endpoint — not checkable via Gatus.
-8. ~~**Centralize Docker image tags** — scattered across modules~~ **DONE (Session 104)** — created `lib/images.nix` (removed in `f5feb77d7`) central registry. Pinned Twenty's `postgres:16` → `postgres:16-alpine` and bare `redis` → `redis:7-alpine`.
+8. ~~**Centralize Docker image tags** — scattered across modules~~ **DONE (Session 104)** — created lib/images.nix (removed in `f5feb77d7`) central registry. Pinned Twenty's `postgres:16` → `postgres:16-alpine` and bare `redis` → `redis:7-alpine`.
 9. ~~**Auto-generate `service-health-check` service list from enabled services**~~ **DONE (Session 104)** — replaced hardcoded 31-service script with hybrid: 6 critical services actively checked + `systemctl --failed` dynamic catch-all.
 10. ~~**Validate sops secret values at activation time**~~ **DONE (Session 104)** — added ExecStartPre validation to `pocket-id` (encryption key) and `gatus` (env template for Discord alerts).
 
@@ -171,7 +171,7 @@
 | ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D.                        |        |                         |
 | 16     | Convert `/data` BTRFS from toplevel to `@data` subvolume                                                                                                        | 30 min | Enables /data snapshots |
 | ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP)                                                          | —      | —                       |
-| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` (removed in `f5feb77d7`) registry                                                                          | —      | —                       |
+| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — lib/images.nix (removed in `f5feb77d7`) registry                                                                          | —      | —                       |
 | ~~19~~ | ~~Standardize on `lib.getExe`~~ **DONE (S105)** — 31 conversions, zero old-style remaining                                                                      | —      | —                       |
 
 ### Tier 4: Nice to Have

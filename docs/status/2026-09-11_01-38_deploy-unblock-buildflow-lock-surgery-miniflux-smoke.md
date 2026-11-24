@@ -107,7 +107,7 @@ Sorted by impact. Impact/Effort/Category per the harvest guide. **This section i
 | ~~9~~ done — BuildFlow vendorHash pushed upstream (02-21 report a1) | ~~Fix BuildFlow upstream: paste `got: 0NQweZeM06UiN3AWkd033QpfTGAZp2Gte05+aaw2b+I=` into `vendorHash.nix`, commit, push (pending Q2)~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
 | ~~10~~ done — re-lock to healthy master done (02-21 report a2) | ~~After #9: `nix flake lock --update-input buildflow`, confirm subtree, drop the interim-pin posture~~ | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
 | 11 | Add upstream CI to BuildFlow (build its own flake on push) — enforcement for the vendorHash-owns-upstream doctrine | High | M | Quality |
-| 12 | Write `scripts/relock-input-at-rev.sh` (e#1 recipe) + AGENTS.md gotcha for the node-deletion trap | Medium | M | Quality | → docs/todo/pipeline.md (relock tool decision row)
+| 12 | Write scripts/relock-input-at-rev.sh (e#1 recipe) + AGENTS.md gotcha for the node-deletion trap | Medium | M | Quality | → docs/todo/pipeline.md (relock tool decision row)
 | 13 **→ quick-go-after-input-updates tracked (docs/todo/pipeline.md)** | Adopt rule: `nix build .#quick-go` after any flake input update; consider a deploy.sh conditional for lock-diff builds | High | S | Process |
 | ~~14~~ **Won't implement — stale build; class covered by pre-deploy §11 FOD preview (docs/todo/pipeline.md).** | ~~Run `nix build .#quick-go` NOW to prove the rest of the Go set against the new lock subtree (shared `go-finding_3`/`go-checker-helpers` nodes)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~15~~ **Won't implement — stale CI check.** | ~~Verify CI green on the next SystemNix push (new lock nodes are fetchable with existing tokens — the CI-dark class)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |

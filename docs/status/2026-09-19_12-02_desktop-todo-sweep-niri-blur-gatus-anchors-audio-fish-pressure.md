@@ -40,7 +40,7 @@
 2. `[blocked:user]` Smart-audio audible verification + reverse direction, incl. the never-tested DP-2 cross-output path (test-tone tooling on PATH since 08-22). → [docs/todo/desktop.md](docs/todo/desktop.md)
 3. `[decision]` btop privileges + terminal-restore policy (sudoers NOPASSWD vs unprivileged; restore ONE ghostty vs ZERO). → [docs/todo/desktop.md](docs/todo/desktop.md)
 4. `[blocked:user]` Post-storm niri-session-manager live confirmation (one login/restart cycle, exactly one restore pass, no ghostty pile). → [docs/todo/desktop.md](docs/todo/desktop.md) (post-deploy session-manager verification row)
-5. `[decision]` Signal Desktop backlog (green preset in UI vs SQLCipher seeding script; `docs/services/signal.md`; verify-or-retract the "appearance syncs to linked devices" claim). → [docs/todo/desktop.md](docs/todo/desktop.md)
+5. `[decision]` Signal Desktop backlog (green preset in UI vs SQLCipher seeding script; docs/services/signal.md; verify-or-retract the "appearance syncs to linked devices" claim). → [docs/todo/desktop.md](docs/todo/desktop.md)
 ~~6. `[blocked:user]` The live niri gatus replay (above).~~ **NOT-DO — dup of §b.2.**
 7. **Fleet-wide bare-VALUE-0 sweep** — ~20 remaining bare `pat(*metric 0*)` checks outside niri (system-health ×~10, mail-relay ×2, attic, bank-sync, signoz, gatus-config ×~5). Scoped OUT of §f23 (which asked for exactly the four sibling checks); already covered by the existing "extend gatus-pattern-lint to ENFORCE anchored value-checks" item in `docs/todo/monitoring.md`. The four niri anchors shrink that future lint's blast radius but don't close it. → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 8. No new work started on any other domain (per instructions: report, don't research).
@@ -105,7 +105,7 @@
 **Docs/bookkeeping debt from this session (14–17):**
 14. Update `ROADMAP.md` — resolve the now-stale "Niri blur" line (HM-module-absence rationale superseded).
 15. Add a FEATURES.md row for niri blur.
-16. Consider `docs/services/niri.md` runbook: monitoring chain, blur mechanism, timeout doctrine, the freshness contract (currently spread across AGENTS + CHANGELOG + this report).
+16. Consider docs/services/niri.md runbook: monitoring chain, blur mechanism, timeout doctrine, the freshness contract (currently spread across AGENTS + CHANGELOG + this report).
 ~~17. Sweep OTHER `TODO_LIST.md` domain sections for the empty `**Source:**` husk pattern (desktop had 3; check for the harvest bug elsewhere).~~ **NOT-DO — subsumed: the check-todo-system pre-commit gate now validates queue/library pairing (AGENTS.md todo-system rules).**
 
 **Monitoring hardening directly continuing this session (18–24):**

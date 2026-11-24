@@ -79,7 +79,7 @@
 ~~10. Fish guard test harness (build-time; source the hook text into fish -c cases)~~ **NOT-DO — dup of b1 fish guard harness.**
 11. /data + pool snapshot legs: count canaries first (`btrfs_data_snapshots`, `btrfs_pool_snapshots`), rescue tier for /data if wanted
 12. post-deploy-check.sh §: rescue unit active + `.rescue` non-empty + stamp=1 + fish hook present in rendered config
-13. `scripts/audit-embedded-shell.sh` pre-commit gate (SC2010 + unescaped `${` classes) → docs/todo/pipeline.md (embedded-shell SC2010 gate row)
+13. scripts/audit-embedded-shell.sh pre-commit gate (SC2010 + unescaped `${` classes) → docs/todo/pipeline.md (embedded-shell SC2010 gate row)
 ~~14. Observe + document whether stc starts the rescue unit at deploy (b.3) — if not, add to deploy.sh restart list per AGENTS rule~~ done — stc-at-deploy question settled via OnBootSec (CHANGELOG 2026-10-06)
 15. system-health `monitoredServices` += btrfs-rescue-snapshot
 

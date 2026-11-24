@@ -187,7 +187,7 @@ fuzz-2 dependency before some future context line moves again).
 collector delta; likely fine, never checked).
 14. Sanity-check one PromQL dashboard panel + one rule query on the new backend after
 deploy (prometheus-v1-provider removal is query-path-adjacent).
-15. Consider a `tests/test-signoz.nix` VM test (packages + config validation + migrator → docs/todo/monitoring.md (signoz VM-test row)
+15. Consider a tests/test-signoz.nix VM test (packages + config validation + migrator → docs/todo/monitoring.md (signoz VM-test row)
 no-op on empty CH) — none exists today; every bump currently gates on prod.
 ~~16. Create `docs/services/signoz.md` runbook (none exists) — bump protocol INCLUDING the~~ done — docs/services/signoz.md runbook exists
 migration-review checklist that TODO item 13 made famous.

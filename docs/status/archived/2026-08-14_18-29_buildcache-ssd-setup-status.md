@@ -95,7 +95,7 @@ _(Also observed, not mine, not investigated: `nix-build-cleanup.service` is in f
 ~~15. Remove the `buildcache_*` entries from `KNOWN_NEW_METRICS`~~ done — zero buildcache hits in `scripts/pre-deploy-check.sh` today. Annotation 2026-08-17.
 ~~16. `.initialized`-condition edge~~ resolved — the init-once guard was REMOVED entirely (2026-08-15): init runs idempotently on every boot; documented in AGENTS.md.
 ~~17. "no failed units" check~~ done — `pre-deploy-check.sh:100-105` (pass/warn on `systemctl --failed` count).
-18. `tests/test-buildcache.nix` VM test ← open — still absent from `tests/` (2026-08-17); now tracked in TODO_LIST P3. Annotation 2026-08-17. → docs/todo/pipeline.md (tests/test-buildcache.nix row, open)
+18. tests/test-buildcache.nix VM test ← open — still absent from `tests/` (2026-08-17); now tracked in TODO_LIST P3. Annotation 2026-08-17. → docs/todo/pipeline.md (tests/test-buildcache.nix row, open)
 ~~19. Annotate `13-15` with "IMPLEMENTED"~~ done — 2026-08-17 docs-health pass (Decision Record + archived).
 20. `disk-diagnose.sh` buildcache mention ← open, trivial, untracked — no buildcache reference in the script today. Annotation 2026-08-17.
 

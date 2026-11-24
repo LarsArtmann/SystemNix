@@ -170,7 +170,7 @@
 ~~41. Queue hygiene sweep (17 malformed rows) + monitoring queue re-sync.~~ **NOT-DO — dup of §f.8.**
 ~~42. Re-check `docs/todo/monitoring.md` "Backlog" items #36/#37/#38/#39/#41/#43 (I/O stall) / #45 (pool-usage) against this session's completions and prune.~~ **NOT-DO — overtaken: the library has been re-numbered and maintained continuously by the standing harvest passes since.**
 43. AGENTS.md: record the SIGKILL-corpse class + reap pattern and the enabled-but-inactive detector contract (one paragraph each, Systemd + system-health sections).
-44. Consider `docs/services/system-health.md` runbook addition for the new detector (interpretation + allowlist policy).
+44. Consider docs/services/system-health.md runbook addition for the new detector (interpretation + allowlist policy).
 ~~45. Check whether `writeShellApplication` shellcheck passes for the backup-catchup script before adding (the nullglob/SC-traps list is long).~~ **NOT-DO — overtaken: the script shipped; tree-wide shellcheck runs in pre-commit.**
 
 **Stretch (only after 1-17 land):**
