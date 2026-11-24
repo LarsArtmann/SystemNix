@@ -79,9 +79,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-10-27 lock float: branching-flow@f28419e still ships the
   # AAAA placeholder upstream; got iS5Z/XOU (first-hand keep-going proof,
   # ~/.cache/lockfloat/float-proof-20261027-172949.log).
+  # RE-STALE 2026-11-24 (deploy-gap catch-up float): spec bCLzzRm6, got
+  # DLfibpbT (first-hand, drv branching-flow-0.6.7-go-modules, 16:1x deploy).
   branching-flow =
     flakePkgShim inputs.branching-flow "default"
-      "sha256-bCLzzRm6UMyitLSIWfIXmKd68gub+H3NR7lRbqyj43A=";
+      "sha256-DLfibpbTaKM6oUFFITxlGyBJmjBl0WYfSxIcRnLTBno=";
   # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
