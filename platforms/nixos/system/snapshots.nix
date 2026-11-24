@@ -583,7 +583,7 @@ in
     # Local snapshots of the per-service subvolumes ON the pool itself
     # (23:45, after the NVMe instances, before nix-gc at 00:00). Protects
     # against app-level corruption / accidental deletion on the pool:
-    # immich media, paperless documents, atticd NAR storage, monitor365
+    # immich media, paperless documents, monitor365
     # buffer, discordsync attachments (pool-native since the 2026-09-22
     # BLOB re-scope of the Own-tools NVMe→pool leg — the discordsync DB
     # stays on NVMe for the Phase-2 hot-db wave). browser-history has NO
@@ -592,6 +592,8 @@ in
     # (/mnt/pool/backups/browser-history, covered by the dump + retention).
     # The empty services/browser-history subvol remains on the pool disk
     # from the 2026-08-16 layout (removal needs root; nothing references it).
+    # Same for services/atticd since the 2026-11-24 attic decommission
+    # (btrbk row removed; empty subvol deletion needs root).
     btrbk.instances."pool" = {
       onCalendar = "23:45";
       snapshotOnly = true;
@@ -602,7 +604,6 @@ in
           snapshot_dir = "/mnt/pool/.snapshots";
           subvolume."services/immich" = { };
           subvolume."services/paperless" = { };
-          subvolume."services/atticd" = { };
           subvolume."services/monitor365" = { };
           subvolume."services/discordsync" = { };
           subvolume."services/bank-sync" = { };

@@ -63,7 +63,6 @@ rec {
 
   siblingEnableStubs = enableStubs [
     "ai-stack"
-    "attic-config"
     "bank-sync"
     "buildcache"
     "browser-history"

@@ -1167,10 +1167,6 @@ in
       # old content back afterwards, then trash it. See
       # modules/nixos/services/hot-user-caches.nix.
       hot-user-caches.enable = true;
-      attic-config = {
-        enable = true;
-        cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";
-      };
       # One-time /data → pool migration (atticd, monitor365, monitor365-archive).
       # Self-neutralizing: ConditionPathExists skips the unit once all sources
       # are migrated; started by deploy.sh after every switch.

@@ -73,7 +73,6 @@ let
     # HELP niri_aw_watcher_late 0 if the AW watcher attached, 1 if late into an active session
     # TYPE niri_aw_watcher_late gauge
     niri_aw_watcher_late 0
-    attic_storage_over_threshold 0
     system_gatus_endpoints_in_error_long 0
     # bank-sync sync-health surface (mirrors the "Bank-Sync Sync Health"
     # endpoint in gatus-config.nix): errors counter zero + last-sync

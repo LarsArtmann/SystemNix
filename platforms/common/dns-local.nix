@@ -21,7 +21,6 @@
     "dnsblock"
     "dnsblockd"
     "search"
-    "cache"
     "banksync"
     "graph"
     "timers"

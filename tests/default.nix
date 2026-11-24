@@ -49,7 +49,6 @@ in
     '';
   };
 
-  attic = makeTest (import ./test-attic.nix { inherit pkgs; });
   searxng = makeTest (import ./test-searxng.nix { inherit pkgs; });
   caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix { inherit pkgs; });
   caddy-mint = makeTest (import ./test-caddy-mint.nix { inherit pkgs inputs; });

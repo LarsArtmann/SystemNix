@@ -373,7 +373,7 @@ in
   # enumeration). Never match DAS disks by KERNEL letters — if spindown is ever
   # wanted again for specific cold disks, match by ID_SERIAL instead. The active
   # pool must NOT standby anyway: nightly btrbk sends, weekly scrubs, and
-  # pool-backed services (paperless/immich/atticd) make 10-min standby cycles
+  # pool-backed services (paperless/immich) make 10-min standby cycles
   # pure latency + wear.)
   services.udev.extraRules = ''
     ACTION=="add|change", KERNEL=="sd[a-z]", SUBSYSTEM=="block", TEST=="queue/nr_requests", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"

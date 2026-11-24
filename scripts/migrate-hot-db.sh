@@ -362,7 +362,7 @@ finalize)
   echo "finalize OK. Functional probes before closing the window:"
   case "$NAME" in
   gatus) echo "  https://status.$(hostname -d 2>/dev/null || echo home.lan) renders + one check cycle green" ;;
-  dnsblockd) echo "  dig cache.home.lan @127.0.0.1 +short answers; /health 200" ;;
+  dnsblockd) echo "  dig auth.home.lan @127.0.0.1 +short answers; /health 200" ;;
   pocket-id) echo "  one SSO login (passkey) through auth.home.lan" ;;
   browser-history) echo "  dashboard loads; inboxclean/agent ingest green on next tick" ;;
   discordsync) echo "  /api/health on :8085 OK; a new Discord message lands in the capture" ;;

@@ -151,8 +151,6 @@
         # from the hub — immich.nix owns the bind).
         immich-ml = 3003;
 
-        attic = 8200;
-
         # FastFlowLM NPU LLM server (OpenAI-compatible) — socket-activated frontend
         # on 52625, backend on 52626. The proxy unit forwards only when the
         # backend binds, so 52626 is internal.
