@@ -884,57 +884,6 @@ _: {
                   '';
                 };
 
-                # problems.<domain> — the browser-error half of the
-                # auto-debug pipeline: web clients POST uncaught errors to
-                # /report (tq incident API, ADR-0021 kind=client) and load
-                # /beacon.js (the embeddable reporter). The tq bearer token
-                # is injected HERE server-side — the browser never sees it.
-                # Route order is load-bearing (same-source-order precedence
-                # as the auth vHost): preflight first (OPTIONS never carries
-                # credentials; gating it kills CORS), then the gate for
-                # external clients, then the LAN-direct routes. External
-                # /report dies at the OAuth gate by design: sendBeacon
-                # cannot complete a redirect dance, and an internet-open
-                # error sink would mint junk fix tasks (the relay's gated
-                # path stays the ingress of record for infra failures).
-                "problems.${domain}" = {
-                  extraConfig = ''
-                    ${tlsConfig}
-                    ${commonConfig}
-                    # proxy-port:${toString ports.tqApi}
-                    @beacon_preflight method OPTIONS
-                    handle @beacon_preflight {
-                      header {
-                        Access-Control-Allow-Origin "*"
-                        Access-Control-Allow-Methods "POST, OPTIONS"
-                        Access-Control-Allow-Headers "Content-Type"
-                        Access-Control-Max-Age "86400"
-                      }
-                      respond 204
-                    }
-                    @external not remote_ip 127.0.0.1/8 ${lanSubnet}
-                    handle @external {
-                      ${forwardAuth}
-                      respond "problems — tq incident sink: POST /report, embed /beacon.js (LAN beacons only; external POST is gated)" 200
-                    }
-                    handle /report {
-                      header Access-Control-Allow-Origin "*"
-                      reverse_proxy 127.0.0.1:${toString ports.tqApi} {
-                        header_up Authorization "Bearer {env.TQ_API_TOKEN}"
-                      }
-                    }
-                    handle /beacon.js {
-                      header Cache-Control "public, max-age=300"
-                      root * ${beaconRoot}
-                      file_server
-                    }
-                    handle {
-                      respond "problems — tq incident sink: POST /report, embed /beacon.js" 200
-                    }
-                    ${serverErrorRoute}
-                  '';
-                };
-
                 "auth.${domain}" = {
                   extraConfig = ''
                     ${tlsConfig}
@@ -1117,6 +1066,63 @@ _: {
                       rewrite * /index.html
                       file_server
                     }
+                  '';
+                };
+              }
+              # problems.<domain> — the browser-error half of the
+              # auto-debug pipeline: web clients POST uncaught errors to
+              # /report (tq incident API, ADR-0021 kind=client) and load
+              # /beacon.js (the embeddable reporter). The tq bearer token
+              # is injected HERE server-side — the browser never sees it.
+              # Route order is load-bearing (same-source-order precedence
+              # as the auth vHost): preflight first (OPTIONS never carries
+              # credentials; gating it kills CORS), then the gate for
+              # external clients, then the LAN-direct routes. External
+              # /report dies at the OAuth gate by design: sendBeacon
+              # cannot complete a redirect dance, and an internet-open
+              # error sink would mint junk fix tasks (the relay's gated
+              # path stays the ingress of record for infra failures).
+              # Gated on the pool (same optionalAttrs pattern as monitor365
+              # above): the subdomain's registry entry + tq-api unit live in
+              # tq-agent-pool.nix, and a minimal host importing caddy without
+              # the pool (caddy-mint VM) must not render a vHost whose
+              # subdomain nothing claims (blind-subdomain assertion).
+              // lib.optionalAttrs ((config.services.tq-agent-pool or { }).enable or false) {
+                "problems.${domain}" = {
+                  extraConfig = ''
+                    ${tlsConfig}
+                    ${commonConfig}
+                    # proxy-port:${toString ports.tqApi}
+                    @beacon_preflight method OPTIONS
+                    handle @beacon_preflight {
+                      header {
+                        Access-Control-Allow-Origin "*"
+                        Access-Control-Allow-Methods "POST, OPTIONS"
+                        Access-Control-Allow-Headers "Content-Type"
+                        Access-Control-Max-Age "86400"
+                      }
+                      respond 204
+                    }
+                    @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                    handle @external {
+                      ${forwardAuth}
+                      respond "problems — tq incident sink: POST /report, embed /beacon.js (LAN beacons only; external POST is gated)" 200
+                    }
+                    handle /report {
+                      header Access-Control-Allow-Origin "*"
+                      reverse_proxy 127.0.0.1:${toString ports.tqApi} {
+                        header_up Authorization "Bearer {env.TQ_API_TOKEN}"
+                      }
+                    }
+                    handle /beacon.js {
+                      header Cache-Control "public, max-age=300"
+                      root * ${beaconRoot}
+                      file_server
+                    }
+                    handle {
+                      respond "problems — tq incident sink: POST /report, embed /beacon.js" 200
+                    }
+                    ${serverErrorRoute}
                   '';
                 };
               }
