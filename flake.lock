@@ -4820,18 +4820,17 @@
     "go-error-family_21": {
       "flake": false,
       "locked": {
-        "lastModified": 1794765142,
-        "narHash": "sha256-q9XJ5QSGXyn93AfUz16UPjPl3pIW/gZ2qVlYaSWsbco=",
-        "owner": "LarsArtmann",
-        "repo": "go-error-family",
-        "rev": "898004e3e1cbf4f104dd93bf621874fdbecfb143",
-        "type": "github"
+        "lastModified": 1795546962,
+        "narHash": "sha256-y/AA0jRZ6aF8TQ2wD6ertnmaygtLQd5sodTzV46/1RE=",
+        "ref": "refs/heads/master",
+        "rev": "1600c18c61fc450754a8210e013d1fae2a6e8146",
+        "revCount": 427,
+        "type": "git",
+        "url": "file:///home/lars/projects/go-error-family"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "go-error-family",
-        "type": "github"
+        "type": "git",
+        "url": "file:///home/lars/projects/go-error-family"
       }
     },
     "go-error-family_22": {
@@ -9889,11 +9888,11 @@
         "templ-components": "templ-components_8"
       },
       "locked": {
-        "lastModified": 1795545898,
-        "narHash": "sha256-hfkWQNyvCFXQJSFCE54i8trBNz8qiK7ED9xLMr/h61o=",
+        "lastModified": 1795547022,
+        "narHash": "sha256-inDQZHBqnlWjn56hL2H7ohFpzWjk9PNkk164N2G0pnI=",
         "ref": "refs/heads/master",
-        "rev": "235db2a4ab380395558e70ad682d3c176831a708",
-        "revCount": 1775,
+        "rev": "33ff7708dc75a51c1e59c518b585ff637c92854b",
+        "revCount": 1777,
         "type": "git",
         "url": "file:///home/lars/projects/overview"
       },
@@ -10078,11 +10077,11 @@
     "project-discovery-daemon_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1795030229,
-        "narHash": "sha256-yJfGYmFEqT6/5vmhfmxjzjgkQfngoeXyejPJ2SLNFJ4=",
+        "lastModified": 1795411233,
+        "narHash": "sha256-VIVKsY+WCCARsF3rIuG9vrmnUFwgEF9uLoKC0r/0Q+c=",
         "ref": "master",
-        "rev": "5110f307f29c97ac1218d6da803f7284d02d6732",
-        "revCount": 203,
+        "rev": "1903bc0e6cad9436344b09a4c991b78194b56ec0",
+        "revCount": 259,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
