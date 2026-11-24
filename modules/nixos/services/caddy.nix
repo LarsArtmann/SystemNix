@@ -669,6 +669,16 @@ _: {
                     non-localhost Host).
                   '';
                 };
+                frameAncestors = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [ ];
+                  description = ''
+                    Origins (full https://host form) allowed to EMBED this
+                    vHost in an iframe: drops the global X-Frame-Options
+                    SAMEORIGIN and defaults a CSP frame-ancestors allowlist
+                    ('self' + the origins).
+                  '';
+                };
               };
             }
           );

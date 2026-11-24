@@ -638,7 +638,7 @@ _: {
             _: e:
             lib.nameValuePair e.subdomain {
               inherit (e) port;
-              inherit (e.vHost) layer root hostOverride;
+              inherit (e.vHost) layer root hostOverride frameAncestors;
             }
           ) vhostEntries;
         })
