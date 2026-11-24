@@ -956,8 +956,14 @@
     };
 
     # project-meta — Per-project metadata management CLI
+    # git+file INTERIM (2026-11-24, go-taskqueue precedent): upstream tip
+    # 1e35099 (first go-verdict consumer) shipped without the flake
+    # input/deps-map row, so mkPreparedSource fails private-dep validation;
+    # fixed locally at 52c248e but the owner push is pending. Flip back to
+    # git+ssh://git@github.com/LarsArtmann/project-meta?ref=refs/heads/master
+    # after the push lands and re-float.
     project-meta = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=refs/heads/master";
+      url = "git+file:///home/lars/projects/project-meta";
     };
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)

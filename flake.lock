@@ -7558,6 +7558,23 @@
         "type": "github"
       }
     },
+    "go-verdict": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795393630,
+        "narHash": "sha256-u7BpRAWubI70plys2FToyjV+nD2FKb7M3cDUf12NOgc=",
+        "owner": "LarsArtmann",
+        "repo": "go-verdict",
+        "rev": "29a764db2c49147ddd1d20b144b3ae72c6953558",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-verdict",
+        "type": "github"
+      }
+    },
     "go-version-auto-configure": {
       "flake": false,
       "locked": {
@@ -10393,6 +10410,7 @@
         "go-nix-helpers": [
           "go-nix-helpers"
         ],
+        "go-verdict": "go-verdict",
         "gogenfilter": "gogenfilter_22",
         "nixpkgs": [
           "nixpkgs"
@@ -10400,18 +10418,17 @@
         "project-discovery-sdk": "project-discovery-sdk_12"
       },
       "locked": {
-        "lastModified": 1795268248,
-        "narHash": "sha256-3T11EyOBs5u4eyefMpmF9C40iooS/wW7GriWCTZd8N8=",
+        "lastModified": 1795544153,
+        "narHash": "sha256-JmusBvaGoNsIesLZuBNcJ36Sipt4Md0s+gLvQF9sdcw=",
         "ref": "refs/heads/master",
-        "rev": "1e35099ce4d3b8711688cec8370bd696f106bb9d",
-        "revCount": 944,
+        "rev": "52c248e123ff03d0b48b1fb3208a316636ea3be4",
+        "revCount": 945,
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/project-meta"
+        "url": "file:///home/lars/projects/project-meta"
       },
       "original": {
-        "ref": "refs/heads/master",
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/project-meta"
+        "url": "file:///home/lars/projects/project-meta"
       }
     },
     "project-meta_3": {
