@@ -63,6 +63,8 @@ type policy struct {
 	suppressed map[suppressReason]int64
 	forwarded  int64
 	replayed   int64
+	tqReports  int64
+	tqFailed   int64
 }
 
 // Gatus 5.37 discord provider renders, into embeds[0].description:
@@ -81,10 +83,10 @@ type discordPayload struct {
 	} `json:"embeds"`
 }
 
-func parseAlert(body []byte) (endpoint string, state alertState, ok bool) {
+func parseAlert(body []byte) (endpoint string, state alertState, desc []string, ok bool) {
 	var p discordPayload
 	if err := json.Unmarshal(body, &p); err != nil {
-		return "", 0, false
+		return "", 0, nil, false
 	}
 	texts := []string{p.Content}
 	for _, e := range p.Embeds {
@@ -96,10 +98,18 @@ func parseAlert(body []byte) (endpoint string, state alertState, ok bool) {
 			if m[2] == "resolved" {
 				state = stateResolved
 			}
-			return m[1], state, true
+			// The full rendered text (failure count, condition errors, alert
+			// description) rides along as context lines for the tq incident
+			// report — gating only ever needs the endpoint + state.
+			for line := range strings.SplitSeq(text, "\n") {
+				if line = strings.TrimSpace(line); line != "" {
+					desc = append(desc, line)
+			}
+			}
+			return m[1], state, desc, true
 		}
 	}
-	return "", 0, false
+	return "", 0, nil, false
 }
 
 func newPolicy(cfg serverConfig) *policy {
@@ -143,7 +153,7 @@ func (p *policy) stateFor(endpoint string) *endpointState {
 
 // handle is the per-alert entry point from the HTTP layer.
 func (p *policy) handle(body []byte, now time.Time) decision {
-	endpoint, state, ok := parseAlert(body)
+	endpoint, state, _, ok := parseAlert(body)
 	if !ok {
 		// Fail-open: an unparseable payload is forwarded verbatim.
 		log.Printf("relay decision=forward reason=unparsed endpoint=\"?\" (gatus template drift? fail-open)")
@@ -299,6 +309,18 @@ func (p *policy) replayOnce(forward replayForwarder, now time.Time) {
 	p.mu.Unlock()
 }
 
+// countTQ tallies tq incident-report outcomes for /healthz (the report
+// itself is fire-and-forget; these counters are its only visibility).
+func (p *policy) countTQ(ok bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if ok {
+		p.tqReports++
+	} else {
+		p.tqFailed++
+	}
+}
+
 func (p *policy) snapshotJSON() string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -319,6 +341,8 @@ func (p *policy) snapshotJSON() string {
 		"suppressed":        sup,
 		"queued_triggers":   queued,
 		"endpoints_tracked": len(p.endpoints),
+		"tq_reports":        p.tqReports,
+		"tq_failures":       p.tqFailed,
 	})
 	return string(b)
 }

@@ -25,6 +25,9 @@ type serverConfig struct {
 	sev1Freshness time.Duration
 	sev1Mute      map[string]bool
 	replayTick    time.Duration
+	tqURL         string
+	tqToken       string
+	tqProject     string
 }
 
 // The relay gates gatus' Discord webhook. Decision rules live in policy.go;
@@ -63,10 +66,18 @@ func main() {
 	flag.DurationVar(&cfg.sev1Freshness, "sev1-freshness", 10*time.Minute, "max age of the SEV1 alert file's epoch line before it no longer counts as active")
 	flag.StringVar(&sev1MuteList, "sev1-mute", "", "comma-separated Group/Name display names muted while SEV1 page-tier is active")
 	flag.DurationVar(&cfg.replayTick, "replay-tick", 30*time.Second, "queue re-evaluation interval")
+	flag.StringVar(&cfg.tqURL, "tq-url", os.Getenv("TQ_API_URL"), "tq write API incident endpoint (POST /api/v1/errors) — forwarded triggers become agent fix tasks; empty disables incident reporting (or $TQ_API_URL)")
+	flag.StringVar(&cfg.tqToken, "tq-token", os.Getenv("TQ_API_TOKEN"), "bearer token for the tq incident API (or $TQ_API_TOKEN); required when -tq-url is set")
+	flag.StringVar(&cfg.tqProject, "tq-project", "SystemNix", "project (repo under the pool's projects-dir) incident fix tasks target")
 	flag.Parse()
 
 	if cfg.upstream == "" {
 		log.Fatal("relay: -upstream/$DISCORD_WEBHOOK_URL is empty — refusing to start as a silent gate")
+	}
+	// The tq sink is optional (empty URL = off) but never half-configured:
+	// a URL without a token would 401 forever while LOOKING wired.
+	if cfg.tqURL != "" && cfg.tqToken == "" {
+		log.Fatal("relay: -tq-url is set but -tq-token/$TQ_API_TOKEN is empty — refusing to start a broken incident sink")
 	}
 	for name := range strings.SplitSeq(sev1MuteList, ",") {
 		if name = strings.TrimSpace(name); name != "" {
@@ -79,6 +90,9 @@ func main() {
 
 	go replayLoop(pol, cfg, func(body []byte, endpoint, reason string) {
 		forward(client, cfg.upstream, body, endpoint, reason)
+		// Replayed triggers are still triggers: the incident sink sees them
+		// too (a mute that delayed an alert must not lose the fix task).
+		go reportIfTriggered(pol, client, cfg, body)
 	})
 
 	mux := http.NewServeMux()
@@ -91,6 +105,10 @@ func main() {
 		decision := pol.handle(body, time.Now())
 		if decision.forward {
 			go forward(client, cfg.upstream, body, decision.endpoint, "")
+			// Same gate, second sink: only parsed triggers are reported
+			// (resolves are not errors; unparsed payloads are fail-open
+			// Discord forwards, not incidents).
+			go reportIfTriggered(pol, client, cfg, body)
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -105,6 +123,11 @@ func main() {
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,
+	}
+	if cfg.tqURL != "" {
+		log.Printf("relay incident sink on %s (project %s)", cfg.tqURL, cfg.tqProject)
+	} else {
+		log.Printf("relay incident sink disabled (-tq-url empty)")
 	}
 	log.Printf("relay listening on %s (upstream set, boot-grace %s, mute-list %d endpoints)", cfg.listen, cfg.bootGrace, len(cfg.sev1Mute))
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
