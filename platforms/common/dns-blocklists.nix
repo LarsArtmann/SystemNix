@@ -1,23 +1,25 @@
 let
-  # GitHub repo hagezi/dns-blocklists is repeatedly locked by GitHub's fraud
-  # detection. GitLab mirror is the primary reliable source.
-  #
-  # COMMIT-PINNED, not branch-tracking (2026-11-06): `main` moves daily and
-  # every hagezi list is a fetchurl FOD, so a branch URL re-breaks ~20 hashes
-  # the moment upstream re-publishes — live: the owner's 07:4x deploy died on
-  # HaGeZi-hoster-raw (specified mME4che8, got BBE5rsFW). A moving ref with a
-  # pinned hash is a self-arming deploy bomb; bump this commit + every hash
-  # together (same doctrine as the paperless-gpt tag pin).
-  # 2026-11-12: the 11-06 pin (f8c1f9f8) started serving DRIFTING snapshots —
-  # the --hashes-only re-pin at 05:5x (AKy6BbjT) mismatched again within the
-  # hour at the SAME commit (got c1sqvguO; the 10-16 "oscillation" class) —
-  # GitLab edge nodes serve inconsistent snapshots of old commits. Bumped the
-  # pin to current HEAD (7700a113) + rehashed in the same breath; if this
-  # recurs, the durable fix is a flake-input fetch (git fetches are immutable
-  # in the store) per docs/todo/pipeline.md.
+  # SOURCE OF TRUTH MOVED TO GITHUB pinned-commit raw (2026-11-24, third
+  # mirror burn): the GitLab mirror served (1) oscillating snapshots at a
+  # pinned commit (2026-11-06), (2) drifting content at the re-pinned HEAD
+  # (2026-11-12), and (3) finally 429→404 rate-limit storms on parallel
+  # fetches PLUS the permanent removal of the hosts/ and domains/ output
+  # formats (2026-11-24) — upstream hagezi/dns-blocklists now ships only
+  # adblock/adguard/controld/dnsmasq/ips/rpz/share/wildcard. All former
+  # hosts/<list>.txt entries were re-pathed to dnsmasq/<list>.txt (the
+  # dnsblockd processor + the SystemNix whitelist filter both parse
+  # dnsmasq `local=/domain/` lines — verified 2026-11-24); HaGeZi-dga7 was
+  # RETIRED (upstream removed the DGA list; no surviving equivalent).
+  # raw.githubusercontent.com at a commit SHA is immutable and
+  # burst-tolerant; the original GitHub-fraud-lock concern applied to the
+  # repo page, not pinned-SHA raw (the StevenBlack list below has fetched
+  # from raw.githubusercontent for years). A moving ref with pinned hashes
+  # stays a self-arming deploy bomb: bump this commit + every hash
+  # together. The durable flake-input fix stays queued in
+  # docs/todo/pipeline.md.
   hagezi =
     subpath:
-    "https://gitlab.com/hagezi/mirror/-/raw/7700a1136399ec841ec6c92f36b5db105be79a63/dns-blocklists/${subpath}";
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/4efe36574890b5ceacfb0ca8c693fee5c7395fb6/${subpath}";
 in
 {
   blocklists = [
@@ -28,88 +30,88 @@ in
     }
     {
       name = "HaGeZi-ultimate";
-      url = hagezi "hosts/ultimate.txt";
-      hash = "sha256-sBrZA+JRliSu1aKGqlqEuEOesRsM4SMUmyE10T0ArVw=";
+      url = hagezi "dnsmasq/ultimate.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-tif";
-      url = hagezi "hosts/tif.txt";
-      hash = "sha256-7gG2meb7nfIqSzQd+WK/2BL8L7RZBgrhzBBY9hwb8lA=";
+      url = hagezi "dnsmasq/tif.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-doh";
-      url = hagezi "hosts/doh.txt";
-      hash = "sha256-0rAP0DaFSHJn6TWx2sRU1muPUSjiPZeT0fIpWjC29HQ=";
+      url = hagezi "dnsmasq/doh.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-apple";
-      url = hagezi "hosts/native.apple.txt";
-      hash = "sha256-hE6SN1H5vsXc530Hl715asohU01pRXJP99Oj8QwwZA8=";
+      url = hagezi "dnsmasq/native.apple.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-amazon";
-      url = hagezi "hosts/native.amazon.txt";
-      hash = "sha256-tBLPPvNp68EusaxSg9k8meLifRDTxN0eBGMpAOR+1os=";
+      url = hagezi "dnsmasq/native.amazon.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-samsung";
-      url = hagezi "hosts/native.samsung.txt";
-      hash = "sha256-zxA6cTmrJ1/tbwTFp2UcNZXMQghc3zCUwMr9tla5AdU=";
+      url = hagezi "dnsmasq/native.samsung.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-xiaomi";
-      url = hagezi "hosts/native.xiaomi.txt";
-      hash = "sha256-0tkG/8+dphF/e8QJhRq4mI+8KxXj6IJw5G49ylzTAGo=";
+      url = hagezi "dnsmasq/native.xiaomi.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-huawei";
-      url = hagezi "hosts/native.huawei.txt";
-      hash = "sha256-1l7lP/1pe5u4nh1h+UHSTt87oeZy5cFjnxZL7ch1xjs=";
+      url = hagezi "dnsmasq/native.huawei.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-lgwebos";
-      url = hagezi "hosts/native.lgwebos.txt";
-      hash = "sha256-rQFLiELTrOoGTECKB7cygpBKN94jxtuuu5K6csYxBFs=";
+      url = hagezi "dnsmasq/native.lgwebos.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-oppo-realme";
-      url = hagezi "hosts/native.oppo-realme.txt";
-      hash = "sha256-lMSoqVhkJik1exM88VjwD15+LEv8vFvA364XK79iKDM=";
+      url = hagezi "dnsmasq/native.oppo-realme.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-roku";
-      url = hagezi "hosts/native.roku.txt";
-      hash = "sha256-joEiDUGjRC547G/q1XheND5EBEp+LpkhM8/d0JAX3Ys=";
+      url = hagezi "dnsmasq/native.roku.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-vivo";
-      url = hagezi "hosts/native.vivo.txt";
-      hash = "sha256-iV0sz/eL+EIOHh9p5SicEsdfa5GvWQzV9csy+1wpD8U=";
+      url = hagezi "dnsmasq/native.vivo.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-winoffice";
-      url = hagezi "hosts/native.winoffice.txt";
-      hash = "sha256-8J/aCcXhqN5KGSzxVJSBEf3chOXVypN4w5x2wnordHs=";
+      url = hagezi "dnsmasq/native.winoffice.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-native-tiktok-extended";
-      url = hagezi "hosts/native.tiktok.extended.txt";
-      hash = "sha256-rJ4k4E9xm9GIxHbTUxeRpuDpyEd+lz0ePdonmrdNptc=";
+      url = hagezi "dnsmasq/native.tiktok.extended.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-gambling";
       url = hagezi "dnsmasq/gambling.txt";
-      hash = "sha256-Gyc3mAaAtprHgsnJDURSYWYD0Z1DBzmkCpqOkjaVySk=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-nsfw";
       url = hagezi "dnsmasq/nsfw.txt";
-      hash = "sha256-LfKV9r5Y2UXX76FE5Y20bDHRMgMnZAJWKMcysj4AGiU=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-social";
       url = hagezi "dnsmasq/social.txt";
-      hash = "sha256-3DdjPkejPf5jbQeukLWgtOZ9r+X+wn+DHq5PF/6qe00=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-dyndns";
@@ -124,7 +126,7 @@ in
       # STABLE twice 20s apart via nix store prefetch-file before this edit.
       # Commit-pinned URLs are immutable, so no oscillation is possible —
       # future mismatches here mean GitLab history rewrite, not drift.
-      hash = "sha256-9txzyjr8CuKbIYZ+xt09kHvxEqLLhuq9YthN02P5WaQ=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-hoster";
@@ -132,23 +134,20 @@ in
       # Re-pinned 2026-10-14: upstream content update broke the build with a
       # hash mismatch (old yq5KLUId…); new content probed STABLE twice 20s
       # apart via nix store prefetch-file before this edit.
-      hash = "sha256-TMBaKcLUnithcwQJDrOgaGnvlWs+TBwg+r4i6l9f2fU=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-urlshortener";
       url = hagezi "dnsmasq/urlshortener.txt";
-      hash = "sha256-4OOu8FD+VsX0FEgzrwRnUs6vc6hlABtMrKqWlBmFoW8=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
     {
       name = "HaGeZi-nosafesearch";
       url = hagezi "dnsmasq/nosafesearch.txt";
-      hash = "sha256-yt1vgcczQJs/74KZf2gR6871sR7xFMUMXoxm9bWeWNk=";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
     }
-    {
-      name = "HaGeZi-dga7";
-      url = hagezi "domains/dga7.txt";
-      hash = "sha256-4aWpF3M9WpLH2RX4ZCG0Ckf6/s2XzbSThXBrjrZgl2k=";
-    }
+    # HaGeZi-dga7 RETIRED 2026-11-24: upstream removed the domains/ format
+    # (and the DGA list with it); threat-intel coverage rides tif.
   ];
 
   whitelist = [
