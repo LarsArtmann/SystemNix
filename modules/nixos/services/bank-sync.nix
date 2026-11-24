@@ -1179,7 +1179,7 @@
               ];
               homepage = {
                 name = "Bank Sync";
-                group = "Sync & Backup";
+                group = "Finance";
                 description = "Wise Transactions → SQLite (Event-Sourced)";
                 # The bundled icon pack has no bank.png — google-finance is the
                 # closest available finance glyph.
