@@ -9,6 +9,20 @@ Scope of this run: (1) answer the owner's follow-up *"are any visits NOT linked 
 
 ---
 
+## CORRECTIONS + FOLLOW-UP (appended 2026-11-24 ~20:30 CET, same report kept as authored)
+
+**Filed.** The scope defect is now **LarsArtmann/browser-history#28** (`Dashboard scope switch applies to half the page: ?scope=all keeps the personal visit count`) — body carries the mechanism, verbatim source quotes pinned to the deployed `fa68d88` (`dashboard.go` is unchanged across `fa68d88..0b50d3f`, so the cites hold for both the deployed rev and local master), the five-gate verification, and the note that the existing `TestTenancy_SuperAdminAllScope` passes only because its assertion greps the page body, which the *unscoped domains table* satisfies while the visit list stays personal.
+
+**Fixed, unpushed.** `api/dashboard.go` now derives the visit filter's user from the scoped context (`scopeUser := visit.UserIDFromCtx(ctx)`), keeping the multi-user clear because `tenantScopeCtx` wraps `userReadCtx` and the single-user id survives beside the multi-user scope. Regression test `api/tenancy_scope_counts_test.go`: two users, one visit each to the SAME domain with distinct paths, asserts the `Total visits` CARD (not the body) is 1 personal / 2 under `scope=all` plus both paths in the list. RED on the old code (`Total visits = 1, want 2`; `missing "plain-path-marker"`), GREEN after; full `go test ./api/` green (56s), `go vet ./api/...` clean.
+
+**CORRECTION — the §a domains partition below is wrong in mechanism.** "166 + 162 (`''`) + 78 (zero-id) = 406" adds *rows*, but `CountDomains` is `COUNT(DISTINCT domain)` (`storage/sqlite_domains.go:141-146`). The honest partition measured 2026-11-24 20:15 is **171 (owner) + 134 (names present ONLY in the stale buckets) = 305 distinct**, out of 411 total `domains` rows. The row-sum in the table is a legitimate *table inventory* but is NOT what the card renders; treat the 406 figure as retired unless a screenshot re-verifies it, and cite the distinct form going forward. Same class as the AGENTS.md "quote-scrutiny" rule: the number was inferred through a pipeline it never ran through.
+
+**Refreshed numbers (live DB 2026-11-24 20:15, browsing since 09:17).** Personal: 6,962 visits / 171 domains / 335 sessions / 100 searches / 56 downloads / 55% (0.5456). All tenants: 6,962 / 305 / 750 / 225 / 114 / 32% (0.3179). Visits now 6,962 vs 6,943 at 09:17; owner domain rows 171 vs 166.
+
+**Unchanged conclusions.** Visit total cannot move (one bucket in `visits`); the 55%→32% drop is the stale anonymous residue, not a scoring bug; `claim-orphaned` remains the remedy and still needs an owner stop window.
+
+---
+
 ## 0. The answer in one paragraph
 
 **No visits live outside `01M000JA6P0VR4Q1BNEPSJN3ME`,** and the 8 duplicate users own **zero rows in all 13 user-scoped tables**. The scope switcher changes the counters because *the page renders two different scopes at once*: `?scope=all` zeroes the context user (`api/tenancy.go:204-211`), so `ListDomainStats`, `CountDomains`, `CountSessions`, `CountSearches`, `CountDownloads` (all dispatched on the scope-overridden `gctx`, `api/dashboard.go:509/564/577/590/603`) go global — but the **visits** filter is built from `r.Context()` *before* the override (`api/dashboard.go:375-385`) and only cleared for the multi-user tenant scope, so `CountVisits` keeps `user_id = <me>` (`storage/sqlite_filter.go:65-66`). The headline "productivity score" is not visit-derived at all: it is `visit.WeightedProductivity(domains)` (`api/dashboard.go:875`, `domain/visit/productivity.go:141-157`) over the per-`(domain,user)` `domains` rows, which still hold pre-auth anonymous buckets (`''`: 162 rows, zero-id: 78 rows) that `claim-orphaned` has never claimed — those drag 0.5472 (55%) down to 0.3181 (32%). The visit total cannot move because the `visits` table has exactly one user bucket.
