@@ -54,8 +54,9 @@ from the file name, 20 from the title (appendix lists them all).
 140 storm/OOM/livelock session statuses without crash vocabulary in name or title, and 7 HTML
 reports. They are cited where a crash report cites them.
 
-**Reading.** 13 date-ordered batches, 13 reader subagents (zai only, at most three at a time;
-three were re-dispatched after `429` rate limits and one was recovered from its finished file).
+**Reading.** 13 date-ordered batches read by zai reader subagents (15 dispatches for 13 batches,
+at most three at a time; three hit `429` rate limits: two were re-dispatched, one was recovered
+from the file it had already written).
 Each reader read every file completely and wrote one 19-field block per file (tier, kind,
 events, reset, family, confidence, trigger, warning, foreseen, fixes, verification level,
 retractions, open follow-ups, lessons, ledger diff, cross-references, flags). A script checked
@@ -407,7 +408,7 @@ Historical reports were not edited.
 4. Live journal checks of F2, F3, F4, F7 (reset reasons, crash-kernel load lines, `kdump-save`
    unit history, per-boot warning counts, boot index, journal usage).
 5. Ledger corrections 1–3 and TODO edits 4–5, re-read after edit; TODO gate re-run after them
-   (§a of the follow-up check in `References`).
+   (`OK`, WARN counts unchanged at 133 and 102).
 
 ## b) PARTIALLY DONE
 
@@ -417,26 +418,26 @@ Historical reports were not edited.
 
 ## c) NOT STARTED
 
-1. Evidence pulls for `7096666b`-era boots (see F7): needs a calm window.
+1. Evidence pulls for the four retained dead boots (F7): needs a calm window.
 2. Re-labelling #34–#37 trigger rows in §2.3 with more than the ledger's own words.
 3. Annotating the same-day mis-numbered reports (#3, #5, #16) in place: owner call (§g.2).
 
 ## d) Honesty ledger
 
-1. **Typo to fix on sight:** §c.1 above reads `7096666b`; the boot id is `7096665b`.
-2. The readers' `[R]` statements are extraction, not my reading. I spot-checked nine against
-   the source files (all held) and rejected one that did not (the "WDT signature known on
-   10-12" reading of the freeze-38 self-review).
-3. The §2.2 counts are first-token and keyword scans of free-text fields. "Prescribed-only"
+1. The readers' `[R]` statements are extraction, not my reading. I spot-checked eleven against
+   the source files: ten held, one did not (the "WDT signature known on 10-12" reading of the
+   freeze-38 self-review, dropped).
+2. The §2.2 counts are first-token and keyword scans of free-text fields. "Prescribed-only"
    versus "config-only" is the reader's judgement call.
-4. The "predicted" count treats a self-review's repeat of its autopsy's prediction as another
+3. The "predicted" count treats a self-review's repeat of its autopsy's prediction as another
    yes. The per-cut view is smaller but the chains in F6 are individually sourced.
-5. Three readers hit zai rate limits; one batch was recovered from a file it had already
+4. Three readers hit zai rate limits; one batch was recovered from a file it had already
    written, so its 300-word summary is missing. Nothing else was lost.
-6. This review ran three extra agent sessions on a box whose reports name agent sessions as
+5. This review ran three extra agent sessions on a box whose reports name agent sessions as
    the top trigger. They read files only, but the count is part of the problem being reviewed.
-7. `docs/services/crush.md`, `docs/services/tq.md`, `flake.lock` and two tq files changed in the
+6. `docs/services/crush.md`, `docs/services/tq.md`, `flake.lock` and two tq files changed in the
    tree during the session. They are not mine and were not touched.
+7. Nothing here is committed by me. The auto-commit daemon will sweep the four files.
 
 ## e) What we should improve (mechanisms, not effort)
 
@@ -460,7 +461,7 @@ Historical reports were not edited.
 | 1 | Make kdump capture one cut (updated: armed since 2026-11-22 19:53, #61/#62 no capture, controlled-panic test, CF9 label caveat) | `TODO_LIST.md` + `docs/todo/stability.md` |
 | 2 | NEW Alert on and decode the kswapd0 page-allocator warning | `TODO_LIST.md` + `docs/todo/stability.md` |
 | 3 | Freeze-ledger backfill (updated: four un-pulled boots still indexed, journal at 7 G/8 G) | `TODO_LIST.md` + `docs/todo/stability.md` |
-| 4 | NEW `[decision]` Number the un-numbered crash boundaries or rule them permanently un-numbered; annotate #3/#5/#16 in place | `docs/todo/stability.md` only |
+| 4 | NEW `[decision]` Number the un-numbered crash boundaries or rule them permanently un-numbered; annotate #3/#5/#16 in place | `TODO_LIST.md` + `docs/todo/stability.md` |
 | 5 | Two stale `[blocked:user]` rows annotated (#55 autopsy, kdump dump-dir) | `docs/todo/stability.md` only |
 | 6 | Six unharvested crash reports: deliberately not harvested here. The standing sweep rows ("Run a dedicated unharvested-§f-report sweep", "Close the unharvested-backlog count") own the class. | existing rows |
 | 7 | Parallel-agent-session concurrency cap `[decision]`: not re-rowed. §4 and §2.2 are the evidence it was waiting for. | `docs/todo/stability.md:17` |
@@ -482,6 +483,8 @@ Historical reports were not edited.
   `crashDump.reservedMemory`, `kdump-save`, watchdogd timeout), `scripts/deploy.sh` entry gates.
 - Session artifacts (not in repo): `~/.cache/crash-review/` (`corpus_final.txt`, `batches/`,
   `extract/B01–B13.md`, `merged_all.md`, `stats_all.txt`, `todo-gate.log`, `findings.md`).
+- TODO gate after the edits: `OK: TODO queue/library structure clean`, `WARN: 133 queue/library
+  entry drift(s)`, `WARN: 102 unharvested §f-bearing report(s)`, identical to the pre-edit run.
 
 ## Appendix: corpus (161 files, script-generated from the corpus rule)
 

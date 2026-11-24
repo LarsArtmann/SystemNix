@@ -121,6 +121,90 @@ let
     else
       resolveFollow v;
 
+  shortestInputPaths =
+    let
+      rootNode = lock.root or "root";
+      discover =
+        paths: current:
+        builtins.filter (edge: edge != null) (
+          builtins.map (
+            name:
+            let
+              value = (nodes.${current}.inputs or { }).${name} or null;
+            in
+            if builtins.isString value && !builtins.hasAttr value paths then
+              { inherit name value; }
+            else
+              null
+          ) (builtins.attrNames (nodes.${current}.inputs or { }))
+        );
+      go =
+        frontier: paths:
+        if frontier == [ ] then
+          paths
+        else
+          let
+            step = builtins.foldl' (
+              acc: node:
+              let
+                found = discover acc.paths node;
+              in
+              {
+                paths = acc.paths // builtins.listToAttrs (
+                  builtins.map (edge: {
+                    name = edge.value;
+                    value = acc.paths.${node} ++ [ edge.name ];
+                  }) found
+                );
+                frontier = acc.frontier ++ builtins.map (edge: edge.value) found;
+              }
+            ) { frontier = [ ]; inherit paths; } frontier;
+          in
+          go step.frontier step.paths;
+    in
+    go [ rootNode ] { ${rootNode} = [ ]; };
+
+  inputPathsTo =
+    nodeKey:
+    let
+      paths = shortestInputPaths;
+    in
+    builtins.filter (names: names != [ ]) (
+      builtins.concatMap (
+        from:
+        let
+          fromPath = paths.${from} or null;
+        in
+        if fromPath == null then
+          [ ]
+        else
+          builtins.concatMap (
+            name:
+            let
+              value = (nodes.${from}.inputs or { }).${name} or null;
+            in
+            if builtins.isString value && value == nodeKey then [ (fromPath ++ [ name ]) ] else [ ]
+          ) (builtins.attrNames (nodes.${from}.inputs or { }))
+      ) (builtins.attrNames nodes)
+    );
+
+  showInputPath = names: builtins.concatStringsSep "/" names;
+
+  treefmtFollowsOverride = names:
+    "${builtins.concatStringsSep ".inputs." names}.inputs.treefmt-nix.follows = \"treefmt-nix\";";
+
+  inputPathLabel =
+    nodeName:
+    let
+      consumers = inputPathsTo nodeName;
+    in
+    if consumers == [ ] then
+      ""
+    else
+      " at input path${if builtins.length consumers == 1 then "" else "s"} ${
+        builtins.concatStringsSep ", " (builtins.map showInputPath consumers)
+      }";
+
   # Deep treefmt-nix guard (2026-10-14): every declared treefmt-nix edge
   # in the whole graph — not just root-owned ones — must resolve to the
   # root pin. Catches both a re-grown deep copy (the discordsync →
@@ -143,13 +227,25 @@ let
       [ ]
     else if builtins.isString value then
       [
-        "${nodeName} locks its own treefmt-nix deep copy (node ${value}, rev ${
+        "${nodeName}${inputPathLabel nodeName} locks its own treefmt-nix deep copy (node ${value}, rev ${
           (nodes.${value}.locked or { }).rev or "?"
-        }) — add a \'<consumer>.inputs.<owner>.inputs.treefmt-nix.follows = \"treefmt-nix\";' override to the infra-follows group in flake.nix"
+        }) — ${
+          let
+            consumers = inputPathsTo nodeName;
+          in
+          if consumers == [ ] then
+            "no root input path reaches this node (orphan) — regenerate the lock"
+          else
+            "add ${
+              builtins.concatStringsSep ", " (
+                builtins.map (line: "'${line}'") (builtins.map treefmtFollowsOverride consumers)
+              )
+            } to the infra-follows group in flake.nix, then regenerate the lock"
+        }"
       ]
     else
       [
-        "${nodeName} treefmt-nix follow resolves to node ${
+        "${nodeName}${inputPathLabel nodeName} treefmt-nix follow resolves to node ${
           if resolved == null then "<dangling-path>" else resolved
         }, not the root treefmt-nix pin (${rootTreefmtKey}) — a root override went inert or points elsewhere"
       ]
