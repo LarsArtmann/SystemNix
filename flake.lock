@@ -11036,11 +11036,11 @@
     "signoz-collector-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1795441419,
-        "narHash": "sha256-r9UXpKib116l/uUn0bA4t+ynSRaaA9ofZvhezuOnP4M=",
+        "lastModified": 1795023778,
+        "narHash": "sha256-DBQ43nKqDXFeOgpDcJ/tESv3YwbVpf3ESm+vJhqS6oM=",
         "owner": "SigNoz",
         "repo": "signoz-otel-collector",
-        "rev": "a1026a7686474a98399e282831076f4bdfac37df",
+        "rev": "74b9fc53bf8e5866d6c0e98c203801b834e40201",
         "type": "github"
       },
       "original": {
