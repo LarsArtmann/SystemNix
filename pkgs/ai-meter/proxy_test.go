@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // testStack wires a Proxy against a fake OpenAI-compatible upstream.
@@ -101,11 +102,7 @@ func (s *testStack) post(path, key, body string) *http.Response {
 	req, _ := http.NewRequest(http.MethodPost, s.proxy.URL+path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+key)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	return resp
+	return do(req)
 }
 
 func (s *testStack) ledgerLines(t *testing.T) []map[string]any {
@@ -302,4 +299,120 @@ func TestRegistryEscapesLabels(t *testing.T) {
 	if !strings.Contains(out, `client="we\"ird"`) || !strings.Contains(out, `model="m\nx"`) {
 		t.Fatalf("labels not escaped:\n%s", out)
 	}
+}
+
+func TestInFlightGaugeSplitsByUpstreamAndModel(t *testing.T) {
+	started := make(chan struct{}, 3)
+	release := make(chan struct{})
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		started <- struct{}{}
+		<-release
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"id":"resp","choices":[],"usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}`)
+	}))
+	t.Cleanup(upstream.Close)
+
+	dir := t.TempDir()
+	keyFile := filepath.Join(dir, "crush.key")
+	if err := os.WriteFile(keyFile, []byte("test-key-1"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ledger, err := OpenLedger(filepath.Join(dir, "usage.jsonl"), slog.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = ledger.Close() })
+
+	registry := NewRegistry()
+	cfg := &Config{
+		InjectStreamUsage: true,
+		Clients:           []Client{{Name: "crush", KeyFile: keyFile, key: "test-key-1"}},
+		Upstreams: []Upstream{
+			{Name: "alpha", BaseURL: upstream.URL, APIKey: "unused"},
+			{Name: "beta", BaseURL: upstream.URL, APIKey: "unused"},
+		},
+	}
+	proxy := httptest.NewServer(NewProxy(cfg, registry, ledger, slog.Default()))
+	t.Cleanup(proxy.Close)
+
+	responses := make(chan *http.Response, 3)
+	send := func(path, body string) {
+		req, _ := http.NewRequest(http.MethodPost, proxy.URL+path, strings.NewReader(body))
+		req.Header().Set("Content-Type", "application/json")
+		req.Header().Set("Authorization", "Bearer test-key-1")
+		go func() { responses <- do(req) }()
+	}
+	send("/v1/alpha/chat/completions", `{"model":"m1"}`)
+	send("/v1/beta/chat/completions", `{"model":"m2"}`)
+	send("/v1/beta/chat/completions", `{"model":"m2"}`)
+	for range 3 {
+		<-started
+	}
+
+	out := registry.Render()
+	for _, want := range []string{
+		`ai_meter_active_requests{client="crush",upstream="alpha",model="m1"} 1` + "\n",
+		`ai_meter_active_requests{client="crush",upstream="beta",model="m2"} 2` + "\n",
+		`ai_meter_active_requests{client="crush",upstream="alpha",model="none"} 0` + "\n",
+		`ai_meter_active_requests{client="crush",upstream="beta",model="none"} 0` + "\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("metrics missing %q\nexposition:\n%s", want, out)
+		}
+	}
+
+	close(release)
+	for range 3 {
+		resp := <-responses
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("want 200, got %d", resp.StatusCode)
+		}
+	}
+
+	// The client can observe the finished body before the server goroutine
+	// runs its deferred End, so the drained state is polled, not assumed.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		drained := true
+		for _, line := range strings.Split(registry.Render(), "\n") {
+			if strings.HasPrefix(line, "ai_meter_active_requests{") && !strings.HasSuffix(line, " 0") {
+				drained = false
+			}
+		}
+		if drained {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("in-flight gauge not drained after all calls ended:\n%s", registry.Render())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+func TestMeteredPathWithoutModelCountsAsNone(t *testing.T) {
+	s := newTestStack(t, nil)
+
+	resp := s.post("/v1/fake/chat/completions", "test-key-1", `not json`)
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("want 200, got %d", resp.StatusCode)
+	}
+
+	want := `ai_meter_requests_total{client="crush",upstream="fake",model="none",code="200"} 1`
+	if out := s.registry.Render(); !strings.Contains(out, want) {
+		t.Fatalf("metrics missing %q\nexposition:\n%s", want, out)
+	}
+	if entries := s.ledgerLines(t); len(entries) != 1 || entries[0]["model"] != "none" {
+		t.Fatalf("ledger entry should carry model none: %v", entries)
+	}
+}
+
+func do(req *http.Request) *http.Response {
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return &http.Response{StatusCode: http.StatusBadGateway, Body: http.NoBody}
+	}
+	return resp
 }
