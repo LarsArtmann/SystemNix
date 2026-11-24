@@ -19,6 +19,12 @@ Scope of this run: (1) answer the owner's follow-up *"are any visits NOT linked 
 
 **Refreshed numbers (live DB 2026-11-24 20:15, browsing since 09:17).** Personal: 6,962 visits / 171 domains / 335 sessions / 100 searches / 56 downloads / 55% (0.5456). All tenants: 6,962 / 305 / 750 / 225 / 114 / 32% (0.3179). Visits now 6,962 vs 6,943 at 09:17; owner domain rows 171 vs 166.
 
+**M9 REHEARSAL EXECUTED 2026-11-24 20:25 — on a COPY, never prod, and it REFUTES this report's "score back to ~55%" prediction.** The server now builds from HEAD (`go build ./cmd/browser-history-server`; `go.work` reads 1.27.3, so the morning's toolchain failures are gone). Dry run on the 09:15 copy: 138,805 events scanned / **135,035 rewritten**; sessions 415, domains 240, search_queries 125, downloads 58, bookmarks 7, omnibox_inputs 2, form_history 20, permissions 5 — the same 217-row behavioural inventory as the 2026-10-15 rehearsal. Applied `-yes` to a throwaway copy: the scopes converge exactly as predicted (All == Personal: 6,943 visits / 301 domains / 750 sessions / 136 searches / 58 downloads) and the re-run is a clean idempotent no-op — BUT the headline score lands at **43.65%**, not ~55%, and the domain counts TRIPLE: `www.youtube.com` 334 → **1,878** (334+772+772), `civitai.red` 318 → **942**, `immich.home.lan` 108 → **324**.
+
+Mechanism: `domains` is a DERIVED aggregate — `projection/visit_projection.go:220-268` increments one count per new visit event — and the claim's domains leg is a count-ADDING upsert (`api/claim_orphaned_cli.go:184`), so two stale snapshots of the SAME history are summed as if they were distinct browsing. The behavioural legs prove the buckets are duplicates: `UPDATE OR REPLACE` collapses them by PK (searches 225 → 136, downloads 114 → 58). `WeightedProductivity` weights by that inflated count, so the weighted distribution shifts even though the productivity values are unchanged.
+
+Corrected guidance: the truthful post-claim figure is **~43.65%**, and the correct remedy is a domain-stats REBUILD from `visits`/the journal (delete the derived rows, let the projection re-seed via `CountVisitsForDomain`), NOT a merge. No rebuild CLI exists today — filed as browser-history#29.
+
 **Unchanged conclusions.** Visit total cannot move (one bucket in `visits`); the 55%→32% drop is the stale anonymous residue, not a scoring bug; `claim-orphaned` remains the remedy and still needs an owner stop window.
 
 ---
