@@ -1024,11 +1024,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795405099,
-        "narHash": "sha256-itL7FY7VLS2AWkY/dgUOI/ZsCCeOqFf4JkwWQ4jLJWs=",
+        "lastModified": 1795549094,
+        "narHash": "sha256-TGDU1qGtVI6zEU90sbuq7isAvUJsm0w7QiohsWvkw0Q=",
         "ref": "refs/heads/master",
-        "rev": "83e0f7670fd4aff1904972335ee9ff8abb6292c2",
-        "revCount": 445,
+        "rev": "eed931d179e9d9da32f5a5c8cdef7006f054f52c",
+        "revCount": 450,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       },
@@ -9888,11 +9888,11 @@
         "templ-components": "templ-components_8"
       },
       "locked": {
-        "lastModified": 1795547331,
-        "narHash": "sha256-+2aZ1AzDH0gWcDqPhxN2cVA3zvkOeqmWGDhECsgaFIE=",
+        "lastModified": 1795549161,
+        "narHash": "sha256-qReCpIW5S3zUqFjPFWNu7ly/SSGOACfYzHQOkFCSF1Q=",
         "ref": "refs/heads/master",
-        "rev": "eb9ed8dc372b511cdc297ef4da90d8de7c3904e5",
-        "revCount": 1781,
+        "rev": "955ce9bba93f8d3843b5bacea8a3cd1aaf0030db",
+        "revCount": 1782,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },

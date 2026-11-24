@@ -351,6 +351,11 @@ _: {
             # zai/glm-5.3-flash --price-input 0.15 --price-output 0.5
             # --price-cache-hit 0.03). Extend per model as consumers adopt
             # them; unknown models meter tokens exactly and cost $0.
+            # glm-5.4 (crushrc declaration 2026-11-24): deliberately NO row
+            # yet — z.ai has not published PAYG pricing (Model API itself
+            # pending security assessment), and invented prices are banned.
+            # Add reference prices here AND to the crushrc declaration when
+            # docs.z.ai/guides/overview/pricing lists it.
             "glm-5.3" = {
               input = 1.4;
               output = 4.4;
