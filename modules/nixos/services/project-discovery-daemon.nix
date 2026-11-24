@@ -106,13 +106,20 @@
           user = lib.mkDefault config.users.primaryUser;
 
           # Admin WebUI bridge: loopback dashboard + gatus's HTTP window
-          # into the daemon. No shim (upstream bakes the correct hash at
-          # 64f5f1b — see the daemon package comment above); port from the
-          # registry, never a literal.
+          # into the daemon. vendorHash shim RE-ADDED (2026-11-24, first-hand
+          # FOD evidence): the lock float past 64f5f1b (now b36f7d8, admin
+          # package stamped 1903bc0) re-staled upstream's bake under our
+          # followed-nixpkgs graph — specified +YuAxieZUv8, got kEd17MIY
+          # (drv admin-1903bc0…-go-modules, 15:2x deploy attempt). The
+          # daemon FOD stayed green (cached); only admin re-fires. Drop
+          # when upstream bakes the got hash or the lock moves past an
+          # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
+          # Port from the registry, never a literal.
           admin = {
             package =
               lib.mkDefault
-                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
+                (inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin).overrideAttrs
+                { vendorHash = "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY="; };
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };
