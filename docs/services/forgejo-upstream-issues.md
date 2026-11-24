@@ -186,3 +186,91 @@ temp file is treated as fatal for the sync with no user-visible notice, and (b) 
 ---
 
 _Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-09-18._
+
+---
+
+## Issue 4 — mirror prune runs without the fetch's credential helper, and a failed prune still reports sync success (2026-11-24)
+
+### Problem
+
+Two stacked defects in the broken-reference recovery path of `runSync`
+(`services/mirror/mirror_pull.go`, verified against the current `forgejo` branch 2026-11-24):
+
+**1. The prune cannot authenticate.** Since pull-mirror credentials moved into the encrypted DB
+store (#11984), the fetch authenticates via `AddAuthCredentialHelperForRemote`, but
+`pruneBrokenReferences` runs `git remote prune` with a bare `git.RunOpts{}` — no credential
+helper, not even the proxy env:
+
+```go
+pruneErr := git.NewCommand(ctx, "remote", "prune").AddDynamicArguments(m.GetRemoteName()).
+    SetDescription(...).
+    Run(&git.RunOpts{
+        Timeout: timeout,
+        Dir:     repoPath,
+        Stdout:  stdoutBuilder,
+        Stderr:  stderrBuilder,
+    })
+```
+
+On a DB-credential mirror the sanitized `remote.origin.url` has no embedded auth, so the prune
+dies `could not read Username for 'https://github.com': terminal prompts disabled`
+(`GIT_TERMINAL_PROMPT=0`). Live journal (Forgejo 15.0.10, `lars/auto-deduplicate`, ~2.5 h
+cadence since 2026-09-24):
+
+```
+SyncMirrors [repo: <Repository 182:lars/auto-deduplicate>]: failed to update mirror repository due to broken references: ... Unable to create '.../commit-graph-chain.lock': File exists ... Attempting Prune
+Failed to prune mirror repository '/var/lib/forgejo/repositories/lars/auto-deduplicate.git' references: ... could not read Username for 'https://github.com': terminal prompts disabled
+```
+
+**2. A failed prune still reports success.** The recovery branch sets `err = nil` before
+attempting the prune, and the prune error never propagates (`pruneBrokenReferences` writes a
+notice but its `pruneErr` is only compared against `nil`):
+
+```go
+err = nil
+
+// Attempt prune
+pruneErr := pruneBrokenReferences(ctx, m, repoPath, timeout, &stdoutBuilder, &stderrBuilder, false)
+if pruneErr == nil {
+    ... // reattempt fetch
+}
+// If there is still an error (or there always was an error)
+if err != nil { ... return nil, false }
+```
+
+When the prune fails, `err` is still `nil`, so `runSync` falls through and returns
+`(..., true)`. `SyncPullMirror` then sets `m.UpdatedUnix = timeutil.TimeStampNow()`, logs
+"Successfully updated", and the mirror shows fresh in the API/UI while ZERO refs were updated.
+In our incident the mirror content has been frozen at its 2026-09-24 state for two months; the
+~2.5 h repository notices were the only signal.
+
+### Why this matters
+
+The recovery path exists to self-heal broken refs; on any authenticated mirror it instead
+guarantees a failed prune (no credentials) followed by a falsely-successful sync (no updated
+refs, fresh `mirror_updated`). The operator's mirror goes permanently stale while every
+dashboard signal says healthy.
+
+### Suggestion
+
+1. Pass the same auth plumbing to the prune: share the `AddAuthCredentialHelperForRemote` /
+   `Env: envs` setup with `pruneBrokenReferences` (or run the prune with the already-prepared
+   command context).
+2. Treat a failed prune as a sync failure: propagate `pruneErr` into the recovery branch (or
+   return `ok = false` after `CreateRepositoryNotice`) so `runSync` does not report success —
+   and does not advance `UpdatedUnix` — when no refs were updated.
+
+Gitea's `services/mirror/mirror_pull.go` (main, checked 2026-11-24) carries the same control
+flow: `pruneBrokenReferences` returns an error that only gates the reattempt, and a failed
+prune leaves `err = nil`, so the sync succeeds with zero refs updated. The credential-helper
+half is Forgejo-specific (Gitea's fetch/prune both run without an explicit helper), but the
+failed-prune-reports-success half is shared.
+
+Related: #14436, #14903 (the credential-store change that removed creds from the git config).
+
+- Version: observed on 15.0.10; both defects present on the current `forgejo` branch (checked
+  2026-11-24); the success-reporting defect also present in gitea main.
+
+---
+
+_Drafted with AI assistance (Crush); source claims verified against the `forgejo` branch on 2026-11-24._
