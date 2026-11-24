@@ -1503,7 +1503,9 @@
           # server being up (plus PapDashboard's img-src policy). Copy the mark
           # into PAP_ICONS_DIR instead — the tile then renders the product's
           # real logo from the Nix store, with no runtime dependency.
-          services.papdashboard.extraIcons.monitor365 =
+          # The attribute name IS the served file name (and what the tile's
+          # `icon` references), so it must keep the image extension.
+          services.papdashboard.extraIcons."monitor365.svg" =
             ../../../assets/monitor365-logo.svg;
         })
       ];
