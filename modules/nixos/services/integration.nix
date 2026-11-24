@@ -355,6 +355,23 @@ _: {
                           (modules/nixos/services/papdashboard.nix).
                         '';
                       };
+                      iconFile = lib.mkOption {
+                        type = lib.types.nullOr lib.types.path;
+                        default = null;
+                        description = ''
+                          Custom icon file for THIS service's tile, copied
+                          into the PapDashboard icon pack under the `icon`
+                          name (extraIcons in papdashboard.nix — overrides a
+                          same-named pack glyph). Use for a service's own
+                          brand mark instead of a borrowed dashboard-icons
+                          glyph; must be set together with a matching `icon`
+                          file name (asserted at eval). Typically the
+                          upstream flake's brand-asset passthru, e.g.
+                          "''${cfg.package.brandAssets}/timesheets.svg", so
+                          the logo provably rides the same rev as the
+                          deployed binary.
+                        '';
+                      };
                       checkUrl = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
                         default = null;

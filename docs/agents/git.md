@@ -6,6 +6,7 @@
 ## Index
 
 - [Git zero-byte object corruption (recovery runbook)](#git-zero-byte-object-corruption-boot-death-mid-commit-2026-09-15)
+- [Stash-loss recovery — failed pop then drop (git-town × daemon, 2026-11-24)](#stash-loss-recovery--failed-pop-then-drop-git-town--daemon-2026-11-24)
 - [History-rewrite verification checklist](#history-rewrite-verification-checklist)
 - [GitHub push protection (GH013) — fixtures & unblock playbook](#github-push-protection-ignores-gitleakstoml-allowlists)
 
@@ -20,6 +21,11 @@ A boot death at 09:32:40 (mid PMA-daemon commit) left 10 loose objects as **0-by
 5. `git write-tree` rebuilds the whole tree chain from the index AND repopulates the cache-tree ext — here it reproduced the lost root tree byte-exact (`0e45a87d…`, the exact sha the cache-tree pointed at).
 6. fsck validates reflog OLD-shas too — after recovery, `git reflog delete <ref>@{0}` any entry referencing a permanently-lost object, or fsck errors forever.
 7. Prevention now in `platforms/common/programs/git.nix`: `core.fsync = "loose-object,index"` (git does NOT fsync loose objects by default; on this box's crash history that is an unacceptable gamble).
+
+## Stash-loss recovery — failed pop then drop (git-town × daemon, 2026-11-24)
+
+- **A FAILED `git stash pop` followed by `git stash drop` deletes the only ref to uncommitted work (2026-11-24, live ×1)** — git-town's sync (stash → rebase → pop) raced the auto-commit daemon's `index.lock`: the pop died `error: could not write index` (working tree stayed CLEAN — the "stash entry is kept" message was the only remaining copy of 6 files/81 lines), and the next typed `git stash drop` removed it anyway. Recovery, zero loss: (1) the drop message PRINTS the full SHA (`Dropped refs/stash@{0} (<sha>)`) — the stash commit survives as a dangling merge commit until gc; `git cat-file -t <sha>` + `git show --stat <sha>` confirm; (2) `git stash store -m "recovered: ..." <sha>` re-pins refs/stash WITHOUT touching the index or worktree (safe mid-sibling-session); (3) classify per-file with `git diff HEAD 'stash@{0}' -- <path>` — after a rebase the stash parent is PRE-rebase, so the stash is usually PARTIALLY superseded (replayed commits already carry some hunks; sibling sessions may have re-landed others) and a blind `git stash apply` both refuses on any dirty overlap and would re-apply stale hunks; (4) restore only the genuinely-missing pieces surgically (`git show 'stash@{0}':<new-file> > <new-file>` for new paths; heredoc appends from the diff's exact lines for queue rows), then verify the restore with `git diff 'stash@{0}' -- <paths>` = empty.
+- **Standing rules: NEVER `git stash drop` after a failed pop — verify `git status` shows the restored changes first; and before ANY `git stash drop` here, remember the daemon's index.lock makes pops fail silently-often (this repo's git-town sync + daemon race is structural, not a one-off).**
 
 ## History-rewrite verification checklist
 
