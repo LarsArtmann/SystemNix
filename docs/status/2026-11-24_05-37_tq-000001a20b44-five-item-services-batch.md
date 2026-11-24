@@ -20,6 +20,10 @@ daemon hashes carrying raw work are cited per item.
    per-account checks, enabled = main+work, All-Gmail-Dead untouched).
    DECISION STILL OPEN (paging/alert-fatigue call = owner); rows left
    unchecked with BLOCKED notes. §f sweep: none owed (decision row).
+   Probe repro (one eval, both directions): throwaway
+   `extendModules` expression via `nix eval --impure --raw --expr`
+   comparing `config.services.integration.inboxclean.checks` filtered on
+   "Gmail Auth" names — default 0 / enabled main+work.
 2. **CV TODO_LIST unstick** — VERIFIED MOOT: fresh live probe, CV tree clean
    (0 status lines, 0 stashes, TODO_LIST.md committed at `2c432cd55`).
    Commit `44ee05ec8`. §f sweep of the Source report (2026-09-30 §d2): the
