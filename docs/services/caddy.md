@@ -134,11 +134,19 @@ printf 'GET / HTTP/1.1\r\nHost: <vhost>\r\nConnection: close\r\n\r\n' \
 
 ## Ops
 
-- **Restart after every deploy** — deploy.sh does this (`Restarting
-  caddy.service (reload broken by PrivateTmp hardening)`): `harden {}` sets
-  `PrivateTmp=true`, which blocks systemd's mount-namespace reload path;
-  switch-to-configuration silently fails to reload (exit 4) and new vHosts
-  stay unloaded. NEVER switch this to a reload.
+- **No post-deploy restart, no reload** — since 2026-11-24 neither happens:
+  the module pins `services.caddy.enableReload = false`, so nixpkgs wires
+  `restartTriggers = configFile` and switch-to-configuration itself restarts
+  caddy whenever the config changes (guarantees the running process matches
+  the generation — reload cannot pick up binary/env changes; F68 doctrine,
+  2026-10-25). History: the old deploy.sh restart band-aid ("reload broken
+  by PrivateTmp") misattributed the 2026-08-08 exit-4 — the real cause was
+  ExecReload pointing at a config path nixpkgs no longer renders; live
+  reloads with PrivateTmp=true succeeded Nov 19/23 once the path matched,
+  and the 26.11 bump's `enableReload` default flip to true had silently
+  re-armed reload (the Nov 19/23 stc reloads were that drift). The explicit
+  pin + band-aid removal (item-4 root-cause fix) make the class
+  structurally unreachable. NEVER set `enableReload = true`.
 - Manual: `sudo systemctl restart caddy.service` (mint re-runs at boot only;
   restart does NOT remint — the 365d leaf persists in /run until reboot).
 - Validate config without restarting: `caddy validate --config

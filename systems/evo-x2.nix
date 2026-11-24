@@ -114,5 +114,12 @@ nixpkgs.lib.nixosSystem {
     inputs.bank-sync.nixosModules.default
     inputs.go-taskqueue.nixosModules.default
     ../platforms/nixos/system/configuration.nix
+    # modloc: per-module (nearest go.mod / Cargo.toml) LOC counter CLI from
+    # the nixos-modules collection — its first programs.* module. REQUIRES
+    # the nixos-modules input floated past the module's landing commit
+    # (d1980f3+): push nixos-modules first, then
+    # `nix flake update nixos-modules` here, or this eval is red.
+    inputs.nixos-modules.nixosModules.modloc
+    {programs.modloc.enable = true;}
   ];
 }

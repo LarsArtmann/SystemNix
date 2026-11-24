@@ -767,14 +767,25 @@ _: {
             (lib.concatStringsSep "\n" vhostLayerLines + "\n");
 
         services.caddy = {
-          # enableReload stays at the nixpkgs default (false), DELIBERATE
-          # (F68, 2026-10-25 deep dive): `caddy reload` cannot pick up binary
-          # or systemd env changes, and logger/output rewrites (the journald
-          # encoder switch is exactly one) are reload's flakiest surface —
-          # a switch-time full restart costs seconds on the LAN edge and
-          # guarantees the running process matches the generation. If a
-          # future change trips on restart latency, revisit per-vHost, not
-          # globally.
+          # enableReload pinned FALSE, DELIBERATE (F68, 2026-10-25 deep dive):
+          # `caddy reload` cannot pick up binary or systemd env changes, and
+          # logger/output rewrites (the journald encoder switch is exactly
+          # one) are reload's flakiest surface — a switch-time full restart
+          # costs seconds on the LAN edge and guarantees the running process
+          # matches the generation. If a future change trips on restart
+          # latency, revisit per-vHost, not globally.
+          # EXPLICIT since 2026-11-24 (item-4 root-cause fix): the pinned
+          # nixpkgs module's default FLIPPED to true (26.11 bump), silently
+          # re-arming reloadTriggers + ExecReload behind F68's back — the
+          # Nov 19/23 stc-initiated reloads were that drift running live.
+          # With enableReload=false the module wires restartTriggers =
+          # configFile (stc itself restarts on config changes) and clears
+          # ExecReload, making the 2026-08-08 "reload broken, stc exit 4"
+          # class structurally unreachable. That incident's PrivateTmp
+          # attribution was wrong: live reloads with PrivateTmp=true
+          # succeeded Nov 19/23 once ExecReload's config path matched the
+          # rendered file (nixpkgs' Caddyfile→caddy_config rename skew).
+          enableReload = false;
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
           # in globalConfig — do NOT add a separate `log {}` block there (collision)
           #

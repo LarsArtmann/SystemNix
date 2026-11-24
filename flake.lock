@@ -1424,11 +1424,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795355971,
-        "narHash": "sha256-Y5212fyuVDuoKsdBgh6O6GcdXQ0G8fyPHx8QjIDB2uA=",
+        "lastModified": 1795479445,
+        "narHash": "sha256-JVUcHm4QQoP0T7e3ZpmUZB5VDfFg6pOLKFM03jrGtwI=",
         "owner": "Artmann-Technologies",
         "repo": "docs-gates",
-        "rev": "c81685bbbe56e04609ed50c83706903d616393bd",
+        "rev": "7a2d69b63a3f70d0449bdeb4da3c9b138786a968",
         "type": "github"
       },
       "original": {
@@ -6252,15 +6252,15 @@
       "locked": {
         "lastModified": 1794766182,
         "narHash": "sha256-ypob3k8wen7p8O+eWrKTAvVP/HTMsBOW19BA86E64z8=",
-        "ref": "refs/heads/master",
+        "owner": "LarsArtmann",
+        "repo": "go-ndjson",
         "rev": "c077cd7e3b7e01f7355f15fe3eec0d684ce6b135",
-        "revCount": 48,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-ndjson"
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-ndjson"
+        "owner": "LarsArtmann",
+        "repo": "go-ndjson",
+        "type": "github"
       }
     },
     "go-nix-helpers": {
@@ -9267,11 +9267,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795373081,
-        "narHash": "sha256-mFuRABMtv1YJHgGTuvSGa6axXQmNAOboEXbRU6F59Q4=",
+        "lastModified": 1795507255,
+        "narHash": "sha256-6QtIb174eGnih9u35DlcXeA8nfO8XS+hD0qX8k7Ba6I=",
         "owner": "LarsArtmann",
         "repo": "nixos-modules",
-        "rev": "fc0c7500b1d2ebe58ee571b5552747128039296d",
+        "rev": "1bb7c82e96e3a2d3a3167beafaeb797eaf2be41d",
         "type": "github"
       },
       "original": {

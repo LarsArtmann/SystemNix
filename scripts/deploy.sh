@@ -835,13 +835,15 @@ if nix run .#pre-deploy-check; then
     fi
   fi
 
-  # Restart Caddy after every deploy. The harden() helper sets PrivateTmp=true
-  # which blocks systemd's mount-namespace reload path — switch-to-configuration
-  # silently fails to reload Caddy (exit code 4), leaving new vHosts unloaded.
-  if systemctl is-enabled --quiet caddy.service 2>/dev/null; then
-    echo "Restarting caddy.service (reload broken by PrivateTmp hardening)..."
-    sudo systemctl restart caddy.service 2>/dev/null || true
-  fi
+  # Caddy is deliberately NOT restarted here: the module pins
+  # services.caddy.enableReload = false, so the nixpkgs module wires
+  # restartTriggers = configFile and switch-to-configuration itself
+  # restarts caddy on config changes (restart-over-reload doctrine, F68
+  # 2026-10-25). The old band-aid restart ("reload broken by PrivateTmp")
+  # was a misattribution — the 2026-08-08 exit-4 was ExecReload pointing
+  # at a config path nixpkgs no longer renders — and after the 26.11
+  # bump re-armed reload it double-bounced the LAN edge after the stc
+  # restart had already applied the generation. Removed 2026-11-24.
 
   # Restart provisioner oneshots that switch-to-configuration skips.
   # Type=oneshot + RemainAfterExit=true services stay in "active (exited)" state

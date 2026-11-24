@@ -51,6 +51,7 @@ Resumed the interrupted 05:21 session with four remaining steps: eval retry, TOD
 ## f) Next — ranked (up to 50; queued-status marked Q)
 
 **P0 — get the fixes live**
+
 1. Re-verify eval at HEAD post-foreign-wave (drvPath; expect the mount-gating trips fixed by a1897abc8/2655f7281 — unproven) → then deploy. **[NEW — Q as the deploy row below]**
 2. Deploy the health-fix wave (audiblesync caps + dir-owner, service-health-check dedup, rotted script removal) at a calm window or with owner-approved pressure override. **[Q — added to TODO_LIST + services.md this pass]**
 3. Run the post-deploy verification battery (§b.3 legs) and update the 05:21 report ledger + tick the queue rows. **[Q — same row]**
