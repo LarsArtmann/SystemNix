@@ -76,7 +76,7 @@ Disposition note (TODO-system rule): the report's DIRECT follow-ups are harveste
 2. **[owner]** Take a fresh pool backup immediately before any delete, and record its name in the report.
 3. Fresh `browser-history-db-*.sqlite` copy → run `merge-duplicate-users -db …` **dry run** and record its group/row counts against the 8 known ids.
 4. **[owner]** Delete the 8 through `/admin/users` (each delete dispatches a real `user-deleted` event).
-5. Re-baseline `browser_history_users 9` → `1` in `modules/nixos/services/browser-history.nix:858` in the SAME change as the delete.
+5. Re-baseline `browser_history_users 9` → `1` in `modules/nixos/services/browser-history.nix:859` in the SAME change as the delete.
 6. Post-op: `browser_history_users 1`, `/health` answers, login resolves to `01M000JA6…`, dashboard renders 6,932 visits, `scripts/mutation-smoke.sh` green.
 7. Prove the survivors' lookups: `FindByEmail`/`FindBySubject` still return the owner after the tombstones (keep-first regression test already exists; re-run it against a copy).
 8. Add a permanent duplicate-email query to the runbook (one-line SQL) so the next owner sees the group instantly.
@@ -137,7 +137,7 @@ Disposition note (TODO-system rule): the report's DIRECT follow-ups are harveste
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **The 8 zombie rows: delete now, or hold for `MergeUsers`?** Delete is provably lossless for this specific group (0 credentials, 0 TOTP, no owned rows) — but it sets the count baseline to 1 and needs the gatus literal changed in the same change, and it means the first real merge exercise waits for another incident.
+1. **The 8 zombie rows: delete now, or hold for `MergeUsers`?** Delete is provably lossless for this specific group (0 credentials, 0 TOTP, no owned rows) — but it sets the count baseline to 1 and needs the gatus literal changed in the same change, and it means the first real merge exercise waits for another incident. **ANSWERED 2026-11-24 (owner): HOLD — wait for the native `MergeUsers` in cqrs-htmx. The 8 rows stay, the count stays 9 by design, no deletion is performed.** Consequences: the `[blocked:user]` decision row in `docs/todo/services.md` became a `[blocked:push]` unblock ladder, and `docs/services/browser-history.md` (duplicate-identity row + consolidation runbook item 3) carries the decision of record.
 2. **Merge contract for consumers: identity-only, or identity + a published event apps must handle?** My filed design publishes `UserMerged` so apps can re-point their own columns (browser-history's CLI is exactly that re-pointing, hand-rolled). The narrower contract keeps `usermgmt` purely identity and leaves every consumer to hand-roll forever. Both are defensible; the second is less code and more duplicated consumer work.
 3. **Tenant keys: keep the panel's name-derived tenant ID (and enforce normalized-name uniqueness), or move the admin panel to opaque IDs?** Name-as-ID makes rename/merge impossible without churn and makes a deleted name permanently unusable; opaque IDs are rename-safe but change every existing tenant URL/ID and need a migration story for the deployments that already hold name-IDs.
 
