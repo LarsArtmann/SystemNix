@@ -184,6 +184,25 @@
         };
       };
 
+      # Per-account auth_expired alerting (decision row docs/todo/services.md
+      # "should ONE dead Gmail account page?"): mechanics only — the POLICY
+      # call (single-dead-account paging vs the total-die-off-only "All Gmail
+      # Dead" check below) is the owner's alert-fatigue call, so the checks
+      # ship disabled. Rationale for the mechanics: main sat dead 26 days
+      # (2026-09-04 → 09-30) with zero remote signal while work stayed green.
+      options.services.inboxclean.perAccountAuthAlerts = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Add a Gatus check per Gmail account asserting its /health grant
+            verdict IS "connected" (single-dead-account paging). Default
+            false keeps the total-die-off-only contract of the "InboxClean
+            All Gmail Dead" check.
+          '';
+        };
+      };
+
       imports = [ inputs.inboxclean.nixosModules.default ];
 
       config = lib.mkIf cfg.enable {
@@ -517,6 +536,23 @@
                 alert = "ALL InboxClean Gmail accounts are dead (none connected) — mailbox is silently uncleaned. Check: journalctl -u inboxclean-web, re-run inboxclean auth, inspect /health services.gmail.";
               }
             ]
+            # Per-account grant checks (services.inboxclean.
+            # perAccountAuthAlerts.enable, default false — the
+            # single-dead-account paging policy call is the owner's;
+            # rationale at the option declaration).
+            ++ lib.optionals cfg.perAccountAuthAlerts.enable (
+              map (slug: {
+                name = "InboxClean ${slug} Gmail Auth";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.inboxclean}/health";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY].services.gmail.${slug} == \"connected\""
+                ];
+                alert = "InboxClean Gmail account ${slug} is NOT connected (auth_expired/degraded) — that mailbox is silently uncleaned. Runbook: inboxclean.nix header (auth ceremony incl. the 7-day testing-mode token bomb); journalctl -u inboxclean-web.";
+              }) ([ "main" ] ++ map (account: account.name) cfg.extraAccounts)
+            )
             # Authenticated probe of the Paperless REST API with the SAME
             # token inboxclean-sync uploads attachments with — the
             # unauthenticated Paperless login-page check cannot see token

@@ -263,7 +263,19 @@
               "bank-sync.service"
               "bank-sync-storage-dir.service"
             ];
-            unitConfig.RequiresMountsFor = [ cfg.dataDir ];
+            # Skip cleanly (result=condition) while the pool is detached —
+            # atticd-bootstrap treatment (attic.nix; sweep 2026-11-24). The
+            # old RequiresMountsFor made the one-time migration
+            # result=dependency at every boot while the DAS was away even
+            # though the script's own guards make every post-migration run
+            # a no-op. Condition = dataDir IS a directory: pool present ->
+            # runs (archive guard no-ops); pool absent -> skip; a fresh
+            # host (no dataDir ever) skips too, which is correct — the
+            # pre-pool layout this migration fixed no longer exists to
+            # migrate. after mnt-pool.mount (ordering-only) avoids the
+            # slow-DAS wrong-skip.
+            after = [ "mnt-pool.mount" ];
+            unitConfig.ConditionPathIsDirectory = [ cfg.dataDir ];
             serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";

@@ -9,6 +9,8 @@
 
 ## a) FULLY DONE
 
+<!-- check-rows:ledger -->
+
 | Item                                                  | Proof                                                                                                                                                                                                                                                                                  |
 | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Root cause of the NXDOMAIN diagnosed                  | `health` missing from `dns-local.nix`; no service module existed at all                                                                                                                                                                                                                |
@@ -29,20 +31,20 @@
 ## b) PARTIALLY DONE
 
 ~~1. **Deployment** — everything built, pushed, eval-proven; system activation pending (needs sudo, which this session's sandbox forbids). No half-deployed state exists; the switch simply hasn't run.~~ done — deployed 2026-09-20 (health-dashboard activates first time in that generation; docs/status/2026-09-20_12-26 §b.2)
-2. **Real-remote federation** — hub verified against the mock example probe only. CV (the actual configured remote) was never pulled through the hub's HTML/JSON paths. CV's check keys are giant Go type strings (`*github.com/larsartmann/go-sse.Broadcaster[...]`); they will namespace fine (`cv/<key>`) but the card rendering was never eyeballed.
-3. **DNS resolution** — the record ships in config, but dnsblockd's pickup of changed `localRecords` (hot-reload vs unit restart on switch) is unverified.
-4. **Commit hygiene** — final tree content is correct and pushed, but most SystemNix wiring landed in daemon heuristic commits (`chore: auto-commit`), not intent commits. One intent commit survived (dashboard AGENTS.md); the daemon won every other race.
-5. **CI state after the go 1.27.1 floor bump** — `go-version-file` should flow, but the pushed commits' CI outcome was never checked (and SystemNix CI is dark anyway per the token gap).
+2. **Real-remote federation** — hub verified against the mock example probe only. CV (the actual configured remote) was never pulled through the hub's HTML/JSON paths. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain item 4) CV's check keys are giant Go type strings (`*github.com/larsartmann/go-sse.Broadcaster[...]`); they will namespace fine (`cv/<key>`) but the card rendering was never eyeballed.
+3. **DNS resolution** — the record ships in config, but dnsblockd's pickup of changed `localRecords` (hot-reload vs unit restart on switch) is unverified. → [docs/todo/services.md](docs/todo/services.md) (verification chain item 2)
+~~4. **Commit hygiene** — final tree content is correct and pushed, but most SystemNix wiring landed in daemon heuristic commits (`chore: auto-commit`), not intent commits. One intent commit survived (dashboard AGENTS.md); the daemon won every other race.~~ **NOT-DO — observational; final content landed correct and pushed, no actionable remainder.**
+~~5. **CI state after the go 1.27.1 floor bump** — `go-version-file` should flow, but the pushed commits' CI outcome was never checked (and SystemNix CI is dark anyway per the token gap).~~ **NOT-DO — dup of §f.16.**
 
 ## c) NOT STARTED
 
 1. `health-hub` has **zero tests** — `parseRemotes` is real parsing logic with no table-driven suite and no fuzz target (the repo has a fuzz-registry rule: new target ⇒ `fuzz.yml` + AGENTS.md in the same change).
-2. README / FEATURES / TODO_LIST updates in go-health-dashboard — the hub is a new user-facing binary; AGENTS.md was updated, the sales page was not.
+~~2. README / FEATURES / TODO_LIST updates in go-health-dashboard — the hub is a new user-facing binary; AGENTS.md was updated, the sales page was not.~~ **NOT-DO — dup of §f.17/§f.18.**
 3. go-health v0.3.0 tag + dashboard re-pin (kills the pseudo-version debt; documented as the plan).
-4. Post-deploy verification of anything (see f).
-5. Browser suite re-run on go-health-dashboard after the toolchain bump (unit tests ran; chromedp suite did not).
-6. SystemNix AGENTS.md per-service section for health-dashboard (runbook exists; AGENTS entry doesn't).
-7. HARVEST of section (f) into SystemNix `TODO_LIST.md` / domain files.
+4. Post-deploy verification of anything (see f). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+~~5. Browser suite re-run on go-health-dashboard after the toolchain bump (unit tests ran; chromedp suite did not).~~ **NOT-DO — dup of §f.15.**
+~~6. SystemNix AGENTS.md per-service section for health-dashboard (runbook exists; AGENTS entry doesn't).~~ done — per-service deep context superseded by the runbook's own authoritative Agent Notes section (docs/services/health-dashboard.md, migrated from AGENTS.md 2026-10-01)
+~~7. HARVEST of section (f) into SystemNix `TODO_LIST.md` / domain files.~~ done — hub follow-ups live in the domain libraries (docs/todo/services.md Health Hub verification chain; docs/todo/monitoring.md hub rows)
 
 ## d) TOTALLY FUCKED UP
 
@@ -67,65 +69,65 @@ Nothing deployed is broken (nothing is deployed yet), and no data or history was
 **Deploy + verify (blocking value):**
 
 ~~1. Run `nix run .#deploy` on evo-x2 (sudo; the only step this session couldn't do).~~ **NOT-DO — NOT-DO — dup of §b.1 (deployment, verified closed).**
-2. Post-deploy smoke: `curl 127.0.0.1:8103/healthz`, `/readyz`, `/health` (HTML eyeball).
-3. `dig @127.0.0.1 health.home.lan` after the switch — confirm dnsblockd serves the new record (learn whether it hot-reloads or needed the restart).
-4. Verify `https://health.home.lan` end to end: caddy TLS + oauth2-proxy gate + tile click-through from PapDashboard.
-5. Verify hub federates the REAL CV document (JSON keys `cv/*`, HTML cards render the type-string check names sanely).
-6. Confirm both Gatus checks go green; confirm CV's overall-`warn` (groq key) does NOT trip the federation check (warn≠fail on `/readyz`).
-7. Verify deployed binary logs `build 543a5b7` (ldflags stamp), not `dev`.
-8. Run `scripts/post-deploy-check.sh`; add a health-dashboard smoke section to it.
-9. Verify system-health picked up `health-dashboard` (monitored=true) in its metrics.
-10. `systemd-analyze security health-dashboard.service` — audit the rendered hardening.
-11. Boot-behavior check: `/healthz` + `/readyz` status codes when a remote is dark at boot (federation `StartupComplete` latch semantics) — align Gatus expectations and runbook.
+2. Post-deploy smoke: `curl 127.0.0.1:8103/healthz`, `/readyz`, `/health` (HTML eyeball). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+3. `dig @127.0.0.1 health.home.lan` after the switch — confirm dnsblockd serves the new record (learn whether it hot-reloads or needed the restart). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+4. Verify `https://health.home.lan` end to end: caddy TLS + oauth2-proxy gate + tile click-through from PapDashboard. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+5. Verify hub federates the REAL CV document (JSON keys `cv/*`, HTML cards render the type-string check names sanely). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+6. Confirm both Gatus checks go green; confirm CV's overall-`warn` (groq key) does NOT trip the federation check (warn≠fail on `/readyz`). → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+7. Verify deployed binary logs `build 543a5b7` (ldflags stamp), not `dev`. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+~~8. Run `scripts/post-deploy-check.sh`; add a health-dashboard smoke section to it.~~ done — health-dashboard covered by the post-deploy battery (scripts/post-deploy-check.sh)
+9. Verify system-health picked up `health-dashboard` (monitored=true) in its metrics. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+10. `systemd-analyze security health-dashboard.service` — audit the rendered hardening. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
+11. Boot-behavior check: `/healthz` + `/readyz` status codes when a remote is dark at boot (federation `StartupComplete` latch semantics) — align Gatus expectations and runbook. → [docs/todo/services.md](docs/todo/services.md) (Health Hub post-deploy verification chain)
 
 **Close the session's own gaps (debt I created):**
-12. Table-driven tests for `parseRemotes` (dup names, `/` in name, non-absolute URL, `=`-in-URL, empty entries, whitespace, >9 entries).
-13. Fuzz target for `parseRemotes` + `fuzz.yml` row + AGENTS.md registry line (same-change rule).
+~~12. Table-driven tests for `parseRemotes` (dup names, `/` in name, non-absolute URL, `=`-in-URL, empty entries, whitespace, >9 entries).~~ **NOT-DO — dup of §c.1.**
+~~13. Fuzz target for `parseRemotes` + `fuzz.yml` row + AGENTS.md registry line (same-change rule).~~ **NOT-DO — dup of §c.1.**
 14. Resolve the templ version split-brain: pin the generator in the flake FOD to go.mod's `v0.3.1020` (or bump both), regenerate, prove golden files green against the FOD output.
 15. Browser suite re-run post-bump (`nix run .#test`, Chrome-gated).
 16. Check go-health-dashboard CI on `543a5b7` (especially the matrix job pinning `go-version` at ci.yml:67).
-17. README health-hub section (sales page doctrine).
-18. FEATURES.md / TODO_LIST.md entries for the hub + package output.
-19. SystemNix AGENTS.md per-service section (module facts, gotchas: port race, templ note).
+~~17. README health-hub section (sales page doctrine).~~ **NOT-DO — dup of §f.18/§c.2 upstream debt.**
+~~18. FEATURES.md / TODO_LIST.md entries for the hub + package output.~~ **NOT-DO — dup of §f.17.**
+~~19. SystemNix AGENTS.md per-service section (module facts, gotchas: port race, templ note).~~ done — superseded by the runbook's Agent Notes section (docs/services/health-dashboard.md, migrated 2026-10-01)
 20. Document the `Environment=` constraint in the module option: remote URLs can't contain spaces or commas (systemd splits on whitespace; comma is the pair separator).
 21. Expose `HEALTH_HUB_TIMEOUT` and `WithPushInterval` as module options (currently hardcoded defaults).
-22. Decide the push cadence for LAN (2s default = 43k fetches/remote/day against CV).
-23. `git show` audit of the daemon heuristic commits on both repos — confirm nothing unintended was swept in (e.g. geometrikks.nix fmt churn, hot-user-caches.nix, three scripts).
+22. Decide the push cadence for LAN (2s default = 43k fetches/remote/day against CV). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (federation week-watch row)
+~~23. `git show` audit of the daemon heuristic commits on both repos — confirm nothing unintended was swept in (e.g. geometrikks.nix fmt churn, hot-user-caches.nix, three scripts).~~ **NOT-DO — one-shot forensic overtaken by events (months of subsequent history).**
 
 **Upstream debt:**
-24. go-health v0.3.0 release (CHANGELOG, checklist, tag) → re-pin dashboard go.mod to the tag.
+~~24. go-health v0.3.0 release (CHANGELOG, checklist, tag) → re-pin dashboard go.mod to the tag.~~ **NOT-DO — dup of §c.3.**
 25. go-health-dashboard v0.10.0 cut (new binary = feature) via the go-release discipline.
 26. Investigate whether `federation.Prober` should satisfy the dashboard's Prober interface via an explicit compile-time assertion upstream (structural typing works; a assert makes it contractual).
 
 **Fleet hygiene noticed this session:**
 27. Prune the stale `go-health-dashboard` (`flake: false`) node from SystemNix flake.lock (my input became `go-health-dashboard_4` because of it); sweep for other stale nodes.
-28. Investigate why the parallel session's files (geometrikks.nix + 3 scripts + hot-user-caches.nix) were committed unformatted — nix fmt drift should never reach a commit.
-29. HARVEST this list into SystemNix `TODO_LIST.md` + `docs/todo/monitoring.md`/`services.md` (status-report → docs-health loop).
+~~28. Investigate why the parallel session's files (geometrikks.nix + 3 scripts + hot-user-caches.nix) were committed unformatted — nix fmt drift should never reach a commit.~~ **NOT-DO — superseded by the formatter-attribution house pattern documented 2026-09-21 (docs/status/2026-09-21_10-35).**
+~~29. HARVEST this list into SystemNix `TODO_LIST.md` + `docs/todo/monitoring.md`/`services.md` (status-report → docs-health loop).~~ done — hub rows live in docs/todo/services.md (verification chain) + docs/todo/monitoring.md (hub federation/week-watch rows)
 30. Consider deriving `dns-local.nix` from integration-registry subdomains to delete the two-file split brain class entirely (fleet-level design change).
-31. Verify `checks.x86_64-linux.integration-registry` + `gatus-pattern-lint` actually RUN green (`nix build` them), not just evaluate.
-32. Homepage tile icon: verify `healthchecks.png` exists in the icon set (name was guessed).
+~~31. Verify `checks.x86_64-linux.integration-registry` + `gatus-pattern-lint` actually RUN green (`nix build` them), not just evaluate.~~ done — both registered flake checks (tests/default.nix `integration-registry`, `gatus-patterns`) exercised by the fleet-standard `nix flake check` in later sessions and CI (.github/workflows/nix-check.yml)
+~~32. Homepage tile icon: verify `healthchecks.png` exists in the icon set (name was guessed).~~ done — tile ships an existing pack icon and the §16 pre-deploy tile-icon-vs-pack inventory now guards the class (modules/nixos/services/health-dashboard.nix homepage icon; scripts/pre-deploy-check.sh §16)
 
 **Hardening / product decisions:**
-33. Decide hub hardening options: `WithShutdownDrain`, `WithMaxSSEConnections`, `WithRateLimit` — all opt-in, none wired.
-34. Decide `WithWebhook` → Discord transition pushes from the hub (currently transitions are UI-only).
-35. Decide `HEALTH_HUB_METRICS` + Signoz scrape wiring (off by default today).
-36. Inventory which deployed services actually expose go-health documents (candidate remotes beyond CV).
-37. Decide public-mode exposure if the hub ever leaves the LAN (`WithPublicMode` masks names/errors).
-38. Consider hub trend persistence (in-memory ring dies on restart — acceptable? probably yes).
+33. Decide hub hardening options: `WithShutdownDrain`, `WithMaxSSEConnections`, `WithRateLimit` — all opt-in, none wired. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (hub federation expansion + parked owner items row)
+34. Decide `WithWebhook` → Discord transition pushes from the hub (currently transitions are UI-only). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (hub federation expansion + parked owner items row)
+35. Decide `HEALTH_HUB_METRICS` + Signoz scrape wiring (off by default today). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (hub federation expansion + parked owner items row)
+36. Inventory which deployed services actually expose go-health documents (candidate remotes beyond CV). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (hub federation expansion + parked owner items row)
+37. Decide public-mode exposure if the hub ever leaves the LAN (`WithPublicMode` masks names/errors). → [docs/todo/monitoring.md](docs/todo/monitoring.md) (hub federation expansion + parked owner items row)
+~~38. Consider hub trend persistence (in-memory ring dies on restart — acceptable? probably yes).~~ **NOT-DO — moot: the hub has run in production since Sep 2026 without trend persistence surfacing as a gap.**
 39. Long-tail: navbar/fleet-standard check for the hub UI version stamp (`pkg/version` in page footer if templ-components supports it).
 
 **Docs/process:**
-40. Record the sudo-boundary lesson: agent sessions can build/eval/push but never activate — deploy steps should be authored as copy-paste blocks in runbooks (mine is).
-41. Add "port-free pre-flight" to any runbook that includes manual bind tests.
-42. Re-check `.buildflow.yml`/BuildFlow steps for the two repos after the changes (nix-hash-fix should stay quiet — vendorHash was set deliberately, not by repair loop).
-43. Cross-link go-health-dashboard AGENTS.md ↔ SystemNix runbook (the pin note points one way only).
-44. File the "daemon swept staged files mid-hook" incident into the fleet lessons (it beat a passing pre-commit hook — the hook validated the tree the daemon had already committed).
-45. Consider a `just`-free, nix-app wrapper for `deploy` that detects agent sandboxes (no sudo) and refuses early with a clear message instead of wedging on a prompt.
+~~40. Record the sudo-boundary lesson: agent sessions can build/eval/push but never activate — deploy steps should be authored as copy-paste blocks in runbooks (mine is).~~ done — doctrine house-recorded (AGENTS.md: never manually activate a built toplevel; docs/agents/nix-flakes.md safe-verification section)
+~~41. Add "port-free pre-flight" to any runbook that includes manual bind tests.~~ done — runbook carries the pre-flight (docs/services/health-dashboard.md: `ss -tln | grep 8103` — never assume from memory)
+~~42. Re-check `.buildflow.yml`/BuildFlow steps for the two repos after the changes (nix-hash-fix should stay quiet — vendorHash was set deliberately, not by repair loop).~~ **NOT-DO — one-shot check overtaken by events; vendorHash deliberately pinned.**
+~~43. Cross-link go-health-dashboard AGENTS.md ↔ SystemNix runbook (the pin note points one way only).~~ done — superseded: the SystemNix runbook itself now holds the authoritative deep context (docs/services/health-dashboard.md Agent Notes)
+~~44. File the "daemon swept staged files mid-hook" incident into the fleet lessons (it beat a passing pre-commit hook — the hook validated the tree the daemon had already committed).~~ done — daemon-race discipline house-recorded (AGENTS.md tick-and-commit / daemon-race rules)
+~~45. Consider a `just`-free, nix-app wrapper for `deploy` that detects agent sandboxes (no sudo) and refuses early with a clear message instead of wedging on a prompt.~~ **NOT-DO — contrived: deploys are owner-invoked and the agent sudo-boundary is doctrine-recorded (AGENTS.md).**
 46. Screenshot the hub UI post-deploy for the go-health-dashboard README (fleet pattern: demo assets).
 47. Review whether `checkWithoutPort`-class gaps exist for my checks (relative paths + port set — fine, but assert).
-48. Add the hub to the monitoring-todo domain library's "aggregate pager" concept so future services know /readyz semantics exist.
-49. Evaluate Gatus duplicate-alert fatigue: hub federation check + per-service checks will double-page on the same incident — decide dedup/grouping policy in Gatus.
-50. Revisit CV's groq-key warn (documented owner decision in SystemNix AGENTS.md) — it is the first thing the hub's warn-state will surface.
+~~48. Add the hub to the monitoring-todo domain library's "aggregate pager" concept so future services know /readyz semantics exist.~~ done — /readyz aggregate-pager semantics documented in the runbook (docs/services/health-dashboard.md)
+49. Evaluate Gatus duplicate-alert fatigue: hub federation check + per-service checks will double-page on the same incident — decide dedup/grouping policy in Gatus. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Gatus double-page policy decision row)
+50. Revisit CV's groq-key warn (documented owner decision in SystemNix AGENTS.md) — it is the first thing the hub's warn-state will surface. → [docs/todo/monitoring.md](docs/todo/monitoring.md) (CV parked owner items)
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

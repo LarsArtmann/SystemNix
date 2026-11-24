@@ -202,7 +202,7 @@ duration is also in every access-log line (`duration` field).
   applies output-file option changes, and open(2) never re-modes existing
   files — the crowdsec re-chmod timer covers the transition.
 - **Probe endpoints skip access logging** (M21): `/health /healthz /metrics
-  /ping /up /api/healthz /api/server/ping /actuator/health` are `log_skip`ed
+  /ping /up /api/healthz /api/server/ping /actuator/health` are `log_skip`ed <!-- format:allow -->
   in commonConfig — responses untouched, only the log row is dropped
   (gatus/post-deploy probes were ~80 req/min of noise into crowdsec +
   geometrikks).

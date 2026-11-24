@@ -256,7 +256,7 @@ storm-attributed — re-check calm; watermark audit if sustained).
 ## Themes / UI (Catppuccin, 2026-09-23)
 
 **Architecture:** delta themes in `modules/nixos/services/_forgejo-themes/` — each file
-`@import`s the upstream `theme-forgejo-{dark,light,auto}.css` (STABLE unhashed filenames in the
+`@import`s the upstream `theme-forgejo-{dark,light,auto}.css` (STABLE unhashed filenames in the <!-- format:allow -->
 package data output; verified v15.0.9) and overrides CSS variables only. `forgejoThemes`
 (forgejo.nix) maps filename → source file; tmpfiles `L+` symlinks install into
 `/var/lib/forgejo/custom/public/assets/css/` on every activation (forgejo serves custom assets

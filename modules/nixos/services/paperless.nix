@@ -1482,6 +1482,26 @@ _: {
                       # (2026-10-03: "column t.slug does not exist").
                       inbox="$($PSQL -c "SELECT count(DISTINCT d.id) FROM documents_document d JOIN documents_document_tags dt ON dt.document_id = d.id JOIN documents_tag t ON t.id = dt.tag_id WHERE t.is_inbox_tag;" || fail=1)"
                       idxage="$($PSQL -c "SELECT COALESCE(EXTRACT(EPOCH FROM (now() - MAX(date_created)))::bigint, -1) FROM documents_paperlesstask WHERE task_type = 'llm_index' AND status = 'success';" || fail=1)"
+                      # Encrypted-tag consistency (wrong-password detection,
+                      # docs/todo/services.md companion row): documents still
+                      # carrying the fallback "encrypted" tag (papersync tags
+                      # uploads it could NOT decrypt) while a REAL decrypt
+                      # password IS configured = decryption failing (wrong
+                      # password), not decryption-unconfigured. The configured
+                      # signal rides a LoadCredential COPY of the root-0400
+                      # sops secret (PID 1 reads the source; this unit user
+                      # only ever sees the copy); the PLACEHOLDER sentinel
+                      # means the owner never pasted the real password
+                      # (inert by design — sops.nix inboxclean-decrypt
+                      # comment). t.name, not slug: paperless >= 3.1 dropped
+                      # the slug column (same 2026-10-03 break as is_inbox_tag).
+                      enc="$($PSQL -c "SELECT count(DISTINCT d.id) FROM documents_document d JOIN documents_document_tags dt ON dt.document_id = d.id JOIN documents_tag t ON t.id = dt.tag_id WHERE t.name = 'encrypted';" || fail=1)"
+                      cred="$CREDENTIALS_DIRECTORY/decrypt-password"
+                      if [ -r "$cred" ] && [ "$(< "$cred")" != "PLACEHOLDER" ]; then
+                        decryptcfg=1
+                      else
+                        decryptcfg=0
+                      fi
 
                       out=$(mktemp "$TF_DIR/paperless_tasks.XXXXXX")
                       {
@@ -1504,6 +1524,24 @@ _: {
                           echo "# HELP paperless_llmindex_last_success_age_seconds Age of the last successful llm_index task; -1 = never run (RAG dark)."
                           echo "# TYPE paperless_llmindex_last_success_age_seconds gauge"
                           echo "paperless_llmindex_last_success_age_seconds ''${idxage:--1}"
+                          echo "# HELP paperless_encrypted_tagged_docs Documents carrying the fallback 'encrypted' tag (papersync could not decrypt them at upload)."
+                          echo "# TYPE paperless_encrypted_tagged_docs gauge"
+                          echo "paperless_encrypted_tagged_docs $enc"
+                          echo "# HELP paperless_decrypt_password_configured 1 = the sops decrypt password is present and NOT the PLACEHOLDER sentinel."
+                          echo "# TYPE paperless_decrypt_password_configured gauge"
+                          echo "paperless_decrypt_password_configured $decryptcfg"
+                          # Consistency verdict (the Gatus-patted gate):
+                          # NOT-configured is the known pre-go-live state
+                          # (must never alarm); configured AND tagged > 0
+                          # means decryption is failing with the configured
+                          # password (the wrong-password class).
+                          echo "# HELP paperless_encrypted_consistency_ok 1 = no wrong-password signature (password unconfigured OR zero encrypted-tagged docs)."
+                          echo "# TYPE paperless_encrypted_consistency_ok gauge"
+                          if [ "$decryptcfg" -eq 1 ] && [ "$enc" -gt 0 ]; then
+                            echo "paperless_encrypted_consistency_ok 0"
+                          else
+                            echo "paperless_encrypted_consistency_ok 1"
+                          fi
                         fi
                       } > "$out"
                       # mktemp creates 0600 and mv preserves it — node_exporter
@@ -1515,6 +1553,14 @@ _: {
                     # Sticky 1777 textfile dir (audit-textfile-tmp pattern).
                     ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
                   }
+                  (lib.optionalAttrs (config.sops.secrets ? paperless_decrypt_password) {
+                    # Root-0400 sops secret exposed as a PID1-made credential
+                    # copy — the collector user COMPARES it against the
+                    # PLACEHOLDER sentinel without ever owning the secret
+                    # file. Conditional: the secret is declared by sops.nix
+                    # under the inboxclean svcEnabled gate.
+                    LoadCredential = [ "decrypt-password:${config.sops.secrets.paperless_decrypt_password.path}" ];
+                  })
                   (harden { ProtectSystem = "strict"; })
                   (serviceOneshotDefaults { })
                 ];
@@ -1625,6 +1671,24 @@ _: {
                     "[BODY] == pat(*\npaperless_tasks_failed_unack_total 0\n*)"
                   ];
                   alert = "Paperless has unacknowledged FAILED background tasks (or the tasks collector could not query the DB) — open Settings > Tasks in the paperless UI, then journalctl -u paperless-task-queue -u paperless-consumer. AI-workflow failures (apply_ai_suggestions) surface with a task_type label on paperless_tasks_failed_by_type.";
+                }
+                {
+                  # Encrypted-tag consistency (wrong-password detection):
+                  # green means NO wrong-password signature — the collector's
+                  # COMPUTED verdict line (password unconfigured OR zero
+                  # encrypted-tagged docs), not a bare absence (anchored
+                  # pat() forms; 2026-08-22 phantom-green class).
+                  name = "Paperless Encrypted Tag Consistency";
+                  group = "Documents";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "5m";
+                  client.timeout = "10s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\npaperless_tasks_collector_success 1\n*)"
+                    "[BODY] == pat(*\npaperless_encrypted_consistency_ok 1\n*)"
+                  ];
+                  alert = "Paperless: documents carry the 'encrypted' fallback tag while a decrypt password IS configured — decryption is failing (wrong password after go-live?); check journalctl -u inboxclean-sync + the affected statements. consistency_ok absent AND collector_success 0 = the collector could not query the DB (fail-closed).";
                 }
               ];
             };

@@ -364,9 +364,24 @@ _: {
           # verify rails, not the pool), failures alert via onFailure, and
           # the deploy.sh provisioner loop re-runs it every deploy
           # (idempotent --no-run; no RemainAfterExit so restart = re-run).
-          after = [ "tq-storage-dir.service" ];
+          after = [
+            "tq-storage-dir.service"
+            "mnt-pool.mount"
+          ];
           wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ "/mnt/pool/services/tq" ];
+          # Skip cleanly (result=condition) while the pool is detached — the
+          # atticd-bootstrap treatment (attic.nix). The old
+          # RequiresMountsFor made the unit result=dependency at every boot
+          # and exit-4 at every switch while the DAS was away: a failed
+          # bootstrap costs verify rails only (deliberate low-stakes, this
+          # comment block) and deploy.sh re-runs it idempotently every
+          # deploy, so the failure was pure noise on top of atticd/daemon
+          # failures that DO carry signal. With the pool mounted but the
+          # dir missing, the condition passes only when tq-storage-dir did
+          # NOT create it — a real failure stays loud. Ordering note: after
+          # mnt-pool.mount (ordering-only) avoids the slow-DAS wrong-skip
+          # where the condition runs before the mount lands.
+          unitConfig.ConditionPathIsDirectory = [ "/mnt/pool/services/tq" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           inherit onFailure;

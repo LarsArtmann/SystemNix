@@ -16,21 +16,21 @@
 
 ## b) PARTIALLY DONE
 
-1. **The Phase-2 item as a whole** — agent-executable scope (measurement, unblock, runbook) is done; the actual migrations are owner windows and did not start (correctly out of agent reach: no sudo in this sandbox).
-2. **Baseline quality** — the matrix ran under a heavy ambient storm (nightly nix-gc/fstrim window, PSI some avg10 57-66% for the full 20-min poll; never quieted). Conditions are labeled per row and the 9-13x contrast carries the verdict, but the ABSOLUTE numbers are window-bound; clean-idle baselines remain unmeasured.
-3. **bank-sync fsync number** — not measured (all pool dirs are root-owned; the agent cannot drop a scratch file on `/mnt/pool`). The STAYS verdict rests on coverage/cadence logic, not a measurement.
-4. **My task footer commit** — the properly-messaged commit with `Task-Queue-ID:` never landed (see d.1); the anchor that exists (`79f89062`) was written by the parallel verification round.
-5. **status report §h file list** — superseded within hours by parallel addenda (§i); accurate at write time, no longer the full change set for the item.
+1. **The Phase-2 item as a whole** — agent-executable scope (measurement, unblock, runbook) is done; the actual migrations are owner windows and did not start (correctly out of agent reach: no sudo in this sandbox). **→ docs/todo/storage.md**
+2. **Baseline quality** — the matrix ran under a heavy ambient storm (nightly nix-gc/fstrim window, PSI some avg10 57-66% for the full 20-min poll; never quieted). Conditions are labeled per row and the 9-13x contrast carries the verdict, but the ABSOLUTE numbers are window-bound; clean-idle baselines remain unmeasured. **→ docs/todo/storage.md**
+~~3. **bank-sync fsync number** — not measured (all pool dirs are root-owned; the agent cannot drop a scratch file on `/mnt/pool`). The STAYS verdict rests on coverage/cadence logic, not a measurement.~~ done — decided in the living row — bank-sync STAYS on coverage/cadence grounds, no measurement built (docs/todo/storage.md:32)
+~~4. **My task footer commit** — the properly-messaged commit with `Task-Queue-ID:` never landed (see d.1); the anchor that exists (`79f89062`) was written by the parallel verification round.~~ done — anchor verified this pass — `79f89062` resolves in this repo (written by the parallel round; this session's footer commit never existed, as owned)
+~~5. **status report §h file list** — superseded within hours by parallel addenda (§i); accurate at write time, no longer the full change set for the item.~~ done — narrative record — no open work
 
 ## c) NOT STARTED (all owner-gated or later-wave; nothing agent-side left for this item)
 
-1. Wave 1-3 migration windows: pocket-id → postgres → discordsync (runbook ready).
+1. Wave 1-3 migration windows: pocket-id → postgres → discordsync (runbook ready). **→ docs/todo/storage.md**
    ~~2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.~~ done — implemented 9546e7a1 (paperless.nix paperless-db-backup 02:00 timer); verified 2026-09-22_05-07 closeout §a.3; tests/test-paperless.nix steps 8+13
-   ~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:84).**
-2. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.
-3. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail.
+   ~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:98 — Docker data-root stayed /data/docker; Docker REMOVED 2026-10-08, docs/agents/storage.md:29).**
+~~2. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.~~ done — RPO inventory live — docs/services/hot-db.md:9 (dump-only RPO doctrine) + :145 (per-service backup/RPO table)
+3. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail. **→ docs/todo/storage.md**
    ~~6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.~~ done — hot-db.nix:393-495 hot-db-metrics collector + per-entry Gatus (T14, 2026-09-30; CHANGELOG:439); VM failure-transition test green
-4. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green.
+4. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green. **→ docs/todo/storage.md**
 
 ## d) TOTALLY FUCKED UP (honest list)
 
@@ -59,47 +59,47 @@
 
 ~~1. `[owner]` Execute Wave 1 (pocket-id) per the 00-25 report §e — snippet + commands ready; ~30 min window.~~ done — pocket-id LIVE on tlc since 2026-10-14 wave 3 (docs/services/hot-db.md:47,135)
 ~~2. `[owner-decision first]` Paperless PG-level dump job (or ratify exporter-only RPO) — queued `[ready]`, agent-executable.~~ **NOT-DO — NOT-DO — dup (of c.2, verified closed via 9546e7a1).**
-3. `[owner]` Wave 2 (postgres cluster) after 1-2; include `immich-db-backup`/`miniflux-backup` in extraUnits.
+3. `[owner]` Wave 2 (postgres cluster) after 1-2; include `immich-db-backup`/`miniflux-backup` in extraUnits. **→ docs/todo/storage.md**
 ~~4. `[owner]` Wave 3 (discordsync, cow=true, db-heal wired).~~ done — discordsync LIVE on tlc since 2026-10-12 wave 5 (docs/services/hot-db.md:31,137)
-~~5. `[owner]` Docker data-root move (~20 G, daemon.json flip) — still ratified "moves here"; see question Q3.~~ **Won't implement — decided-against — Docker earmark dropped; data-root verified /data/docker (docs/agents/storage.md:84).**
-6. `[owner]` Wave-2 candidates: dnsblockd + papdashboard entries (plan T12).
+~~5. `[owner]` Docker data-root move (~20 G, daemon.json flip) — still ratified "moves here"; see question Q3.~~ **Won't implement — decided-against — Docker earmark dropped; data-root verified /data/docker (docs/agents/storage.md:98 — Docker data-root stayed /data/docker; Docker REMOVED 2026-10-08, docs/agents/storage.md:29).**
+6. `[owner]` Wave-2 candidates: dnsblockd + papdashboard entries (plan T12). **→ docs/todo/storage.md**
 ~~7. `[owner]` gatus entry, cow=true, only if monitoring latency ever justifies it (plan T13).~~ done — gatus LIVE on tlc since 2026-10-14 wave 1 (docs/services/hot-db.md:133)
 ~~8. Post-wave: clean shadowed originals; confirm `@` snapshot deltas shrink (existing [watch] rows).~~ **Won't implement — decided against cleaning — shadowed QLC originals kept as recovery source (hot-db.md RECOVERY-SOURCE HOLD 2026-10-15).**
 
 **Agent-executable engineering**
-9. Quiet-window re-measure of the fsync matrix (clean-idle baselines + loaded rows) to replace the storm-bound numbers before/after wave 1 (acceptance-criteria §2 vehicle).
-10. fsync-bench v2: per-device diskstats attribution + `--json` output (§e.4).
-11. Re-realize `tests/test-hot-db.nix` + `tests/test-crush-hot-db.nix` on a quiet machine (VM builds were storm-blocked).
+9. Quiet-window re-measure of the fsync matrix (clean-idle baselines + loaded rows) to replace the storm-bound numbers before/after wave 1 (acceptance-criteria §2 vehicle). **→ docs/todo/storage.md**
+~~10. fsync-bench v2: per-device diskstats attribution + `--json` output (§e.4).~~ **NOT-DO — superseded — the post-wave fsync/latency soak watch (docs/todo/storage.md:267) owns the follow-up question; the diskstats/`--json` niceties were never funded.**
+11. Re-realize `tests/test-hot-db.nix` + `tests/test-crush-hot-db.nix` on a quiet machine (VM builds were storm-blocked). **→ docs/todo/storage.md**
 ~~12. Paperless PG dump job implementation (miniflux-backup pattern + backup-coordination row) — if Q-ratified over exporter-only.~~ **NOT-DO — NOT-DO — dup (of c.2, verified closed via 9546e7a1).**
-13. RPO review (T15): per-DB dump cadence/restore-time inventory table + WAL-archiving recommendation note.
+~~13. RPO review (T15): per-DB dump cadence/restore-time inventory table + WAL-archiving recommendation note.~~ done — RPO inventory live — docs/services/hot-db.md:9/:145 (same disposition as §c.4)
 ~~14. Monitoring wiring (T14): `hot_db_mount_present{entry}` fail-closed textfile metric + per-entry Gatus checks.~~ **NOT-DO — NOT-DO — dup (of c.6, verified closed: hot-db.nix T14 collector).**
-15. `/mnt/hot` scrub-coverage decision (verification round's gap): add Samsung to autoScrub or document the nodatacow-tier exclusion explicitly.
+15. `/mnt/hot` scrub-coverage decision (verification round's gap): add Samsung to autoScrub or document the nodatacow-tier exclusion explicitly. **→ docs/todo/storage.md**
 ~~16. Fix `scripts/bench-disk.sh` stale pinned fio path.~~ done — bench-disk.sh:34-35 pinned path now guarded by `[ -x ]` check + `command -v fio` fallback
 ~~17. migrate-hot-db.sh: sister-unit stop list for windows (§e.8).~~ done — migrate-hot-db.sh takes extra unit args (fixture exercises fixture.service + extra.timer; §i addendum wired pocket-id-provision/discordsync-db-heal)
 18. Compaction pass on the storage.md Phase-2 row (harvest narratives to status reports).
-19. Verify/correct the item's "20-02 §f.16-19" source pointer.
-20. Functional d2 0.9.0 smoke: re-render one disk-visualization artifact end-to-end (my d2 verification was eval-level only).
-21. Audit the remaining 2026-09-17-era playwright shims for the same rot (the pythonPackagesExtensions django-polymorphic strip block: still needed on 44a91898?).
-22. AGENTS touch: genericize the lock node-mapping example (§e.9).
-23. AGENTS touch: hot-db landmine-guard semantics (per-entry, forgejo coexistence) when the crush-hot-db fold lands.
-24. The crush-hot-db → services.hot-db fold (existing [watch] item; fold includes deleting the interim module + deploy.sh entry).
-25. Confirm `sudo`-less verification of the pool fsync number is impossible → convert to a root textfile collector sample or drop it (decision row).
-26. Queue hygiene: teach check-todo-system to warn on queue rows whose inline text exceeds ~N chars (the Phase-2 row is becoming a narrative).
-27. Add hot-db entry declarations checklist to `docs/CONTRIBUTING.md` "Eval-Time Guards" section (landmine semantics for future module authors).
-28. Post-bump validation sweep for nixpkgs 44a91898 (the bumping session's scope, but the tree deserves one full smoke pass in a quiet window).
-29. Re-check `playwright-driver.browsers-chromium` consumers after the shim drop (anything else assuming the preset?).
-30. Capture the storm-window bench datapoints into the SigNoz-annotated 2026-09-14-era storm baseline table (one line, closes the measurement-vs-telemetry loop).
+19. Verify/correct the item's "20-02 §f.16-19" source pointer. **→ docs/todo/storage.md**
+~~20. Functional d2 0.9.0 smoke: re-render one disk-visualization artifact end-to-end (my d2 verification was eval-level only).~~ **NOT-DO — one-off cosmetic verification — d2 stays packaged; the disk-layout viz era closed under the SUPERSEDED-banner doctrine (docs/CONTRIBUTING.md:475).**
+~~21. Audit the remaining 2026-09-17-era playwright shims for the same rot (the pythonPackagesExtensions django-polymorphic strip block: still needed on 44a91898?).~~ done — nothing left to audit — zero playwright/django-polymorphic shim blocks remain in flake.nix (grep zero this pass); the 7ec13a70 drop removed the class
+~~22. AGENTS touch: genericize the lock node-mapping example (§e.9).~~ done — answered in the living docs — docs/agents/nix-flakes.md:164 carries the concrete example and :177 the generic "walk `nodes[root]`, never a bare node read" rule
+~~23. AGENTS touch: hot-db landmine-guard semantics (per-entry, forgejo coexistence) when the crush-hot-db fold lands.~~ **NOT-DO — conditional on the fold (still pending, TODO_LIST:1247); the landmine semantics are documented meanwhile at docs/services/hot-db.md:464.**
+24. The crush-hot-db → services.hot-db fold (existing [watch] item; fold includes deleting the interim module + deploy.sh entry). **→ docs/todo/storage.md**
+~~25. Confirm `sudo`-less verification of the pool fsync number is impossible → convert to a root textfile collector sample or drop it (decision row).~~ done — decided in the living row — bank-sync STAYS (docs/todo/storage.md:32); no pool-fsync collector was built
+26. Queue hygiene: teach check-todo-system to warn on queue rows whose inline text exceeds ~N chars (the Phase-2 row is becoming a narrative). **→ docs/todo/pipeline.md**
+~~27. Add hot-db entry declarations checklist to `docs/CONTRIBUTING.md` "Eval-Time Guards" section (landmine semantics for future module authors).~~ **NOT-DO — landmine semantics documented at docs/services/hot-db.md:464 (the mandatory-window paragraph); the CONTRIBUTING guard table stayed audit-module-scoped.**
+~~28. Post-bump validation sweep for nixpkgs 44a91898 (the bumping session's scope, but the tree deserves one full smoke pass in a quiet window).~~ **NOT-DO — superseded — nixpkgs moved far past 44a91898; every later bump rode its own validation battery.**
+~~29. Re-check `playwright-driver.browsers-chromium` consumers after the shim drop (anything else assuming the preset?).~~ done — nothing left to re-check — zero playwright references remain in flake.nix (grep zero this pass)
+~~30. Capture the storm-window bench datapoints into the SigNoz-annotated 2026-09-14-era storm baseline table (one line, closes the measurement-vs-telemetry loop).~~ **NOT-DO — superseded by the 2026-11-03 storm-attribution forensics batch (CHANGELOG S-0029–S-0033 — storm drivers attributed from retained evidence).**
 
 **Watch/verification (time-gated)**
-31. Post-wave-1: PSI avg60 24h delta vs the 40-60% storm baseline (existing [watch] rows apply).
-32. Post-wave: `hot_db_mount_present` green + consumer units' RequiresMountsFor visible in unit text.
-33. Watch for a recurrence of the daemon-orphaned-footer class; if it recurs, propose a queue-side hook that refuses dispatch closeout without a footer-bearing commit.
+31. Post-wave-1: PSI avg60 24h delta vs the 40-60% storm baseline (existing [watch] rows apply). **→ docs/todo/storage.md**
+~~32. Post-wave: `hot_db_mount_present` green + consumer units' RequiresMountsFor visible in unit text.~~ done — T14 collector + per-entry Gatus landed (docs/services/hot-db.md:464; VM failure-transition test green per §c.6) — post-wave legs ride the runbook
+~~33. Watch for a recurrence of the daemon-orphaned-footer class; if it recurs, propose a queue-side hook that refuses dispatch closeout without a footer-bearing commit.~~ done — doctrine landed — the tq harvest protocol mandates footer-bearing commits (TODO_LIST.md header routing rules); the queue-side hook was never needed
 
 ## g) QUESTIONS (cannot self-answer)
 
-1. **Wave timing/order:** when do you want the three hot-db migration windows executed, and do you ratify the runbook order pocket-id → postgres → discordsync (smallest/hottest first), or a different sequence?
-2. **cow-flag deviation:** my measurement shows nodatacow buys nothing on TLC while costing checksums — do you ratify DEVIATING from the ratified "nodatacow hot subvol" layout (pocket-id `cow=true`), and should postgres also flip to `cow=true` or keep `cow=false` for large-file fragmentation reasons?
-3. **Docker data-root:** the item says it "moves here too" — with container churn (not fsync-bound) and ~20 G plus growth on a disk that also carries `/nix` and the hot tier, do you still want it on the Samsung, or keep it on the QLC `/data` partition?
+1. **Wave timing/order:** when do you want the three hot-db migration windows executed, and do you ratify the runbook order pocket-id → postgres → discordsync (smallest/hottest first), or a different sequence? **→ docs/todo/storage.md**
+~~2. **cow-flag deviation:** my measurement shows nodatacow buys nothing on TLC while costing checksums — do you ratify DEVIATING from the ratified "nodatacow hot subvol" layout (pocket-id `cow=true`), and should postgres also flip to `cow=true` or keep `cow=false` for large-file fragmentation reasons?~~ done — ratified + landed — all five entries are `cow = true` per the measurement (docs/services/hot-db.md:464); the postgres wave is ratified `cow = false`
+~~3. **Docker data-root:** the item says it "moves here too" — with container churn (not fsync-bound) and ~20 G plus growth on a disk that also carries `/nix` and the hot tier, do you still want it on the Samsung, or keep it on the QLC `/data` partition?~~ done — decided-against and now MOOT — Docker data-root stayed /data/docker on QLC and Docker was REMOVED 2026-10-08 (docs/agents/storage.md:98/:29)
 
 ---
 

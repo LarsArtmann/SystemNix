@@ -318,9 +318,17 @@
 
           systemd.services.media-atlas-archive-perms = lib.mkIf cfg.immichExternalLibrary.enable {
             description = "MediaAtlas archive permission converger (group-read on the DiscordSync attachment tree for the Immich crawler)";
-            # Mount-gated (226 class): a detached DAS skips cleanly via the
-            # converger's -d guard, never shadow-writes a root-fs path.
-            unitConfig.RequiresMountsFor = [ archivePath ];
+            # Skip cleanly (result=condition) while the pool is detached —
+            # atticd-bootstrap treatment (attic.nix; sweep 2026-11-24). The
+            # old RequiresMountsFor made the unit result=dependency BEFORE
+            # the converger's own "-d missing → nothing to converge" guard
+            # could run: the script had the skip semantics but the hard
+            # mount dep defeated them at every detached-DAS boot/switch.
+            # Condition on the archive dir itself (pool absent → dir absent
+            # → skip; the in-script guard stays as belt). after
+            # mnt-pool.mount (ordering-only) avoids the slow-DAS wrong-skip.
+            after = [ "mnt-pool.mount" ];
+            unitConfig.ConditionPathIsDirectory = [ archivePath ];
             wantedBy = [ "multi-user.target" ];
             # Converge BEFORE the crawler can scan.
             before = [ "immich-server.service" ];

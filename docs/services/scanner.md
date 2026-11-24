@@ -60,7 +60,7 @@ Printed-side **UP**, head-first. Duplex frame 1 = printed face (watermark backs 
 
 1. **Durable (deployed, `paperless.nix` consumer unit):** root `ExecStartPre` sets dir `2775`; `lars` is in the `paperless` group (`configuration.nix` extraGroups).
 2. **ACL bridge (live):** `sudo setfacl -m u:lars:rwx …/consume` — covers sessions with a stale group list.
-3. **Readable per file:** the consumer runs as another user, so a delivered file it cannot read is skipped **silently and forever**. A mode-600 phone photo sat in consume from 08:38 to 10:59 (2 h 21 min) with nothing in the journal; only `chmod 0644` unblocked it (consumed as doc 1000493 within 10 s). The wrapper now `chmod 0644`s every delivery — any other producer (manual copy, phone-photo drop) must land `0644` or the file is dead weight nobody reports.
+3. **Readable per file:** the consumer runs as another user, so a delivered file it cannot read is skipped **silently and forever**. A mode-600 phone photo sat in consume from 08:38 to 10:59 (2 h 21 min) with nothing in the journal; only `chmod 0644` unblocked it (consumed as doc 1000493 within 10 s). The wrapper now `chmod 0644`s every delivery — any other producer (manual copy, phone-photo drop) must land `0644` or the file is dead weight nobody reports. <!-- format:allow -->
 
 **Hardening lesson (2026-10-19 regression):** a sandboxed `preStart` chmod as the service user EPERMs and start-limit-kills the consumer (dead 04:41–06:14). Before adding any script line to a hardened unit, determine as-which-user/namespace it executes — use the `+`-prefixed root `ExecStartPre`, existence-guarded, and verify via journal, not file modes.
 

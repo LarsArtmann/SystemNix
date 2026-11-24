@@ -1,6 +1,6 @@
 # oauth2-proxy (Layer 2 forward-auth bridge)
 
-**Service:** `services.oauth2-proxy-config` — `modules/nixos/services/oauth2-proxy.nix` (wrapper over nixpkgs `services.oauth2-proxy`). Port 4180 (`lib/ports.nix`), loopback only — never has its own vHost; Caddy `protectedVHost`s call it via `forward_auth localhost:4180`. The `auth.<domain>` vHost routes `/oauth2/*` here (login/callback legs).
+**Service:** `services.oauth2-proxy-config` — `modules/nixos/services/oauth2-proxy.nix` (wrapper over nixpkgs `services.oauth2-proxy`). Port 4180 (`lib/ports.nix`), loopback only — never has its own vHost; Caddy `protectedVHost`s call it via `forward_auth localhost:4180`. The `auth.<domain>` vHost routes `/oauth2/*` here (login/callback legs). <!-- format:allow -->
 
 One instance fronts EVERY Layer 2 service (SigNoz, SearXNG, Twenty, Dozzle, Crush Daily, indexer-web, dashboards, …). It is down ⇒ external access to all of them breaks (LAN bypass unaffected — `protectedVHost` keeps LAN traffic off this path entirely). Layer semantics: [docs/agents/sso-dns.md](../agents/sso-dns.md).
 
