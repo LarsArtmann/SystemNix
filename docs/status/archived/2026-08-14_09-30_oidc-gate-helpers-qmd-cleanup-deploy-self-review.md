@@ -196,7 +196,7 @@ The `mkOidcGate` helper replaces this with a generic "OIDC endpoint unreachable 
 
 ### Monitoring
 
-10. ~~**The disk usage alert is immediately red** — `system_disk_usage_over_threshold = 1`. Root is at ~91%. This needs to be addressed (GC, store cleanup) or the alert will spam Discord every 5 minutes.~~ still open, improved — 87% live 08-14 after buildcache offload (`19c195e9` freed ~70G); still above the 85% threshold
+10. ~~**The disk usage alert is immediately red** — `system_disk_usage_over_threshold = 1`. Root is at ~91%. This needs to be addressed (GC, store cleanup) or the alert will spam Discord every 5 minutes.~~ improved/routed — 87% live 08-14 after buildcache offload (`19c195e9`); the disk-usage/GC pressure class is tracked in docs/todo/stability.md → docs/todo/stability.md
 
 11. ~~**The oomd kills alert is immediately red** — `system_oomd_kills_alert = 1`. Something was killed. Should investigate `journalctl -u systemd-oomd --grep "Killed" -n 20`.~~ done — investigated across 08-46/10-04 sessions; nix-daemon exemption + 60%/30s threshold at `17731861`
 

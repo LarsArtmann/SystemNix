@@ -57,7 +57,7 @@ Operational note: the root self-heal streamed 322 G to the HDD pool through the 
 
 ## g) Carried / follow-ups
 
-- ~~templ-components + go-health LIFT~~ — **EXECUTED overnight** (gen-960, see §b); row ticked [x] by the executing session.
+- ~~templ-components + go-health LIFT~~ done — — **EXECUTED overnight** (gen-960, see §b); row ticked [x] by the executing session.
 - **CV shim-drop-at-upstream-bake** — unchanged (the cv strand flaps per float; the 23-35 session already re-pinned cv's FOD to `MeDzARcT…`).
 - §18 sanity redesign; node-exporter journal rate; tq-agent-pool CPU — pre-existing rows, evidenced again by tonight's calm-box.
 - DiscordSync golden-snapshot tz fix (921d5fc4) rides upstream; nothing SystemNix-side pending from it.

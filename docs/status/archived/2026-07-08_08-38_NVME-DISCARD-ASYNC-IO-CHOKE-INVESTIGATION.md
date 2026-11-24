@@ -151,7 +151,7 @@
 
 ### Critical (P0 — do today)
 
-1. ~~Replace `discard=async` with `fstrim.timer`~~ on root (`nvme0n1p6`) and `/data` (`nvme0n1p8`)
+1. ~~Replace `discard=async` with `fstrim.timer`~~ done — on root (`nvme0n1p6`) and `/data` (`nvme0n1p8`)
 2. Run `sudo smartctl -a /dev/nvme0n1` — check media errors, wear level, available spare
 3. Run `sudo btrfs device stats /data` — get persistent corruption counter
 4. Run `sudo btrfs scrub start -r /data` — read-only scrub to map all bad blocks

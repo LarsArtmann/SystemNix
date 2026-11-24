@@ -78,7 +78,7 @@ The `nix run .#deploy` command could not complete. The niri config change is in 
 1. Root filesystem at 95-96% (deploy hard-fails at >=95%)
 2. `cqrs-lint` vendorHash mismatch — FIXED in this session
 3. HaGeZi blocklist 404 — `HaGeZi-dga7-raw` fetch returns 404 from all mirrors, aborting the build ~~— resolved at `88c594cc` (GitLab mirror)~~
-4. Failed systemd services (browser-history-agent, nix-build-cleanup) ~~— both healthy/retired since (`c39b6d50`)~~
+4. ~~Failed systemd services (browser-history-agent, nix-build-cleanup)~~ resolved — both healthy/retired since (`c39b6d50`)
 
 ### 2. AGENTS.md not updated
 

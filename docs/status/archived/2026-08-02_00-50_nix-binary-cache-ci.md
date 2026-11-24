@@ -326,7 +326,7 @@ The `attic.nix` entry should now read:
 
 ### Updates to section E (improvements)
 
-- ~~E4: SQLite backend may not scale~~ — still valid but deprioritized; single-project cache with 7-day retention will stay well within SQLite's comfort zone
+- ~~E4: SQLite backend may not scale~~ done — — still valid but deprioritized; single-project cache with 7-day retention will stay well within SQLite's comfort zone
 - ~~E10: `allow-duplicate-paths` might not be valid~~ — **removed** during rewrite; was an untested Attic setting that may not exist in the nixpkgs module
 - New item: the `allow-duplicate-paths` setting was removed in the disk-safety rewrite — verify it's not needed after first real deployment
 

@@ -128,7 +128,7 @@
 
 ### Monitoring (N/A for CLI tools, but noting for completeness)
 
-23. ~~Add Gatus health check~~ — N/A, cqrs-lint is a CLI dev tool, not a service
+23. ~~Add Gatus health check~~ done — — N/A, cqrs-lint is a CLI dev tool, not a service
 
 ---
 

@@ -89,5 +89,5 @@
 - Batches: `~/.cache/docshealth/b0{1..9}-{raw,spec,drops,checkrows}.[tsv|log]` (raw agent output → validator spec → drops with reasons → per-batch check-rows)
 - Commits: `e37dde0c2` (tombstone) · `36057309a` (249-row prune) · 9 × `docs(status): annotate batch-0N corpus verdicts` · daemon `f12302830` (archive moves)
 - Archive: `docs/status/archived/{2026-09-19_16-16…,2026-09-30_07-42…}`; `check-doc-links.sh` OK post-move
-- Gates this session: annotate self-test green; `check-todo-system.sh` OK (structure) + ~~WARN 82 (all 2026-10 wave, out of scope)~~ **WARN 82 corrected 2026-10-24 (T1): 81 stable = 22 Sept + 59 Oct, see census in 16-43 plan §T1**; `check-doc-links.sh` OK; `nix flake check --no-build` PENDING (f.1)
+- Gates this session: annotate self-test green; `check-todo-system.sh` OK (structure) + ~~WARN 82 (all 2026-10 wave, out of scope)~~ done — **WARN 82 corrected 2026-10-24 (T1): 81 stable = 22 Sept + 59 Oct, see census in 16-43 plan §T1**; `check-doc-links.sh` OK; `nix flake check --no-build` PENDING (f.1)
 - Plan marker: `docs/planning/2026-10-19_05-06_SUPERB-docs-health-corpus-completion.md` line 5 — EXECUTING (instance docs-health redispatch-1024, 2026-10-24 07:29, HEAD `e9627a7bd`)

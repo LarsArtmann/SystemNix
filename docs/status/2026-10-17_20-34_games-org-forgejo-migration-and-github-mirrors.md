@@ -52,7 +52,7 @@
 3. Observe the first real `sync_on_commit` round-trip on a games repo push. [ready — rides the next natural push]
 4. Owner decision: scrub leaked names from tracked files (3 files named in §d.4) — cheap, keeps history. [blocked:user]
 5. Owner decision: history rewrite vs accept for the committed names (public repo; needs rewrite checklist + force-push approval). [blocked:user]
-6. ~~Owner decision: delete orphaned `LarsArtmann/motivation` on GitHub~~ **RETRACTED — see §h: the name is a transfer redirect; deleting through it would destroy the live org repo.**
+6. ~~Owner decision: delete orphaned `LarsArtmann/motivation` on GitHub~~ done — **RETRACTED — see §h: the name is a transfer redirect; deleting through it would destroy the live org repo.**
 7. Design declarative org-namespace push-mirror support in forgejo-github-sync (subsumes the new script; audit-flagged since 2026-09-18). [decision]
 8. Consider a forgejo dump restore drill covering push-mirror re-attach (the generic script is the recovery path — prove it on a scratch repo). [ready]
 9. The 17 repos ride the forgejo subvol btrbk leg + weekly forgejo dump automatically — verify the next dump includes them (size delta check). [ready]
@@ -61,7 +61,7 @@
 ## g) QUESTIONS (cannot figure out myself)
 
 1. **Leak disposition**: scrub tracked files only, full history rewrite, or accept? (Rewrite on a public repo with clones/CI is irreversible-ish and breaks the auto-commit daemon's assumptions — my recommendation: scrub files now, accept history, rotate nothing since no secrets are in the leaked set.)
-2. ~~**Delete `LarsArtmann/motivation` on GitHub?**~~ **RETRACTED (§h): the old name redirects to the live org repo — nothing to delete, and deleting through the redirect would be catastrophic.**
+2. ~~**Delete `LarsArtmann/motivation` on GitHub?**~~ done — **RETRACTED (§h): the old name redirects to the live org repo — nothing to delete, and deleting through the redirect would be catastrophic.**
 3. **Do the games repos need CI on forgejo** (Actions/runner, like eventcatalog-hub) or are they mirror-only? This decides whether the runner needs org-repo grants (the auto-assign phase's org gap).
 
 ---

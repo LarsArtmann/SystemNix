@@ -233,7 +233,7 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. Suspecte
 | 6  | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free                                         | 15min  | MEDIUM — catches stale process leaks               |
 | 7  | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly                                                | 10min  | LOW — prevents swap accumulation                   |
 | 8  | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after                                        | 15min  | MEDIUM — verifies refactor correctness             |
-| 9  | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | —      | —                                                  |
+| 9  | ~~Investigate NVMe boot delay~~ done — **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | —      | —                                                  |
 | 9a | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme`                                 | 5min   | HIGH — confirms 2m50s fix                          |
 
 ### Architecture & Quality

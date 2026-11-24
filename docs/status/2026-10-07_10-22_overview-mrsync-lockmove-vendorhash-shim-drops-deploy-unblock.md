@@ -65,7 +65,7 @@
 
 _Session-direct (harvested at authoring time):_
 
-1. ~~bank-sync helper-alias contradiction~~ → HARVESTED: `[ready]` row in TODO_LIST.md + docs/todo/upstream.md (queue↔library, no drift).
+1. ~~bank-sync helper-alias contradiction~~ done — → HARVESTED: `[ready]` row in TODO_LIST.md + docs/todo/upstream.md (queue↔library, no drift).
 2. ~~morning's bank-sync `[blocked:push]` row now moot~~ → HARVESTED: RESOLVED annotation in both surfaces + a7868a7-sweep row + go-nix-helpers trigger-fired annotation.
 3. Pre-deploy §11 rerun immediately before `nix run .#deploy` on this tree → folded into b.1; no separate row (covered by the deploy script running the full gate anyway).
 4. Post-deploy smoke battery → NOT re-queued: the existing post-deploy rows from the 09:48 report (§b.4) cover the same deploy; deliberately not duplicated.

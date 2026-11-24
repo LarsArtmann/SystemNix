@@ -127,7 +127,7 @@ This is the THIRD time this exact failure mode has occurred in this project's do
 I changed the count from 12 to 16 without actually counting the rows. Let me count now:
 
 1. Raspberry Pi 3
-2. ~~PhotoMap AI~~ (removed — doesn't count)
+2. ~~PhotoMap AI~~ done — (removed — doesn't count)
 3. Multi-WM (Sway)
 4. Twenty CRM
 5. SigNoz alerts

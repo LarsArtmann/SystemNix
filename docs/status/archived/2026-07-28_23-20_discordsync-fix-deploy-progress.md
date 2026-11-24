@@ -56,7 +56,7 @@ From `journalctl -u discordsync.service`:
 
 ## Outstanding/Unrelated Issues Observed During Deploy
 
-- ~~SearXNG smoke check failed with `404` on `http://localhost:8888/healthz`~~ — post-deploy smoke test now passes at `localhost:8889`. The `8888` reference in the original report was likely a typo or a stale port; not caused by this work.
+- ~~SearXNG smoke check failed with `404` on `http://localhost:8888/healthz`~~ done — — post-deploy smoke test now passes at `localhost:8889`. The `8888` reference in the original report was likely a typo or a stale port; not caused by this work.
 - **Activation script error remains:** `failed to lookup user 'crush-daily': user: unknown user crush-daily` — sops secret owner references a non-existent user; unrelated to DiscordSync. This is a pre-existing issue that should be addressed separately.
 
 ## Next Steps

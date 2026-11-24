@@ -22,7 +22,7 @@ geo.home.lan is **up, logged-in, and completely empty**: the SSO allow-list fix 
 3. **Go-live row updated on its owning surface** (`docs/todo/services.md:117`): SSO step (1) marked DONE with the live journal proof; MaxMind + CARTO remain as the only user-gated steps. The row lives only in the domain library (blocked:user items are not queue-harvested — correct per the TODO system).
 4. **Session-runner orientation corrected**: `hostname` = evo-x2 — this session runs ON the target host, so `journalctl` works directly (used for every finding above). This invalidates the first turn's "can't read logs, ssh is blocked" limitation.
 5. **User's journalctl confusion resolved**: the pasted output (`journalctl -u geometrikks`, lines 1–35) is oldest-first docker-era history (Sep 20, `docker-compose[3679957]`) — journalctl prints oldest-first; the native entries sit at the END. The old lines are not evidence of anything being wrong.
-6. **§f self-harvest applied at authoring time** (per the TODO-system rule): the smoke-probe row extended with the ingestion leg + a NEW data-plane Gatus check row, both landed on `TODO_LIST.md` (~~:512) AND `docs/todo/services.md` (~~:148) — no drift.
+6. **§f self-harvest applied at authoring time** (per the TODO-system rule): the smoke-probe row extended with the ingestion leg + a NEW data-plane Gatus check row, both landed on `TODO_LIST.md` (~~:512) AND `docs/todo/services.md` (~~ done —:148) — no drift.
 
 ## b) PARTIALLY DONE
 

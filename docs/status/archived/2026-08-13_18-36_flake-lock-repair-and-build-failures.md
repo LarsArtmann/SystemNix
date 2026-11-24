@@ -81,7 +81,7 @@
 ### Deploy (`nh os boot`)
 
 - Build succeeded but the system has NOT been deployed. User's original command chain was `... && nh os boot -v`.
-- **Decision**: I stopped after `nh os build` because deploying is an irreversible action that affects the running system. ~~Deployed successfully later the same evening (`2026-08-13_19-01`, `990fcd66`).~~
+- **Decision**: I stopped after `nh os build` because deploying is an irreversible action that affects the running system. ~~Deployed successfully later the same evening (`2026-08-13_19-01`, `990fcd66`).~~ resolved — deployed successfully later the same evening (`2026-08-13_19-01`, `990fcd66`)
 
 ### `nix flake check --all-systems`
 

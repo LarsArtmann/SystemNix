@@ -88,7 +88,7 @@
 2. `file_storage` extension for journald cursor persistence — currently `start_at=end` means logs emitted during collector downtime are lost (gap, no duplication).
 3. Eval-time validation of dashboard JSONs (schema/owner-tag/one-query-per-panel) — currently only deploy-time via provisioner hard-fail.
 4. Committing the dashboard generator (`/tmp/gen_dashboards.py` — ephemeral!) to `scripts/`.
-5. ~~Log-ingestion-volume anomaly alert (sudden silence or flood detection).~~ ← open — TODO_LIST Priority 3
+5. ~~Log-ingestion-volume anomaly alert (sudden silence or flood detection).~~ done — ← open — TODO_LIST Priority 3
 6. ~~TODO_LIST.md not updated with the follow-ups in F.~~ done 2026-08-17 (docs-health harvest)
 
 ## Category D — Mistakes & Course Corrections (honest)

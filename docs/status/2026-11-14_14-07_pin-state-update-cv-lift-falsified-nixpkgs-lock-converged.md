@@ -34,6 +34,6 @@ dbus-1 / man-paths / mandb / polkit unit drvs appear in the run-4 enumeration as
 
 ## f) Follow-ups
 
-- ~~The 3 fleet-input re-float rows~~ queued then REMOVED same session (§c correction: the fixwave re-locked past the broken revs; run 5 green) — the enumeration lives in §c as history.
+- ~~The 3 fleet-input re-float rows~~ done — queued then REMOVED same session (§c correction: the fixwave re-locked past the broken revs; run 5 green) — the enumeration lives in §c as history.
 - CV upstream ask (guard-green go.sum + templ-1100 g-c-s bump + vendorHash re-bake in one commit; expected got IX/nWy4A… if nothing else moves) → owned by the rollback-deploy session's round-3 surfaces; NOT duplicated here.
 - nixpkgs float proof (patchelf >= 0.19 + floated tools green) → remains on TODO_LIST.md:3500; probe evidence recorded in §b.

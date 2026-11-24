@@ -68,9 +68,9 @@
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3) — ANSWERED 22:45
 
-1. **Deploy timing:** ~~Deploy NOW…?~~ **ANSWER: WAIT** for the concurrent session to settle. No deploy from this session; the fixes ride the next `nix run .#deploy` whenever that is.
-2. **Key rotations:** ~~act now or park?~~ **ANSWER: PARK as persistent nag** — TODO_LIST P1 now carries the 🔑 persistent-nag item with per-key runbooks (Resend first: Pocket ID email is dead).
-3. **History purge push:** ~~tonight / date?~~ **ANSWER: HOLD indefinitely — rotation is the fix.** AGENTS.md "Secret Leak Incident" State line updated to record the decision; the runbook is retained verbatim for a future flip.
+1. **Deploy timing:** ~~Deploy NOW…?~~ done — **ANSWER: WAIT** for the concurrent session to settle. No deploy from this session; the fixes ride the next `nix run .#deploy` whenever that is.
+2. **Key rotations:** ~~act now or park?~~ done — **ANSWER: PARK as persistent nag** — TODO_LIST P1 now carries the 🔑 persistent-nag item with per-key runbooks (Resend first: Pocket ID email is dead).
+3. **History purge push:** ~~tonight / date?~~ done — **ANSWER: HOLD indefinitely — rotation is the fix.** AGENTS.md "Secret Leak Incident" State line updated to record the decision; the runbook is retained verbatim for a future flip.
 
 ---
 

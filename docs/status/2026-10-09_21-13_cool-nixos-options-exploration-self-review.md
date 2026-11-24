@@ -56,9 +56,9 @@
 
 **Resolved during this report's authoring (no queue entries needed):**
 
-1. ~~verify gamemode/steam enabled~~ — TRUE (configuration.nix:624 + steam.nix:27-28)
-2. ~~verify attic-config enabled~~ — TRUE (configuration.nix:503-506; multi-line attrset, first grep missed it)
-3. ~~verify sched_ext kernel support~~ — TRUE (CONFIG_SCHED_CLASS_EXT=y, live kernel 7.2.9)
+1. ~~verify gamemode/steam enabled~~ done — — TRUE (configuration.nix:624 + steam.nix:27-28)
+2. ~~verify attic-config enabled~~ done — — TRUE (configuration.nix:503-506; multi-line attrset, first grep missed it)
+3. ~~verify sched_ext kernel support~~ done — — TRUE (CONFIG_SCHED_CLASS_EXT=y, live kernel 7.2.9)
 
 **Harvested → domain libraries (queue row only for the [ready] item):**
 4. **[decision→stability]** scx pilot spec: default-off module, `scx_lavd` first, SigNoz A/B (IO-PSI/loadavg/interactive latency), one-boot reversible

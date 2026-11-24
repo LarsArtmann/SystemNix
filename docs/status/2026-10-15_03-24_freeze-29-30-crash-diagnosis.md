@@ -35,7 +35,7 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 
 ## c) NOT STARTED
 
-1. ~~Owner-licensed SIGSTOP containment~~ — **EXECUTED 03:26** (§a.8) for the third live event; outstanding remainder: notify the two owning sessions + the CONT/resume decision when cool (§f.16).
+1. ~~Owner-licensed SIGSTOP containment~~ done — — **EXECUTED 03:26** (§a.8) for the third live event; outstanding remainder: notify the two owning sessions + the CONT/resume decision when cool (§f.16).
 2. **discordsync 99.3 % CPU × 6+ min spin** — noticed in ps twice, never investigated; still unexplained and possibly still burning.
 3. **Attribution of the all-day Oct-14 eval/build storm** (which sessions/schedules ran the nix work that OOM-invoked from 00:32 — tq pool, daemon-commit→pre-commit→flake-check chain, or manual sessions).
 4. **llama-chat envelope check** (41 GB VM + `oom_score_adj:300` intent; the 2026-10-08 memory-watermark class).

@@ -185,7 +185,7 @@ Then deploy as usual — `nix run .#deploy`.
 
 ## Open queue items
 
-1. ~~**`pre-deploy-check.sh` buildcache-mount-staleness check** — cross-check `findmnt /mnt/buildcache` source device against `lsblk` output; fail pre-deploy if the source device isn't in the current block-device list. The exact check the next session should add.~~ ← open — TODO_LIST Priority 3 (zombie-mount detector)
+1. ~~**`pre-deploy-check.sh` buildcache-mount-staleness check** — cross-check `findmnt /mnt/buildcache` source device against `lsblk` output; fail pre-deploy if the source device isn't in the current block-device list. The exact check the next session should add.~~ done — ← open — TODO_LIST Priority 3 (zombie-mount detector)
 2. **Hermes deploy-failure investigation** — `hermes.service: status=1/FAILURE` on 2026-08-16 with `Slash command sync timed out` in the journal. ← open — TODO_LIST Priority 1
 3. **`nix-build-cleanup.service` exit 1** — same deploy, separate issue, low priority (orphaned sandbox cleanup, not user-facing). ← open (untracked, minor)
 4. **btrfs+zstd buildcache conversion** — still deferred. ← open — TODO_LIST Priority 2

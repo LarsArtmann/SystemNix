@@ -87,7 +87,7 @@ _All items in this section were completed by the 00-59 continuation session (pap
 34. Boot-resilience test: pool absent (DAS off) → services fail gracefully, boot not hung (30 min). ← open — TODO_LIST Priority 2
 35. smartd alert path verification for the MG08s (10 min). ← open — TODO_LIST Priority 2
 36. Paperless exporter (`services.paperless.exporter`) + backup-coordination entry (20 min). ← done — exporter on, pool-side via dataDir (00-59 §a.4/b)
-37. ~~Update `deploy.sh` provisioner-restart list if paperless grows one (10 min)~~ not needed — paperless needs no provisioner oneshot
+37. ~~Update `deploy.sh` provisioner-restart list if paperless grows one (10 min)~~ done — not needed — paperless needs no provisioner oneshot
 
 ## g) Questions (max 3)
 

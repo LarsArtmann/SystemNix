@@ -97,7 +97,7 @@ Also noticed mid-session: a sibling session reset cqrs-htmx master from `8028bf2
 5. ~~Run `go test ./...` in browser-history against pinned revs~~ done — green in the 04-32 session (test-verified against published v4.7.0)
 6. Run cqrs-lint (`cmd/cqrs-lint`) Go tests. ← open (untracked, upstream)
 7. Run file-and-image-renamer Go tests. ← open (untracked, upstream)
-8. ~~Split `focus-new-windows.nix` out of `a60a646e`~~ dropped — history rewrite never authorized (correct default); wiring landed via subsequent commits
+8. ~~Split `focus-new-windows.nix` out of `a60a646e`~~ done — dropped — history rewrite never authorized (correct default); wiring landed via subsequent commits
 9. ~~Commit the untracked `docs/status/2026-08-16_01-34_DISCORD-ALERT-SPAM-DIAGNOSIS.md`~~ done — tracked + archived 2026-08-17
 10. ~~HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md (docs-health) — awaiting instruction~~ done — 2026-08-17 docs-health pass
 

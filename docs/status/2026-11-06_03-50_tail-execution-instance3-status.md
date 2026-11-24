@@ -36,8 +36,8 @@
 
 *(self-harvested at authoring — every obligation landed in an existing surface this session; no new rows minted)*
 
-1. ~~Deploy D2 carries T18+T19 config~~ — deliberately not harvested as a new row: the plan's own T3/D2 owner gate owns it (plan line 52 + tombstone).
-2. ~~Live-verify the verify-site reap on the next verify run~~ — deliberately not harvested: the mechanism self-verifies (journal `reaping stale site-verify tree` line on next run; the 1.5G dormant tree is the built-in fixture).
-3. ~~trash-metrics gatus alert~~ — deliberately deferred per runbook doctrine (same as bun-memory-watchdog at introduction); revisit only on a burn-down regression.
+1. ~~Deploy D2 carries T18+T19 config~~ done — — deliberately not harvested as a new row: the plan's own T3/D2 owner gate owns it (plan line 52 + tombstone).
+2. ~~Live-verify the verify-site reap on the next verify run~~ done — — deliberately not harvested: the mechanism self-verifies (journal `reaping stale site-verify tree` line on next run; the 1.5G dormant tree is the built-in fixture).
+3. ~~trash-metrics gatus alert~~ done — — deliberately deferred per runbook doctrine (same as bun-memory-watchdog at introduction); revisit only on a burn-down regression.
 
 **Commits this session:** `2d7188fe9` (tombstone), `ff1ae20` (eventcatalog-hub), `156bebdb6`/`679115732` (daemon sweeps of my in-flight files — contents verified exclusively mine), `a77c9bcf5` (T18), `425cc9440` (daemon: T21 annotations), `2cb16fc` (SKILLS), T19+README commit (this report's §a.3/.7), pipeline.md:395 + plan annotation (daemon-swept or final commit).

@@ -12,7 +12,7 @@
 2. **btrbk-pool nightly: success.** All 5 `services/*` subvols snapshotted on-pool at 23:45 (immich, paperless, monitor365, discordsync, browser-history).
 3. **btrfs-verify-snapshots: success** (NVMe root snapshot freshness intact).
 4. **Root-seed progress:** 468G now received on the pool (was 424G at 01:00) — `backups/root` holds @.20260812–20260814 (3 of 6 catch-up snapshots). Raid1 mirror healthy, no pool-side errors.
-5. ~~**Config fixes written (in tree, undeployed — see §b):**~~ **Deployed via `2fbb69f9`** (btrbk 24h timeout, byte-gate, disk-growth preStart) — annotation 2026-08-17:
+5. ~~**Config fixes written (in tree, undeployed — see §b):**~~ done — **Deployed via `2fbb69f9`** (btrbk 24h timeout, byte-gate, disk-growth preStart) — annotation 2026-08-17:
    - `snapshots.nix`: btrbk-root/data `TimeoutStartSec` 6h → **24h** (observed ~17 MB/s seed throughput through the USB DAS; 6h covered only ~60% of the root send before systemd killed it mid-stream).
    - `scripts/pre-deploy-check.sh`: disk gate converted from **percentage to bytes** (FAIL < 5G free, WARN < 15G). 95% of a 723G disk = 41G free — the old gate blocked deploys that could not cause its stated emergency-shell failure mode.
    - `scheduled-tasks.nix`: `disk-growth-check` gets `preStart = mkdir /var/lib/disk-growth` — its `ReadWritePaths` namespace setup hard-fails with 226/NAMESPACE when the state dir is missing.
@@ -24,7 +24,7 @@
    - **NVMe hardware is healthy** (SMART PASSED, 0 media/data-integrity errors, 13% wear, 100% spare). Corruption is torn-write/bitrot class — consistent with the box's history of 58 unsafe shutdowns and 114 critical over-temperature events.
    - **Extent layout:** 22 bad physical addresses cluster in 3 windows (~595G, ~627–639G region of the 1.1T partition). All resolve attempts (`logical-resolve` ENOENT, first fiemap scan) failed so far — first scan had a real bug (`filefrag -v1` is not a valid flag; every call silently failed). Fixed script queued as background job 01A when the user stopped the session; **it never produced results**.
    - **Content risk assessment:** /data = docker volumes (nightly pg_dumps now also on pool), AI models (redownloadable), llamacpp models, monitor365 DuckDB (backed up until the service was disabled), attic cache. Nothing irreplaceable-only-on-/data identified so far, but file-level confirmation is still missing.
-2. ~~**Stranded deploy (3rd attempt):** the fixes in §a.5 are written, formatted, flake-checked — not deployed.~~ Deployed via `2fbb69f9` (byte-gate unblocked it).
+2. ~~**Stranded deploy (3rd attempt):** the fixes in §a.5 are written, formatted, flake-checked — not deployed.~~ done — Deployed via `2fbb69f9` (byte-gate unblocked it).
 
 ## c) NOT STARTED
 

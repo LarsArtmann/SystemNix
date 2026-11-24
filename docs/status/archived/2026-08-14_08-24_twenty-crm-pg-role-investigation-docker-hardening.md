@@ -93,7 +93,7 @@ The running Docker containers ALREADY have the memory limits applied (verified v
 - **I didn't deploy.** The Nix changes are in the working tree but not deployed. The running containers happen to match because they were already changed at runtime, but this is fragile — the next deploy from a clean checkout would have reverted the limits if I hadn't caught it
 - **I didn't verify whether the `role "twenty"` error was reproducible.** I confirmed it's NOT currently happening, but I didn't check WHEN it last occurred or what triggered it. The TODO item said "crash-loops" present tense, but the system was already healthy. I should have checked `docker events --since` or journal timestamps to understand the timeline
 - **I didn't check if Twenty's backup is actually working.** The backup timer (`twenty-backup.timer`) runs `pg_dump` daily at 02:00. I verified the data exists but didn't check if the backup has been succeeding. With the prior oomd kill storms and nix-daemon outage, backups may have been skipped
-- ~~**I didn't add Twenty to the `backup-coordination` module.** The backup timer exists in `twenty.nix`, but it's NOT registered in `services.backup-coordination.backups` in `configuration.nix` — meaning backup freshness is not monitored by Gatus~~ **premise WRONG (08-14):** it WAS registered — `configuration.nix:578` (since `976e9547`); nothing to add
+- ~~**I didn't add Twenty to the `backup-coordination` module.** The backup timer exists in `twenty.nix`, but it's NOT registered in `services.backup-coordination.backups` in `configuration.nix` — meaning backup freshness is not monitored by Gatus~~ done — **premise WRONG (08-14):** it WAS registered — `configuration.nix:578` (since `976e9547`); nothing to add
 
 ---
 

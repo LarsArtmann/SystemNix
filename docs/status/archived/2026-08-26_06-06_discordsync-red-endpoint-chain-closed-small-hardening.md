@@ -52,7 +52,7 @@
 
 ### g) Questions (max 3)
 
-1. ~~**Turso plan**: keep local-only (then remove sync env/keys), re-auth, or upgrade? (The quota log line recurs hourly.)~~ answered 2026-09-11 at `cee81cbe` — re-auth cannot fix it (the free plan is account-level BLOCKED while the token authenticates); local-first encoded, upgrade = user billing decision
+1. ~~**Turso plan**: keep local-only (then remove sync env/keys), re-auth, or upgrade? (The quota log line recurs hourly.)~~ done — answered 2026-09-11 at `cee81cbe` — re-auth cannot fix it (the free plan is account-level BLOCKED while the token authenticates); local-first encoded, upgrade = user billing decision
 2. **The frozen 11,404**: schedule the M09 event-store replay sometime (would allow returning to true depth==0 semantics), or accept the growth-flag monitoring as permanent?
 3. **DAS reseat timing**: any window planned? (Everything in f.1 queues behind it.)
 
