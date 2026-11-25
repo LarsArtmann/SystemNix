@@ -236,6 +236,10 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		pend.answered()
 		pend.stamp(&rec)
 		rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
+		// The record carries the code of this answer alone: a call whose
+		// earlier attempt was rejected is told by its admission outcome, not
+		// by a rejection code pinned on a success.
+		rec.UpstreamCode = ""
 		// Every answer is closed when the call leaves, on the path that
 		// streams it as much as on those that replay it.
 		defer func() { _ = resp.Body.Close() }()

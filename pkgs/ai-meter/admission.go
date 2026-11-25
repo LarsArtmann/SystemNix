@@ -589,18 +589,26 @@ func (p *pending) enter(ctx context.Context) error {
 	waited, err := g.acquire(waitCtx, p.arrived)
 	if err != nil {
 		if errors.Is(err, errAdmissionTimeout) {
+			// A call that ran out of budget while waiting waited all the
+			// same, and the wait metrics must say so.
+			p.waitedAll(g.now().Sub(since))
 			return err
 		}
 		return ctx.Err()
 	}
 	if waited {
-		p.waited += g.now().Sub(since)
-		// A call that waits again adds only what it waited since, and
-		// counts as a waiting call once.
-		g.registry.AdmissionWaited(g.name, p.waited-p.reported, !p.counted)
-		p.reported, p.counted = p.waited, true
+		p.waitedAll(g.now().Sub(since))
 	}
 	return nil
+}
+
+// waitedAll adds d to what the call waited for the upstream to have room.
+// A call that waits again adds only what it waited since, and counts as a
+// waiting call once.
+func (p *pending) waitedAll(d time.Duration) {
+	p.waited += d
+	p.gate.registry.AdmissionWaited(p.gate.name, p.waited-p.reported, !p.counted)
+	p.reported, p.counted = p.waited, true
 }
 
 // answered counts the answer the upstream just gave the call.
