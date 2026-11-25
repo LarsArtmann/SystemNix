@@ -775,7 +775,13 @@ if nix run .#pre-deploy-check; then
       printf 'unknown: %s names no concrete preferred/default entry (ESP unreadable, or a non-systemd-boot loader)' "$loader_conf"
       return 0
     fi
-    if sudo -n grep -q -- "init=$cur/init" "$entries_dir/$entry_name" 2>/dev/null; then
+    # systemd-boot boot counting renames an entry that has not completed a
+    # boot to `<name>+<tries>[-<attempts>].conf` while `preferred` keeps the
+    # plain name (the 19:33 gen-1031 install landed as `...+3.conf`, and the
+    # first version of this check read that as unanchored), so match both
+    # shapes. The entries dir is root-only: the glob must expand inside the
+    # elevated shell, never in the caller.
+    if sudo -n sh -c 'grep -l -- "$1" "$2".conf "$2"+[0-9]*.conf 2>/dev/null | head -n 1 | grep -q .' _ "init=$cur/init" "$entries_dir/${entry_name%.conf}"; then
       printf 'ok'
     else
       printf 'unanchored: %s prefers %s, which does not boot %s' "$loader_conf" "$entry_name" "$cur"
