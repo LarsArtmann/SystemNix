@@ -869,7 +869,7 @@
       '';
     };
 
-  # Boot-generation freshness gauge (2026-11-25 — the "Boot Generation
+  # Boot-generation freshness gauge (2026-11-25, the "Boot Generation
   # Freshness" gatus page ~15 min after EVERY deploy): the gauge compared
   # /run/booted-system with the NEWEST profile overall, which is red by
   # construction from the first deploy after a boot until the next reboot
@@ -1004,14 +1004,14 @@
           grep -qF '{BOOTED_NEWEST}' "$MODULE" || {
             echo "module lost the gauge emission"; exit 1;
           }
-          grep -qF '\nsystem_booted_is_newest_profile *\n' "$MODULE" || {
+          grep -qF '\nsystem_booted_is_newest_profile *)' "$MODULE" || {
             echo "module lost the anchored Gatus presence condition"; exit 1;
           }
           if grep -qF 'NEWEST_SYS=$(readlink -f /nix/var/nix/profiles/system 2>/dev/null)' "$MODULE"; then
-            echo "MUTATION: the newest-overall comparison is back — it pages after every deploy"; exit 1
+            echo "MUTATION: the newest-overall comparison is back: it pages after every deploy"; exit 1
           fi
 
-          echo "PASS: boot-generation freshness — deployed-since-boot fresh, stale boot stale, numeric order, fail-closed fallbacks, wiring pinned"
+          echo "PASS: boot-generation freshness: deployed-since-boot fresh, stale boot stale, numeric order, fail-closed fallbacks, wiring pinned"
         '';
       };
     in

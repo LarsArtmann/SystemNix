@@ -1184,7 +1184,7 @@ _: {
           # every `nix run .#deploy` installs a newer generation live, so the
           # old "booted == newest overall" form went red ~15 min after EVERY
           # deploy and stayed red until the next reboot (2026-11-24 21:53:
-          # booted gen-1027, gen-1028 deployed 21:42) — a page on normal
+          # booted gen-1027, gen-1028 deployed 21:42): a page on normal
           # operation. A generation switched to after the boot is the running
           # system, not a stale boot. 1 = the booted toplevel IS the newest
           # generation that predates the boot; 0 = it is older, or nothing is
@@ -2045,7 +2045,7 @@ _: {
             echo "# TYPE system_current_system_profiled gauge"
             echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
 
-            echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation that already existed at boot time, 0 if the machine booted a generation older than one that predates the boot (stale bootloader default / rollback boot — crash3 + 2026-09-07 stuck-boot class) or nothing is resolvable. Generations deployed after the boot do not count: they are the running system, not a stale boot"
+            echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation that already existed at boot time, 0 if the machine booted a generation older than one that predates the boot (stale bootloader default / rollback boot: crash3 + 2026-09-07 stuck-boot class) or nothing is resolvable. Generations deployed after the boot do not count: they are the running system, not a stale boot"
             echo "# TYPE system_booted_is_newest_profile gauge"
             echo "system_booted_is_newest_profile ''${BOOTED_NEWEST}"
 
@@ -2958,7 +2958,7 @@ _: {
                   "[BODY] != pat(*system_booted_is_newest_profile 0\n*)"
                   "[BODY] == pat(*\nsystem_booted_is_newest_profile *)"
                 ];
-                alert = "The machine BOOTED a nix generation older than the newest profile generation that already existed at boot time — a stale bootloader default or rollback boot (the crash3 days-long stale-boot + 2026-09-07 stuck-boot class). Deploys since the boot do not count. Check: `readlink -f /run/booted-system` vs `ls -lt /nix/var/nix/profiles/system-*-link | head -3`, and `bootctl list` for the default entry; run `nix run .#pre-reboot-check` BEFORE any reboot.";
+                alert = "The machine BOOTED a nix generation older than the newest profile generation that already existed at boot time: a stale bootloader default or rollback boot (the crash3 days-long stale-boot + 2026-09-07 stuck-boot class). Deploys since the boot do not count. Check: `readlink -f /run/booted-system` vs `ls -lt /nix/var/nix/profiles/system-*-link | head -3`, and `bootctl list` for the default entry; run `nix run .#pre-reboot-check` BEFORE any reboot.";
               }
               {
                 name = "Memory Emergency Guard";
