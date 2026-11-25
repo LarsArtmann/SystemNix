@@ -23,6 +23,11 @@ type Ledger struct {
 	path   string
 	file   *os.File
 	logger *slog.Logger
+	// sizeAtOpen is how many bytes the ledger held when it was opened, after
+	// a torn tail was terminated. ReplayCosts reads exactly that much: every
+	// call recorded afterwards is folded in live by the request path and
+	// must not be counted a second time. Negative when the size is unknown.
+	sizeAtOpen int64
 }
 
 type ledgerEntry struct {
@@ -69,42 +74,65 @@ func OpenLedger(path string, logger *slog.Logger) (*Ledger, error) {
 	if err != nil {
 		return nil, err
 	}
-	ledger := &Ledger{path: path, file: file, logger: logger}
-	if err := ledger.terminateTornTail(); err != nil {
+	ledger := &Ledger{path: path, file: file, logger: logger, sizeAtOpen: -1}
+	size, err := ledger.terminateTornTail()
+	if err != nil {
 		// Never a reason to refuse traffic: the next append then lands on
-		// the same line, and ReplayCosts skips both as unparseable.
+		// the same line, and ReplayCosts skips both as unparseable. The
+		// replay then falls back to the size it observes when it starts.
 		logger.Warn("ledger tail check failed", "err", err)
+		size, err = ledger.size()
+	}
+	if err == nil {
+		ledger.sizeAtOpen = size
 	}
 	return ledger, nil
 }
 
 // terminateTornTail ends a final line that lacks its newline (a write cut by
-// a crash or a full disk). Without this the next append joins the torn line
-// and BOTH entries become unparseable; with it exactly one is lost.
-func (l *Ledger) terminateTornTail() error {
+// a crash or a full disk) and reports the ledger's size afterwards. Without
+// this the next append joins the torn line and BOTH entries become
+// unparseable; with it exactly one is lost.
+func (l *Ledger) terminateTornTail() (int64, error) {
 	reader, err := os.Open(l.path)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer func() { _ = reader.Close() }()
 	info, err := reader.Stat()
 	if err != nil {
-		return err
+		return 0, err
 	}
-	if info.Size() == 0 {
-		return nil
+	size := info.Size()
+	if size == 0 {
+		return 0, nil
 	}
 	last := []byte{0}
-	if _, err := reader.ReadAt(last, info.Size()-1); err != nil {
-		return err
+	if _, err := reader.ReadAt(last, size-1); err != nil {
+		return 0, err
 	}
 	if last[0] == '\n' {
-		return nil
+		return size, nil
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	_, err = l.file.Write([]byte{'\n'})
-	return err
+	if _, err := l.file.Write([]byte{'\n'}); err != nil {
+		return 0, err
+	}
+	return size + 1, nil
+}
+
+func (l *Ledger) size() (int64, error) {
+	file, err := os.Open(l.path)
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = file.Close() }()
+	info, err := file.Stat()
+	if err != nil {
+		return 0, err
+	}
+	return info.Size(), nil
 }
 
 // Append records one call. Errors are returned (the caller counts them as

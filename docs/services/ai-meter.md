@@ -78,11 +78,12 @@ A model is routinely used before its price is published (glm-5.4 from 2026-11-24
 | Surface | Where its number comes from | After the row ships |
 | ------- | --------------------------- | ------------------ |
 | Ledger | facts (tokens) | unchanged: nothing was ever wrong |
-| `ai_meter_cost_usd_total` (the "Spend (all-time)" panel) | `Ledger.ReplayCosts` at every start, pricing each recorded call at the current table | every earlier call of that model is priced; the counter steps up once, at the restart |
+| `ai_meter_cost_usd_total` (the "Spend (all-time)" panel) | `Ledger.ReplayCosts` at every start, pricing each recorded call the ledger held when the replay began, at the current table | every earlier call of that model is priced; the counter steps up once, at the restart |
 | "Spend Rate" and "Spend Rate by Model" panels | PromQL derived from the exact token counters x the current table (`_ai-meter-dashboard.nix`), recomputed at query time | the chart's whole history is restated at the true timestamps, with no spike |
 | crush's own per-session cost | crush's `--price-*` flags on the model declaration, applied by crush itself | not an ai-meter surface; whether crush re-prices sessions it already recorded is unverified |
 
 - The same mechanism restates a price that is CORRECTED or withdrawn, in either direction.
+- The replay runs alongside serving, never ahead of it: the ledger grows without bound and its size must not decide how long routed calls fail after a restart (866k calls, ~1.1 s, on 2026-11-25). The cost family is withheld from `/metrics` until the pass has ended, so the counter is only ever scraped whole; a call that lands meanwhile is added on top.
 - Only the cost family is replayed. Re-baselining requests or tokens would read as one enormous spike in every rate() panel and in the "AI Upstream Failure Rate" ratio alert that consume them.
 - A ledger line that does not parse (torn write, foreign content) is skipped at replay, counted in `ai_meter_metering_errors_total` and logged (`ledger has unparseable lines`); it never keeps the proxy from starting, because every routed call depends on it.
 - `OpenLedger` terminates a final line that lacks its newline, so a torn write costs exactly one entry instead of two.
@@ -98,7 +99,7 @@ A model is routinely used before its price is published (glm-5.4 from 2026-11-24
 
 Gatus: "ai-meter" (:8107/health, 200 + <500ms) and "ai-meter metrics" (:8108/metrics, 200 + `pat(*ai_meter_requests_total*)`). Eval gates: ports registered, port-registry audit (no literals), gatus coverage (both ports probed), deploy-restart-audit (ai-meter-keys in the deploy.sh provisioner loop), and the dashboard template must carry each spend placeholder exactly once (`_ai-meter-dashboard.nix` throws at eval otherwise).
 
-`checks.x86_64-linux.ai-meter-spend-promql` (`flake/parts/checks/ai-meter-guards.nix`): the dashboard's spend-rate PromQL and the Go cost formula are two implementations of one formula, so the check evaluates what the generator REALLY emits with promtool's engine on a fixture, then holds the Go side (`TestEstimateCostMatchesDashboardPromQL`) to the same number. Either formula moving alone fails it. It also asserts that the dashboard evo-x2 provisions keeps both spend panels, mentions every priced model and carries no template placeholder. Negative legs: `CASES=aimeter bash scripts/negative-test-lints.sh` (either formula drifting, a dropped placeholder, a neutered ledger replay).
+`checks.x86_64-linux.ai-meter-spend-promql` (`flake/parts/checks/ai-meter-guards.nix`): the dashboard's spend-rate PromQL and the Go cost formula are two implementations of one formula, so the check evaluates what the generator REALLY emits with promtool's engine on a fixture, then holds the Go side (`TestEstimateCostMatchesDashboardPromQL`) to the same number. Either formula moving alone fails it. promtool is more permissive than SigNoz: it accepted a `\.` escape that SigNoz's own parser rejects, so the check also refuses a lone backslash in any spend query, and a generated query should still be cross-checked against the live engine (`/api/v1/query?query=…` on `ports.signoz`) before it ships. It also asserts that the dashboard evo-x2 provisions keeps both spend panels, mentions every priced model and carries no template placeholder. Negative legs: `CASES=aimeter bash scripts/negative-test-lints.sh` (either formula drifting, a dropped placeholder, a neutered ledger replay).
 
 ## Tests
 

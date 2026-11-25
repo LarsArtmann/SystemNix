@@ -26,6 +26,8 @@ func restartStack(t *testing.T, s *testStack, costs map[string]Cost) *testStack 
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = ledger.Close() })
+	// The same two calls run() makes, minus the goroutine.
+	registry.BeginCostReplay()
 	seedCostCounter(&cfg, ledger, registry, slog.Default())
 
 	restarted := &testStack{upstream: s.upstream, cfg: &cfg, registry: registry, ledger: ledger}
@@ -204,14 +206,44 @@ func TestOpenLedgerTerminatesATornTailLine(t *testing.T) {
 	}
 
 	// Exactly the torn entry is lost; the next one starts on its own line.
-	cfg := &Config{}
-	summary, err := ledger.ReplayCosts(cfg, NewRegistry())
+	// It was recorded after the open, so a FRESH open is what replays it.
+	reopened, err := OpenLedger(path, slog.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = reopened.Close() })
+	summary, err := reopened.ReplayCosts(&Config{}, NewRegistry())
 	if err != nil {
 		t.Fatalf("replay: %v", err)
 	}
 	if summary.Calls != 1 || summary.Skipped != 1 {
 		t.Fatalf("replayed %d calls and skipped %d lines, want 1 and 1", summary.Calls, summary.Skipped)
 	}
+}
+
+// A call that is recorded after the ledger was opened is folded in live by
+// the request path. The replay must leave it alone, or it is paid for twice.
+func TestReplayCostsLeavesCallsRecordedAfterTheOpenAlone(t *testing.T) {
+	price := map[string]Cost{"m": {Input: 2}}
+
+	s := newTestStack(t, price)
+	for range 2 {
+		resp := s.post("/v1/fake/chat/completions", "test-key-1", `{"model":"m"}`)
+		_ = resp.Body.Close()
+	}
+
+	// The stack's ledger was opened before either call: its replay sees
+	// nothing, and the calls exist exactly once, in the live counter.
+	summary, err := s.ledger.ReplayCosts(&Config{Costs: price}, NewRegistry())
+	if err != nil {
+		t.Fatalf("replay: %v", err)
+	}
+	if summary.Calls != 0 {
+		t.Fatalf("a ledger replayed %d calls that were recorded after it was opened", summary.Calls)
+	}
+
+	// The next process finds both, and nothing more.
+	assertCost(t, restartStack(t, s, price).registry.Render(), "m", 2*EstimateCost(100, 20, 50, Cost{Input: 2}))
 }
 
 func TestOpenLedgerLeavesATerminatedFileAlone(t *testing.T) {

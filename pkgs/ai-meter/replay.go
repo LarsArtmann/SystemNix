@@ -33,14 +33,19 @@ func (l *Ledger) ReplayCosts(cfg *Config, registry *Registry) (ReplaySummary, er
 		return ReplaySummary{}, err
 	}
 	defer func() { _ = file.Close() }()
-	info, err := file.Stat()
-	if err != nil {
-		return ReplaySummary{}, err
+	// Only what the ledger held when it was opened, which is before any
+	// call could be served. Calls appended since are folded in live by the
+	// request path; reading them here as well would count them twice. (A
+	// ledger that was shrunk underneath simply ends earlier.)
+	limit := l.sizeAtOpen
+	if limit < 0 {
+		info, err := file.Stat()
+		if err != nil {
+			return ReplaySummary{}, err
+		}
+		limit = info.Size()
 	}
-	// Only what the ledger held when the replay began. Calls appended after
-	// that moment are folded in live by the request path; reading them here
-	// as well would count them twice.
-	return replayCosts(io.LimitReader(file, info.Size()), cfg, registry)
+	return replayCosts(io.LimitReader(file, limit), cfg, registry)
 }
 
 func replayCosts(input io.Reader, cfg *Config, registry *Registry) (ReplaySummary, error) {
