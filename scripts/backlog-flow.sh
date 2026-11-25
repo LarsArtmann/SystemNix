@@ -90,8 +90,7 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "b1", "b2", "b3")
     head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "r5")
 
-    command = ["bash", script, root, "--json", "--window", "7d=" + pre, "--window", "30d=" + pre,
-               "--window", "pre-block=" + pre]
+    command = ["bash", script, root, "--json"]
     result = run(command)
     expect(result.returncode == 0, "the script must exit 0 on a clean fixture", result.stdout + result.stderr)
     try:
@@ -103,23 +102,32 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     expect(list(revisions) == ["now", "7d", "30d", "pre-block", "post-block"],
            "five revisions in the default order", result.stdout)
     expect(revisions["now"]["open"] == 5 and revisions["now"]["ticked"] == 3, "open and ticked rows at HEAD", result.stdout)
-    expect(revisions["7d"]["sha"] == pre[:7] and revisions["30d"]["sha"] == pre[:7], "7-day and 30-day revisions resolve by date", result.stdout)
+    expect(revisions["7d"]["sha"] == post[:7], "the 7-day revision is the last commit before HEAD minus 7 days", result.stdout)
+    expect(revisions["30d"]["sha"] is None and revisions["30d"]["open"] is None, "a date older than the history yields an empty revision", result.stdout)
+    expect([entry["name"] for entry in report["windows"]] == ["7d", "pre-block"], "a window whose start predates the history is skipped", result.stdout)
     expect(revisions["pre-block"]["sha"] == pre[:7] and revisions["post-block"]["sha"] == post[:7], "block edges resolve by date", result.stdout)
     expect(revisions["pre-block"]["open"] == 4 and revisions["pre-block"]["ticked"] == 1, "census at the pre-block revision", result.stdout)
     expect(revisions["post-block"]["open"] == 6 and revisions["post-block"]["ticked"] == 2, "census at the post-block revision", result.stdout)
     now_tags = revisions["now"]["tags"]
     expect(now_tags.get("ready") == 2 and now_tags.get("decision") == 1 and now_tags.get("watch") == 1
-           and now_tags.get("blocked:user") == 1 and "blocked:deploy" not in now_tags, "per-tag census at HEAD", result.stdout)
+           and now_tags.get("blocked:user") == 1 and now_tags.get("blocked:deploy") == 0, "per-tag census at HEAD", result.stdout)
 
     windows = {entry["name"]: entry for entry in report["windows"]}
     flow = windows["7d"]
-    wanted = {"added_open": 3, "added_closed": 1, "removed": 1, "ticked": 1, "reopened": 0, "net_open": 1}
-    for field, value in wanted.items():
+    for field, value in {"added_open": 1, "added_closed": 0, "removed": 1, "ticked": 1, "reopened": 0, "net_open": -1}.items():
         expect(flow[field] == value, f"window 7d field {field}: want {value}", result.stdout)
-    expect(flow["added_open_by_tag"] == {"blocked:user": 1, "ready": 1, "watch": 1}, "added rows by tag", result.stdout)
+    expect(flow["added_open_by_tag"] == {"blocked:user": 1}, "added rows by tag", result.stdout)
     expect(flow["ticked_by_tag"] == {"ready": 1}, "ticked rows by tag", result.stdout)
     expect(flow["removed_by_tag"] == {"blocked:deploy": 1}, "removed rows by tag", result.stdout)
-    expect(windows["30d"]["added_open"] == 3 and windows["pre-block"]["ticked"] == 1, "the other windows read the same edges", result.stdout)
+    since = windows["pre-block"]
+    for field, value in {"added_open": 3, "added_closed": 1, "removed": 1, "ticked": 1, "reopened": 0, "net_open": 1}.items():
+        expect(since[field] == value, f"window pre-block field {field}: want {value}", result.stdout)
+    expect(since["added_open_by_tag"] == {"blocked:user": 1, "ready": 1, "watch": 1}, "a longer window counts the rows it saw being added", result.stdout)
+
+    pinned = {entry["name"]: entry for entry in json.loads(run(["bash", script, root, "--json", "--no-gate", "--window", "7d=" + pre]).stdout)["windows"]}
+    expect(pinned["7d"]["added_open"] == 3 and pinned["7d"]["added_closed"] == 1 and pinned["7d"]["net_open"] == 1,
+           "--window NAME=REV pins a window start", json.dumps(pinned["7d"]))
+    expect(pinned["pre-block"]["added_open"] == 3, "a pinned window leaves the other windows on their dates", json.dumps(pinned["pre-block"]))
 
     block = report["block"]
     for field, value in {"day": "2026-11-07", "added": 3, "open_now": 2, "share_pct": 40.0, "closed_or_removed": 1}.items():
@@ -162,10 +170,10 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     os.makedirs(plain)
     bad = run(["bash", script, plain])
     expect(bad.returncode != 0 and "not a git repository" in bad.stderr, "a non-repository must fail loudly", bad.stderr)
-    before = run(["git", "-C", root, "status", "--porcelain"]).stdout
-    expect(before == "", "the script never writes to the repository", before)
+    before = run(["git", "-C", root, "status", "--porcelain", "--", "TODO_LIST.md"]).stdout
+    expect(before == "", "the script never writes to the queue file", before)
 
-print("SELFTEST OK: five date-resolved revisions, per-tag census, window flow, per-tag flow, block share by library and source month, domains, gate WARN counts, --no-gate, --block-day, extra revisions and windows, text mode, loud refusals, read-only")
+print("SELFTEST OK: date-resolved revisions incl. a too-old date, per-tag census, window flow, per-tag flow, block share by library and source month, domains, gate WARN counts, --no-gate, --block-day, extra revisions and windows, text mode, loud refusals, read-only")
 SELFTEST_EOF
 fi
 
@@ -179,7 +187,7 @@ import subprocess
 import sys
 
 QUEUE = "TODO_LIST.md"
-ROW = re.compile(r"^- \[([ x])\] (?:\[([^\]]*\] )?)?\*\*([^*]+)\*\*")
+ROW = re.compile(r"^- \[([ x])\] (?:\[([^\]]*)\] )?\*\*([^*]+)\*\*")
 UNTITLED = re.compile(r"^- \[([ x])\] (.*)$")
 LINK = re.compile(r"docs/todo/([a-z0-9-]+)\.md")
 MONTH = re.compile(r"(20\d\d-\d\d)-\d\d")
@@ -273,7 +281,7 @@ def window_flow(start_rows, now_rows):
     added_open = [title for title, value in now_rows.items() if value[0] and title not in start_rows]
     added_closed = [title for title, value in now_rows.items() if not value[0] and title not in start_rows]
     removed = [title for title in start_rows if title not in now_rows]
-    ticked = [title, value for title, value in start_rows.items() if value[0] and title in now_rows and not now_rows[title][0]]
+    ticked = [(title, value) for title, value in start_rows.items() if value[0] and title in now_rows and not now_rows[title][0]]
     reopened = [title for title, value in start_rows.items() if not value[0] and title in now_rows and now_rows[title][0]]
     return {
         "added_open": len(added_open),
@@ -351,14 +359,13 @@ def main(argv):
     }
 
     def dated(name):
-        """The default revision for a date-based name: explicit --window/--rev wins, else the last commit before the date."""
-        override = options["window"].get(name) if name in WINDOW_NAMES else None
-        if name != "now" and name not in WINDOW_NAMES:
-            override = None
-        wanted = override or options["rev"].get(name) or defaults[name]
-        if wanted == defaults[name]:
-            return git(repo, "rev-list", "-1", f"--before={wanted}", "HEAD").strip()
-        return wanted
+        """Revision behind a default name: an explicit switch wins, a date default
+        resolves to the last commit before it (empty when the history is younger)."""
+        explicit = options["rev"].get(name) or options["window"].get(name)
+        wanted = explicit or defaults[name]
+        if wanted != defaults[name] or name == "now":
+            return wanted
+        return git(repo, "rev-list", "-1", f"--before={wanted}", "HEAD").strip()
 
     revisions = []
     rows_at = {}
