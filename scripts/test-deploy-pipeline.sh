@@ -23,8 +23,8 @@
 #      literal "!= 1" override site may remain (=2 must clear gate 1)
 #   F  media-atlas provisioner batch — the hub's provisioners restart in ONE
 #      transaction (REAL function text under the deploy's set-flags), the
-#     budget argument survives the multi-unit form, and the batch stays
-#     out of the per-unit loop (tripwire)
+#      budget argument survives the multi-unit form, and the batch stays
+#      out of the per-unit loop (tripwire)
 #   G  boot-entry anchor (2026-11-25 gen-1030 revert) — the third anchor
 #      leg on the REAL function text: preferred entry boots the running
 #      toplevel -> ok; another generation -> unanchored; glob-only or
@@ -432,7 +432,7 @@ if [ -n "$boot_final_line" ] && [ -n "$smoke_exit_line" ] && [ "$boot_final_line
 else
   bad "boot-entry final assertion must precede the smoke exit (assert@$boot_final_line exit3@$smoke_exit_line)"
 fi
-assert_eq "boot_entry_anchor_status is consulted twice (repair + final assertion)" "$(grep -c 'boot_entry_anchor_status "\$cur_system"' "$DEPLOY_SH")" "2"
+assert_eq "boot_entry_anchor_status is consulted at the repair, its re-check and the final assertion" "$(grep -c 'boot_entry_anchor_status "\$cur_system"' "$DEPLOY_SH")" "3"
 assert_contains "final boot-entry assertion exits 14 (reboot-revertible class)" "$(sed -n '/UNANCHORED (boot entry)/,/esac/p' "$DEPLOY_SH")" "exit 14"
 rm -rf "$boot_shim" "$boot_esp"
 

@@ -336,11 +336,12 @@
               need_has reint-quarantined "failed=1 quarantined=1"
               grep -q '^forgejo_mirror_reinterval_quarantined 1$' "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom" \
                 || { echo "FAIL reinterval: quarantine metric not published"; cat "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom"; exit 1; }
-              unset FORGEJO_REINTERVAL_STATE_DIR FORGEJO_MIRROR_TEXTFILE_DIR
+              unset FORGEJO_MIRROR_TEXTFILE_DIR
               # non-array listing dies loud (phantom-green guard)
               printf 200 > "$STUB_HTTP/$FJL.9.code"
               printf '{"message":"token expired"}' > "$STUB_HTTP/$FJL.9.body"
               run "$REINT"; need_rc reint3 1; need_has reint3 "did not return an array"
+              unset FORGEJO_REINTERVAL_STATE_DIR
               # one PATCH per listing run that reached the PATCH: strikes 1, 2,
               # recovery, reset-strike-1, strike-2, loud, quarantined = 7 PATCHes
               # on flaky, none for the failed listing
