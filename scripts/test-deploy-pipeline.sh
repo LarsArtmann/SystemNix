@@ -308,11 +308,10 @@ restart)
 esac
 exit 0
 EOS
-# timeout shim: records the budget, then behaves like the real one.
+# timeout shim: records the budget it is called with, then is the real one.
 cat >"$shim_dir/bin/timeout" <<EOS
 #!/bin/sh
 printf '%s\n' "\$1" >>"\$BUDGET_LOG"
-shift
 exec "$REAL_TIMEOUT" "\$@"
 EOS
 chmod +x "$shim_dir/bin/systemctl" "$shim_dir/bin/timeout"
@@ -327,7 +326,7 @@ run_fn() { # $1 = the call, $2 = the enabled unit set; logs reset per call
 hub_out=$(run_fn 'restart_media_atlas_provisioners' "immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision")
 assert_eq "hub enabled: exactly one restart transaction" "$(wc -l <"$RESTART_LOG")" "1"
 assert_eq "hub enabled: the transaction carries all three provisioners" "$(cat "$RESTART_LOG")" "restart immich-api-key-provision.service media-atlas-pg-ro.service media-atlas-key-provision.service"
-assert_eq "hub enabled: default budget" "$(cat "$BUDGET_LOG")" "120"
+assert_eq "hub enabled: three gated probes, then ONE restart at the default budget" "$(cat "$BUDGET_LOG")" "$(printf '10\n10\n10\n120')"
 assert_contains "hub enabled: the echo names the batch" "$hub_out" "Restarting provisioners (one transaction): immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision"
 
 run_fn 'restart_media_atlas_provisioners' "immich-api-key-provision media-atlas-pg-ro" >/dev/null
