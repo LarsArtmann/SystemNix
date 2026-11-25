@@ -54,7 +54,13 @@ in
         ports
         ioTier
         ;
-      alerts = import ./_signoz-alerts.nix { inherit pkgs lib inputs; };
+      alerts = import ./_signoz-alerts.nix {
+        inherit pkgs lib inputs;
+        # The ai-meter module renders its dashboard with spend-rate queries
+        # derived from the price table; absent when that module is not
+        # imported (the alerts module then ships the unpriced template).
+        aiMeterDashboard = (config.services.ai-meter or { }).dashboard or null;
+      };
       signozScripts = import ./_signoz-scripts.nix { inherit pkgs cfg config; };
       signozMetrics = import ./_signoz-metrics.nix {
         inherit

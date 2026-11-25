@@ -187,7 +187,7 @@
         "spec": {
           "display": {
             "name": "Spend Rate",
-            "description": "Estimated spend from the per-model cost table, 15m rate annualized to the hour."
+            "description": "Estimated USD/hour from the exact token counters at the current reference prices (services.ai-meter.costs). A price row that lands late restates the whole history, so a restatement never shows as a spike."
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -211,7 +211,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum(rate(ai_meter_cost_usd_total[15m])) * 3600",
+                    "query": "@@spendRate@@",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -228,8 +228,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Spend Since Start",
-            "description": "Cumulative estimated USD since the last ai-meter restart (counter resets on restart)."
+            "name": "Spend (all-time)",
+            "description": "Cumulative estimated USD since the ledger began, at the current reference prices. The counter is replayed from the ledger at every ai-meter start: it survives restarts, and a price row that lands late restates all earlier usage."
           },
           "plugin": {
             "kind": "signoz/NumberPanel",
@@ -523,7 +523,7 @@
         "spec": {
           "display": {
             "name": "Spend Rate by Model",
-            "description": "Estimated USD/hour per model, 15m rate."
+            "description": "Estimated USD/hour per model from the exact token counters at the current reference prices; only priced models appear. A price row that lands late restates the whole history."
           },
           "plugin": {
             "kind": "signoz/TimeSeriesPanel",
@@ -568,7 +568,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum by (model) (rate(ai_meter_cost_usd_total[15m])) * 3600",
+                    "query": "@@spendRateByModel@@",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

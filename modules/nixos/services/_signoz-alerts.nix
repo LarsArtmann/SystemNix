@@ -2,8 +2,24 @@
   pkgs,
   lib,
   inputs,
+  # Rendered ai-meter dashboard (services.ai-meter.dashboard): its
+  # spend-rate queries are derived from the reference price table. null when
+  # the ai-meter module is not imported; the template is then rendered with
+  # no priced models, so it still ships valid queries instead of the
+  # template's placeholders.
+  aiMeterDashboard ? null,
 }:
 let
+  aiMeterDashboardSource =
+    if aiMeterDashboard != null then
+      toString aiMeterDashboard
+    else
+      pkgs.writeText "ai-meter-dashboard.json" (
+        (import ./_ai-meter-dashboard.nix { inherit lib; }).render {
+          template = builtins.readFile "${inputs.self}/modules/nixos/services/dashboards/ai-meter.json";
+          costs = { };
+        }
+      );
   # SigNoz v5 alerting API payload.
   # op semantics (preserved from the legacy AND/AND_NOT operators):
   #   "above_or_equal" = alert when metric is at/above target (legacy "AND")
@@ -993,7 +1009,6 @@ in
       "${inputs.self}/modules/nixos/services/dashboards/traces.json";
     "signoz/dashboards/browser-history.json".source =
       "${inputs.self}/modules/nixos/services/dashboards/browser-history.json";
-    "signoz/dashboards/ai-meter.json".source =
-      "${inputs.self}/modules/nixos/services/dashboards/ai-meter.json";
+    "signoz/dashboards/ai-meter.json".source = aiMeterDashboardSource;
   };
 }

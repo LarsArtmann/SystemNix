@@ -81,6 +81,18 @@ _: {
       # URLs stay eval-able in isolation (prod hosts set the domain).
       domain = if config.networking.domain != null then config.networking.domain else "home.lan";
 
+      # The SigNoz dashboard ships with its spend-rate queries derived from
+      # cfg.costs, so a price row that lands late restates the chart's whole
+      # history (why: _ai-meter-dashboard.nix). Rendered from the template
+      # next to the other dashboards; signoz.nix provisions this file in its
+      # place.
+      dashboard = pkgs.writeText "ai-meter-dashboard.json" (
+        (import ./_ai-meter-dashboard.nix { inherit lib; }).render {
+          template = builtins.readFile ../../../modules/nixos/services/dashboards/ai-meter.json;
+          inherit (cfg) costs;
+        }
+      );
+
       # The ai-meter dashboard's SigNoz UUID (provisioned dashboard slug
       # "systemnix-ai-meter"; live lookup: GET
       # http://localhost:${toString ports.signoz}/api/v2/dashboards?limit=100
@@ -363,10 +375,15 @@ _: {
             # --price-cache-hit 0.03). Extend per model as consumers adopt
             # them; unknown models meter tokens exactly and cost $0.
             # glm-5.4 (crushrc declaration 2026-11-24): deliberately NO row
-            # yet — z.ai has not published PAYG pricing (Model API itself
-            # pending security assessment), and invented prices are banned.
-            # Add reference prices here AND to the crushrc declaration when
-            # docs.z.ai/guides/overview/pricing lists it.
+            # yet. z.ai has not published PAYG pricing (the Model API itself
+            # is pending a security assessment) and invented prices are
+            # banned. Adding the row IS the backfill: the ledger stores
+            # tokens only and ai-meter replays it at the current table on
+            # every start, so the restart that ships the row prices every
+            # earlier glm-5.4 call, and the dashboard's spend-rate queries
+            # (derived from this table) redraw their whole history. Add the
+            # crushrc --price-* flags in the same wave, once
+            # docs.z.ai/guides/overview/pricing lists the model.
             "glm-5.3" = {
               input = 1.4;
               output = 4.4;
@@ -378,13 +395,20 @@ _: {
               cachedInput = 0.03;
             };
           };
-          description = "Per-model cost table (USD per 1M tokens). Best-effort: tokens are always exact, cost only for known models.";
+          description = "Per-model cost table (USD per 1M tokens), applied to the WHOLE ledger at every start: adding or changing a row restates all earlier usage. Tokens are always exact; cost only for known models.";
         };
 
         configFile = lib.mkOption {
           type = lib.types.path;
           readOnly = true;
           description = "Rendered proxy config (sops template; placeholders decrypted at activation).";
+        };
+
+        dashboard = lib.mkOption {
+          type = lib.types.path;
+          internal = true;
+          default = dashboard;
+          description = "Rendered SigNoz dashboard: the ai-meter.json template with its spend-rate queries derived from costs.";
         };
       };
 
