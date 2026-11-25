@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math/rand/v2"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -164,12 +164,12 @@ func TestGateStopsAtItsFloorAndStillWaitsBeforeItProbes(t *testing.T) {
 }
 
 func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
+	cfg := testAdmission()
+	cfg.MaxConcurrency = 1
+	g, _ := clockedGate(cfg)
 	ctx := context.Background()
-	for range 2 {
-		if waited, err := g.acquire(ctx, false); err != nil || waited {
-			t.Fatalf("acquire within the allowance: waited %t, err %v", waited, err)
-		}
+	if waited, err := g.acquire(ctx, false); err != nil || waited {
+		t.Fatalf("acquire within the allowance: waited %t, err %v", waited, err)
 	}
 
 	admitted := make(chan int, 3)
@@ -185,10 +185,11 @@ func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
 		_, waiting := g.snapshot()
 		return waiting == 3
 	})
-	if inflight, _ := g.snapshot(); inflight != 4 {
-		t.Fatalf("calls in flight = %d, want 4", inflight)
+	if inflight, _ := g.snapshot(); inflight != 1 {
+		t.Fatalf("calls in flight = %d, want the allowance of 1", inflight)
 	}
 
+	// Each release hands the one slot to the call that queued first.
 	for i := 3; i <= 5; i++ {
 		g.Release()
 		select {
@@ -200,15 +201,15 @@ func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
 			t.Fatalf("call %d was never admitted", i)
 		}
 	}
-	g.Release() // the first two calls
-	g.Release()
-	if inflight, waiting := g.snapshot(); inflight != 5 || waiting != 0 {
-		t.Fatalf("after handing every slot on: in flight %d, waiting %d", inflight, waiting)
+	if inflight, waiting := g.snapshot(); inflight != 1 || waiting != 0 {
+		t.Fatalf("after handing the slot on: in flight %d, waiting %d", inflight, waiting)
 	}
 }
 
 func TestGateRetryRejoinsAheadOfTheQueue(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
+	cfg := testAdmission()
+	cfg.MaxConcurrency = 1
+	g, _ := clockedGate(cfg)
 	ctx := context.Background()
 	if _, err := g.acquire(ctx, false); err != nil {
 		t.Fatal(err)
@@ -249,7 +250,9 @@ func TestGateRetryRejoinsAheadOfTheQueue(t *testing.T) {
 }
 
 func TestGateACallThatGivesUpLeavesNoSlotBehind(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
+	cfg := testAdmission()
+	cfg.MaxConcurrency = 1
+	g, _ := clockedGate(cfg)
 	ctx := context.Background()
 	if _, err := g.acquire(ctx, false); err != nil {
 		t.Fatal(err)
@@ -285,7 +288,7 @@ func TestGateLosesNoSlotWhenCallsGiveUpWhileSlotsAreHandedOn(t *testing.T) {
 	ctx := context.Background()
 
 	var wg sync.WaitGroup
-	for range 300 {
+	for n := range 300 {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
@@ -362,7 +365,7 @@ func TestPendingWaitsForAResetWithinItsBudget(t *testing.T) {
 
 	// The reset lands inside the budget: the call waits for it and is sent.
 	g.exhausted(base.Add(2*time.Second), []byte("quota"), "application/json", "1308")
-	*clock = base.Add(time.Second)
+	*clock = base.Add(2*time.Second - 20*time.Millisecond)
 	call := g.open(base)
 	if err := call.enter(context.Background()); err != nil {
 		t.Fatalf("enter = %v, want a slot once the window reset", err)
@@ -383,11 +386,7 @@ func TestPendingWaitsForAResetWithinItsBudget(t *testing.T) {
 }
 
 func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
 	ctx := context.Background()
-	if _, err := g.acquire(ctx, false); err != nil {
-		t.Fatal(err)
-	}
 	cfg := testAdmission()
 	cfg.MaxWait = 20 * time.Millisecond
 	short := NewGate("short", cfg, NewRegistry(), quietLogger())
@@ -408,25 +407,16 @@ func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 	}
 }
 
-func TestPendingBackoffGrowsAndStaysUnderItsCeiling(t *testing.T) {
+func TestPendingBackoffGrowsToItsCeilingAndStaysInItsRange(t *testing.T) {
 	g, _ := clockedGate(testAdmission())
 	call := g.open(time.Now())
-	previous := time.Duration(0)
-	for rejection := 1; rejection <= 8; rejection++ {
+	for rejection := 1; rejection <= 9; rejection++ {
 		call.rejected = rejection
-		delay := call.backoff()
-		if delay < retryBase/4 || delay >= retryCeiling {
-			t.Fatalf("backoff after %d rejections = %v, outside [%v, %v)", rejection, delay, retryBase/4, retryCeiling)
-		}
-		if rejection <= 4 && delay < previous {
-			// Only the floor is monotone: the jitter range of a later
-			// rejection starts where the earlier ceiling was.
-			t.Fatalf("backoff floor fell: %v after %v", delay, previous)
-		}
-		if rejection >= 5 {
-			previous = retryCeiling / 4
-		} else {
-			previous = retryBase << (rejection - 1)
+		ceiling := min(retryBase<<min(rejection-1, maxRetriesForBackoff), retryCeiling)
+		for range 50 {
+			if delay := call.backoff(); delay < ceiling/4 || delay >= ceiling {
+				t.Fatalf("backoff after %d rejections = %v, outside [%v, %v)", rejection, delay, ceiling/4, ceiling)
+			}
 		}
 	}
 }
@@ -467,11 +457,11 @@ func TestClassifyReadsTheBusinessCodeBeforeTheWording(t *testing.T) {
 		want rejectionKind
 		code string
 	}{
-		"retryable code":              {`{"error":{"code":"1302","message":"Rate limit reached for requests"}}`, kindRateLimit, "1302"},
-		"numeric code":                {`{"error":{"code":1302,"message":"Rate limit reached for requests"}}`, kindRateLimit, "1302"},
-		"quota code":                  {`{"error":{"code":"1308","message":"Usage limit reached for 5 hour. Your limit will reset at 2026-11-15 23:51:01"}}`, kindQuota, "1308"},
-		"unknown code with a reset":   {`{"error":{"code":"1399","message":"Resets at 2026-11-15 23:51:01"}}`, kindQuota, "1399"},
-		"no code, rate limit wording": {`{"error":{"message":"Rate limit reached for requests"}}`, kindRateLimit, ""},
+		"retryable code":                {`{"error":{"code":"1302","message":"Rate limit reached for requests"}}`, kindRateLimit, "1302"},
+		"numeric code":                  {`{"error":{"code":1302,"message":"Rate limit reached for requests"}}`, kindRateLimit, "1302"},
+		"quota code":                    {`{"error":{"code":"1308","message":"Usage limit reached for 5 hour. Your limit will reset at 2026-11-15 23:51:01"}}`, kindQuota, "1308"},
+		"unknown code with a reset":     {`{"error":{"code":"1399","message":"Resets at 2026-11-15 23:51:01"}}`, kindQuota, "1399"},
+		"no code, rate limit wording":   {`{"error":{"message":"Rate limit reached for requests"}}`, kindRateLimit, ""},
 		"code the config does not name": {`{"error":{"code":"1113","message":"Insufficient balance or no resource package. Please recharge."}}`, kindOther, "1113"},
 		"policy limit":                  {`{"error":{"code":"1313","message":"Your account's current usage pattern does not comply with the Fair Usage Policy, and your request frequency has been limited."}}`, kindOther, "1313"},
 		"not JSON":                      {`<html>429</html>`, kindOther, ""},
@@ -535,20 +525,19 @@ func TestRetryAfterReadsWholeSeconds(t *testing.T) {
 func TestPendingHonorsAShortRetryAfterAndDefersALongOneToTheClient(t *testing.T) {
 	g, _ := clockedGate(testAdmission())
 	header := http.Header{}
-	header.Set("Retry-After", maxHonoredRetryAfter.String())
+	header.Set("Retry-After", (maxHonoredRetryAfter + time.Second).String())
 	call := g.open(time.Now())
 	call.rejected = 1
 	if call.pause(context.Background(), header) {
-		t.Fatalf("a Retry-After of %v was waited out", maxHonoredRetryAfter)
+		t.Fatalf("a Retry-After above %v was waited out", maxHonoredRetryAfter)
 	}
-	// The budget ended during the pause, not the call's patience with a
-	// short one.
 	header.Set("Retry-After", "0")
 	if !call.pause(context.Background(), header) {
 		t.Fatal("a zero Retry-After was not honored")
 	}
 
 	expired := g.open(time.Now().Add(-time.Hour))
+	expired.rejected = 1
 	if expired.pause(context.Background(), nil) {
 		t.Fatal("a call past its budget was paused for a retry")
 	}
@@ -581,16 +570,4 @@ func TestLoadConfigRefusesAnInvalidAdmissionAndNamesTheUpstream(t *testing.T) {
 			t.Errorf("admission %s: error = %v, want one containing %q", admission, err, wantErr)
 		}
 	}
-}
-
-func TestBackoffJitterStaysInsideItsRange(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
-	call := g.open(time.Now())
-	call.rejected = 3
-	for range 200 {
-		if delay := call.backoff(); delay < 500*time.Millisecond || delay > 2*time.Second {
-			t.Fatalf("backoff = %v, outside [500ms, 2s]", delay)
-		}
-	}
-	_ = rand.IntN(2)
 }

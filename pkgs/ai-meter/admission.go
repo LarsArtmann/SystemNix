@@ -563,7 +563,7 @@ func (p *pending) pause(ctx context.Context, header http.Header) bool {
 // retryBase, jittered over its range so calls rejected together do not
 // return together.
 func (p *pending) backoff() time.Duration {
-	ceiling := min(retryBase<<min(p.rejected-1, maxRetriesForBackoff), retryCeiling)
+	ceiling := min(retryBase<<min(max(p.rejected-1, 0), maxRetriesForBackoff), retryCeiling)
 	floor := ceiling / 4
 	return floor + rand.N(ceiling-floor)
 }
