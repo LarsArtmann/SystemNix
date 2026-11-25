@@ -10,7 +10,7 @@ lsp add statix --disabled true
 # deliberately NOT inside the managed block below: tq bootstrap's template
 # renders `model large <model> --reasoning-effort <effort>` only, but thinking
 # in crush v0.102.0 is switched by the SLOT's `--think` — probe-verified
-# 2026-11-24 against z.ai (`"thinking": {"type": "disabled"}` without it,
+# 2026-11-24/25 against z.ai (`"thinking": {"type": "disabled"}` without it,
 # `{"type": "enabled"}` with it); the global crushrc's `model add … --thinking
 # always` does NOT reach the request, and `--can-reason true` additionally
 # rewrites `--thinking` to `toggleable` (internal/shellconfig/model.go). The

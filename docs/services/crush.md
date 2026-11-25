@@ -46,7 +46,7 @@ catalog default. The rc statements are therefore the only durable pins.
 | `large` | per repo         | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh` | Backlog harvesting — cheap tier; pinned by the `.crushrc` tq-bootstrap managed block (`tq bootstrap --model …`), which re-renders on every deploy                               |
 
 **Thinking is switched by the SLOT's `--think`, not by the model declaration**
-(probe-verified 2026-11-24, crush v0.102.0, z.ai through the ai-meter): a `model
+(probe-verified 2026-11-24/25, crush v0.102.0, z.ai through the ai-meter): a `model
 large zai/glm-5.4 --reasoning-effort xhigh` line with `model add … --thinking
 always` in the global rc still sends `"thinking": {"type": "disabled"}`
 (logged request body); adding `--think` to the slot line flips it to
@@ -125,7 +125,7 @@ makes old plaintext residue in session DBs inert.
    with `--debug` (`XDG_CONFIG_HOME=$(mktemp -d)`, copy the global rc, append
    `.crushrc`) and read `.crush/logs/crush.log` for the POST body — assert
    `"thinking": {"type": "enabled"}` next to `"model": "glm-5.4"` against
-   `/v1/zai/chat/completions` (the exact check that caught the 2026-11-24
+   `/v1/zai/chat/completions` (the exact check that caught the 2026-11-24/25
    disabled-thinking regression).
 
 ## Gotchas
