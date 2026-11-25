@@ -340,3 +340,28 @@ verify (timer NextElapse Mon 00:00, rendered unit HOME=%h + ReadWritePaths
 + onFailureP0, tmpfiles `stat ~/.local/state/tracking-papers`, anchor
 discipline) → tick the `[blocked:push]` rows in TODO_LIST +
 docs/todo/services.md.
+
+### Deploy outcome (2026-11-25 05:26, final)
+
+The library-policy session pushed its fixed lineage (origin/master →
+a60fda4, 04:41); the lock was floated (`5578f08f0`, pre-commit toplevel
+build gate PASSED — the FOD heals), master pushed 04:52Z, and the
+04:59:27 sibling-carried deploy landed the whole wave as **gen-1030**.
+nh skipped the profile-set: the anchor check caught UNANCHORED and the
+repair procedure ran (profile → gen-1030 == current-system `hggzirywc…`,
+`stc boot`, boot-mirror-sync restarted + mirrored 403M, **pre-reboot-check
+18 ✓ / 0 ✗ SAFE TO REBOOT**, path trigger armed/waiting). Live unit
+verified: timer active/waiting, **NextElapse 2026-11-30 00:00:00 CET Mon**;
+rendered service HOME=%h, ReadWritePaths ×3, OnFailure notify-failure@%n +
+notify-failure-p0@%n, MemoryMax 512M, TimeoutStartSec 25min, User=lars;
+tmpfiles `~/.local/state/tracking-papers` = lars:users 0750.
+
+CI (nix-check on the push): red, but NOT this task's input — every fetch
+failure (23×) is `Code-To-CV-Agent` publickey, the structural bundle-slug
+mismatch (`@REPO cvagent` can never insteadOf-match the repo slug; queued
+as a pipeline row). **Zero tracking-papers fetch errors** — the new deploy
+key + BUNDLE_2 entry work on CI.
+
+The `[blocked:push]` harvest rows are ticked in TODO_LIST +
+docs/todo/services.md (deploy + verification narrative); the first-fire
+watch row stays open until Mon 2026-11-30.
