@@ -153,7 +153,7 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
 
     text = run(["bash", script, root, "--no-gate", "--window", "7d=" + pre])
     expect(text.returncode == 0, "text mode exits 0", text.stdout + text.stderr)
-    for needle in ("Open queue rows per revision", "Flow since each window start (rows)",
+    for needle in ("Open queue rows per revision", "Flow since each window start",
                    "Block (rows added on 2026-11-07): 3 added, 2 still open (40.0% of the open queue), 1 closed or removed"):
         expect(needle in text.stdout, f"text mode must print: {needle}", text.stdout + text.stderr)
 

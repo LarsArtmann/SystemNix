@@ -3,7 +3,7 @@
 **Module:** `modules/nixos/services/kdump-capture-path.nix` (auto-discovered as `flake.nixosModules.kdump-capture-path`; active whenever `boot.crashDump.enable` is true)
 **Capture-side units:** `modules/nixos/services/_kdump-capture-units.nix` (`kdump-save.service`, `kdump-retention.service` + timer, the `/var/crash` tmpfiles rule)
 **VM regression test:** `checks.x86_64-linux.kdump-capture-boot` (`tests/test-kdump-capture-boot.nix`, one fixed node and one unfixed control node)
-**Gates that read it:** `scripts/pre-reboot-check.sh` section 12 (contract of the generation the reboot boots), `scripts/post-deploy-check.sh` (kdump capture contract), `scripts/crash-triage.sh` (`kdump=` verdict per boot), `scripts/boot-evidence-pull.sh` (pstore section)
+**Gates that read it:** `scripts/pre-reboot-check.sh` section 12 (contract of the generation the reboot boots) and `scripts/post-deploy-check.sh` section 26 (kdump capture contract). Queued, not implemented: the `kdump=` verdict in `scripts/crash-triage.sh` and the pstore section in `scripts/boot-evidence-pull.sh`.
 **Created:** 2026-11-25, after the two evidence-less panic cuts #64 (08:57:47) and #65 (11:05:51)
 
 ## What it does (three legs)
@@ -26,7 +26,7 @@ Retention: `kdump-retention` keeps the 2 newest entries, 20 G cap, boot + weekly
 
 - `N pages RAM` below about 2000000 in a pstore dump = the 512 MiB capture kernel is speaking, not the crashed one. `min:2097152kB` plus `System is deadlocked on memory` = the capture kernel OOM-panicked (the pre-fix signature of #61, #62, #64, #65).
 - Parts are stored newest-first (`Panic#1 Part1` holds the last lines); the archive's `dmesg.txt` is already chronological.
-- `scripts/crash-triage.sh` prints one `kdump=` verdict per boot: `main-kernel-panic-captured`, `capture-kernel-OOM`, `capture-kernel-panicked`, `none`.
+- By hand until the tooling lands: `journalctl -b <next boot> -o json _SYSTEMD_UNIT=systemd-pstore.service | grep -c FILE=`, then decode the record ids with `date -d @<epoch>`. The planned `scripts/crash-triage.sh` verdict vocabulary is `main-kernel-panic-captured`, `capture-kernel-OOM`, `capture-kernel-panicked`, `none`.
 
 ## Verification (2026-11-25)
 
@@ -36,7 +36,7 @@ Retention: `kdump-retention` keeps the 2 newest entries, 20 G cap, boot + weekly
 
 ## Live acceptance (owner, one deliberate crash)
 
-After the next reboot (both legs are boot-time): `echo c | sudo tee /proc/sysrq-trigger`, wait for the box to return (budget: the capture boot races the 90 s hardware watchdog; the VM needed 8 s), then `scripts/crash-triage.sh` must print `kdump=main-kernel-panic-captured` and `/var/crash` must contain a directory with `vmcore-dmesg.txt`. Before that reboot: `nix run .#pre-reboot-check` section 12 must pass.
+After the next reboot (both legs are boot-time): `echo c | sudo tee /proc/sysrq-trigger`, wait for the box to return (budget: the capture boot races the 90 s hardware watchdog; the VM needed 8 s), then `/var/crash` must contain a directory with `vmcore-dmesg.txt` whose last lines carry the panic, and `/var/lib/systemd-pstore` must hold a dump with a long uptime stamp (or the pstore `FILE=` lines must be in the journal of the boot after the crash). Before that reboot: `nix run .#pre-reboot-check` section 12 must pass.
 
 ## Rules
 
