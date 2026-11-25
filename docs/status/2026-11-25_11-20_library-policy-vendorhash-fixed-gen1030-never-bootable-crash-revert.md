@@ -17,6 +17,7 @@
 6. **deploy.sh gained the second anchor leg** (`boot_entry_anchor_status`, commit `b884174cf` + `8b40f7fc7`): on every switch it reads the loader's `preferred` entry and checks that the entry's `options init=` is the running toplevel; on mismatch it re-arms the boot entries with `sudo <running>/bin/switch-to-configuration boot` BEFORE the provisioner loop that restarts boot-mirror-sync, and the final assertion exits 14 on `UNANCHORED (boot entry)`; an unreadable ESP is a WARN, never a pass. Validated live against the real ESPs at 11:27 before the fix could land: running gen-1029 → `ok`; gen-1030 → `unanchored: /boot/loader/loader.conf prefers nixos-90cc59d1…a7fd.conf, which does not boot /nix/store/hggzirywc8…`. Fixture group G in `scripts/test-deploy-pipeline.sh` (71 assertions hold; two mutations each trip it).
 7. **Docs and memory:** AGENTS.md "Build & Deploy" gained the two paragraphs (anchor second leg; §11 contract); CHANGELOG gained three entries; TODO harvest in §h; the sibling report's anchor claim annotated inline (docs/status/2026-11-25_06-19_…md, top blockquote).
 8. **Lint:** shellcheck (warning severity, the hook's bar) clean on all six touched scripts; canonical formatter run on `lib/lars-packages.nix` (it rewrote three SIBLING shim sites that rode daemon commits unformatted: `invoices`, `io-surface`, `project-discovery-daemon`; my library-policy lines were already canonical).
+9. **The activation-holding oneshot is fixed in the tree** (modules/nixos/services/bank-sync.nix, docs/services/bank-sync.md:51-57): the service lost its `wantedBy = [ "multi-user.target" ]` and its weekly timer gained `OnBootSec = "10min"` (the `btrfs-rescue-snapshot` pattern), so switch transactions stop restarting it while the every-boot run survives. Eval-verified at 20:21 (`wantedBy = []`, timer `{OnBootSec, OnCalendar, Persistent, RandomizedDelaySec}`, full toplevel drvPath evaluates, no stray-unit warning); canonical formatter clean. Rides the next deploy.
 
 ## b) PARTIALLY DONE
 
@@ -60,7 +61,7 @@
 2. Post-crash-calm-gate must not hold a deploy's activation for its 60-min wait (docs/todo/stability.md).
 **Deploy pipeline**
 3. Consolidate check #1's inline benign-class awk into `vendor_freshness_real_errors` (docs/todo/pipeline.md).
-4. bank-sync-qonto-corpus: every switch restarts the 2h-cap oneshot (docs/todo/services.md).
+4. bank-sync-qonto-corpus: every switch restarts the 2h-cap oneshot (docs/todo/services.md): fix in tree, retagged `[blocked:deploy]`; verify on the next deploy that the journal shows no start at switch time.
 **Stability**
 5. Boot-time IO storm attribution data points for the two crash boots (docs/todo/stability.md, watch).
 6. Crash ledger rows + autopsy for `b4931451` (WDT) and `8b31b428` (CF9) — stability sessions.
@@ -74,4 +75,4 @@
 
 ## h) SELF-HARVEST DECLARATION
 
-HARVESTED. Every §f item is in TODO_LIST.md and its domain library with a `**Source:**` back-pointer: f.1 → docs/todo/pipeline.md + queue one-liner `[blocked:deploy]`; f.2 → docs/todo/stability.md + queue `[ready]`; f.3 → docs/todo/pipeline.md + queue `[ready]`; f.4 → docs/todo/services.md + queue `[ready]`; f.5 → docs/todo/stability.md + queue `[watch]`. Deliberately NOT harvested: f.6 (owned by the stability sessions, evidence already pulled) and f.7 (already a sibling row).
+HARVESTED. Every §f item is in TODO_LIST.md and its domain library with a `**Source:**` back-pointer: f.1 → docs/todo/pipeline.md + queue one-liner `[blocked:deploy]`; f.2 → docs/todo/stability.md + queue `[ready]`; f.3 → docs/todo/pipeline.md + queue `[ready]`; f.4 → docs/todo/services.md + queue `[ready]`; f.4 → docs/todo/services.md + queue, retagged `[blocked:deploy]` after the fix landed; f.5 → docs/todo/stability.md + queue `[watch]`. Deliberately NOT harvested: f.6 (owned by the stability sessions, evidence already pulled) and f.7 (already a sibling row).
