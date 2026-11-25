@@ -134,7 +134,7 @@ selftest() {
     echo "$out"
     exit 1
   fi
-  local want_q='^- \[x\] \[ready\] \*\*Alpha row\*\* — body — done selftest → \[docs/todo/pipeline.md\]\(docs/todo/pipeline.md\)$'
+  local want_q='^- \[x\] \[ready\] \*\*Alpha row\*\* — body → \[docs/todo/pipeline.md\]\(docs/todo/pipeline.md\) — done selftest$'
   local want_l='^- \[x\] \[ready\] \*\*Alpha row\*\* — body — done selftest$'
   if ! grep -qE "$want_q" "$root/TODO_LIST.md" || ! grep -qE "$want_l" "$root/docs/todo/pipeline.md"; then
     echo "SELFTEST FAIL: --apply must flip the titled row on the queue AND the library, note appended"
@@ -144,7 +144,7 @@ selftest() {
     echo "SELFTEST FAIL: --apply flipped a row whose title only shares a prefix"
     exit 1
   fi
-  if ! grep -qE '^- \[x\] \[blocked:user\] \*\*Delta row\*\* — body — done selftest' "$root/TODO_LIST.md" ||
+  if ! grep -qE '^- \[x\] \[blocked:user\] \*\*Delta row\*\* — body → \[docs/todo/pipeline.md\]\(docs/todo/pipeline.md\) — done selftest' "$root/TODO_LIST.md" ||
     ! grep -qE '^- \[x\] \[blocked:user\] \*\*Delta row\*\* — body — done selftest' "$root/docs/todo/pipeline.md"; then
     echo "SELFTEST FAIL: --apply must flip a blocked row on both surfaces"
     exit 1
