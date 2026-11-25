@@ -45,6 +45,20 @@ type ledgerEntry struct {
 	DurationMS       int64  `json:"duration_ms"`
 	TTFTMS           int64  `json:"ttft_ms"`
 	UsageMissing     bool   `json:"usage_missing,omitempty"`
+	// Attempts is how many answers the upstream gave the call: absent means
+	// one, 0 a call the proxy never sent (one with admission timeout,
+	// circuit or cancelled).
+	Attempts *int `json:"attempts,omitempty"`
+	// QueueMS is how long the call waited for the upstream to have room.
+	// Absent means it did not wait.
+	QueueMS int64 `json:"queue_ms,omitempty"`
+	// UpstreamCode is the business code the upstream's error answer carried.
+	// Absent means the answer named none.
+	UpstreamCode string `json:"upstream_code,omitempty"`
+	// Admission is how the call left a gated upstream: absorbed, gave_up,
+	// timeout, circuit or cancelled. Absent means the upstream answered the
+	// call as it was sent, or the upstream has no gate.
+	Admission string `json:"admission,omitempty"`
 }
 
 // call maps a stored entry back to the call it recorded. Cost stays zero:
@@ -157,6 +171,15 @@ func (l *Ledger) Append(rec Record) error {
 		DurationMS:       rec.DurationMS,
 		TTFTMS:           ttft,
 		UsageMissing:     rec.UsageMissing,
+		QueueMS:          rec.QueueMS,
+		UpstreamCode:     rec.UpstreamCode,
+		Admission:        rec.Admission,
+	}
+	if rec.Admission == outcomeAdmitted {
+		entry.Admission = ""
+	}
+	if attempts := rec.Attempts; attempts != 1 {
+		entry.Attempts = &attempts
 	}
 	line, err := json.Marshal(entry)
 	if err != nil {

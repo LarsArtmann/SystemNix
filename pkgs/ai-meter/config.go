@@ -29,6 +29,10 @@ type Upstream struct {
 	BaseURL   string `json:"base_url"`
 	APIKey    string `json:"api_key"`
 	AuthStyle string `json:"auth_style,omitempty"`
+	// Admission queues calls to the upstream and retries its rate-limit
+	// rejections. Absent leaves the upstream ungated: every call is sent as
+	// it arrives and every answer goes to the client as it came.
+	Admission *AdmissionSettings `json:"admission,omitempty"`
 }
 
 // Cost is USD per 1M tokens, matching provider pricing pages and crush's
@@ -136,7 +140,12 @@ func (c *Config) loadAndValidate() error {
 		default:
 			return fmt.Errorf("upstream %s: unknown auth_style %q (want bearer or x-goog-api-key)", up.Name, up.AuthStyle)
 		}
-	}
+			if up.Admission != nil {
+				if _, err := up.Admission.config(); err != nil {
+					return fmt.Errorf("upstream %s: admission: %w", up.Name, err)
+				}
+			}
+		}
 	if c.OTLPEndpoint != "" {
 		u, err := url.Parse(c.OTLPEndpoint)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {

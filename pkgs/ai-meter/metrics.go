@@ -42,6 +42,20 @@ type Record struct {
 	TTFTMS       int64
 	UsageMissing bool // upstream returned no usage block
 
+	// Attempts is how many answers the upstream has given this call: 1
+	// unless the proxy retried rate-limit rejections on its behalf, and 0
+	// for a call it never sent (see Admission).
+	Attempts int
+	// QueueMS is how long the call waited in the proxy for the upstream to
+	// have room, in milliseconds.
+	QueueMS int64
+	// UpstreamCode is the business code the upstream's error answer carried
+	// ("1302" for a z.ai rate limit), empty when it named none.
+	UpstreamCode string
+	// Admission is how the call left a gated upstream (outcomeAdmitted and
+	// the rest); empty for a call to an upstream without a gate.
+	Admission string
+
 	// StartedAt is when the proxy accepted the request, EndedAt when the call
 	// was recorded. A duration alone cannot place a call on a timeline, so the
 	// span needs both.
@@ -67,6 +81,12 @@ type Registry struct {
 	ttftCount    map[durKey]float64
 	inflight     map[inflightKey]float64
 
+	admission       map[string]admissionGauge
+	admissionWait   map[string]float64
+	admissionWaited map[string]float64
+	admissions      map[admissionKey]float64
+	rejections      map[rejectionKey]float64
+
 	unauthorized   float64
 	meteringErrors float64
 	spanExports    map[string]float64
@@ -87,6 +107,17 @@ type durKey struct {
 	stream                  bool
 }
 
+// admissionGauge is the state of one gated upstream at a moment.
+type admissionGauge struct {
+	waiting         float64
+	inflight        float64
+	limit           float64
+	quotaExhausted  bool
+}
+
+type admissionKey struct{ client, upstream, model, outcome string }
+type rejectionKey struct{ upstream, model, code, kind string }
+
 func NewRegistry() *Registry {
 	return &Registry{
 		requests:     map[reqKey]float64{},
@@ -97,6 +128,11 @@ func NewRegistry() *Registry {
 		ttftSum:      map[durKey]float64{},
 		ttftCount:    map[durKey]float64{},
 		inflight:     map[inflightKey]float64{},
+		admission:     map[string]admissionGauge{},
+		admissionWait: map[string]float64{},
+		admissionWaited: map[string]float64{},
+		admissions:    map[admissionKey]float64{},
+		rejections:    map[rejectionKey]float64{},
 		spanExports:  map[string]float64{},
 		startTime:    time.Now(),
 	}
@@ -199,6 +235,37 @@ func (r *Registry) SpanExported(outcome string, count float64) {
 	r.spanExports[outcome] += count
 }
 
+// AdmissionState replaces what is true of one gated upstream right now: how
+// many calls wait there, how many are in flight, the current allowance, and
+// whether its usage quota is known to be spent.
+func (r *Registry) AdmissionState(upstream string, waiting, inflight, limit int, quotaExhausted bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.admission[upstream] = admissionGauge{
+		waiting:        float64(waiting),
+		inflight:       float64(inflight),
+		limit:          float64(limit),
+		quotaExhausted: quotaExhausted,
+	}
+}
+
+// AdmissionWaited adds the time one call waited for the upstream to have
+// room. Each call counts once, on its last admission.
+func (r *Registry) AdmissionWaited(upstream string, waited time.Duration) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.admissionWait[upstream] += waited.Seconds()
+	r.admissionWaited[upstream]++
+}
+
+// UpstreamRejection counts a 429 the upstream answered, by the business
+// code in its body and by what that code means for the next request.
+func (r *Registry) UpstreamRejection(upstream, model, code string, kind rejectionKind) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.rejections[rejectionKey{upstream, model, code, string(kind)}]++
+}
+
 // Record folds one completed call into every metric family.
 func (r *Registry) Record(rec Record) {
 	r.mu.Lock()
@@ -217,6 +284,9 @@ func (r *Registry) Record(rec Record) {
 	if rec.Stream && rec.TTFTMS >= 0 {
 		r.ttftSum[dk] += float64(rec.TTFTMS) / 1000
 		r.ttftCount[dk]++
+	}
+	if rec.Admission != "" {
+		r.admissions[admissionKey{rec.Client, rec.Upstream, rec.Model, rec.Admission}]++
 	}
 }
 
@@ -324,6 +394,72 @@ func (r *Registry) Render() string {
 		writeSeries(&b, "ai_meter_active_requests", r.inflight[k], "client", k.client, "upstream", k.upstream, "model", k.model)
 	}
 
+	// Admission control. Upstreams without a gate have no series here.
+	gated := make([]string, 0, len(r.admission))
+	for upstream := range r.admission {
+		gated = append(gated, upstream)
+	}
+	sort.Strings(gated)
+	writeGauge(&b, "ai_meter_admission_inflight", "Calls the proxy keeps in flight at the upstream.", gated, func(upstream string) float64 {
+		return r.admission[upstream].inflight
+	})
+	writeGauge(&b, "ai_meter_admission_waiting", "Calls waiting for the upstream to have room.", gated, func(upstream string) float64 {
+		return r.admission[upstream].waiting
+	})
+	writeGauge(&b, "ai_meter_admission_limit", "Calls the proxy currently allows in flight at the upstream: it starts at the configured ceiling, drops by one per rate-limit rejection, and grows back by one after a quiet interval.", gated, func(upstream string) float64 {
+		return r.admission[upstream].limit
+	})
+	writeGauge(&b, "ai_meter_quota_exhausted", "1 while the upstream's usage quota is spent until the reset time it named.", gated, func(upstream string) float64 {
+		if r.admission[upstream].quotaExhausted {
+			return 1
+		}
+		return 0
+	})
+
+	waits := make([]string, 0, len(r.admissionWaited))
+	for upstream := range r.admissionWaited {
+		waits = append(waits, upstream)
+	}
+	sort.Strings(waits)
+	b.WriteString("# HELP ai_meter_admission_wait_seconds_sum Time calls spent waiting for the upstream to have room, in seconds.\n")
+	b.WriteString("# TYPE ai_meter_admission_wait_seconds_sum counter\n")
+	for _, upstream := range waits {
+		writeSeries(&b, "ai_meter_admission_wait_seconds_sum", r.admissionWait[upstream], "upstream", upstream)
+	}
+	b.WriteString("# HELP ai_meter_admission_wait_seconds_count Calls that waited for admission at least once.\n")
+	b.WriteString("# TYPE ai_meter_admission_wait_seconds_count counter\n")
+	for _, upstream := range waits {
+		writeSeries(&b, "ai_meter_admission_wait_seconds_count", r.admissionWaited[upstream], "upstream", upstream)
+	}
+
+	rejects := make([]rejectionKey, 0, len(r.rejections))
+	for k := range r.rejections {
+		rejects = append(rejects, k)
+	}
+	sort.Slice(rejects, func(i, j int) bool {
+		a, c := rejects[i], rejects[j]
+		return a.upstream < c.upstream || a.upstream == c.upstream && (a.model < c.model || a.model == c.model && (a.code < c.code || a.code == c.code && a.kind < c.kind))
+	})
+	b.WriteString("# HELP ai_meter_upstream_rejections_total HTTP 429 answers from a gated upstream by the business code in the body: kind=\"rate_limit\" (too much at once; counted against the allowance and, within the retry budget, retried) or kind=\"quota\" (a usage window is spent; passed through and not sent again before its reset).\n")
+	b.WriteString("# TYPE ai_meter_upstream_rejections_total counter\n")
+	for _, k := range rejects {
+		writeSeries(&b, "ai_meter_upstream_rejections_total", r.rejections[k], "upstream", k.upstream, "model", k.model, "code", k.code, "kind", k.kind)
+	}
+
+	outcomes := make([]admissionKey, 0, len(r.admissions))
+	for k := range r.admissions {
+		outcomes = append(outcomes, k)
+	}
+	sort.Slice(outcomes, func(i, j int) bool {
+		a, c := outcomes[i], outcomes[j]
+		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && (a.model < c.model || a.model == c.model && a.outcome < c.outcome))
+	})
+	b.WriteString("# HELP ai_meter_admission_outcomes_total How calls to a gated upstream left the proxy: \"admitted\" (sent once, answered), \"absorbed\" (a rate-limit rejection was retried and a later attempt was answered), \"gave_up\" (the last allowed attempt was rejected too), \"timeout\" (never sent: the wait budget ran out), \"circuit\" (not sent: the upstream's usage quota is spent), \"cancelled\" (the client went away while waiting).\n")
+	b.WriteString("# TYPE ai_meter_admission_outcomes_total counter\n")
+	for _, k := range outcomes {
+		writeSeries(&b, "ai_meter_admission_outcomes_total", r.admissions[k], "client", k.client, "upstream", k.upstream, "model", k.model, "outcome", k.outcome)
+	}
+
 	// Every outcome is exposed, also at zero, so a rate or alert over it
 	// never meets an absent series.
 	b.WriteString("# HELP ai_meter_spans_exported_total Proxied calls by how handing their span to the OTLP endpoint went: \"ok\" (the endpoint accepted the batch), \"failed\" (the endpoint rejected it or never answered), \"dropped\" (the export queue was full, or the proxy stopped before the span was sent).\n")
@@ -347,6 +483,15 @@ func (r *Registry) Render() string {
 	writeSeries(&b, "ai_meter_start_time_seconds", float64(r.startTime.Unix()))
 
 	return b.String()
+}
+
+// writeGauge writes one single-label gauge family, a series per key.
+func writeGauge(b *strings.Builder, name, help string, keys []string, value func(string) float64) {
+	b.WriteString("# HELP " + name + " " + help + "\n")
+	b.WriteString("# TYPE " + name + " gauge\n")
+	for _, key := range keys {
+		writeSeries(b, name, value(key), "upstream", key)
+	}
 }
 
 func writeSeries(b *strings.Builder, name string, value float64, labelPairs ...string) {
