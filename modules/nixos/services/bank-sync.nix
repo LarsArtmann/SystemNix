@@ -1023,7 +1023,14 @@
             lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled)
               {
                 description = "Bank-Sync Qonto full corpus -> Paperless-ngx reconciliation (convergent)";
-                wantedBy = [ "multi-user.target" ];
+                # Boot convergence WITHOUT boot gating (2026-11-25; the
+                # btrfs-rescue-snapshot pattern). With `wantedBy =
+                # [ "multi-user.target" ]` this oneshot is inactive after
+                # every run (no RemainAfterExit), so EVERY switch
+                # transaction started it again and the activation waited for
+                # it (2026-11-25: 2m08s at 05:09, 28 min at 19:05 behind a
+                # paperless storm, stopped by hand). The timer's OnBootSec
+                # keeps the every-boot run.
                 after = [
                   "network-online.target"
                   "bank-sync-storage-dir.service"
@@ -1063,9 +1070,10 @@
               };
 
           systemd.timers.bank-sync-qonto-corpus = lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled) {
-            description = "Weekly Bank-Sync Qonto corpus reconciliation timer";
+            description = "Bank-Sync Qonto corpus reconciliation: every boot (10 min settle) + weekly";
             wantedBy = [ "timers.target" ];
             timerConfig = {
+              OnBootSec = "10min";
               OnCalendar = "Sun *-*-* 05:00:00";
               Persistent = true;
               RandomizedDelaySec = "15m";
