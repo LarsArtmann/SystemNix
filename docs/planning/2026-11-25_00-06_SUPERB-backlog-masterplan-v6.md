@@ -422,11 +422,12 @@ Sequencing in words:
 
 ## 10. Harvest and queue policy for this plan
 
-NOT HARVESTED, deliberately, and waiting for the owner's ruling:
+HARVESTED on 2026-11-25, by the standing rule (the ruling question went unanswered):
 
-1. This session's 19 new items (the 22:33 report, section f) and these 27 tasks have no rows. The pool dispatches `TODO_LIST.md` only, so it cannot see them.
-2. The measurement that shaped this plan says harvesting is what inflated the queue. Rowing 27 tasks would be the same move at smaller scale.
-3. Proposal, pending the ruling: land at most 10 rows, the ones that must be dispatched without a plan-reading session (T05, T06, T07, T08, T10, T11, T12, T13, plus two decision rows for T03 and T09). The rest live here until the intake guard exists.
+1. This session's 28 items (the 22:33 report, section f) are settled: 17 new rows covering 18 items, 9 existing rows, 1 declined. The ledger is the "Harvest log" at the end of that report.
+2. The 17 rows in terms of this plan: T05, T06, T08, T10, T11, T12 and T13 are the 9 `[ready]` rows, each with a line at the top of its queue section; T03 is the harvest block decision row and T09 the pool decision row; 6 more library-only rows hold the gated items (intake policy, single-source design, secret-scan design, designed refusals, the AGENTS.md context tax, the ci-watchdog extension).
+3. Not rowed, on purpose: T01, T02, T07 and T14 already have rows (owner keys, CI auth, the `dead-guard-lint` fix, the honest harness run), and the sweep lanes T16 to T24 are plan-only waves over rows that already exist.
+4. Queue delta of this session: +9 `[ready]` rows on about 2,438. That is above the intake this plan proposes (at most 3 new rows per session unless as many are closed); it is recorded here so the first execution of T05 has an honest baseline.
 
 Once T05 lands, this plan's tasks follow the intake rule like everything else.
 

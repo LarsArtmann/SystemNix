@@ -472,3 +472,21 @@ scripts/check-todo-system.sh 2>&1 | grep -E '^(WARN|FAIL)'
 grep -E '^(User|CapabilityBoundingSet)=' /etc/systemd/system/audiblesync-backup-dir.service
 stat -c '%U:%G %a %n' /mnt/pool/backups/audiblesync
 ```
+
+---
+
+## Harvest log (2026-11-25; docs-health HARVEST; premise re-checked 2026-11-25)
+
+| Source | Disposition | Destination / reason |
+| --- | --- | --- |
+| §f 1 and 2 (write plan v6; build the generator) | done in code | `docs/planning/2026-11-25_00-06_SUPERB-backlog-masterplan-v6.md`, rendered from this report's Appendix A tables by a throwaway generator with arithmetic assertions |
+| §f 3 (ruling on the harvest, then land with a ledger) | new row | the ruling question went unanswered, so the standing rule decided: 17 rows landed; ledger in the 22:33 report; the intake policy itself is a `[decision]` row in `docs/todo/pipeline.md` |
+| §f 4 (correction appendix on the 22:33 report) | done in code | appended there under "Correction (2026-11-25)" |
+| §f 5 (commit and push) | done in code | performed at the end of this session; the daemon swept most files under heuristic messages first |
+| §f 6 (table views in chat) | done in code | Pareto, Step 2 and Step 3 tables reported in chat |
+| §f 7 to 33 (the 27 plan tasks) | see plan section 10 | T05, T06, T08, T10, T11, T12 and T13 are the 9 new `[ready]` rows; T03 and T09 are the 2 new decision rows; T07, T14 and the sweep lanes ride existing rows or the plan only |
+| §f 34 (v3 tombstone) | done in code | annotation appended to the v3 plan file; the marker line itself was left to the executor |
+| §f 35 (queue file versus its own header) | merged | into the harvest block decision row in `docs/todo/pipeline.md`: the same mechanics decide it |
+| §f 36 (pool rows) | existing row | `docs/todo/services.md`: 3 pool rows; annotate at execution |
+| §f 37 (nextd-refresh) | existing row | `docs/todo/services.md`: the watch row |
+| §f 38 (designed refusals) | new row | `docs/todo/pipeline.md` `[decision]` |

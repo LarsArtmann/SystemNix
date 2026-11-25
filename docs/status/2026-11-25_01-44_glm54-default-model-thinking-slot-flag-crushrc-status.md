@@ -46,7 +46,11 @@ Note the asymmetry: glm-5.3 (a CATALOG model, `"reasoning": {"thinking": "toggle
 6. **Docs corrected at the source of the lie.** `docs/services/crush.md` gained §Default Models: slot-resolution order, per-slot/per-repo table, the wire-probe finding, the `--can-reason` ordering bug, why the line lives outside the block, the accepted `tq doctor` WARN, the deploy requirement, and (in the verification suite) a 6-step wire-check recipe. The old claim ("thinking rides the model declaration, surviving slot routing") is deleted.
 7. **Sibling surfaces de-drifted.** `docs/services/tq.md` (two mechanisms + doctor WARN + glm-5.4 tier), `docs/agents/secrets.md` (two custom models, not "the ONE"), `platforms/nixos/users/home.nix` (old "--thinking always rides only the glm-5.3-flash declaration" rationale replaced with the slot truth), two `docs/todo/upstream.md` rows (bootstrap `--think`/`--slot-flag`; crush `--can-reason` override bug), `docs/todo/services.md` + `docs/todo/upstream.md` model-name drift (glm-5.3 → 5.4).
 8. **Stale doc fixed on sight:** `docs/services/tq.md` still claimed the go-taskqueue input was `git+file INTERIM`; the flake and lock are `github:LarsArtmann/go-taskqueue?ref=master` (verified in `flake.nix` + `flake.lock`).
-9. **Verifications run:** `bash -n .crushrc` OK · merged-rc load `EXTRA="$(cat .crushrc)" scripts/crush-rc-test.sh --expect-model zai/glm-5.4` PASS · `nix fmt -- <9 files>` clean · `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` rc=0 · `scripts/check-todo-system.sh` rc=0 (structure clean; 102 pre-existing unharvested-report WARNs).
+10. **CHANGELOG entry written** (the auto-commit daemon does not author these): a top-of-file bullet recording the slot-flag root cause, the two-mechanism pin design, the accepted doctor WARN, and the eval pin.
+11. **§f follow-ups harvested at authoring time** (TODO-system rule, not deferred): `docs/todo/services.md` gained `[blocked:deploy]` (deploy + 4-point convergence battery), `[blocked:user]` (CV/go-taskqueue thinking decision), and `[ready]` (extract `scripts/crush-thinking-probe.sh` + eval-pin the default slot + sweep every `~/projects/*/.crushrc`) rows, each with a Source pointer to this report.
+12. **Probe-date wording corrected** in `.crushrc` + `crush.md` (`2026-11-24` → `2026-11-24/25`; the decisive probes ran 00:02-00:14 on 11-25).
+13. **Scratch cleanup done:** the 13 probe/simulation dirs I created under `~/.cache` were trashed (the 5 remaining `~/.cache/crush-*` entries predate this session).
+14. **Verifications run:** `bash -n .crushrc` OK · merged-rc load `EXTRA="$(cat .crushrc)" scripts/crush-rc-test.sh --expect-model zai/glm-5.4` PASS · `nix fmt -- <9 files>` clean · `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` rc=0 · `scripts/check-todo-system.sh` rc=0 (structure clean; 102 pre-existing unharvested-report WARNs).
 
 ## b) PARTIALLY DONE
 
@@ -55,7 +59,6 @@ Note the asymmetry: glm-5.3 (a CATALOG model, `"reasoning": {"thinking": "toggle
 3. **`tq doctor` WARN accepted, not silenced.** SystemNix will WARN "managed block pins no --reasoning-effort". Accepted deliberately (silencing it would need the upstream `--think` render). The WARN's advice text is actively wrong for this repo — flagged upstream.
 4. **Cross-repo false claim not fixed.** `crush-config`'s `flake.nix` still asserts `--thinking always` "must always send thinking — the flag lives on the model declaration, surviving slot routing" (a comment + a grep check). I did not touch that repo (needs push).
 5. **No live pool-agent run** with the new pin (needs the deploy + a task tick) — so agent-side thinking is inferred from the same wire mechanism, not observed in a tq run.
-6. **Probe-hygiene.** 18 scratch dirs under `~/.cache/` (crush-*probe*, crush-54-*, crush-ab-*, tqsim.*) not cleaned.
 
 ## c) NOT STARTED
 
@@ -73,7 +76,7 @@ Note the asymmetry: glm-5.3 (a CATALOG model, `"reasoning": {"thinking": "toggle
 
 1. **I asserted a wire result before extracting the model from the same request body.** Mid-session I told the user "decisive proof … `\"thinking\": {\"type\": \"enabled\"}`" after reading the tail of a truncated log line — the body in that line was a **glm-5.3** request from a sibling session, not my glm-5.4 probe. Only when I re-extracted `model` + `thinking` from ONE body did the opposite (glm-5.4 = `disabled`) surface. Root failure: quoting a finding from output I had truncated, without a self-contained capture. Rule going forward: any wire claim quotes model AND switch from a single request record, plus its log timestamp.
 2. **The first solution was built on the false premise.** I wrote `.crushrc` and docs saying "thinking comes from the model declaration" and shipped that to the user as verified. Had I stopped there, the repo would have "GLM-5.4 with thinking" on paper and thinking **off** on the wire — the exact failure class the owner was asking me to prevent.
-3. **Cost/noise:** ~8 z.ai probe calls (several 429s), one probe silently routed through a dead huggingface small model (rc=1), and 18 temp dirs left behind.
+3. **Cost/noise:** ~8 z.ai probe calls (several 429s), one probe silently routed through a dead huggingface small model (rc=1), and 18 temp dirs left behind at the time of the failure (13 of them trashed at close-out — see §a.13; the waste was real, only the litter was cleaned).
 4. **Two avoidable test-cycle failures:** first `lib.last`/`lib.head` on `ExecStart` (unclear list semantics), then `--verify SystemNix=nix flake check --no-build` as an infix — but `escapeShellArgs` single-quotes the arg, so the rendered string is `--verify 'SystemNix=nix flake check --no-build'`. One red check run before the split-assertion fix.
 5. **`write` on `.crushrc` while a sibling session was active** (repo-wide warning fired on a later edit). No conflict occurred, but the AGENTS rule says re-read immediately before rewriting — I had read it two calls earlier.
 6. **Comment dates straddled midnight:** `.crushrc`/docs say "probe-verified 2026-11-24"; the decisive probes ran 00:02-00:14 on 11-25.
@@ -92,7 +95,7 @@ Note the asymmetry: glm-5.3 (a CATALOG model, `"reasoning": {"thinking": "toggle
 
 Ordered roughly by value. `[ready]` = agent-actionable without owner input; `[blocked:*]` = gated.
 
-1. `[blocked:deploy]` Deploy the change (`nix run .#deploy`) and re-read the post-switch `.crushrc` block (must be permissions+metrics only, model line above it).
+1. HARVESTED → docs/todo/services.md — `[blocked:deploy]` Deploy the change (`nix run .#deploy`) and re-read the post-switch `.crushrc` block (must be permissions+metrics only, model line above it).
 2. `[ready]` After deploy: re-run the wire probe against the LIVE repo file (`crush run --debug` + body read) and record model+thinking in one line.
 3. `[blocked:push]` go-taskqueue: add `--slot-flag`/`--think` to `tq bootstrap` (`cmd/tq/bootstrap.go:594`) + a bootstrap test case + a doctor test that accepts the new form.
 4. `[blocked:push]` go-taskqueue: fix `doctorCrushManagedBlock`'s WARN advice to not recommend re-adding `--model` blindly.
@@ -100,15 +103,15 @@ Ordered roughly by value. `[ready]` = agent-actionable without owner input; `[bl
 6. `[blocked:push]` crush-config: drop `--can-reason true` from the glm-5.4 (and review glm-5.3-flash) declarations — redundant, and it silently downgrades `--thinking`.
 7. `[blocked:push]` crush-config: replace the false flake-check comment/assertion about `--thinking always` with the wire finding.
 8. `[ready]` File the crush upstream issue: `--can-reason` overrides `--thinking` (with the source line numbers and the 4-permutation probe table).
-9. `[blocked:user]` Decide CV + go-taskqueue: should their large slot carry `--think`? (today: thinking-disabled pool agents).
+9. HARVESTED → docs/todo/services.md — `[blocked:user]` Decide CV + go-taskqueue: should their large slot carry `--think`? (today: thinking-disabled pool agents).
 10. `[ready]` If yes to 9: move their slot lines out of the managed block the same way, or wait for (3).
-11. `[ready]` Extract `scripts/crush-thinking-probe.sh` (isolated XDG, `--debug`, prints time/model/thinking per request) and reference it from `crush.md`.
-12. `[ready]` Add a flake check asserting `checks.<…>.crush-default-model` = `.crushrc` large slot is `zai/glm-5.4 --think` and the block has no model line.
+11. HARVESTED → docs/todo/services.md — `[ready]` Extract `scripts/crush-thinking-probe.sh` (isolated XDG, `--debug`, prints time/model/thinking per request) and reference it from `crush.md`.
+12. HARVESTED → docs/todo/services.md — `[ready]` Add a flake check asserting `checks.<…>.crush-default-model` = `.crushrc` large slot is `zai/glm-5.4 --think` and the block has no model line.
 13. `[ready]` Add a `.crushrc`-shape lint: model lines must not appear inside the tq managed markers.
-14. `[ready]` Harden the tq test to locate invocations by content ("SystemNix", "CV") rather than `elemAt` positions.
-15. `[ready]` Add a post-deploy-check leg: deployed `tq-bootstrap` ExecStart must not contain `--model`.
-16. `[ready]` Clean the 18 `~/.cache/crush-*` / `~/.cache/tqsim.*` scratch dirs.
-17. `[ready]` Correct the probe-date wording (2026-11-24 → 2026-11-24/25) in `.crushrc`, `crush.md`, `tq.md`.
+14. HARVESTED → docs/todo/services.md — `[ready]` Harden the tq test to locate invocations by content ("SystemNix", "CV") rather than `elemAt` positions.
+15. HARVESTED → docs/todo/services.md — `[ready]` Add a post-deploy-check leg: deployed `tq-bootstrap` ExecStart must not contain `--model`.
+16. ~~`[ready]` Clean the 18 `~/.cache/crush-*` / `~/.cache/tqsim.*` scratch dirs.~~ done (13 dirs trashed; the 5 remaining predate the session).
+17. ~~`[ready]` Correct the probe-date wording (2026-11-24 → 2026-11-24/25) in `.crushrc`, `crush.md`, `tq.md`.~~ done.
 18. `[ready]` Reconcile the 2026-11-24 22:37 report: its "thinking active" evidence was a direct API probe, not a crush request — add a one-line pointer in `docs/services/crush.md` so the two do not read as contradictory.
 19. `[ready]` Run `nix flake check --no-build --all-systems` at a calm window to cover the darwin eval × the shared docs.
 20. `[ready]` Verify a REAL interactive session in this repo shows glm-5.4 (picker/log) post-merge — cheap identity check.
@@ -116,7 +119,7 @@ Ordered roughly by value. `[ready]` = agent-actionable without owner input; `[bl
 22. `[ready]` Add the `assisted-by`/attribution note to any future report claiming wire facts (house rule already exists for rev citations).
 23. `[ready]` Document the "model pin outside the block" technique in tq.md as a named pattern, with the idempotence proof command.
 24. `[blocked:user]` Consider whether glm-5.4 should keep `--can-reason true` at all (see 6) or be declared `toggleable` + repo `--think` everywhere.
-25. `[ready]` Audit every other repo `.crushrc` in `~/projects/**` for slot lines lacking `--think` on a reasoning model (`rg -n 'model large' ~/projects/*/.crushrc`).
+25. HARVESTED → docs/todo/services.md — `[ready]` Audit every other repo `.crushrc` in `~/projects/**` for slot lines lacking `--think` on a reasoning model (`rg -n 'model large' ~/projects/*/.crushrc`).
 26. `[ready]` Add the finding to `docs/agents/secrets.md`'s model-declaration bullet (one sentence: declaration ≠ request switch).
 27. `[ready]` Re-check `ai-meter` metering for glm-5.4 traffic remains cost-$0/token-exact post-deploy (no price row by design).
 28. `[watch]` Watch for z.ai 429 storms during the first pool window after the model switch.
@@ -126,7 +129,7 @@ Ordered roughly by value. `[ready]` = agent-actionable without owner input; `[bl
 32. `[blocked:push]` Upstream: consider making the request builder honor `reasoning.thinking = always` regardless of slot (design question for charm).
 33. `[ready]` Add a tiny fixture to the tq test: a `.crushrc` containing a model line INSIDE the markers must make the shape lint (13) fail.
 34. `[ready]` Sweep this report's §f items 1-3 into the queue file if the owner wants them dispatched this week.
-35. `[ready]` Write the CHANGELOG entry for this change (the auto-commit daemon did not).
+35. ~~`[ready]` Write the CHANGELOG entry for this change (the auto-commit daemon did not).~~ done.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
@@ -157,5 +160,6 @@ Ordered roughly by value. `[ready]` = agent-actionable without owner input; `[bl
 
 ## j) HARVEST DECISIONS (per TODO-system rule)
 
-- Harvested: §f.1 (deploy) → `docs/todo/services.md`; §f.9 (CV/flash thinking decision) → `docs/todo/services.md` `[blocked:user]`; §f.3/6/7 already exist as `docs/todo/upstream.md` rows; §f.11/12/14/15 folded into the ready row "extract the wire probe + eval-pin the default" → `docs/todo/services.md`.
-- Deliberately NOT harvested (recorded here instead): §f.16/17 (trivial cleanup/date nits — done-in-place candidates), §f.30 (not a real item), §f.20-22/27-29 (post-deploy verification steps that belong to the deploy runbook, not the queue).
+- Harvested (files updated in this same session): `docs/todo/services.md` — `[blocked:deploy]` deploy + 4-point convergence battery (§f.1, absorbing §f.20-22/27-29 as its battery); `[blocked:user]` CV/go-taskqueue thinking decision (§f.9-10, §f.25); `[ready]` wire-probe script + eval pins + shape lint + test hardening (§f.11-15). `docs/todo/upstream.md` — `[blocked:push]` bootstrap slot-flag render (§f.3-5), `[ready]` crush `--can-reason` override (§f.8), `[blocked:push]` crush-config `--can-reason` drop + false-comment fix (§f.6-7).
+- Done in place, not harvested: §f.16 (scratch cleanup), §f.17 (date wording), §f.35 (CHANGELOG entry).
+- Deliberately NOT harvested: §f.18-19 (one-off verification/session-window tasks), §f.23-24/26/31-34 (doc touches and per-report repetition that would bloat the queue; the owner-visible decisions are covered by the rows above).

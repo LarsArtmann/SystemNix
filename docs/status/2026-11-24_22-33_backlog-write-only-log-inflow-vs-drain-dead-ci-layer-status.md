@@ -286,3 +286,45 @@ git show 6ce9696:TODO_LIST.md | grep -c '^- \[ \]'               # queue open ro
 git log --since="30 days ago" --format='@@@%ad' --date=short -p --unified=0 -- TODO_LIST.md 'docs/todo/*.md'
 journalctl -u tq-agent-pool.service --since "2026-11-22 00:00" --no-pager -o short-iso
 ```
+
+---
+
+## Correction (2026-11-25, appended by the same session; nothing above was rewritten)
+
+**§d.1 names the wrong cause.** The counts stand: 660 open rows on 2026-09-19, 7,614 at 22:20 on 2026-11-24, +4,369 in 30 days, 870 rows ticked. The sentence "every rule pushes sessions to add rows" does not explain them. Measured later the same night: 1,538 rows were added to `TODO_LIST.md` on 2026-11-07 in one bulk harvest (1,114 `[ready]` add events, 73 percent of the dated ones from reports 7 or more days old) while v5's T03 and T04 were being executed. 1,509 of them are still open, 43 percent of the open queue, with 26 closed in 17 days. The weekly ready-line adds around that day were 222 (week of 10-26), 1,350 (week of 11-02), 284 (11-09) and 183 (11-16). So the organic inflow is 26 to 40 ready-line adds per day, and one day's harvest is the bulk of the growth. Corrected statement: the queue is net-additive, and a single bulk harvest accounts for about 1,500 of its rows. Source: `docs/status/2026-11-24_23-38_planning-run-queue-tripled-by-11-07-bulk-harvest-masterplan-lineage-v5-status.md` §d.1.
+
+**The age proxy in §d.1 reads differently with that known:** the 1,393 `[ready]` rows whose earliest date is September or October are mostly that back-harvest, not slow organic aging.
+
+## Harvest log (2026-11-25; docs-health HARVEST; premise re-checked 2026-11-25 for every row)
+
+28 items: 17 new rows covering 18 items (9 `[ready]` rows with a queue line, 8 library-only gated rows), 9 existing rows, 1 declined.
+
+| Source (report §item) | Disposition | Destination / reason |
+| --- | --- | --- |
+| §f.1 keys | existing row | `docs/todo/security.md`: the PERSISTENT NAG row and the "scan stays red until 2 rotations" row; owner action |
+| §f.2 CI auth | existing row | `docs/todo/pipeline.md`: 4 rows (branching-flow input, read-only PAT, summit-planner key, create the token); owner action |
+| §f.3 intake policy | new row | `docs/todo/pipeline.md` `[decision]`: Backlog intake policy: per-session cap or close-before-open |
+| §f.4 age-out ruling, §f.13 age-out policy | merged | one new `[decision]` row in `docs/todo/pipeline.md`: The 2026-11-07 harvest block (1,509 open queue rows) |
+| §f.5 dead-guard-lint | existing row | `TODO_LIST.md`: Fix dead-guard-lint control failure blocking the CI negative-test harness |
+| §f.6 audiblesync-backup-dir | new row | queue + `docs/todo/services.md` `[ready]`: Triage audiblesync-backup-dir.service: chmod EPERM on the backup directory |
+| §f.7 AGENTS.md dead marking | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.8 size ratchet | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.9 NOW list | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.10 session-start probe | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.11 harness doc-count mutations | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.12 harness INFRA verdict | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.14 single-source | new row | `docs/todo/pipeline.md` `[decision]` |
+| §f.15 pool restart loop | existing row | `docs/todo/services.md`: 3 pool rows (start-limit placement, unstick, gate refusals); annotate at execution, no new row |
+| §f.16 pool dirty-tree preflight | new row | `docs/todo/services.md` `[decision]`: Pool: dirty-tree preflight and the 30-per-day budget shared by three repos |
+| §f.17 local gate path | new row | queue + `docs/todo/pipeline.md` `[ready]` |
+| §f.18 secret-scan baseline | new row | `docs/todo/security.md` `[decision]` |
+| §f.19 ci-watchdog extension | new row | `docs/todo/services.md` `[blocked:user]` |
+| §f.20 rust-cache-gc stamp | declined | no journal entry since the 21:51 failure and the rust-cache session owns the unit; reason to re-evaluate: a new EPERM line at its next run |
+| §f.21 llama re-arm | existing row | `docs/todo/stability.md`: the calm-gate failure row |
+| §f.22 forgejo-github-sync | existing row | `docs/todo/services.md`: the failing exit 1 row |
+| §f.23 nextd-refresh | existing row | `docs/todo/services.md`: the watch row; the fix lives in the nextd repo |
+| §f.24 AGENTS.md context tax | new row | `docs/todo/pipeline.md` `[decision]` |
+| §f.25 honest harness run | existing row | `TODO_LIST.md`: the Red-CI pair row |
+| §f.26 history purge | existing row | `docs/todo/security.md`: the purge versus rotation-only row |
+| §f.27 designed refusals | new row | `docs/todo/pipeline.md` `[decision]` |
+| §f.28 backlog-flow script | new row | queue + `docs/todo/pipeline.md` `[ready]` |

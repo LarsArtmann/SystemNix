@@ -3654,3 +3654,7 @@ The 33 P0-gated rows are the 1%-tier's owner asks — they lead the next owner r
 4. **Line refs are authoring-time** (HEAD `3b619de32`, 17:10 CET); the libraries append continuously, so refs drift within hours. The Level-2 `Ref` column is a finding aid (domain + approximate line), never an address.
 5. **Census assertion at authoring:** `grep -ch '^- \[ \]' docs/todo/*.md | awk '{s+=$1} END{print s}'` = 2,092 = Level-2 row count. Live count at plan-commit time may already differ by single digits (parallel sessions append during authoring); that is the documented drift, not an error.
 6. **Generator:** one throwaway bash/awk pipeline (row extraction → v2-anchor-match inheritance → keyword rules → sprint packing), never committed; its bugs (embedded-pipe cells, Source-tail pollution, NR-vs-FNR join) were found by spot-checking outputs against known rows before assembly.
+
+---
+
+**Annotated 2026-11-25 (by the session that wrote plan v6):** the tombstone line above has read EXECUTING since 2026-11-03 17:33 with no EXECUTED flip for 21 days. v4 (2026-11-05), v5 (2026-11-07) and v6 (`2026-11-25_00-06_SUPERB-backlog-masterplan-v6.md`) were written since; v6 supersedes this plan. The marker line was not changed here: only the executor flips it.
