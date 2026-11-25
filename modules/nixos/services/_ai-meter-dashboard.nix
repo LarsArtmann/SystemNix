@@ -19,14 +19,24 @@
 # numbers differ.
 { lib }:
 let
-  # A model name's dots (and any other regex metacharacter) must match
-  # literally inside the `model=~` selector.
-  regexSpecial = lib.strings.stringToCharacters ".+*?()|[]{}^$\\";
+  # How a model name is spelled inside the `model=~` selector. It must match
+  # literally, and it must parse in BOTH query engines: SigNoz's own PromQL
+  # parser rejects the single "\." that promtool and Prometheus accept (live
+  # 2026-11-25: "unknown escape sequence U+002E"), which would have shipped
+  # two dead panels. So dots become a character class and every other
+  # metacharacter a doubled backslash, which both engines read as a literal.
+  regexSpecial = lib.strings.stringToCharacters "+*?()|[]{}^$\\";
   escapeRegex =
     name:
-    lib.concatMapStrings (char: if builtins.elem char regexSpecial then "\\${char}" else char) (
-      lib.strings.stringToCharacters name
-    );
+    lib.concatMapStrings (
+      char:
+      if char == "." then
+        "[.]"
+      else if builtins.elem char regexSpecial then
+        "\\\\${char}"
+      else
+        char
+    ) (lib.strings.stringToCharacters name);
 
   # Tokens per second of one kind for one priced model. The label carries
   # whatever the client asked for; the proxy's price lookup strips one

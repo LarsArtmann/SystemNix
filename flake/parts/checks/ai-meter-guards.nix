@@ -22,6 +22,10 @@
 #      and mentions every priced model in their queries (asserted here, at
 #      flake-eval time); the build additionally rejects a leftover
 #      placeholder.
+#   4. No generated query carries a single-backslash escape. promtool would
+#      accept it, SigNoz's own PromQL parser refuses it ("unknown escape
+#      sequence"), and the first live cross-check on 2026-11-25 is what
+#      caught that: two dead panels that every offline test had passed.
 #
 # promtool (3.16) compares samples EXACTLY, and rate() carries float noise
 # (15 comes back as 14.999999999999998), so the PromQL side is rounded to
@@ -127,15 +131,29 @@
           ) hostDashboard.spec.panels;
           spendPanelList = lib.attrValues spendPanels;
           spendQueries = map (panel: (lib.head panel.spec.queries).spec.plugin.spec.query) spendPanelList;
-          # The queries spell a model name regex-escaped ("glm-5\.3").
+          # The queries spell a model name regex-escaped ("glm-5[.]3").
           uncovered = lib.filter (
             model: !builtins.all (lib.hasInfix (renderer.escapeRegex model)) spendQueries
           ) (builtins.attrNames host.costs);
+
+          # promtool accepts a single-backslash escape ("\\.") that SigNoz's own
+          # PromQL parser rejects, and a dead panel is the only symptom (live
+          # 2026-11-25). No spend-rate query may carry a lone backslash.
+          carriesLoneBackslash = query: lib.hasInfix "\\" (lib.replaceStrings [ "\\\\" ] [ "" ] query);
+          offending = lib.filter carriesLoneBackslash (
+            [
+              (renderer.spendRate fixture)
+              (renderer.spendRateByModel fixture)
+            ]
+            ++ spendQueries
+          );
           wiringHolds =
             assert lib.assertMsg (lib.length spendPanelList == 2)
               "ai-meter-spend-promql: the dashboard must keep exactly one panel each for ${toString spendPanelNames}, found ${toString (lib.length spendPanelList)}";
             assert lib.assertMsg (uncovered == [ ])
               "ai-meter-spend-promql: priced models missing from the dashboard's spend-rate queries: ${toString uncovered}";
+            assert lib.assertMsg (offending == [ ])
+              "ai-meter-spend-promql: a spend-rate query carries a single-backslash escape, which SigNoz's PromQL parser rejects: ${lib.head offending}";
             !lib.hasInfix "@@" (builtins.readFile host.dashboard);
           fixtureDashboard = pkgs.writeText "ai-meter-dashboard-fixture.json" (
             renderer.render {

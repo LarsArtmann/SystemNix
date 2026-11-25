@@ -1047,6 +1047,11 @@ run_case aimeter placeholder-dropped ai-meter-spend-promql fail \
 run_case aimeter replay-neutered ai-meter-vm fail \
   'no cost series for upstream' \
   'sed:pkgs/ai-meter/replay.go:s|registry.RestoreCost(call)|_ = call|'
+# SigNoz's own PromQL parser rejects the "\." escape promtool accepts, so
+# the selector must stay escape-free; a dot spelled as an escape is dead.
+run_case aimeter dot-as-escape ai-meter-spend-promql fail \
+  'single-backslash escape, which SigNoz' \
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s|"\[.\]"|"\\\\."|'
 run_case aimeter comment-control ai-meter-spend-promql pass '' \
   'sed:modules/nixos/services/_ai-meter-dashboard.nix:s|^{ lib }:$|{ lib }:\n# control comment|'
 
