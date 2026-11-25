@@ -632,11 +632,11 @@ in
           if [[ "$code" == "200" ]]; then
             echo "  $owner/$name: '$cur' -> $TARGET_INTERVAL"
             patched=$((patched + 1))
-            rm -f "$STRIKE_DIR/${owner}__${name}"
+            rm -f "$STRIKE_DIR/''${owner}__''${name}"
           else
             failed=$((failed + 1))
             key="$owner/$name"
-            strike_file="$STRIKE_DIR/${owner}__${name}"
+            strike_file="$STRIKE_DIR/''${owner}__''${name}"
             strikes=$(cat "$strike_file" 2>/dev/null || echo 0)
             [[ "$strikes" =~ ^[0-9]+$ ]] || strikes=0
             strikes=$((strikes + 1))
