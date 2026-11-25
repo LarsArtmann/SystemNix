@@ -150,5 +150,5 @@ Thirty items, not fifty: the rest of what I could list would be restatements of 
 
 ## h) SELF-HARVEST DECLARATION
 
-HARVESTED with this report (nine pairs, TODO_LIST.md one-liner + library row, each with a `**Source:**` back-pointer here): f.1 `[watch]` → docs/todo/pipeline.md; f.5, f.7, f.8, f.10, f.11, f.13, f.20 `[ready]` → docs/todo/pipeline.md; f.15, f.16 `[ready]` → docs/todo/monitoring.md.
+HARVESTED with this report (ten pairs, TODO_LIST.md one-liner + library row, each with a `**Source:**` back-pointer here): f.1 `[watch]` → docs/todo/pipeline.md; f.5, f.7, f.8, f.10, f.11, f.13, f.20 `[ready]` → docs/todo/pipeline.md; f.15, f.16 `[ready]` → docs/todo/monitoring.md.
 Deliberately NOT harvested: f.2/f.6/f.12/f.14/f.25 (already queued from the 11-20 report), f.3/f.17/f.27/f.28/f.29/f.30 (sibling rows exist), f.9 and f.21 (sibling rows cover the area; the observations live in §b and §d above), f.22 and f.23 (owner decisions, §g), f.24 and f.26 (low-value one-offs), f.4 (standing battery work).

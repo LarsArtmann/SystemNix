@@ -247,10 +247,10 @@ kdump_capture_verdict() {
 # the crashed kernel's log into this boot), both, or `none`. An unparseable
 # bound never invents evidence.
 kdump_evidence_verdict() {
-  local words=""
-  [ "$1" -gt "$2" ] 2>/dev/null && words="capture"
-  [ "$3" -gt "$4" ] 2>/dev/null && words="${words:+$words }pstore"
-  echo "${words:-none}"
+  local found=""
+  [ "$1" -gt "$2" ] 2>/dev/null && found="capture"
+  [ "$3" -gt "$4" ] 2>/dev/null && found="${found:+$found }pstore"
+  echo "${found:-none}"
 }
 
 # kdump_read_unit <systemd unit dir> <unit>
@@ -436,7 +436,7 @@ kdump_capture_contract_section() {
   esac
   case "$evidence" in
   *pstore*)
-    report_warn "kdump pstore evidence - /var/lib/systemd-pstore gained an archive since this boot started (newest: $pstore_path); newest 3: $(ls -1t "$KDUMP_PSTORE_DIR" 2>/dev/null | head -3 | tr '\n' ' ' || true)"
+    report_warn "kdump pstore evidence - /var/lib/systemd-pstore gained an archive since this boot started (newest: $pstore_path); newest 3: $({ find "$KDUMP_PSTORE_DIR" -mindepth 1 -maxdepth 1 -printf '%T@ %f\n' 2>/dev/null || true; } | sort -rn | sed -n '1,3{s/^[0-9.]* //;p;}' | tr '\n' ' ')"
     ;;
   esac
   if [ "$evidence" = "none" ]; then
