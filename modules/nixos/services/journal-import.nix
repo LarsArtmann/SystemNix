@@ -228,7 +228,7 @@ _: {
             # journal status prints EVERYTHING to stderr (verified 2026-11-10:
             # stdout 0 bytes, stderr 720) — capture 2>&1 or the parse sees an
             # empty stream and the fail-loud guard fires every tick.
-            MAPPED=$("$JOURNAL" --config journal.yaml status 2>&1 | sed -n 's/^[[:space:]]*balance \([0-9][0-9]*\) .*/\1/p' | sort -u | tr '\n' ' ')
+            MAPPED=$("$JOURNAL" --config journal.yaml status 2>&1 | sed -n 's/^[[:space:]]*balance \([0-9][0-9]*\) .*/\1/p' | sort -u | tr '\n' ' ') || MAPPED=""
             if [ -z "$MAPPED" ]; then
               echo "journal-import: coverage table parsed EMPTY — status format drift? refusing to filter staged facts (fail loud, nothing deleted)"
               exit 1

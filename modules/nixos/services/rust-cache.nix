@@ -589,7 +589,7 @@
             done
 
             # Leg 3: threshold ladder — escalate the sweep age once.
-            pct=$(usage)
+            pct=$(usage) || pct=""
             if [ -z "$pct" ]; then
               echo "rust-cache-gc: usage unavailable - mount vanished mid-run?" >&2
               exit 1

@@ -1848,7 +1848,7 @@
                 state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
                   '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
                 expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
-                  '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
+                  '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""') || expiry=""
                 if [ "$seeded" = "0" ]; then
                   echo "cv-relogin-desktop: $platform state=$state -> skip (unseeded in the CHECKOUT store)" >&2
                   continue
@@ -1867,7 +1867,7 @@
                 fi
                 echo "cv-relogin-desktop: $platform -> HEADED refresh (a browser window opens; finish 2FA/SSO there if asked)"
                 if [ -z "''${DISPLAY:-}" ]; then
-                  d=$(ls /tmp/.X11-unix/X* 2>/dev/null | sed 's/.*\/X//' | sort -n | head -1)
+                  d=$(ls /tmp/.X11-unix/X* 2>/dev/null | sed 's/.*\/X//' | sort -n | head -1) || d=""
                   if [ -n "$d" ]; then
                     export DISPLAY=":$d"
                   fi
