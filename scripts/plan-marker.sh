@@ -27,6 +27,7 @@ ts=$(date +"%Y-%m-%d %H:%M %Z")
 short=$(git rev-parse --short HEAD 2>/dev/null || echo "no-git")
 
 marker_re='^\*\*EXECUT(ING|ED) '
+anchor_re='\*\*(Created|Written):\*\*'
 line_start="**EXECUTING (instance ${note}, ${ts}, HEAD \`${short}\`):** executing (see AGENTS.md plan-execution tombstone)"
 line_done="**EXECUTED (instance ${note}, ${ts}, HEAD \`${short}\`):** execution finished"
 
@@ -41,20 +42,21 @@ if grep -qE "$marker_re" "$plan"; then
   fi
   mv "$tmp" "$plan"
 else
-  # No tombstone yet: insert right after the **Created:** header line
-  # (every plan in docs/planning/ carries one; refuse loudly otherwise —
-  # a marker appended to an arbitrary body position is worse than none).
-  if ! grep -q '^\*\*Created:\*\*' "$plan"; then
-    echo "refusing: $plan has no '**Created:**' header line to anchor the marker" >&2
+  # No tombstone yet: insert right after the **Created:** header line (the
+  # masterplan ritual writes the same line as **Written:**, so both anchor).
+  # Refuse loudly when neither exists: a marker appended to an arbitrary
+  # body position is worse than none. Refused live on plan v6, 2026-11-25.
+  if ! grep -qE "$anchor_re" "$plan"; then
+    echo "refusing: $plan has no '**Created:**' or '**Written:**' header line to anchor the marker" >&2
     exit 1
   fi
   if [ "$mode" = "start" ]; then
     tmp=$(mktemp)
-    sed -E "0,/^(\*\*Created:\*\*.*)$/s||\\1\n${line_start}|" "$plan" >"$tmp"
+    sed -E "0,/^(${anchor_re}.*)$/s||\\1\n${line_start}|" "$plan" >"$tmp"
     mv "$tmp" "$plan"
   else
     tmp=$(mktemp)
-    sed -E "0,/^(\*\*Created:\*\*.*)$/s||\\1\n${line_done}|" "$plan" >"$tmp"
+    sed -E "0,/^(${anchor_re}.*)$/s||\\1\n${line_done}|" "$plan" >"$tmp"
     mv "$tmp" "$plan"
   fi
 fi

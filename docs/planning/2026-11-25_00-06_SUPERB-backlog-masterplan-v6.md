@@ -1,6 +1,7 @@
 # SUPERB Backlog Masterplan v6: The 1 % Is One Ruling and Two Owner Actions
 
 **Written:** 2026-11-25 00:06 CET (`date`), boot `b4931451`, gen system-1029 live, io PSI some avg10=35.82 / avg60=45.37 / avg300=45.85, branch ahead 2, HEAD `d384660`.
+**EXECUTING (instance crush-glm54-full-exec-1125-0818, 2026-11-25 08:18 CET, HEAD `93a0ce7b5`):** executing (see AGENTS.md plan-execution tombstone)
 **Status:** PLAN (not executing. `scripts/plan-marker.sh <this file> start <instance>` is owed before any execution session).
 **Supersedes:** [v5 (2026-11-07)](./2026-11-07_04-12_SUPERB-backlog-masterplan-v5.md). Predecessors: [v4 (2026-11-05)](./2026-11-05_17-32_SUPERB-backlog-masterplan-v4.md), [v3 (2026-11-03)](./2026-11-03_17-10_SUPERB-backlog-masterplan-v3.md) (its tombstone has read EXECUTING since 2026-11-03 17:33 with no EXECUTED flip: treat it as a dead executor), v2 and v1 (2026-10-23).
 **Source sessions:** [status 2026-11-24 22:33](../status/2026-11-24_22-33_backlog-write-only-log-inflow-vs-drain-dead-ci-layer-status.md) (inflow vs drain, the dead CI layer, live failures) and [status 2026-11-24 23:38](../status/2026-11-24_23-38_planning-run-queue-tripled-by-11-07-bulk-harvest-masterplan-lineage-v5-status.md) (the 2026-11-07 bulk harvest; the design this file renders).
