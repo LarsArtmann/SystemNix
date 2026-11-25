@@ -148,6 +148,24 @@ in
       # closes over the flake input and ships the ldflags-stamped package.
     };
 
+    # ALWAYS-ON, not session-scoped (2026-11-25): the upstream home module
+    # binds the user unit to the graphical session (PartOf/After/WantedBy =
+    # graphical-session.target) — fine for a bar-widget-only loopback tool,
+    # wrong once the LAN vHost fronts it (modules/nixos/services/
+    # quotaboard.nix; Gatus pages on it, PapDashboard links it): it must run
+    # at the SDDM greeter, in SSH-only periods and after a crash reboot
+    # before login. Linger on the primary user starts the user manager at
+    # boot, so default.target pulls the unit up with the box; the sops env
+    # template is rendered in the initrd stage, before the user manager
+    # starts. ONLY these three lifecycle keys are overridden — the unit body
+    # (ExecStart, Type=notify, StateDirectory, hardening) stays upstream's
+    # single definition. Runbook: docs/services/quotaboard.md.
+    systemd.user.services.quotaboard = {
+      Unit.PartOf = lib.mkForce [ ];
+      Unit.After = lib.mkForce [ ];
+      Install.WantedBy = lib.mkForce [ "default.target" ];
+    };
+
     programs.dank-material-shell = {
       enable = true;
       systemd.enable = true;

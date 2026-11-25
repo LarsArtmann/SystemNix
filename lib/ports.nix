@@ -280,12 +280,14 @@
         ai-meter = 8107;
         ai-meter-metrics = 8108;
 
-        # quotaboard — AI coding-plan quota dashboard (user service from the
-        # quotaboard flake input, wired in desktop/quickshell.nix). Loopback
-        # ONLY: the web UI has no auth by design (single-user desktop tool);
-        # the DMS bar widget reads the JSON API here. 8791 is the app's own
-        # compiled-in default — registering it makes the eval-enforced port
-        # registry the single owner of record.
+        # quotaboard — AI coding-plan quota dashboard (always-on user service
+        # from the quotaboard flake input, wired in desktop/quickshell.nix).
+        # Loopback bind, fronted by the quotaboard vHost (Layer 2
+        # protectedVHost — the web UI has no auth of its own;
+        # modules/nixos/services/quotaboard.nix); the DMS bar widget reads
+        # the JSON API here. 8791 is the app's own compiled-in default —
+        # registering it makes the eval-enforced port registry the single
+        # owner of record.
         quotaboard = 8791;
 
         # project-discovery-admin — WebUI bridge for the project-discovery

@@ -46,6 +46,7 @@
     "discover"
     "problems"
     "ai-meter"
+    "quotaboard"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is

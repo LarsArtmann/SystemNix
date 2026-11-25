@@ -286,6 +286,11 @@ in
       # Same root cause as boot.nix's hardcoded "user-1000" slice.
       uid = 1000;
       description = "Lars";
+      # Declarative pin of the imperative `loginctl enable-linger lars` the
+      # box has run on all along (live Linger=yes): always-on user units
+      # (quotaboard since 2026-11-25, quickshell.nix) need the user manager
+      # up from boot — its LAN vHost is dead at the SDDM greeter otherwise.
+      linger = true;
       extraGroups = [
         "networkmanager"
         "wheel"
