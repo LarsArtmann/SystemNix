@@ -155,7 +155,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
         if [ "$chunk" = "$s" ]; then return 1; fi # no closing quote
         v+=$chunk
         tb=0
-        while [[ $chunk == *"$bs"* ]]; do
+        while [[ $chunk == *"$bs" ]]; do # count the trailing backslashes
           tb=$((tb + 1))
           chunk=${chunk%?}
         done
