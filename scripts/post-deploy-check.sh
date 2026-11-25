@@ -7,6 +7,7 @@
 #
 # Usage: nix run .#post-deploy-check
 #        or: ./scripts/post-deploy-check.sh
+#        ./scripts/post-deploy-check.sh --section-26-only   (the kdump capture contract alone)
 set -euo pipefail
 
 DOMAIN="${SYSTEMNIX_DOMAIN:-home.lan}"
@@ -170,6 +171,299 @@ report_warn() {
   echo -e "${YELLOW}WARN${NC} $1"
   WARN=$((WARN + 1))
 }
+
+# ── §26 kdump capture contract (2026-11-25: two panics, zero evidence) ──
+# kdump is configured (crashkernel=512M) and kexec_crash_loaded read 1 on
+# every look, yet the 08:57:47 and 11:05:51 cuts captured NOTHING: the
+# capture kernel applied the host sysctl bag (vm.min_free_kbytes=2097152)
+# inside its 512M reservation and OOM-panicked, and the crashed kernel
+# kexec'd BEFORE its kmsg dump. This battery never read the capture path
+# (kexec_crash_loaded=1 was its only proof). The crash image is loaded ONCE
+# per boot by the BOOTING generation, so a deploy STAGES a capture-path fix
+# without making it live. The section (called at §26 below) asserts (1) the
+# image is loaded, (2) the DEPLOYED generation carries the contract, (3) says
+# when the fix is staged for the next boot, (4) surfaces fresh capture
+# evidence, and prints one `kdump-capture:` summary line.
+#
+# The verdict table is pure and lives here (no scripts/lib/ twin to drift
+# from); scripts/test-post-deploy-kdump.sh drives the REAL section through
+# the section-only runner below, over these env-overridable surfaces.
+KDUMP_CURRENT_SYSTEM="${KDUMP_CURRENT_SYSTEM:-/run/current-system}"
+KDUMP_CRASH_LOADED_FILE="${KDUMP_CRASH_LOADED_FILE:-/sys/kernel/kexec_crash_loaded}"
+KDUMP_CMDLINE_FILE="${KDUMP_CMDLINE_FILE:-/proc/cmdline}"
+KDUMP_CRASH_DIR="${KDUMP_CRASH_DIR:-/var/crash}"
+KDUMP_PSTORE_DIR="${KDUMP_PSTORE_DIR:-/var/lib/systemd-pstore}"
+
+# kdump_unit_has_condition <unit text> <condition line>
+# True when the text carries the EXACT unit line (whitespace-normalized, so
+# the systemd-accepted `Key = value` spacing counts too). Line-exact on
+# purpose: ConditionPathExists=!/proc/vmcore and ConditionPathExists=/proc/vmcore
+# are opposite verdicts, and a substring match would conflate them.
+kdump_unit_has_condition() {
+  local text="$1" want="$2" line
+  local -a words
+  while IFS= read -r line; do
+    read -r -a words <<<"$line" || true
+    [ "${#words[@]}" -gt 0 ] || continue
+    line="${words[*]}"
+    [ "${line// /}" = "$want" ] && return 0
+  done <<<"$text"
+  return 1
+}
+
+# kdump_capture_verdict <kernel-params text> <systemd-sysctl unit + drop-in text>
+#                       <kdump-capture-boot-sysctl.service text> <kdump-save.service text>
+# Prints `disabled` when the kernel-params carry no crashkernel= (nothing to
+# capture with, the contract does not apply), else the space-separated broken
+# legs, else `ok`. An EMPTY unit text = the unit file is missing; an EMPTY
+# kernel-params text = unreadable (its two legs are then not judged).
+kdump_capture_verdict() {
+  local params="$1" sysctl_text="$2" capture_text="$3" save_text="$4" verdict=""
+  if [ -n "$params" ]; then
+    case " $params " in
+    *" crashkernel="*) ;;
+    *)
+      echo disabled
+      return 0
+      ;;
+    esac
+    case " $params " in
+    *" crash_kexec_post_notifiers "*) ;;
+    *) verdict="no-post-notifiers" ;;
+    esac
+  fi
+  kdump_unit_has_condition "$sysctl_text" 'ConditionPathExists=!/proc/vmcore' || verdict="$verdict no-sysctl-condition"
+  kdump_unit_has_condition "$capture_text" 'ConditionPathExists=/proc/vmcore' || verdict="$verdict no-capture-sysctl-unit"
+  kdump_unit_has_condition "$save_text" 'ConditionPathExists=/proc/vmcore' || verdict="$verdict no-save-unit"
+  verdict="${verdict# }"
+  echo "${verdict:-ok}"
+}
+
+# kdump_evidence_verdict <newest /var/crash entry epoch|0> <capture-since epoch>
+#                        <newest pstore archive epoch|0> <pstore-since epoch>
+# Prints the evidence words: `capture` (a dump landed after the boot before
+# this one started: kdump-save writes it in the CAPTURE boot, which ends with
+# the reboot that starts the current one), `pstore` (systemd-pstore archived
+# the crashed kernel's log into this boot), both, or `none`. An unparseable
+# bound never invents evidence.
+kdump_evidence_verdict() {
+  local words=""
+  [ "$1" -gt "$2" ] 2>/dev/null && words="capture"
+  [ "$3" -gt "$4" ] 2>/dev/null && words="${words:+$words }pstore"
+  echo "${words:-none}"
+}
+
+# kdump_read_unit <systemd unit dir> <unit>
+# The unit file plus every file of its <unit>.d/ drop-in dir as one text (a
+# NixOS drop-in is where unitConfig lands). Prints nothing when the unit file
+# itself is missing; an unreadable piece is skipped, never fatal.
+kdump_read_unit() {
+  local dir="$1" unit="$2" f part text=""
+  [ -f "$dir/$unit" ] || return 0
+  for f in "$dir/$unit" "$dir/$unit.d"/*; do
+    [ -f "$f" ] || continue
+    if part="$(cat "$f" 2>/dev/null)"; then
+      text="$text$part"$'\n'
+    fi
+  done
+  printf '%s' "$text"
+}
+
+# kdump_boot_epoch - start of the running boot (epoch seconds): now minus
+# /proc/uptime. KDUMP_BOOT_EPOCH overrides it (fixture harness).
+kdump_boot_epoch() {
+  if [ -n "${KDUMP_BOOT_EPOCH:-}" ]; then
+    echo "$KDUMP_BOOT_EPOCH"
+    return 0
+  fi
+  echo $(( $(date +%s) - $(cut -d. -f1 /proc/uptime 2>/dev/null || echo 0) ))
+}
+
+# kdump_prev_boot_epoch - start of the boot BEFORE this one (the boot that
+# panicked when a capture happened), from `journalctl --list-boots`; prints
+# nothing when the journal cannot say (caller falls back to this boot's
+# start). KDUMP_PREV_BOOT_EPOCH overrides it (fixture harness).
+kdump_prev_boot_epoch() {
+  local list
+  local -a boots cols
+  if [ -n "${KDUMP_PREV_BOOT_EPOCH:-}" ]; then
+    echo "$KDUMP_PREV_BOOT_EPOCH"
+    return 0
+  fi
+  list="$(journalctl --list-boots --no-pager 2>/dev/null </dev/null || true)"
+  mapfile -t boots <<<"$list"
+  [ "${#boots[@]}" -ge 2 ] || return 0
+  read -r -a cols <<<"${boots[${#boots[@]} - 2]}" || true
+  [ "${#cols[@]}" -ge 6 ] || return 0
+  date -d "${cols[2]} ${cols[3]} ${cols[4]} ${cols[5]}" +%s 2>/dev/null || true
+}
+
+# kdump_newest_entry <dir> <crash|pstore> - "<epoch> <path>" of the newest
+# entry below <dir> (/var/crash: its timestamp dirs and flat vmcore files;
+# pstore: the archive dirs, one or two levels deep), nothing when there is
+# none. find's output is drained through sort before a line is selected: a
+# `find | head` pipeline SIGPIPEs find under pipefail (the §12 lesson).
+kdump_newest_entry() {
+  local dir="$1"
+  local -a sel
+  [ -d "$dir" ] || return 0
+  if [ "$2" = "pstore" ]; then
+    sel=(-mindepth 1 -maxdepth 2 -type d)
+  else
+    sel=(-mindepth 1 -maxdepth 1 \( -type d -o -name 'vmcore*' \))
+  fi
+  { find "$dir" "${sel[@]}" -printf '%T@ %p\n' 2>/dev/null || true; } | sort -rn | sed -n '1{s/^\([0-9]*\)\.[0-9]* /\1 /;p;}'
+  return 0
+}
+
+kdump_capture_contract_section() {
+  local unit_dir="$KDUMP_CURRENT_SYSTEM/etc/systemd/system"
+  local params loaded_raw loaded=0 cmdline="" sysctl_text="" capture_text="" save_text="" verdict="" reservation=""
+  local boot_epoch crash_since crash_newest="" pstore_newest="" evidence="" deploy_ok=no staged=no
+  local crash_epoch=0 pstore_epoch=0 crash_path="" pstore_path="" panic_lines=""
+  local -a opts legs
+
+  loaded_raw="$(cat "$KDUMP_CRASH_LOADED_FILE" 2>/dev/null || true)"
+  loaded_raw="${loaded_raw//[[:space:]]/}"
+  [ "$loaded_raw" != "1" ] || loaded=1
+  params="$(cat "$KDUMP_CURRENT_SYSTEM/kernel-params" 2>/dev/null || true)"
+  case " $params " in
+  *" crashkernel="*) ;;
+  *)
+    if [ -r "$KDUMP_CURRENT_SYSTEM/kernel-params" ]; then
+      report_skip "kdump capture contract - kdump disabled in the deployed generation (no crashkernel= in kernel-params), contract not applicable (crash image loaded=$loaded)"
+      echo "kdump-capture: loaded=$loaded staged=no deploy_ok=n/a"
+      return 0
+    fi
+    report_warn "kdump capture contract - $KDUMP_CURRENT_SYSTEM/kernel-params unreadable: cannot tell kdump enabled from disabled, the units are audited anyway"
+    ;;
+  esac
+
+  # (1) the image: loaded once per boot by the booting generation.
+  if [ "$loaded" = 1 ]; then
+    report_pass "kdump crash image - loaded (/sys/kernel/kexec_crash_loaded=1)"
+  else
+    report_fail "kdump crash image - the crash image is NOT loaded (kexec_crash_loaded=${loaded_raw:-unreadable}): a panic will not be captured (the image is loaded once per boot by the booting generation: a deploy that enables kdump needs a reboot)"
+  fi
+
+  # (2) the DEPLOYED generation: what the next boot's crash image will boot into.
+  sysctl_text="$(kdump_read_unit "$unit_dir" systemd-sysctl.service)"
+  capture_text="$(kdump_read_unit "$unit_dir" kdump-capture-boot-sysctl.service)"
+  save_text="$(kdump_read_unit "$unit_dir" kdump-save.service)"
+  verdict="$(kdump_capture_verdict "$params" "$sysctl_text" "$capture_text" "$save_text")"
+  read -r -a opts <<<"$params" || true
+  for opt in "${opts[@]}"; do
+    case "$opt" in
+    crashkernel=*) reservation="${opt#crashkernel=}" ;;
+    esac
+  done
+  read -r -a legs <<<"$verdict" || true
+  for leg in "${legs[@]}"; do
+    case "$leg" in
+    no-post-notifiers)
+      report_fail "kdump kernel cmdline - the deployed generation's kernel-params lack crash_kexec_post_notifiers: with a crash image loaded the kernel kexecs BEFORE its kmsg dump, so the panic text never reaches pstore (modules/nixos/services/kdump-capture-path.nix leg 2)"
+      ;;
+    no-sysctl-condition)
+      if [ -z "$sysctl_text" ]; then
+        report_fail "kdump sysctl condition - systemd-sysctl.service missing in $KDUMP_CURRENT_SYSTEM: the capture kernel would apply vm.min_free_kbytes=2097152 (a 2 GiB watermark) inside the ${reservation:-crash} kernel reservation and OOM-deadlock (leg 1)"
+      else
+        report_fail "kdump sysctl condition - systemd-sysctl.service (+ drop-ins) in $KDUMP_CURRENT_SYSTEM lacks ConditionPathExists=!/proc/vmcore: the capture kernel would apply vm.min_free_kbytes=2097152 (a 2 GiB watermark) inside the ${reservation:-512M} reservation and OOM-deadlock (leg 1; the 2026-11-25 zero-evidence cuts)"
+      fi
+      ;;
+    no-capture-sysctl-unit)
+      if [ -z "$capture_text" ]; then
+        report_fail "kdump capture sysctl unit - kdump-capture-boot-sysctl.service missing in $KDUMP_CURRENT_SYSTEM: the capture kernel keeps kernel.panic=0 and a capture boot that panics itself never reboots on its own (leg 1)"
+      else
+        report_fail "kdump capture sysctl unit - kdump-capture-boot-sysctl.service in $KDUMP_CURRENT_SYSTEM lacks ConditionPathExists=/proc/vmcore: it is no longer selected for the capture boot and would also run in the normal one (leg 1)"
+      fi
+      ;;
+    no-save-unit)
+      if [ -z "$save_text" ]; then
+        report_fail "kdump save unit - kdump-save.service missing in $KDUMP_CURRENT_SYSTEM: nothing writes /var/crash/<ts>/vmcore-dmesg.txt, a captured panic leaves no evidence"
+      else
+        report_fail "kdump save unit - kdump-save.service in $KDUMP_CURRENT_SYSTEM lacks ConditionPathExists=/proc/vmcore: nothing selects it for the capture boot, so the vmcore-dmesg evidence is never written"
+      fi
+      ;;
+    esac
+  done
+  if [ "$verdict" = "ok" ]; then
+    deploy_ok=yes
+    report_pass "kdump capture contract - deployed generation carries every leg (crash_kexec_post_notifiers, systemd-sysctl conditioned on !/proc/vmcore, capture-sysctl + save units conditioned on /proc/vmcore)"
+  fi
+
+  # (3) live or staged: the RUNNING kernel decides whether the fix is already
+  # in effect. "Staged" is claimed only when the deployed generation really
+  # carries the fix (deploy_ok), otherwise the FAILs above own the verdict.
+  if [ ! -r "$KDUMP_CMDLINE_FILE" ]; then
+    report_warn "kdump capture path - $KDUMP_CMDLINE_FILE unreadable: cannot tell a live capture path from a staged one"
+  else
+    cmdline="$(cat "$KDUMP_CMDLINE_FILE" 2>/dev/null || true)"
+    case " $cmdline " in
+    *" crash_kexec_post_notifiers "*)
+      report_pass "kdump capture path - live in this boot (crash_kexec_post_notifiers on /proc/cmdline)"
+      ;;
+    *)
+      if [ "$deploy_ok" = yes ]; then
+        staged=yes
+        report_warn "kdump capture path - /proc/cmdline lacks crash_kexec_post_notifiers: capture-path fix is staged, it becomes live at the next boot (the crash image is loaded once per boot by the booting generation) - until then a panic captures nothing"
+      else
+        report_warn "kdump capture path - /proc/cmdline lacks crash_kexec_post_notifiers and the deployed generation does not carry the fix either (FAILs above): the capture path is broken now AND after the next reboot"
+      fi
+      ;;
+    esac
+  fi
+
+  # (4) evidence, informational. A dump is written in the CAPTURE boot, which
+  # ends with the reboot that starts the current one, so its bound is the
+  # start of the boot BEFORE this one (this boot's start would never see a
+  # capture). pstore is archived into THIS boot, so there its start is right.
+  boot_epoch="$(kdump_boot_epoch)"
+  crash_since="$(kdump_prev_boot_epoch)"
+  [ -n "$crash_since" ] || crash_since="$boot_epoch"
+  crash_newest="$(kdump_newest_entry "$KDUMP_CRASH_DIR" crash)"
+  pstore_newest="$(kdump_newest_entry "$KDUMP_PSTORE_DIR" pstore)"
+  [ -z "$crash_newest" ] || { read -r crash_epoch crash_path <<<"$crash_newest" || true; }
+  [ -z "$pstore_newest" ] || { read -r pstore_epoch pstore_path <<<"$pstore_newest" || true; }
+  evidence="$(kdump_evidence_verdict "$crash_epoch" "$crash_since" "$pstore_epoch" "$boot_epoch")"
+  case "$evidence" in
+  *capture*)
+    if [ -r "$crash_path/vmcore-dmesg.txt" ]; then
+      panic_lines="$(grep -m 3 -E 'Kernel panic|Oops|BUG:|general protection|soft lockup|hung_task|blocked for more than|Out of memory|Killed process' "$crash_path/vmcore-dmesg.txt" 2>/dev/null | cut -c1-200 || true)"
+    fi
+    report_warn "kdump capture evidence - NEW dump since the boot before this one: $crash_path; first panic lines: ${panic_lines:-none readable in vmcore-dmesg.txt (vmcore-dmesg failed? pstore is the fallback)}; triage: scripts/crash-triage.sh"
+    ;;
+  esac
+  case "$evidence" in
+  *pstore*)
+    report_warn "kdump pstore evidence - /var/lib/systemd-pstore gained an archive since this boot started (newest: $pstore_path); newest 3: $(ls -1t "$KDUMP_PSTORE_DIR" 2>/dev/null | head -3 | tr '\n' ' ' || true)"
+    ;;
+  esac
+  if [ "$evidence" = "none" ]; then
+    report_pass "kdump evidence - no capture since the boot before this one (newest /var/crash entry: ${crash_path:-none}; no pstore archive since this boot)"
+  fi
+  echo "kdump-capture: loaded=$loaded staged=$staged deploy_ok=$deploy_ok"
+}
+
+# Section-only runner: `--section-26-only` runs ONE numbered section and
+# exits with its own verdict. It sits above the first live probe on purpose:
+# no storm gate, no battery-cooldown marker, no probe dir, and above all NO
+# fail-baseline write (a one-section fail set must never replace the full
+# battery's baseline). Any other --section-N-only is a loud error, never a
+# silent full run.
+case "${1:-}" in
+--section-26-only)
+  echo "=== §26 kdump capture contract (section-only run) ==="
+  kdump_capture_contract_section
+  echo ""
+  echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP${NC}  WARN: $WARN${NC}"
+  if [ "$FAIL" -gt 0 ]; then exit 1; fi
+  exit 0
+  ;;
+--section-*-only)
+  echo "no section-only runner for '$1' (supported: --section-26-only)" >&2
+  exit 2
+  ;;
+esac
 
 # ── §22 pool-detached root-cause collapse (attic exit-4 class, sweep 2026-11-24) ──
 # When /mnt/pool is unmounted, every pool-bound probe below fails for the
@@ -2829,6 +3123,15 @@ else
   done <"$_tk_registry"
   unset _tk_acct _tk_mode _tk_root _tk_rest _tk_cycle _tk_out _tk_dedup _tk_registry
 fi
+
+# --- §26 kdump capture contract ---
+# Definitions and the pure verdict table sit next to the report helpers
+# (they double as the --section-26-only runner). kdump is on, the crash
+# image was loaded, and a panic still captured nothing from 2026-11-17 to
+# 2026-11-25: the capture path itself was broken and nothing asserted it.
+echo ""
+echo "=== §26 kdump capture contract ==="
+kdump_capture_contract_section
 
 # --- Summary ---
 echo ""

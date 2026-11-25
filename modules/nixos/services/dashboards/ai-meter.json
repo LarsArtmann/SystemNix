@@ -10,7 +10,7 @@
   "spec": {
     "display": {
       "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, and whether the metering itself is healthy. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
-      "name": "AI Meter DRYRUN delete me"
+      "name": "AI Meter \u2014 Routed AI Calls"
     },
     "duration": "",
     "layouts": [

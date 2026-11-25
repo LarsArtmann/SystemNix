@@ -148,14 +148,11 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
     s=${s#"${s%%[![:space:]]*}"}
     case "$s" in
     "${dq}"*)
-      s=${s:1}
+      s=${s:1} # drop the opening quote
       v=''
       while :; do
-        case "$s" in
-        "${dq}"*) ;;
-        *) return 1 ;; # unterminated string
-        esac
         chunk=${s%%"${dq}"*}
+        if [ "$chunk" = "$s" ]; then return 1; fi # no closing quote
         v+=$chunk
         tb=0
         while [[ $chunk == *"$bs"* ]]; do
