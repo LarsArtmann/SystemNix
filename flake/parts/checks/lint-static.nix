@@ -853,6 +853,9 @@
                 deepTreefmt = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/evil-deep-treefmt.lock") { }
                 );
+                deepTreefmtPaths = builtins.toJSON (
+                  auditWith (root + "/tests/fixtures/lock-audit/evil-deep-treefmt-paths.lock") { }
+                );
                 allowlisted = builtins.toJSON (
                   auditWith (root + "/tests/fixtures/lock-audit/allowlisted.lock") {
                     "tool.nixpkgs" = "fixture reason";
@@ -874,6 +877,7 @@
                   infraDup
                   aliasCollision
                   deepTreefmt
+                  deepTreefmtPaths
                   allowlisted
                   stale
                   ;
@@ -894,10 +898,18 @@
                   || fail "evil-alias-collision (edge names a root input but points at its own node — the art-dupl blind spot) not flagged: $aliasCollision"
                 echo "$deepTreefmt" | grep -q 'toolB' && echo "$deepTreefmt" | grep -q 'treefmt-nix' \
                   || fail "evil-deep-treefmt (deep copy of treefmt-nix under a tool's tool — the discordsync → art-dupl_3 class) not flagged: $deepTreefmt"
+                echo "$deepTreefmt" | grep -Fq 'at input path toolA/toolB' \
+                  && echo "$deepTreefmt" | grep -Fq 'toolA.inputs.toolB.inputs.treefmt-nix.follows = ' \
+                  || fail "evil-deep-treefmt violation names neither its input path nor the paste-ready override (lock node keys are renumbered by relocks): $deepTreefmt"
+                echo "$deepTreefmtPaths" | grep -Fq 'at input paths toolA/toolB, toolC/toolB' \
+                  && echo "$deepTreefmtPaths" | grep -Fq 'toolA.inputs.toolB.inputs.treefmt-nix.follows = ' \
+                  && echo "$deepTreefmtPaths" | grep -Fq 'toolC.inputs.toolB.inputs.treefmt-nix.follows = ' \
+                  && echo "$deepTreefmtPaths" | grep -Fq 'no root input path reaches this node (orphan)' \
+                  || fail "evil-deep-treefmt-paths (one deep copy shared by two consumers + an orphan copy) does not list every consumer's override and the orphan fallback: $deepTreefmtPaths"
                 [ "$allowlisted" = "[]" ] || fail "deliberate-allowlisted edge flagged (qmd/discordsync class): $allowlisted"
                 echo "$stale" | grep -q 'matches no live edge' \
                   || fail "stale deliberate entry not flagged (table rot): $stale"
-                echo "lock-audit: 8 legs green (clean, dup, drift, infra-dup, alias-collision, deep-treefmt, allowlisted, stale-deliberate)"
+                echo "lock-audit: 9 legs green (clean, dup, drift, infra-dup, alias-collision, deep-treefmt, deep-treefmt-paths, allowlisted, stale-deliberate)"
                 touch $out
               '';
 

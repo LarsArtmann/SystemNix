@@ -1,0 +1,46 @@
+{
+  "version": 7,
+  "nodes": {
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "toolA": "toolA",
+        "toolC": "toolC",
+        "treefmt-nix": "treefmt-nix"
+      }
+    },
+    "nixpkgs": {
+      "locked": { "rev": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "type": "github" }
+    },
+    "orphanTool": {
+      "inputs": {
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": { "rev": "1111111111111111111111111111111111111111", "type": "github" }
+    },
+    "toolA": {
+      "inputs": {
+        "toolB": "toolB"
+      },
+      "locked": { "rev": "cccccccccccccccccccccccccccccccccccccccc", "type": "github" }
+    },
+    "toolB": {
+      "inputs": {
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": { "rev": "dddddddddddddddddddddddddddddddddddddddd", "type": "github" }
+    },
+    "toolC": {
+      "inputs": {
+        "toolB": "toolB"
+      },
+      "locked": { "rev": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "type": "github" }
+    },
+    "treefmt-nix": {
+      "locked": { "rev": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "type": "github" }
+    },
+    "treefmt-nix_2": {
+      "locked": { "rev": "ffffffffffffffffffffffffffffffffffffffff", "type": "github" }
+    }
+  }
+}

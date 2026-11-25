@@ -326,10 +326,11 @@ the box was not calm (see the live-state table).
 - **Empty reads taken as evidence:** `journalctl -b <8-char id>` (10-18), a silently broken
   `rg -o` (10-28), `pstore empty` that was permission-denied (#8–#15), `kill` reporting success
   without executing (10-15). Most are now rules in `AGENTS.md`.
-- **Fixes that caused the next problem:** `startLimitBurst=2` bricked browser-history-agent
-  during deploys (08-11 fix, re-fixed 08-18); the udev `hdparm` rule `d57c1210` is named in the
-  ledger as the root cause of the 2026-08-22 DAS USB drop; the 06-23 deploy caused an
-  emergency-mode boot (`discard=async` on ext4).
+- **Fixes that caused the next problem:** the 08-11 crash-loop fix `a1223f22` was never
+  deployed, and its start-limit keys sat in `[Service]`, where systemd 261+ ignores them, so
+  browser-history-agent restarted every ~18 s without limit `[R]`; the ledger names the udev
+  `hdparm` rule `d57c1210` as the root cause of the 2026-08-22 DAS USB drop; the 06-23 deploy
+  caused an emergency-mode boot (`discard=async` on ext4).
 
 ### F9. Before numbering, the same disease `[R]`
 
