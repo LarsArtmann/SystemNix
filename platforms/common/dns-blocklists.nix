@@ -253,6 +253,7 @@ in
     "pubads.g.doubleclick.net"
     "licensing.bitmovin.com"
     "smetrics.sbs.com.au"
+    "baidu.com"
   ];
 
   extraDomains = [

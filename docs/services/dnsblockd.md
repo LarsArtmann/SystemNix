@@ -35,7 +35,7 @@ the two host names are the ONLY legitimate case.
 **Failover asymmetry (pinned 2026-10-28, plan T13):** `rpi3-dns` imports the
 same module but is NOT a clone of evo-x2 — the render test now pins both the
 parity and the differences: same `:53` port, same `zero_ip` blocked-answer,
-same 77-entry permanent whitelist; DIFFERENT block IP (`.151` vs `.200`, so a
+same 78-entry permanent whitelist; DIFFERENT block IP (`.151` vs `.200`, so a
 client can tell which resolver answered), filter proxy OFF on rpi3, and
 `dnsRateLimitPerSec = 0` (unlimited) so a failover never throttles every
 client during an evo-x2 outage. Consequence to remember before enabling

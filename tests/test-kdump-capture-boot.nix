@@ -65,7 +65,7 @@ in
 
     with subtest("fixed: capture-path legs are present in the main boot"):
         fixed.succeed("grep -q crash_kexec_post_notifiers /proc/cmdline")
-        fixed.succeed("grep -q 'ConditionPathExists=!/proc/vmcore' /etc/systemd/system/systemd-sysctl.service")
+        fixed.succeed("grep -rq 'ConditionPathExists=!/proc/vmcore' /etc/systemd/system/systemd-sysctl.service /etc/systemd/system/systemd-sysctl.service.d/")
         fixed.succeed("systemctl is-active systemd-sysctl.service")
         fixed.fail("systemctl is-active --quiet kdump-capture-boot-sysctl.service")
 

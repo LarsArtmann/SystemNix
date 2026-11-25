@@ -320,7 +320,7 @@ kdump_capture_contract_section() {
   local unit_dir="$KDUMP_CURRENT_SYSTEM/etc/systemd/system"
   local params loaded_raw loaded=0 cmdline="" sysctl_text="" capture_text="" save_text="" verdict="" reservation=""
   local boot_epoch crash_since crash_newest="" pstore_newest="" evidence="" deploy_ok=no staged=no
-  local crash_epoch=0 pstore_epoch=0 crash_path="" pstore_path="" panic_lines=""
+  local crash_epoch=0 pstore_epoch=0 crash_path="" pstore_path="" panic_lines="" panic_text=""
   local -a opts legs
 
   loaded_raw="$(cat "$KDUMP_CRASH_LOADED_FILE" 2>/dev/null || true)"
@@ -429,8 +429,9 @@ kdump_capture_contract_section() {
   *capture*)
     if [ -r "$crash_path/vmcore-dmesg.txt" ]; then
       panic_lines="$(grep -m 3 -E 'Kernel panic|Oops|BUG:|general protection|soft lockup|hung_task|blocked for more than|Out of memory|Killed process' "$crash_path/vmcore-dmesg.txt" 2>/dev/null | cut -c1-200 || true)"
+      panic_text="${panic_lines//$'\n'/ | }"
     fi
-    report_warn "kdump capture evidence - NEW dump since the boot before this one: $crash_path; first panic lines: ${panic_lines:-none readable in vmcore-dmesg.txt (vmcore-dmesg failed? pstore is the fallback)}; triage: scripts/crash-triage.sh"
+    report_warn "kdump capture evidence - NEW dump since the boot before this one: $crash_path; first panic lines: ${panic_text:-none readable in vmcore-dmesg.txt (vmcore-dmesg failed? pstore is the fallback)}; triage: scripts/crash-triage.sh"
     ;;
   esac
   case "$evidence" in

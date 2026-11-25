@@ -22,7 +22,7 @@
 #      and NEVER the YAML (store is world-readable)
 #   8. rpi3-dns parity (2026-10-28, plan T13): the secondary host shares this
 #      module, so its DNS contract is pinned too — same port, same zero_ip
-#      response, same 77-entry whitelist — while its DELIBERATE divergences
+#      response, same 78-entry whitelist — while its DELIBERATE divergences
 #      are pinned just as hard (different block IP, filter proxy OFF, no rate
 #      limit). Asserted at EVAL level: rpi3-dns is aarch64-linux, so this
 #      x86_64 host cannot realize its rendered config file (no aarch64
@@ -581,8 +581,8 @@ let
       msg = "the two hosts must answer blocked names identically (a failover must not change what a block MEANS)";
     }
     {
-      ok = builtins.length rpi3.services.dns-blocker.whitelist == 77;
-      msg = "rpi3 whitelist drifted from the shared 77-entry list (the permanent allowlist is judgement data, not per-host state)";
+      ok = builtins.length rpi3.services.dns-blocker.whitelist == 78;
+      msg = "rpi3 whitelist drifted from the shared 78-entry list (the permanent allowlist is judgement data, not per-host state)";
     }
     {
       ok = rpi3.services.dns-blocker.blockIP != evox2.services.dns-blocker.blockIP;
