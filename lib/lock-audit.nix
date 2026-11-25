@@ -132,10 +132,7 @@ let
             let
               value = (nodes.${current}.inputs or { }).${name} or null;
             in
-            if builtins.isString value && !builtins.hasAttr value paths then
-              { inherit name value; }
-            else
-              null
+            if builtins.isString value && !builtins.hasAttr value paths then { inherit name value; } else null
           ) (builtins.attrNames (nodes.${current}.inputs or { }))
         );
       go =
@@ -144,21 +141,30 @@ let
           paths
         else
           let
-            step = builtins.foldl' (
-              acc: node:
-              let
-                found = discover acc.paths node;
-              in
-              {
-                paths = acc.paths // builtins.listToAttrs (
-                  builtins.map (edge: {
-                    name = edge.value;
-                    value = acc.paths.${node} ++ [ edge.name ];
-                  }) found
-                );
-                frontier = acc.frontier ++ builtins.map (edge: edge.value) found;
-              }
-            ) { frontier = [ ]; inherit paths; } frontier;
+            step =
+              builtins.foldl'
+                (
+                  acc: node:
+                  let
+                    found = discover acc.paths node;
+                  in
+                  {
+                    paths =
+                      acc.paths
+                      // builtins.listToAttrs (
+                        builtins.map (edge: {
+                          name = edge.value;
+                          value = acc.paths.${node} ++ [ edge.name ];
+                        }) found
+                      );
+                    frontier = acc.frontier ++ builtins.map (edge: edge.value) found;
+                  }
+                )
+                {
+                  frontier = [ ];
+                  inherit paths;
+                }
+                frontier;
           in
           go step.frontier step.paths;
     in
@@ -190,7 +196,8 @@ let
 
   showInputPath = names: builtins.concatStringsSep "/" names;
 
-  treefmtFollowsOverride = names:
+  treefmtFollowsOverride =
+    names:
     "${builtins.concatStringsSep ".inputs." names}.inputs.treefmt-nix.follows = \"treefmt-nix\";";
 
   inputPathLabel =
@@ -201,9 +208,9 @@ let
     if consumers == [ ] then
       ""
     else
-      " at input path${if builtins.length consumers == 1 then "" else "s"} ${
-        builtins.concatStringsSep ", " (builtins.map showInputPath consumers)
-      }";
+      " at input path${
+         if builtins.length consumers == 1 then "" else "s"
+       } ${builtins.concatStringsSep ", " (builtins.map showInputPath consumers)}";
 
   # Deep treefmt-nix guard (2026-10-14): every declared treefmt-nix edge
   # in the whole graph — not just root-owned ones — must resolve to the

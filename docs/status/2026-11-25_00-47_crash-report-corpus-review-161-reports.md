@@ -30,12 +30,13 @@
 Boot `b4931451` is the freeze-#63 recovery boot (up since 2026-11-24 20:46:44). It spent the
 whole review in the state the ledger calls "never-cooled":
 
-| Time | Tctl | io PSI some avg10 | load (1 m) | What was running |
-| ---- | ---- | ----------------- | ---------- | ---------------- |
-| 22:55 | (not read) | 98.2 % | 557 | 7 `ld.mold` linkers in D state, the top writer at 2.7 MB/s |
-| 00:00 | 90 °C | 40 % | 13 | calmest point of the session |
-| 00:43 | 99 °C | 32 % | 87 | 36 `crush` processes, 7 `java` (315 % CPU), 5 `go` (240 %), `govulncheck` (240 %), `buildflow` ×2, `shellcheck`, `execution.test`, six `btrfs-delayed-meta` kworkers in D state |
-| 00:47 | 98 °C | 36 % | 22 | 37 `crush` processes |
+| Time          | Tctl          | io PSI some avg10 | load (1 m) | What was running                                                                                                                                                                |     |     |     |     |     |     |
+| ------------- | ------------- | ----------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --- | --- | --- | --- | --- |
+| 22:55         | (not read)    | 98.2 %            | 557        | 7 `ld.mold` linkers in D state, the top writer at 2.7 MB/s                                                                                                                      |     |     |     |     |     |     |
+| 00:00         | 90 °C         | 40 %              | 13         | calmest point of the session                                                                                                                                                    |     |     |     |     |     |     |
+| 00:43         | 99 °C         | 32 %              | 87         | 36 `crush` processes, 7 `java` (315 % CPU), 5 `go` (240 %), `govulncheck` (240 %), `buildflow` ×2, `shellcheck`, `execution.test`, six `btrfs-delayed-meta` kworkers in D state |     |     |     |     |     |     |
+| 00:47         | 98 °C         | 36 %              | 22         | 37 `crush` processes                                                                                                                                                            |     |     |     |     |     |     |
+| 01:09 → 01:10 | 62 °C → 96 °C | 38 %              | 13         | 38 `crush` processes; this session's 2-second scoped `nix fmt` eval ran inside that minute                                                                                      |     |     |     |     |     |     |
 
 Five of the last recovery boots died 5 m 55 s to 7 h 57 m after boot while re-entering this
 state (#48 8 m, #53 5 m 55 s, #60 55 m, #40 3 h, #47 7 h 57 m). Nothing was stopped: the
@@ -76,26 +77,26 @@ until a known-value check (89 vs 1 host-crash blocks) exposed it.
 
 ### 2.1 Tiers
 
-| Tier | Files | What they are |
-| --- | ----- | ------------ |
-| host-crash | 100 | whole host froze, hard reset, watchdog reset, thermal trip, emergency-mode boot |
-| service-crashloop | 26 | discordsync (3), browser-history (2), nsfw-classifier (2), pma (2), cv-server (2), bank-sync, pocket-id, monitor365, llama-rag, netbird, clickhouse, homepage, helium, gatus panic, dex |
-| desktop-crash | 13 | niri black screens (4), helium (3), CS2, display watchdog sessions |
-| mechanism | 7 | causes without a crash event (OOM forensics, thermal-pstate-guard, memory guard) |
-| not-a-crash-report | 14 | crash incidental |
-| reference | 1 | `docs/crash-analysis-2026-08-09.md` |
+| Tier               | Files | What they are                                                                                                                                                                           |
+| ------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| host-crash         | 100   | whole host froze, hard reset, watchdog reset, thermal trip, emergency-mode boot                                                                                                         |
+| service-crashloop  | 26    | discordsync (3), browser-history (2), nsfw-classifier (2), pma (2), cv-server (2), bank-sync, pocket-id, monitor365, llama-rag, netbird, clickhouse, homepage, helium, gatus panic, dex |
+| desktop-crash      | 13    | niri black screens (4), helium (3), CS2, display watchdog sessions                                                                                                                      |
+| mechanism          | 7     | causes without a crash event (OOM forensics, thermal-pstate-guard, memory guard)                                                                                                        |
+| not-a-crash-report | 14    | crash incidental                                                                                                                                                                        |
+| reference          | 1     | `docs/crash-analysis-2026-08-09.md`                                                                                                                                                     |
 
 ### 2.2 Host-crash reports by what they say `[S]`
 
-| Field | Counts (of 100) |
-| --- | --- |
-| Kind | autopsy 50, self-review 24, triage 14, fix-wave 9, other 3 |
-| Root-cause confidence in the report | high 37, medium 48, low 6, contested 3, n/a 6 |
-| Reset as stated | watchdog 44, "hard reset" 17, unknown 16, owner power 8, thermal trip 7, software CF9 5, emergency mode 1 |
-| Family | combined storm + ceiling 25, IO livelock 24, thermal 13, memory cliff 8, zram full 5, emergency mode 3, other 22 |
-| Named trigger | agent session 35, autonomous service 22, unknown 22, deploy 11, system timer 8, owner manual 2 |
-| Fix verification at report time | **live-verified 19**, config-only 23, prescribed-only 37, committed-not-deployed 18, none 3 |
-| "An earlier report or row predicted this cut" | yes 54, no 39, unknown 5, n/a 2 |
+| Field                                         | Counts (of 100)                                                                                                  |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Kind                                          | autopsy 50, self-review 24, triage 14, fix-wave 9, other 3                                                       |
+| Root-cause confidence in the report           | high 37, medium 48, low 6, contested 3, n/a 6                                                                    |
+| Reset as stated                               | watchdog 44, "hard reset" 17, unknown 16, owner power 8, thermal trip 7, software CF9 5, emergency mode 1        |
+| Family                                        | combined storm + ceiling 25, IO livelock 24, thermal 13, memory cliff 8, zram full 5, emergency mode 3, other 22 |
+| Named trigger                                 | agent session 35, autonomous service 22, unknown 22, deploy 11, system timer 8, owner manual 2                   |
+| Fix verification at report time               | **live-verified 19**, config-only 23, prescribed-only 37, committed-not-deployed 18, none 3                      |
+| "An earlier report or row predicted this cut" | yes 54, no 39, unknown 5, n/a 2                                                                                  |
 
 Motif scan over the same 100 `[S]`: 59 mention a fix that never ran, was inert, undeployed or
 dead code; 48 mention a prediction; 30 mention a vacuumed or truncated journal; 25 an
@@ -103,82 +104,82 @@ unidentified actor; 11 a forced deploy; 8 a lost evidence bundle.
 
 ### 2.3 Numbered freezes (ledger order, local time)
 
-| # | Cut | Reset | Family | Named trigger |
-| --- | --- | --- | --- | --- |
-| 1 | 08-22 00:27:09 | owner power cut | zram full | flm 21.6 GB unevictable, nightly btrbk + nix-gc, ~12 agent sessions |
-| 2 | 08-22 05:49:56 | owner power cut | zram full | guard stopped the service, not the socket |
-| 3 | 08-31 16:34 | hard | IO livelock | four stacked full-disk readers |
-| 4 | 09-14 13:32 | hard | IO livelock | llama spin, session DBs on QLC, a stray `find` |
-| 5 | 09-18 15:27 | hard | IO livelock | all-day storm, llama-rag spin, deploy activation |
-| 6 | 09-18 19:28:11 | hard | IO livelock | recovery migration + db heal + ~27 sessions |
-| 7 | 09-29 09:51 | hard | scrub loop | weekly scrub restart loop, 432 trips |
-| 8 | 10-01 18:27:13 | thermal / hard | thermal | D-state wedge, drivers not sourced |
-| 9 | 10-01 18:56 | thermal / hard | thermal | never-cooled recovery boot |
-| 11 | 10-02 10:57:54 | thermal / hard | thermal | 3 h at 98–99 °C |
-| 12 | 10-03 14:14 | hard | thermal | 27 h clickhouse compile, gopls |
-| 13 | 10-04 03:36:03 | thermal | combined | tq-agent-pool +155 GB, nix bursts |
-| 14 | 10-04 05:07:41 | thermal | combined | nix burst, launcher unidentified |
-| 15 | 10-04 08:38:22 | thermal | combined | soak-unblock session-259, ~120 GB in 21 min |
-| 16 | 10-05 19:41:16 | thermal | thermal | with the pstate guard live |
-| 17 | 10-06 15:12:57 | thermal | thermal | a deploy against a written `[blocked:user]` gate |
-| 18 | 10-06 15:41:14 | thermal | thermal | 26 m recovery boot |
-| 19 | 10-06 21:08:23 | hard | IO collapse | rust-cache USB→USB rsync, first launch |
-| 20 | 10-06 21:50:42 | hard | IO collapse | third migration launch into a build battery |
-| 21 | 10-07 00:00:59 | hard | IO livelock | battery + migration ×4 + midnight nix-gc |
-| 22 | 10-07 00:58:02 | hard | IO livelock | a deploy's ungated validation battery |
-| 23 | 10-07 01:28:03 | hard | IO livelock | healthy memory |
-| 24 | 10-07 02:49:28 | hard | IO livelock | healthy memory |
-| 25 | 10-07 08:32:56 | hard | IO livelock | tq-pool ~864 GB reads |
-| 26 | 10-07 11:03:54 | hard | IO livelock | the SIGSTOP-sweep session |
-| 27 | 10-11 11:07:59 | hard | IO livelock | storm without the memory leg |
-| 28 | 10-12 13:04:01 | hard | combined | 46 OOM invocations on a chronic storm |
-| 29 | 10-15 02:17:32 | hard | combined | vendorHash-fleet storm |
-| 30 | 10-15 03:12:26 | hard | combined | owner-manual `btrfs balance` on the critical root |
-| 31 | 10-18 03:03:38 | watchdog | combined | died in guided throttle |
-| 32 | 10-20 14:40:30 | hard | combined | memory leg, 107 OOM lines |
-| 33 | 10-25 04:31:30 | hard | combined | 493 trips over 4.5 days |
-| 34 | 10-25 22:22:13 | watchdog | combined | 637 throttle enters |
-| 35 | 10-26 22:53:58 | watchdog | combined | 343 throttle enters |
-| 36 | 10-27 10:03:11 | watchdog | combined | +1.3 TB system.slice reads in one window, sdb at 100 % |
-| 37 | 10-28 00:40:38 | watchdog | combined | same pair as #36 |
-| 38 | 10-30 03:32:02 | watchdog | combined, memory-led | 38 OOM invocations |
-| 39 | 11-02 11:34:07 | watchdog | combined | deploy re-armed the owner-stopped llama-chat |
-| 40 | 11-02 14:42:00 | watchdog | combined | boot-time re-arm + forced deploy 9 min before |
-| 41 | 11-02 15:16:15 | watchdog | combined | 32 m recovery boot |
-| 42 | 11-02 22:07:23 | watchdog | combined | clickhouse at 100 % CPU |
-| 43 | 11-03 16:16:27 | watchdog | combined | memory-led finish |
-| 44 | 11-03 17:39:40 | watchdog | combined | recovery boot + parallel build battery |
-| 45 | 11-03 21:42 | watchdog | combined | tq-pool sqlite LIKE scans at 409 MB/s |
-| 46 | 11-04 19:04:30 | watchdog | combined | btrfs delayed-refs reclaim wedge |
-| 47 | 11-05 03:03 | watchdog | combined | cvagent wave + flm-real SIGABRT crash loop |
-| 48 | 11-05 03:13 | watchdog | combined | six GB-scale cold readers at T+120 s |
-| 49 | 11-05 20:36:40 | watchdog | combined | lint-fleet storm + two forced deploys |
-| 50 | 11-06 05:56:21 | watchdog | combined | all-night multi-session agent storm |
-| 51 | 11-07 01:06:21 | owner power cut | emergency mode | automount conflict; forced deploy after six refusals |
-| 52 | 11-14 09:20:19 | software CF9 | combined | morning agent storm; 8 failed deploy attempts |
-| 53 | 11-14 09:27:13 | watchdog | combined | 5 m 55 s recovery boot |
-| 54 | 11-14 15:41:18 | owner power button | combined, memory-led | `session-115.scope` 77.9 G, unidentified |
-| 55 | 11-15 02:24:48 | software CF9 | combined | never autopsied |
-| 56 | 11-17 15:10:56 | software CF9 | combined | storm + ceiling |
-| 57 | 11-17 21:01:48 | not pulled | unknown | planned reboot versus crash unresolved |
-| 58 | 11-19 00:08:48 | software CF9 | combined | io PSI 99 % from 23:55 |
-| 59 | 11-22 19:52:29 | software CF9 | combined | unattributed |
-| 60 | 11-22 20:48:35 | watchdog | combined | printer-monitor session in-window |
-| 61 | 11-23 05:53:51 | software CF9 | combined | zero session activity |
-| 62 | 11-23 21:12:17 | software CF9 | combined | zero session activity |
-| 63 | 11-24 20:44:18 | watchdog | combined | `cargo test` into a full rust-cache disk |
+| #   | Cut            | Reset              | Family               | Named trigger                                                       |
+| --- | -------------- | ------------------ | -------------------- | ------------------------------------------------------------------- |
+| 1   | 08-22 00:27:09 | owner power cut    | zram full            | flm 21.6 GB unevictable, nightly btrbk + nix-gc, ~12 agent sessions |
+| 2   | 08-22 05:49:56 | owner power cut    | zram full            | guard stopped the service, not the socket                           |
+| 3   | 08-31 16:34    | hard               | IO livelock          | four stacked full-disk readers                                      |
+| 4   | 09-14 13:32    | hard               | IO livelock          | llama spin, session DBs on QLC, a stray `find`                      |
+| 5   | 09-18 15:27    | hard               | IO livelock          | all-day storm, llama-rag spin, deploy activation                    |
+| 6   | 09-18 19:28:11 | hard               | IO livelock          | recovery migration + db heal + ~27 sessions                         |
+| 7   | 09-29 09:51    | hard               | scrub loop           | weekly scrub restart loop, 432 trips                                |
+| 8   | 10-01 18:27:13 | thermal / hard     | thermal              | D-state wedge, drivers not sourced                                  |
+| 9   | 10-01 18:56    | thermal / hard     | thermal              | never-cooled recovery boot                                          |
+| 11  | 10-02 10:57:54 | thermal / hard     | thermal              | 3 h at 98–99 °C                                                     |
+| 12  | 10-03 14:14    | hard               | thermal              | 27 h clickhouse compile, gopls                                      |
+| 13  | 10-04 03:36:03 | thermal            | combined             | tq-agent-pool +155 GB, nix bursts                                   |
+| 14  | 10-04 05:07:41 | thermal            | combined             | nix burst, launcher unidentified                                    |
+| 15  | 10-04 08:38:22 | thermal            | combined             | soak-unblock session-259, ~120 GB in 21 min                         |
+| 16  | 10-05 19:41:16 | thermal            | thermal              | with the pstate guard live                                          |
+| 17  | 10-06 15:12:57 | thermal            | thermal              | a deploy against a written `[blocked:user]` gate                    |
+| 18  | 10-06 15:41:14 | thermal            | thermal              | 26 m recovery boot                                                  |
+| 19  | 10-06 21:08:23 | hard               | IO collapse          | rust-cache USB→USB rsync, first launch                              |
+| 20  | 10-06 21:50:42 | hard               | IO collapse          | third migration launch into a build battery                         |
+| 21  | 10-07 00:00:59 | hard               | IO livelock          | battery + migration ×4 + midnight nix-gc                            |
+| 22  | 10-07 00:58:02 | hard               | IO livelock          | a deploy's ungated validation battery                               |
+| 23  | 10-07 01:28:03 | hard               | IO livelock          | healthy memory                                                      |
+| 24  | 10-07 02:49:28 | hard               | IO livelock          | healthy memory                                                      |
+| 25  | 10-07 08:32:56 | hard               | IO livelock          | tq-pool ~864 GB reads                                               |
+| 26  | 10-07 11:03:54 | hard               | IO livelock          | the SIGSTOP-sweep session                                           |
+| 27  | 10-11 11:07:59 | hard               | IO livelock          | storm without the memory leg                                        |
+| 28  | 10-12 13:04:01 | hard               | combined             | 46 OOM invocations on a chronic storm                               |
+| 29  | 10-15 02:17:32 | hard               | combined             | vendorHash-fleet storm                                              |
+| 30  | 10-15 03:12:26 | hard               | combined             | owner-manual `btrfs balance` on the critical root                   |
+| 31  | 10-18 03:03:38 | watchdog           | combined             | died in guided throttle                                             |
+| 32  | 10-20 14:40:30 | hard               | combined             | memory leg, 107 OOM lines                                           |
+| 33  | 10-25 04:31:30 | hard               | combined             | 493 trips over 4.5 days                                             |
+| 34  | 10-25 22:22:13 | watchdog           | combined             | 637 throttle enters                                                 |
+| 35  | 10-26 22:53:58 | watchdog           | combined             | 343 throttle enters                                                 |
+| 36  | 10-27 10:03:11 | watchdog           | combined             | +1.3 TB system.slice reads in one window, sdb at 100 %              |
+| 37  | 10-28 00:40:38 | watchdog           | combined             | same pair as #36                                                    |
+| 38  | 10-30 03:32:02 | watchdog           | combined, memory-led | 38 OOM invocations                                                  |
+| 39  | 11-02 11:34:07 | watchdog           | combined             | deploy re-armed the owner-stopped llama-chat                        |
+| 40  | 11-02 14:42:00 | watchdog           | combined             | boot-time re-arm + forced deploy 9 min before                       |
+| 41  | 11-02 15:16:15 | watchdog           | combined             | 32 m recovery boot                                                  |
+| 42  | 11-02 22:07:23 | watchdog           | combined             | clickhouse at 100 % CPU                                             |
+| 43  | 11-03 16:16:27 | watchdog           | combined             | memory-led finish                                                   |
+| 44  | 11-03 17:39:40 | watchdog           | combined             | recovery boot + parallel build battery                              |
+| 45  | 11-03 21:42    | watchdog           | combined             | tq-pool sqlite LIKE scans at 409 MB/s                               |
+| 46  | 11-04 19:04:30 | watchdog           | combined             | btrfs delayed-refs reclaim wedge                                    |
+| 47  | 11-05 03:03    | watchdog           | combined             | cvagent wave + flm-real SIGABRT crash loop                          |
+| 48  | 11-05 03:13    | watchdog           | combined             | six GB-scale cold readers at T+120 s                                |
+| 49  | 11-05 20:36:40 | watchdog           | combined             | lint-fleet storm + two forced deploys                               |
+| 50  | 11-06 05:56:21 | watchdog           | combined             | all-night multi-session agent storm                                 |
+| 51  | 11-07 01:06:21 | owner power cut    | emergency mode       | automount conflict; forced deploy after six refusals                |
+| 52  | 11-14 09:20:19 | software CF9       | combined             | morning agent storm; 8 failed deploy attempts                       |
+| 53  | 11-14 09:27:13 | watchdog           | combined             | 5 m 55 s recovery boot                                              |
+| 54  | 11-14 15:41:18 | owner power button | combined, memory-led | `session-115.scope` 77.9 G, unidentified                            |
+| 55  | 11-15 02:24:48 | software CF9       | combined             | never autopsied                                                     |
+| 56  | 11-17 15:10:56 | software CF9       | combined             | storm + ceiling                                                     |
+| 57  | 11-17 21:01:48 | not pulled         | unknown              | planned reboot versus crash unresolved                              |
+| 58  | 11-19 00:08:48 | software CF9       | combined             | io PSI 99 % from 23:55                                              |
+| 59  | 11-22 19:52:29 | software CF9       | combined             | unattributed                                                        |
+| 60  | 11-22 20:48:35 | watchdog           | combined             | printer-monitor session in-window                                   |
+| 61  | 11-23 05:53:51 | software CF9       | combined             | zero session activity                                               |
+| 62  | 11-23 21:12:17 | software CF9       | combined             | zero session activity                                               |
+| 63  | 11-24 20:44:18 | watchdog           | combined             | `cargo test` into a full rust-cache disk                            |
 
 #10 (2026-10-01 19:08) was defused and is not a cut. #51 and #54 are owner-ended wedges, so
 60 of the 62 are autonomous crash ends.
 
 ### 2.4 Rate
 
-| Period | Crash ends | Days | Rate |
-| --- | --- | --- | --- |
-| 2026-05-04 → 08-18 (before numbering) | 24 | 106 | 0.23/day |
-| 08-22 → 09-30 | 3 numbered + 4 un-numbered | 40 | 0.18/day |
-| October | 29 numbered + 4 un-numbered | 31 | 1.06/day |
-| 11-01 → 11-24 | 26 numbered | 24 | 1.08/day |
+| Period                                | Crash ends                  | Days | Rate     |
+| ------------------------------------- | --------------------------- | ---- | -------- |
+| 2026-05-04 → 08-18 (before numbering) | 24                          | 106  | 0.23/day |
+| 08-22 → 09-30                         | 3 numbered + 4 un-numbered  | 40   | 0.18/day |
+| October                               | 29 numbered + 4 un-numbered | 31   | 1.06/day |
+| 11-01 → 11-24                         | 26 numbered                 | 24   | 1.08/day |
 
 The step is on 2026-10-01: the thermal ceiling appears in the record (the #8 bullet's
 supersession note dates it to 2026-09-27) and the rate goes from 0.18 to about 1.07 per day.
@@ -192,19 +193,19 @@ is 2026-11-07 → 11-14 (7 d 8 h), then 08-31 → 09-14 (14 d, before the step).
 Three same-day reports numbered their own crash, and the ledger later gave that number to a
 different cut, so the same-day event lost its number:
 
-| Cut (local) | What the same-day source says | Where |
-| --- | --- | --- |
-| 2026-08-24 06:20:52 | "kernel freeze #3 … 4th freeze in 3 days" (ledger #3 is 08-31) | `archived/2026-08-24_08-00_crash3-balance-freeze-das-absent-io-diagnosis.md` |
-| 2026-09-15 09:32:38 | "Freeze #5 … hard reset" (ledger #5 is 09-18) | `archived/2026-09-15_10-45_freeze-5-diagnosis-io-psi-livelock-13h-storm-git-repair.md` |
-| 2026-10-04 ~09:32 | "FREEZE #16 CONFIRMED: the 08:39 boot died ~09:32" (ledger #16 is 10-05 19:41) | `2026-10-04_10-50_freeze-15-session-brutal-self-review-…`, and the #16/#17 autopsy's "boot -2 (Oct 04 09:32:34 → …)" |
+| Cut (local)         | What the same-day source says                                                  | Where                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-24 06:20:52 | "kernel freeze #3 … 4th freeze in 3 days" (ledger #3 is 08-31)                 | `archived/2026-08-24_08-00_crash3-balance-freeze-das-absent-io-diagnosis.md`                                         |
+| 2026-09-15 09:32:38 | "Freeze #5 … hard reset" (ledger #5 is 09-18)                                  | `archived/2026-09-15_10-45_freeze-5-diagnosis-io-psi-livelock-13h-storm-git-repair.md`                               |
+| 2026-10-04 ~09:32   | "FREEZE #16 CONFIRMED: the 08:39 boot died ~09:32" (ledger #16 is 10-05 19:41) | `2026-10-04_10-50_freeze-15-session-brutal-self-review-…`, and the #16/#17 autopsy's "boot -2 (Oct 04 09:32:34 → …)" |
 
 Five more were never numbered:
 
-| Cut (local) | Boot | Note | Where |
-| --- | --- | --- | --- |
-| 2026-09-27 17:54 and ~20:28 | — | "BOTH hard cuts … at Tctl ceiling" | #8 bullet in `docs/agents/stability.md`; `2026-10-26_08-19_task-…_stability-batch-sep27-archaeology.md` |
-| 2026-10-10 | — | "Five boots in 6 days (Oct 7 ×2, Oct 10, Oct 11, Oct 12), all hard-cut endings" | `2026-10-12_13-15_freeze-28-crash-diagnosis-session-status.md` |
-| 2026-10-18 00:40:44, plus one more that night | `ee085387` | "daecca67 was the night's third freeze-class boot end" | `2026-10-18_00-58_boot-ee085387-thermal-trip-crash-diagnosis-selfreview.md`, `2026-10-18_04-18_status-update-…` |
+| Cut (local)                                   | Boot       | Note                                                                            | Where                                                                                                           |
+| --------------------------------------------- | ---------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 2026-09-27 17:54 and ~20:28                   | —          | "BOTH hard cuts … at Tctl ceiling"                                              | #8 bullet in `docs/agents/stability.md`; `2026-10-26_08-19_task-…_stability-batch-sep27-archaeology.md`         |
+| 2026-10-10                                    | —          | "Five boots in 6 days (Oct 7 ×2, Oct 10, Oct 11, Oct 12), all hard-cut endings" | `2026-10-12_13-15_freeze-28-crash-diagnosis-session-status.md`                                                  |
+| 2026-10-18 00:40:44, plus one more that night | `ee085387` | "daecca67 was the night's third freeze-class boot end"                          | `2026-10-18_00-58_boot-ee085387-thermal-trip-crash-diagnosis-selfreview.md`, `2026-10-18_04-18_status-update-…` |
 
 Two are numbered only in TODO rows and have no ledger row: #57 (`783f2d13`, 2026-11-17
 21:01:48) and #58 (`cd60fc6b`, 2026-11-19 00:08:48).
@@ -259,12 +260,12 @@ Memory reclaim on one ext4 filesystem enters the ext4 journal and then asks the 
 allocator for a buffer. The only ext4 filesystem on the host is `/mnt/buildcache`
 (`/dev/sdb1`, `rw,noatime,lazytime,commit=120,data=writeback`, the USB buildcache SSD).
 
-| Dead boot | Freeze | Warning time | Before the cut |
-| --- | --- | --- | --- |
-| `cd60fc6b` | #58 | 2026-11-18 10:46:14 | 13.4 h |
-| `69ee350d` | #60 | 2026-11-22 20:40:09 | 8.5 min |
-| `3aa71817` | #61 | 2026-11-23 05:33:49 | 20 min |
-| `7096665b`, `783f2d13`, `e5cad2ec`, `a95832c5`, `27ec3ede` | #56, #57, #59, #62, #63 | none | |
+| Dead boot                                                  | Freeze                  | Warning time        | Before the cut |
+| ---------------------------------------------------------- | ----------------------- | ------------------- | -------------- |
+| `cd60fc6b`                                                 | #58                     | 2026-11-18 10:46:14 | 13.4 h         |
+| `69ee350d`                                                 | #60                     | 2026-11-22 20:40:09 | 8.5 min        |
+| `3aa71817`                                                 | #61                     | 2026-11-23 05:33:49 | 20 min         |
+| `7096665b`, `783f2d13`, `e5cad2ec`, `a95832c5`, `27ec3ede` | #56, #57, #59, #62, #63 | none                |                |
 
 Zero mentions anywhere in the repo (`grep -r '__alloc_frozen_pages\|page_alloc.c'` over docs
 and TODO). It is a marker, not a proven cause. It appeared 8.5 and 20 minutes ahead of two
@@ -374,14 +375,14 @@ all through #47's boot; the 7-day calm gap of 2026-11-07 → 11-14.
 `WARN: 133 queue/library entry drift(s)`, `WARN: 102 unharvested §f-bearing report(s)`. The two
 WARNs predate this review. Six of the 102 are crash reports:
 
-| Report | Open follow-ups the gate sees no surface for |
-| --- | --- |
-| `2026-11-14_16-17_crash-loop-fix-wave-brutal-selfreview.md` | deploy the wave in a calm window + verification battery; attribute x2dx2 ×14 and cvagent ×4 restarts; crash-loop alert leg; push 26 commits |
-| `2026-11-14_16-55_psi-band-80-enrollment-storm-reboot-forensics.md` | band 80 + enrollment deploy not fired; cvagent P0 fix; shadow-bundle sweep ruling |
-| `2026-11-14_18-30_crash-loop-followup-brutal-selfreview-status.md` | verification battery 4/4 unrun; runner loop fix; 28+ commits unpushed |
-| `2026-11-15_09-35_night-deploy-marathon-gens1008-1011.md` | immich converger deeper verify; it also records no freeze although #55 cut at 02:24:48 mid-session |
-| `2026-11-17_17-44_freeze-56-fix-wave-closeout-session-status.md` | deploy + proof battery; kdump observability; boot-evidence pull for `7096665b`; storm-admission policy |
-| `2026-11-24_22-10_rust-cache-wave-continuation-evidence-census-self-review.md` | deploy the wave; CH ingest-stall forensics; guard no-match era; concurrent-session load guard |
+| Report                                                                         | Open follow-ups the gate sees no surface for                                                                                                |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2026-11-14_16-17_crash-loop-fix-wave-brutal-selfreview.md`                    | deploy the wave in a calm window + verification battery; attribute x2dx2 ×14 and cvagent ×4 restarts; crash-loop alert leg; push 26 commits |
+| `2026-11-14_16-55_psi-band-80-enrollment-storm-reboot-forensics.md`            | band 80 + enrollment deploy not fired; cvagent P0 fix; shadow-bundle sweep ruling                                                           |
+| `2026-11-14_18-30_crash-loop-followup-brutal-selfreview-status.md`             | verification battery 4/4 unrun; runner loop fix; 28+ commits unpushed                                                                       |
+| `2026-11-15_09-35_night-deploy-marathon-gens1008-1011.md`                      | immich converger deeper verify; it also records no freeze although #55 cut at 02:24:48 mid-session                                          |
+| `2026-11-17_17-44_freeze-56-fix-wave-closeout-session-status.md`               | deploy + proof battery; kdump observability; boot-evidence pull for `7096665b`; storm-admission policy                                      |
+| `2026-11-24_22-10_rust-cache-wave-continuation-evidence-census-self-review.md` | deploy the wave; CH ingest-stall forensics; guard no-match era; concurrent-session load guard                                               |
 
 Stale rows found: "kdump dump-dir missing: /var/crash does not exist" (the directory has
 existed since 2026-11-19 14:44) and "Freeze #55 full autopsy from aging journal evidence"
@@ -410,6 +411,10 @@ Historical reports were not edited.
    unit history, per-boot warning counts, boot index, journal usage).
 5. Ledger corrections 1–3 and TODO edits 4–5, re-read after edit; TODO gate re-run after them
    (`OK`, WARN counts unchanged at 133 and 102).
+6. Scoped formatter on the four touched files: `nix fmt -- --fail-on-change <files>` reports
+   `formatted 4 files (0 changed)` on the 01:10 retry. The 01:05 attempt failed before
+   formatting on another session's in-flight `tracking-papers` flake input (infra-follows audit),
+   which had landed by the retry.
 
 ## b) PARTIALLY DONE
 
@@ -457,15 +462,15 @@ Historical reports were not edited.
 
 ## f) NEXT (session-harvested; every row cites this report)
 
-| # | Row | Surface |
-| --- | --- | --- |
-| 1 | Make kdump capture one cut (updated: armed since 2026-11-22 19:53, #61/#62 no capture, controlled-panic test, CF9 label caveat) | `TODO_LIST.md` + `docs/todo/stability.md` |
-| 2 | NEW Alert on and decode the kswapd0 page-allocator warning | `TODO_LIST.md` + `docs/todo/stability.md` |
-| 3 | Freeze-ledger backfill (updated: four un-pulled boots still indexed, journal at 7 G/8 G) | `TODO_LIST.md` + `docs/todo/stability.md` |
-| 4 | NEW `[decision]` Number the un-numbered crash boundaries or rule them permanently un-numbered; annotate #3/#5/#16 in place | `TODO_LIST.md` + `docs/todo/stability.md` |
-| 5 | Two stale `[blocked:user]` rows annotated (#55 autopsy, kdump dump-dir) | `docs/todo/stability.md` only |
-| 6 | Six unharvested crash reports: deliberately not harvested here. The standing sweep rows ("Run a dedicated unharvested-§f-report sweep", "Close the unharvested-backlog count") own the class. | existing rows |
-| 7 | Parallel-agent-session concurrency cap `[decision]`: not re-rowed. §4 and §2.2 are the evidence it was waiting for. | `docs/todo/stability.md:17` |
+| #   | Row                                                                                                                                                                                           | Surface                                   |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| 1   | Make kdump capture one cut (updated: armed since 2026-11-22 19:53, #61/#62 no capture, controlled-panic test, CF9 label caveat)                                                               | `TODO_LIST.md` + `docs/todo/stability.md` |
+| 2   | NEW Alert on and decode the kswapd0 page-allocator warning                                                                                                                                    | `TODO_LIST.md` + `docs/todo/stability.md` |
+| 3   | Freeze-ledger backfill (updated: four un-pulled boots still indexed, journal at 7 G/8 G)                                                                                                      | `TODO_LIST.md` + `docs/todo/stability.md` |
+| 4   | NEW `[decision]` Number the un-numbered crash boundaries or rule them permanently un-numbered; annotate #3/#5/#16 in place                                                                    | `TODO_LIST.md` + `docs/todo/stability.md` |
+| 5   | Two stale `[blocked:user]` rows annotated (#55 autopsy, kdump dump-dir)                                                                                                                       | `docs/todo/stability.md` only             |
+| 6   | Six unharvested crash reports: deliberately not harvested here. The standing sweep rows ("Run a dedicated unharvested-§f-report sweep", "Close the unharvested-backlog count") own the class. | existing rows                             |
+| 7   | Parallel-agent-session concurrency cap `[decision]`: not re-rowed. §4 and §2.2 are the evidence it was waiting for.                                                                           | `docs/todo/stability.md:17`               |
 
 ## g) Owner questions
 
