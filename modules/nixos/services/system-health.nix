@@ -2139,7 +2139,9 @@ _: {
               fi
               churn=0
               if [ "$cur_r" -ge ${toString restartChurnThreshold} ] 2>/dev/null; then
-                if [ "$last_g" -gt 0 ] && [ $((NOW_EPOCH - last_g)) -lt ${toString (restartChurnQuietMinutes * 60)} ]; then
+                if [ "$last_g" -gt 0 ] && [ $((NOW_EPOCH - last_g)) -lt ${
+                  toString (restartChurnQuietMinutes * 60)
+                } ]; then
                   churn=1
                   ANY_CHURN=1
                 fi
