@@ -1,7 +1,8 @@
 # SUPERB: ai-meter rate-limit relief and Forgejo extraction
 
-**Written:** 2026-11-25 06:04 CET (`date`), boot `b4931451`, HEAD `dc4a8ee69`, branch in sync with origin, tree clean.
-**Status:** PLAN (not executing). `scripts/plan-marker.sh <this file> start <instance>` is owed before any execution session.
+**Created:** 2026-11-25 06:04 CET (`date`), boot `b4931451`, HEAD `dc4a8ee69`, branch in sync with origin, tree clean.
+**EXECUTING (instance aimeter-exec-0621, 2026-11-25 06:22 CET, HEAD `07b83e5a1`):** executing (see AGENTS.md plan-execution tombstone)
+**Status:** EXECUTING (tombstone line below; `scripts/plan-marker.sh <this file> done <instance>` closes it).
 **Scope line:** two efforts the owner asked for in one session, in the order that pays soonest: (1) stop the z.ai rate-limit failures that kill Crush turns, (2) move ai-meter out of SystemNix into its own Forgejo repo with a GitHub twin.
 **Related:** [v6 backlog masterplan](./2026-11-25_00-06_SUPERB-backlog-masterplan-v6.md) (queue shape), [status 2026-11-25 05:26](../status/2026-11-25_05-26_ai-meter-span-export-live-native-ai-observability-verified-dashboard-rewrite-not-started.md) (the parallel ai-meter work this plan builds on), [runbook](../services/ai-meter.md), [Forgejo runbook, canonical repos](../services/forgejo.md).
 
