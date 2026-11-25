@@ -82,10 +82,10 @@ type Registry struct {
 	inflight     map[inflightKey]float64
 
 	admission       map[string]admissionGauge
-	admissionWait    map[string]float64
-	admissionWaited  map[string]float64
-	admissionKept    map[string]float64
-	admissions       map[admissionKey]float64
+	admissionWait   map[string]float64
+	admissionWaited map[string]float64
+	admissionKept   map[string]float64
+	admissions      map[admissionKey]float64
 	rejections      map[rejectionKey]float64
 
 	unauthorized   float64
@@ -130,10 +130,10 @@ func NewRegistry() *Registry {
 		ttftCount:       map[durKey]float64{},
 		inflight:        map[inflightKey]float64{},
 		admission:       map[string]admissionGauge{},
-		admissionWait:    map[string]float64{},
-		admissionWaited:  map[string]float64{},
-		admissionKept:    map[string]float64{},
-		admissions:       map[admissionKey]float64{},
+		admissionWait:   map[string]float64{},
+		admissionWaited: map[string]float64{},
+		admissionKept:   map[string]float64{},
+		admissions:      map[admissionKey]float64{},
 		rejections:      map[rejectionKey]float64{},
 		spanExports:     map[string]float64{},
 		startTime:       time.Now(),

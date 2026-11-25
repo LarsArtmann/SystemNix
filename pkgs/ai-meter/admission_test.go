@@ -32,13 +32,20 @@ func testAdmission() AdmissionConfig {
 	}
 }
 
-// clockedGate is a gate whose time the test moves with a pointer.
+// clockedGate is a gate whose time the test moves with a pointer. The clock
+// starts an hour ahead of the real one: a call's wait budget is a real
+// deadline, and must not have passed before the test begins.
 func clockedGate(cfg AdmissionConfig) (*Gate, *time.Time) {
 	g := NewGate("fake", cfg, NewRegistry(), quietLogger())
-	clock := time.Date(2026, 11, 25, 12, 0, 0, 0, time.UTC)
+	clock := time.Now().Add(time.Hour).UTC().Truncate(time.Second)
 	g.now = func() time.Time { return clock }
 	g.changedAt = clock
 	return g, &clock
+}
+
+// openAt starts a call that arrived at at, with bytes no other call shares.
+func (g *Gate) openAt(at time.Time) *pending {
+	return g.open(at, arrivalKeyOf("crush", []byte(at.Format(time.RFC3339Nano))))
 }
 
 func (g *Gate) allowance() int {
@@ -56,7 +63,7 @@ func (g *Gate) snapshot() (inflight, waiting int) {
 // takeAndRelease runs one call through the gate without waiting.
 func takeAndRelease(t *testing.T, g *Gate) {
 	t.Helper()
-	if _, err := g.acquire(context.Background(), false); err != nil {
+	if _, err := g.acquire(context.Background(), g.now()); err != nil {
 		t.Fatalf("acquire: %v", err)
 	}
 	g.Release()
@@ -167,16 +174,17 @@ func TestGateStopsAtItsFloorAndStillWaitsBeforeItProbes(t *testing.T) {
 func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
 	cfg := testAdmission()
 	cfg.MaxConcurrency = 1
-	g, _ := clockedGate(cfg)
+	g, clock := clockedGate(cfg)
+	base := *clock
 	ctx := context.Background()
-	if waited, err := g.acquire(ctx, false); err != nil || waited {
+	if waited, err := g.acquire(ctx, base); err != nil || waited {
 		t.Fatalf("acquire within the allowance: waited %t, err %v", waited, err)
 	}
 
 	admitted := make(chan int, 3)
 	for i := 3; i <= 5; i++ {
 		go func() {
-			if _, err := g.acquire(ctx, false); err != nil {
+			if _, err := g.acquire(ctx, base.Add(time.Duration(i)*time.Second)); err != nil {
 				t.Errorf("queued acquire: %v", err)
 			}
 			admitted <- i
@@ -209,19 +217,24 @@ func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
 	}
 }
 
-func TestGateRetryRejoinsAheadOfTheQueue(t *testing.T) {
+func TestGateQueueIsOrderedByFirstArrivalNotByQueueing(t *testing.T) {
 	cfg := testAdmission()
 	cfg.MaxConcurrency = 1
-	g, _ := clockedGate(cfg)
+	g, clock := clockedGate(cfg)
+	base := *clock
 	ctx := context.Background()
-	if _, err := g.acquire(ctx, false); err != nil {
+	if _, err := g.acquire(ctx, base); err != nil {
 		t.Fatal(err)
 	}
 	admitted := make(chan string, 2)
-	later := make(chan struct{})
+
+	// A call the proxy sent back arrives again. It first came before the
+	// fresh call, queues after it, and must still be ahead of it.
+	retried := g.openAt(base.Add(time.Second))
+	fresh := g.openAt(base.Add(2 * time.Second))
 	go func() {
-		if _, err := g.acquire(ctx, false); err != nil {
-			t.Errorf("acquire: %v", err)
+		if _, err := fresh.enter(ctx); err != nil {
+			t.Errorf("fresh call: %v", err)
 		}
 		admitted <- "fresh"
 	}()
@@ -230,25 +243,164 @@ func TestGateRetryRejoinsAheadOfTheQueue(t *testing.T) {
 		return waiting == 1
 	})
 	go func() {
-		close(later)
-		if _, err := g.acquire(ctx, true); err != nil {
-			t.Errorf("acquire: %v", err)
+		if _, err := retried.enter(ctx); err != nil {
+			t.Errorf("retried call: %v", err)
 		}
-		admitted <- "retry"
+		admitted <- "retried"
 	}()
-	<-later
-	awaitFor(t, "the retry to queue", func() bool {
+	awaitFor(t, "the retried call to queue", func() bool {
 		_, waiting := g.snapshot()
 		return waiting == 2
 	})
 
 	g.Release()
-	if got := <-admitted; got != "retry" {
-		t.Fatalf("%s was admitted first, want the retry ahead of the call that queued before it", got)
+	if got := <-admitted; got != "retried" {
+		t.Fatalf("%s was admitted first, want the call with the earlier first arrival", got)
 	}
 	g.Release()
 	if got := <-admitted; got != "fresh" {
 		t.Fatalf("%s was admitted second", got)
+	}
+	retried.leave()
+	fresh.leave()
+}
+
+func TestGateACallTheClientSendsAgainKeepsItsFirstArrival(t *testing.T) {
+	g, clock := clockedGate(testAdmission())
+	base := *clock
+	body := []byte("the same call")
+	key := arrivalKeyOf("crush", body)
+
+	first := g.open(base, key)
+	again := g.open(base.Add(20*time.Second), key)
+	if !first.arrived.Equal(base) || !again.arrived.Equal(base) {
+		t.Fatalf("a call sent again arrived at %v, want its first arrival %v", again.arrived, base)
+	}
+	if !again.deadline.Equal(base.Add(50 * time.Second)) {
+		t.Fatalf("a call sent again ends its budget at %v, want %v: the budget starts anew", again.deadline, base.Add(50*time.Second))
+	}
+
+	for name, other := range map[string]*pending{
+		"other bytes":  g.open(base.Add(20*time.Second), arrivalKeyOf("crush", []byte("another call"))),
+		"other client": g.open(base.Add(20*time.Second), arrivalKeyOf("cv", body)),
+		"a day later":  g.open(base.Add(arrivalMemory+time.Second), key),
+	} {
+		if !other.arrived.Equal(other.deadline.Add(-g.cfg.MaxWait)) {
+			t.Errorf("%s: arrived at %v, want its own arrival", name, other.arrived)
+		}
+	}
+}
+
+func TestGateRemembersOnlySoManyFirstArrivals(t *testing.T) {
+	g, _ := clockedGate(testAdmission())
+	base := time.Now().Add(time.Hour)
+	key := func(n int) arrivalKey { return arrivalKeyOf("crush", []byte(strconv.Itoa(n))) }
+	for n := range maxArrivals + 1 {
+		g.open(base.Add(time.Duration(n)*time.Millisecond), key(n))
+	}
+
+	// The ring gave the oldest call's place to the newest one. The others
+	// are still remembered, and re-learning the oldest forgets the next in
+	// line.
+	for n, at := range map[int]time.Duration{1: time.Millisecond, maxArrivals: time.Duration(maxArrivals) * time.Millisecond} {
+		if got := g.open(base.Add(time.Minute), key(n)).arrived; !got.Equal(base.Add(at)) {
+			t.Errorf("arrival %d was forgotten: %v", n, got)
+		}
+	}
+	if got := g.open(base.Add(time.Minute), key(0)).arrived; !got.Equal(base.Add(time.Minute)) {
+		t.Errorf("the oldest arrival is still remembered: %v", got)
+	}
+	if got := g.open(base.Add(2*time.Minute), key(1)).arrived; !got.Equal(base.Add(2 * time.Minute)) {
+		t.Errorf("the ring did not give arrival 1's place away: %v", got)
+	}
+	if len(g.arrivalAt) > maxArrivals {
+		t.Errorf("the gate remembers %d arrivals, want at most %d", len(g.arrivalAt), maxArrivals)
+	}
+}
+
+func TestGateARaisedAllowanceGoesToTheLongestWaitingCall(t *testing.T) {
+	cfg := testAdmission()
+	cfg.MaxConcurrency, cfg.MinConcurrency = 2, 1
+	g, clock := clockedGate(cfg)
+	base := *clock
+	ctx := context.Background()
+	g.rejected()
+	if got := g.allowance(); got != 1 {
+		t.Fatalf("allowance = %d, want 1", got)
+	}
+	if _, err := g.acquire(ctx, base); err != nil {
+		t.Fatal(err)
+	}
+
+	waiting := make(chan struct{}, 2)
+	go func() {
+		if _, err := g.acquire(ctx, base.Add(time.Second)); err != nil {
+			t.Errorf("the waiting call: %v", err)
+		}
+		waiting <- struct{}{}
+	}()
+	awaitFor(t, "the call to queue", func() bool {
+		_, n := g.snapshot()
+		return n == 1
+	})
+
+	// A quiet interval later a new call arrives. The allowance grows by one,
+	// and the free slot is the waiting call's, not the new arrival's.
+	late := base.Add(cfg.GrowAfter + time.Second)
+	*clock = late
+	go func() {
+		if _, err := g.acquire(ctx, late); err != nil {
+			t.Errorf("the late call: %v", err)
+		}
+		waiting <- struct{}{}
+	}()
+	awaitFor(t, "the waiting call to be admitted by the raised allowance", func() bool {
+		select {
+		case <-waiting:
+			return true
+		default:
+			return false
+		}
+	})
+	awaitFor(t, "the late call to queue", func() bool {
+		_, n := g.snapshot()
+		return n == 1
+	})
+	if inflight, n := g.snapshot(); inflight != 2 || n != 1 || g.allowance() != 2 {
+		t.Fatalf("in flight %d, waiting %d, allowance %d; want 2, 1, 2", inflight, n, g.allowance())
+	}
+
+	g.Release()
+	select {
+	case <-waiting:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the late call was never admitted")
+	}
+	g.Release()
+	g.Release()
+	if inflight, n := g.snapshot(); inflight != 0 || n != 0 {
+		t.Fatalf("after every call left: in flight %d, waiting %d", inflight, n)
+	}
+}
+
+func TestArrivalKeyTellsClientsAndBodiesApart(t *testing.T) {
+	want := arrivalKeyOf("crush", []byte("x"))
+	if arrivalKeyOf("crush", []byte("x")) != want {
+		t.Fatal("the same client and bytes gave two keys")
+	}
+	for name, other := range map[string]arrivalKey{
+		"other client":     arrivalKeyOf("cv", []byte("x")),
+		"other bytes":      arrivalKeyOf("crush", []byte("y")),
+		"longer name":      arrivalKeyOf("crush\x00x", []byte("")),
+		"empty body":       arrivalKeyOf("crush", nil),
+		"shifted boundary": arrivalKeyOf("crush\x00a", []byte("b")),
+	} {
+		if other == want {
+			t.Errorf("%s: same key", name)
+		}
+	}
+	if arrivalKeyOf("crush\x00a", []byte("b")) == arrivalKeyOf("crush", []byte("\x00ab")) {
+		t.Error("a client name and the bytes after it can spell the same call")
 	}
 }
 
@@ -264,7 +416,7 @@ func TestGateACallThatGivesUpLeavesNoSlotBehind(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	queued := make(chan error, 1)
 	go func() {
-		_, err := g.acquire(ctx, false)
+		_, err := g.acquire(ctx, g.now())
 		queued <- err
 	}()
 	awaitFor(t, "the call to queue", func() bool {
@@ -297,7 +449,7 @@ func TestGateLosesNoSlotWhenCallsGiveUpWhileSlotsAreHandedOn(t *testing.T) {
 			defer wg.Done()
 			callCtx, cancel := context.WithTimeout(ctx, time.Duration(n%7)*time.Millisecond)
 			defer cancel()
-			waited, err := g.acquire(callCtx, n%5 == 0)
+			waited, err := g.acquire(callCtx, time.Now().Add(-time.Duration(n)*time.Millisecond))
 			if err != nil {
 				return
 			}
@@ -348,7 +500,7 @@ func TestPendingIsNotSentWhileTheQuotaIsSpent(t *testing.T) {
 	base := *clock
 	g.exhausted(base.Add(time.Hour), []byte("quota"), "application/json", "1308")
 
-	call := g.open(base)
+	call := g.openAt(base)
 	err := call.enter(context.Background())
 	var quota *quotaRejection
 	if !errors.As(err, &quota) || !quota.until.Equal(base.Add(time.Hour)) || string(quota.body) != "quota" {
@@ -369,7 +521,7 @@ func TestPendingWaitsForAResetWithinItsBudget(t *testing.T) {
 	// The reset lands inside the budget: the call waits for it and is sent.
 	g.exhausted(base.Add(2*time.Second), []byte("quota"), "application/json", "1308")
 	*clock = base.Add(2*time.Second - 20*time.Millisecond)
-	call := g.open(base)
+	call := g.openAt(*clock)
 	if err := call.enter(context.Background()); err != nil {
 		t.Fatalf("enter = %v, want a slot once the window reset", err)
 	}
@@ -381,7 +533,7 @@ func TestPendingWaitsForAResetWithinItsBudget(t *testing.T) {
 	// Past the reset the circuit stays closed, whatever it knew.
 	g.exhausted(base.Add(4*time.Second), []byte("quota"), "application/json", "1308")
 	*clock = base.Add(5 * time.Second)
-	call = g.open(*clock)
+	call = g.openAt(*clock)
 	if err := call.enter(context.Background()); err != nil {
 		t.Fatalf("enter after the reset = %v", err)
 	}
@@ -393,10 +545,10 @@ func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 	cfg := testAdmission()
 	cfg.MaxConcurrency, cfg.MaxWait = 1, 20*time.Millisecond
 	short := NewGate("short", cfg, NewRegistry(), quietLogger())
-	if _, err := short.acquire(ctx, false); err != nil {
+	if _, err := short.acquire(ctx, time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	call := short.open(time.Now())
+	call := g.openAt(time.Now())
 	started := time.Now()
 	if err := call.enter(ctx); !errors.Is(err, errAdmissionTimeout) {
 		t.Fatalf("enter = %v, want the wait budget to run out", err)
@@ -415,7 +567,7 @@ func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 
 func TestPendingBackoffGrowsToItsCeilingAndStaysInItsRange(t *testing.T) {
 	g, _ := clockedGate(testAdmission())
-	call := g.open(time.Now())
+	call := g.openAt(time.Now())
 	for rejection := 1; rejection <= 9; rejection++ {
 		call.rejected = rejection
 		ceiling := min(retryBase<<min(rejection-1, maxRetriesForBackoff), retryCeiling)
@@ -532,24 +684,84 @@ func TestPendingHonorsAShortRetryAfterAndDefersALongOneToTheClient(t *testing.T)
 	g, clock := clockedGate(testAdmission())
 	header := http.Header{}
 	header.Set("Retry-After", strconv.Itoa(int((maxHonoredRetryAfter+time.Second)/time.Second)))
-	call := g.open(*clock)
+	call := g.openAt(*clock)
 	call.rejected = 1
-	if call.pause(context.Background(), header) {
-		t.Fatalf("a Retry-After above %v was waited out", maxHonoredRetryAfter)
+	if err := call.pause(context.Background(), header); !errors.Is(err, errRetryAfterTooLong) {
+		t.Fatalf("a Retry-After above %v: pause = %v, want %v", maxHonoredRetryAfter, err, errRetryAfterTooLong)
 	}
 
 	header.Set("Retry-After", "0")
-	call = g.open(*clock)
+	call = g.openAt(*clock)
 	call.rejected = 1
-	if !call.pause(context.Background(), header) {
-		t.Fatal("a zero Retry-After was not honored")
+	if err := call.pause(context.Background(), header); err != nil {
+		t.Fatalf("a zero Retry-After was not honored: %v", err)
 	}
 
-	expired := g.open(clock.Add(-time.Hour))
+	expired := g.openAt(clock.Add(-time.Hour))
 	expired.rejected = 1
-	if expired.pause(context.Background(), nil) {
-		t.Fatal("a call past its budget was paused for a retry")
+	if err := expired.pause(context.Background(), nil); !errors.Is(err, errAdmissionTimeout) {
+		t.Fatalf("a call past its budget: pause = %v, want the budget to end it", err)
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	call = g.openAt(*clock)
+	call.rejected = 1
+	if err := call.pause(ctx, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("a call whose client left: pause = %v, want the context's error", err)
+	}
+}
+
+func TestPendingWaitsAreCountedOncePerCallHoweverOftenItWaits(t *testing.T) {
+	registry := NewRegistry()
+	cfg := testAdmission()
+	cfg.MaxConcurrency = 1
+	g := NewGate("fake", cfg, registry, quietLogger())
+	ctx := context.Background()
+
+	call := g.openAt(time.Now())
+	for range 2 {
+		// Another call holds the only slot while ours waits.
+		if _, err := g.acquire(ctx, time.Now()); err != nil {
+			t.Fatal(err)
+		}
+		admitted := make(chan error, 1)
+		go func() { admitted <- call.enter(ctx) }()
+		awaitFor(t, "the call to queue", func() bool {
+			_, waiting := g.snapshot()
+			return waiting == 1
+		})
+		time.Sleep(30 * time.Millisecond)
+		g.Release()
+		if err := <-admitted; err != nil {
+			t.Fatalf("enter: %v", err)
+		}
+		call.leave()
+	}
+
+	out := registry.Render()
+	if waited := metricValue(t, out, `ai_meter_admission_wait_seconds_sum{upstream="fake"}`); waited < 0.06 {
+		t.Errorf("two waits of at least 30 ms each summed to %v s", waited)
+	}
+	if calls := metricValue(t, out, `ai_meter_admission_wait_seconds_count{upstream="fake"}`); calls != 1 {
+		t.Errorf("one call that waited twice counted %v times", calls)
+	}
+}
+
+// metricValue reads one series out of a Prometheus exposition.
+func metricValue(t *testing.T, exposition, series string) float64 {
+	t.Helper()
+	for line := range strings.SplitSeq(exposition, "\n") {
+		if after, found := strings.CutPrefix(line, series+" "); found {
+			value, err := strconv.ParseFloat(after, 64)
+			if err != nil {
+				t.Fatalf("series %q: %v", series, err)
+			}
+			return value
+		}
+	}
+	t.Fatalf("no series %q in the exposition:\n%s", series, exposition)
+	return 0
 }
 
 func TestLoadConfigRefusesAnInvalidAdmissionAndNamesTheUpstream(t *testing.T) {

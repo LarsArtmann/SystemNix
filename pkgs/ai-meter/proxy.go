@@ -209,7 +209,7 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 
 	forwardBody := InjectStreamUsage(body, info, p.cfg.InjectStreamUsage)
 
-	pend := p.admissionFor(upstream, rec.StartedAt)
+	pend := p.admissionFor(client, upstream, body, rec.StartedAt)
 	for {
 		if err := pend.enter(r.Context()); err != nil {
 			p.notAdmitted(w, rec, pend, err)
@@ -236,6 +236,9 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		pend.answered()
 		pend.stamp(&rec)
 		rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
+		// Every answer is closed when the call leaves, on the path that
+		// streams it as much as on those that replay it.
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusTooManyRequests || !pend.gated() {
 			p.answer(w, resp, rec)
@@ -261,24 +264,39 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		// The slot is free again before the retry decision, and after the
 		// allowance was lowered: the retry queues afresh under it.
 		pend.leave()
-		if kind == kindRateLimit && pend.retryable() && pend.pause(r.Context(), resp.Header) {
-			_ = resp.Body.Close()
-			continue
-		}
-		if kind == kindRateLimit {
+		if kind == kindRateLimit && pend.retryable() {
+			stopped := pend.pause(r.Context(), resp.Header)
+			if stopped == nil {
+				_ = resp.Body.Close()
+				continue
+			}
+			rec.Admission = outcomeGaveUp
+			switch {
+			case r.Context().Err() != nil:
+				// The client left while the proxy waited on its behalf.
+				rec.Status, rec.UsageMissing, rec.Admission = statusClientClosedRequest, true, outcomeCancelled
+				p.record(rec)
+				return
+			case errors.Is(stopped, errAdmissionTimeout):
+				// Come back at once, like a call that timed out in the
+				// queue: the retry re-enters with a whole new budget.
+				rec.Admission = outcomeTimeout
+				resp.Header.Set("Retry-After", "1")
+			}
+		} else if kind == kindRateLimit {
 			rec.Admission = outcomeGaveUp
 		}
 		p.replay(w, resp, errBody, complete, rec)
-		_ = resp.Body.Close()
-		return
 	}
 }
 
 // admissionFor opens the admission of a call that arrived at started: at
-// the gate of an upstream configured with one, or nowhere.
-func (p *Proxy) admissionFor(upstream Upstream, started time.Time) *pending {
+// the gate of an upstream configured with one, or nowhere. The key from the
+// client's name and the call's bytes lets a sent-back call keep its place
+// when the client sends it again.
+func (p *Proxy) admissionFor(client Client, upstream Upstream, body []byte, started time.Time) *pending {
 	if gate, gated := p.gates[upstream.Name]; gated {
-		return gate.open(started)
+		return gate.open(started, arrivalKeyOf(client.Name, body))
 	}
 	return ungated()
 }
@@ -347,7 +365,9 @@ func (p *Proxy) notAdmitted(w http.ResponseWriter, rec Record, pend *pending, er
 		if quota.contentType != "" {
 			w.Header().Set("Content-Type", quota.contentType)
 		}
-		w.Header().Set("Retry-After", strconv.Itoa(max(int(pend.gate.now().Sub(quota.until).Seconds())+1, 1)))
+		// The whole wait until the reset, rounded up, so a client that honors
+		// the header does not return early.
+		w.Header().Set("Retry-After", strconv.Itoa(int(quota.until.Sub(pend.gate.now()).Seconds())+1))
 		w.WriteHeader(http.StatusTooManyRequests)
 		_, _ = w.Write(quota.body)
 	default:

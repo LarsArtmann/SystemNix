@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -305,13 +306,16 @@ type arrival struct {
 }
 
 // arrivalKey tells a call the client sends again from a new one: the same
-// client, sending the same bytes.
+// client, sending the same bytes. The client's length goes in first, so a
+// name can never run into the bytes that follow it.
 type arrivalKey [sha256.Size]byte
 
 func arrivalKeyOf(client string, body []byte) arrivalKey {
+	size := make([]byte, 4)
+	binary.BigEndian.PutUint32(size, uint32(len(client)))
 	digest := sha256.New()
+	_, _ = digest.Write(size)
 	_, _ = digest.Write([]byte(client))
-	_, _ = digest.Write([]byte{0})
 	_, _ = digest.Write(body)
 	var key arrivalKey
 	copy(key[:], digest.Sum(nil))
