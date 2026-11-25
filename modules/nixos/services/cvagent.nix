@@ -234,13 +234,20 @@
             # ProtectHome (unlike the scan unit) — the db lives under /home and
             # only ReadWritePaths (upstream plain, = dataDir) needs access.
             # MemoryMax mkForce: the harden{} argument drives the derived
-            # MemoryHigh watermark (llama-chat 410M-orphan class).
+            # MemoryHigh watermark (llama-chat 410M-orphan class). 4G, not
+            # 1G: the dashboard's working set is about 765 MB of heap plus a
+            # 780 MB sqlite DB that its page render reads through the page
+            # cache. At 1G (high watermark 819 MiB) the cgroup sat pinned at
+            # the watermark and evicted the DB pages again and again (1.07M
+            # high events and 314 GB swapped out in one 11.5 h boot), so
+            # every dashboard request re-read the DB from disk and timed out
+            # with a 500 (live 2026-11-25).
             systemd.services.cvagent = {
               inherit onFailure;
               serviceConfig = lib.mkMerge [
                 (harden {
                   ProtectHome = false;
-                  MemoryMax = lib.mkForce "1G";
+                  MemoryMax = lib.mkForce "4G";
                 })
                 (serviceDefaults { RestartSec = "10s"; })
                 ioTier.background
