@@ -868,4 +868,164 @@
         machine.succeed("${probe}/bin/memcg-oom-collector-probe ${collector} ${../modules/nixos/services/system-health.nix}")
       '';
     };
+
+  # Boot-generation freshness gauge (2026-11-25 — the "Boot Generation
+  # Freshness" gatus page ~15 min after EVERY deploy): the gauge compared
+  # /run/booted-system with the NEWEST profile overall, which is red by
+  # construction from the first deploy after a boot until the next reboot
+  # (2026-11-24: booted gen-1027, gen-1028 deployed 21:42, alert 21:53). It
+  # now compares against the newest numbered generation whose link predates
+  # the boot. The REAL functions are sliced from the rendered collector and
+  # run under the collector's strictness against fixture profile dirs:
+  # deployed-since-boot must read fresh, a genuine stale boot stale, the
+  # reference must follow numeric (not lexicographic) generation order, and
+  # every unresolvable input must fail closed. Static tripwires pin the
+  # consumer line, the emission, the anchored Gatus condition and the
+  # absence of the retired newest-overall comparison.
+  boot-generation-freshness =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      collector = evo.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+      probe = pkgs.writeShellApplication {
+        name = "boot-generation-freshness-probe";
+        # SC2016: slice anchors are deliberate literals; SC1091: the sliced
+        # collector functions are runtime artifacts by design.
+        excludeShellChecks = [
+          "SC2016"
+          "SC1091"
+        ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gawk
+          pkgs.bash
+        ];
+        text = ''
+          set -euo pipefail
+          SCRIPT="''${1:?collector store path required}"
+          MODULE="''${2:?system-health module path required}"
+          WORK=$(mktemp -d)
+
+          # Both REAL functions, in definition order: from the first header
+          # down to (excluding) their consumer line. Anchors tolerate
+          # writeShellApplication's residual indentation.
+          sed -n '/^ *newest_profile_at_boot() {$/,/^ *BOOTED_NEWEST=\$(booted_is_expected_generation/p' "$SCRIPT" > "$WORK/slice.sh"
+          grep -q '^ *BOOTED_NEWEST=\$(booted_is_expected_generation /run/booted-system /nix/var/nix/profiles /proc/stat) || BOOTED_NEWEST=0$' "$WORK/slice.sh" || {
+            echo "slice failed: booted-generation consumer line not found in rendered collector"; exit 1;
+          }
+          sed '$d' "$WORK/slice.sh" > "$WORK/functions.sh"
+
+          # Fixture boot epoch; link mtimes are offsets in seconds.
+          BOOT=1800000000
+          expect() {
+            [ "$2" = "$3" ] || { echo "$1: expected '$3', got '$2'"; exit 1; }
+            echo "ok: $1 = $3"
+          }
+          # $1 = profile dir, $2 = generation number, $3 = link mtime offset
+          mkgen() {
+            local dir="$1" number="$2" offset="$3"
+            mkdir -p "$dir/store/gen-$number"
+            ln -sfn "$dir/store/gen-$number" "$dir/profiles/system-$number-link"
+            touch -h -d "@$((BOOT + offset))" "$dir/profiles/system-$number-link"
+          }
+          # $1 = path, $2 = btime value (empty = no btime line)
+          mkstat() {
+            printf 'cpu  1 2 3 4 5 6 7 8 9 10\nintr 0\n' > "$1"
+            if [ -n "$2" ]; then printf 'btime %s\n' "$2" >> "$1"; fi
+          }
+          # Each call runs in a fresh shell with the collector's strictness.
+          gauge() {
+            bash -c 'set -euo pipefail; source "$1"; booted_is_expected_generation "$2" "$3" "$4"' _ "$WORK/functions.sh" "$1" "$2" "$3"
+          }
+          reference() {
+            bash -c 'set -euo pipefail; source "$1"; newest_profile_at_boot "$2" "$3"' _ "$WORK/functions.sh" "$1" "$2"
+          }
+          # The retired predicate, for the discrimination proof only.
+          legacy() {
+            if [ "$(readlink -f "$1")" = "$(readlink -f "$2/system")" ]; then echo 1; else echo 0; fi
+          }
+          mkstat "$WORK/stat" "$BOOT"
+
+          # ── 1) deployed-since-boot (the 2026-11-24 shape) ──────────────
+          # Generations 9 and 10 predate the boot; 100 was deployed after it
+          # and is the running system. 9/10/100 also make lexicographic link
+          # order (10 < 100 < 9) disagree with numeric order.
+          A="$WORK/a"
+          mkdir -p "$A/profiles"
+          mkgen "$A" 9 -5000
+          mkgen "$A" 10 -1000
+          mkgen "$A" 100 3000
+          ln -sfn system-100-link "$A/profiles/system"
+          expect "reference = numeric-max pre-boot generation" "$(reference "$A/profiles" "$BOOT")" "$A/store/gen-10"
+          ln -sfn "$A/store/gen-10" "$A/booted"
+          expect "deployed since boot reads fresh" "$(gauge "$A/booted" "$A/profiles" "$WORK/stat")" 1
+          expect "retired newest-overall form would have paged here" "$(legacy "$A/booted" "$A/profiles")" 0
+
+          # ── 2) genuine stale boot ───────────────────────────────────────
+          # Booted gen-9 while gen-10 already existed at boot time (stale
+          # bootloader default / rollback boot): stays stale even though a
+          # newer generation was deployed afterwards.
+          ln -sfn "$A/store/gen-9" "$A/booted"
+          expect "rollback boot reads stale" "$(gauge "$A/booted" "$A/profiles" "$WORK/stat")" 0
+
+          # ── 3) nothing deployed since boot ──────────────────────────────
+          D="$WORK/d"
+          mkdir -p "$D/profiles"
+          mkgen "$D" 9 -5000
+          mkgen "$D" 10 -1000
+          ln -sfn system-10-link "$D/profiles/system"
+          ln -sfn "$D/store/gen-10" "$D/booted"
+          expect "booted the newest generation" "$(gauge "$D/booted" "$D/profiles" "$WORK/stat")" 1
+          ln -sfn "$D/store/gen-9" "$D/booted"
+          expect "booted one behind a pre-boot generation" "$(gauge "$D/booted" "$D/profiles" "$WORK/stat")" 0
+
+          # ── 4) unresolvable inputs fall back to the newest overall ──────
+          E="$WORK/e"
+          mkdir -p "$E/profiles"
+          mkgen "$E" 10 1000
+          mkgen "$E" 100 3000
+          ln -sfn system-100-link "$E/profiles/system"
+          ln -sfn "$E/store/gen-100" "$E/booted"
+          expect "no generation predates the boot, booted newest" "$(gauge "$E/booted" "$E/profiles" "$WORK/stat")" 1
+          mkstat "$WORK/stat-nobtime" ""
+          ln -sfn "$A/store/gen-10" "$A/booted"
+          expect "unknown boot epoch falls back to newest overall" "$(gauge "$A/booted" "$A/profiles" "$WORK/stat-nobtime")" 0
+          ln -sfn "$A/store/gen-100" "$A/booted"
+          expect "unknown boot epoch, booted newest overall" "$(gauge "$A/booted" "$A/profiles" "$WORK/stat-nobtime")" 1
+          expect "missing proc stat falls back the same way" "$(gauge "$A/booted" "$A/profiles" "$A/missing")" 1
+          expect "unresolvable booted link" "$(gauge "$A/missing" "$A/profiles" "$WORK/stat")" 0
+          mkdir -p "$WORK/empty"
+          expect "profile dir without generations" "$(gauge "$A/booted" "$WORK/empty" "$WORK/stat")" 0
+
+          # ── 5) Static tripwires on the module source ───────────────────
+          grep -qF 'BOOTED_NEWEST=$(booted_is_expected_generation /run/booted-system /nix/var/nix/profiles /proc/stat) || BOOTED_NEWEST=0' "$MODULE" || {
+            echo "module lost the booted-generation consumer line"; exit 1;
+          }
+          grep -qF '{BOOTED_NEWEST}' "$MODULE" || {
+            echo "module lost the gauge emission"; exit 1;
+          }
+          grep -qF '\nsystem_booted_is_newest_profile *\n' "$MODULE" || {
+            echo "module lost the anchored Gatus presence condition"; exit 1;
+          }
+          if grep -qF 'NEWEST_SYS=$(readlink -f /nix/var/nix/profiles/system 2>/dev/null)' "$MODULE"; then
+            echo "MUTATION: the newest-overall comparison is back — it pages after every deploy"; exit 1
+          fi
+
+          echo "PASS: boot-generation freshness — deployed-since-boot fresh, stale boot stale, numeric order, fail-closed fallbacks, wiring pinned"
+        '';
+      };
+    in
+    pkgs.testers.runNixOSTest {
+      name = "boot-generation-freshness";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("${probe}/bin/boot-generation-freshness-probe ${collector} ${../modules/nixos/services/system-health.nix}")
+      '';
+    };
 }
