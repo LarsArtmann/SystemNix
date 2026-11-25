@@ -20,4 +20,5 @@ model large zai/glm-5.4 --think --reasoning-effort xhigh
 # >>> tq bootstrap (managed) >>>
 permissions allow view ls grep glob edit multiedit write bash fetch download todos
 option metrics false
+model large zai/glm-5.3 --reasoning-effort xhigh
 # <<< tq bootstrap (managed) <<<
