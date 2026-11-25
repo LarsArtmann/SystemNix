@@ -220,8 +220,16 @@ in
       # "Registered efi_pstore as persistent store backend". Deliberately NOT
       # re-pinned to "efi_pstore": an explicit name would silently re-break on
       # any future upstream module rename, exactly the class that burned us.
-      "pstore.record_console=true"
-      "pstore.max_reason=3" # PANIC, OOPS, and WARN
+      #
+      # pstore.record_console=true and pstore.max_reason=3 were removed
+      # 2026-11-25: the kernel 7.3 pstore core has no such parameters (live
+      # /sys/module/pstore/parameters: backend, compress, kmsg_bytes,
+      # update_ms; fs/pstore/platform.c), so both tokens were inert while
+      # this comment claimed PANIC/OOPS/WARN coverage. Check that directory
+      # before adding any pstore.* token. Whether the crashed kernel's log
+      # reaches pstore at all is decided by crash_kexec_post_notifiers
+      # (modules/nixos/services/kdump-capture-path.nix, leg 2): without it
+      # a loaded crash image kexecs before the kmsg dump.
       # Blacklist serial8250 — no physical serial ports on this hardware.
       # Without this, the driver registers phantom ttyS0-S3 devices and systemd
       # waits ~90s for them to appear, adding 1m31s to boot time.
@@ -573,79 +581,10 @@ in
         '';
       };
 
-      # ── kdump vmcore retention ────────────────────────────────────────
-      # vmcores of a 94 GB machine are multi-GB even filtered+compressed;
-      # an unbounded /var/crash on the space-tight root fs would trade one
-      # emergency for another. Keep the 2 newest dumps, hard-cap total at
-      # 20G (oldest deleted first). Timer at boot + weekly — dumps are rare.
-      kdump-retention = {
-        description = "Bound /var/crash vmcore retention (2 newest, max 20G total)";
-        serviceConfig = {
-          Type = "oneshot";
-        };
-        script = ''
-          set -euo pipefail
-          CRASH_DIR="/var/crash"
-          [ -d "$CRASH_DIR" ] || exit 0
-
-          list_entries() {
-            # kdump default layout: timestamp dirs; also tolerate flat vmcore files.
-            ${pkgs.findutils}/bin/find "$CRASH_DIR" -mindepth 1 -maxdepth 1 \( -name 'vmcore*' -o -type d \) -printf '%T@ %p\n' | sort -rn
-          }
-
-          # Keep the 2 newest entries, delete the rest.
-          list_entries | ${pkgs.gawk}/bin/awk 'NR > 2 { $1=""; sub(/^ /, ""); print }' | while read -r old; do
-            [ -n "$old" ] && ${pkgs.coreutils}/bin/rm -rf -- "$old" && echo "kdump-retention: removed old dump $old"
-          done
-
-          # Hard cap: while total exceeds 20G, delete the oldest remaining entry.
-          while :; do
-            total_bytes=$(${pkgs.coreutils}/bin/du -sb "$CRASH_DIR" 2>/dev/null | ${pkgs.gawk}/bin/awk '{print $1}')
-            [ "''${total_bytes:-0}" -lt 21474836480 ] && break
-            oldest=$(list_entries | tail -1 | ${pkgs.gawk}/bin/awk '{ $1=""; sub(/^ /, ""); print }') || true || true
-            [ -z "$oldest" ] && break
-            ${pkgs.coreutils}/bin/rm -rf -- "$oldest"
-            echo "kdump-retention: 20G cap exceeded — removed $oldest"
-          done
-        '';
-      };
-
-      # ── kdump capture-side: write the evidence nixpkgs never writes ────
-      # nixpkgs' boot.crashDump ONLY loads the panic kernel (postBootCommands
-      # kexec -p) and boots the capture kernel into rescue (cmdline "… 1
-      # boot.shell_on_fail") — it ships NO service that reads /proc/vmcore,
-      # which is why /var/crash has never existed here despite crashDump
-      # since 2026-08-22. This unit runs ONLY in the kexec-ed capture boot
-      # (ConditionPathExists=/proc/vmcore — that file exists exclusively in a
-      # crash-kexec boot; conditioned no-op otherwise). Budget: the capture
-      # boot races the 90 s hardware WDT (watchdogd's last pet dies at panic,
-      # the timer runs through kexec), so save the seconds-cheap evidence and
-      # reboot — a full 124 GiB vmcore copy is deliberately NOT attempted.
-      # kdump-retention above bounds what lands here.
-      kdump-save = {
-        description = "Save vmcore-dmesg evidence after crash-kexec boot";
-        wantedBy = [ "rescue.target" ];
-        unitConfig = {
-          ConditionPathExists = "/proc/vmcore";
-        };
-        serviceConfig = {
-          Type = "oneshot";
-        };
-        script = ''
-          set -euo pipefail
-          ${pkgs.coreutils}/bin/mkdir -p /var/crash
-          dest="/var/crash/$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S)"
-          ${pkgs.coreutils}/bin/mkdir "$dest"
-          if ${pkgs.kexec-tools}/bin/vmcore-dmesg /proc/vmcore > "$dest/vmcore-dmesg.txt"; then
-            echo "kdump-save: wrote $dest/vmcore-dmesg.txt"
-          else
-            echo "kdump-save: vmcore-dmesg FAILED (rc=$?) — check pstore as fallback" >&2
-          fi
-          ${pkgs.util-linux}/bin/dmesg > "$dest/capture-boot-dmesg.txt" || true
-          ${pkgs.coreutils}/bin/sync
-          ${pkgs.systemd}/bin/reboot -f
-        '';
-      };
+      # kdump-save (writes /var/crash/<ts>/vmcore-dmesg.txt in the capture
+      # boot) and kdump-retention moved 2026-11-25 to
+      # modules/nixos/services/_kdump-capture-units.nix (imported by the
+      # kdump-capture-path module) so the VM test drives the real units.
     };
 
     user.services = {
@@ -839,26 +778,8 @@ in
   # night simply runs at the next daily slot.
   systemd.timers.fstrim.timerConfig.Persistent = lib.mkForce false;
 
-  # /var/crash must exist from boot: the kdump-save capture unit mkdir -p's
-  # at run time (tmpfiles can silently skip re-running on a plain switch —
-  # the 2026-11-04 monitor365 class), but the pre-created dir keeps
-  # kdump-retention's `[ -d ] || exit 0` honest and makes the evidence
-  # location inspectable before the first panic ever lands a dump.
-  systemd.tmpfiles.rules = [
-    "d /var/crash 0755 root root -"
-  ];
-
-  # kdump vmcore retention — bound /var/crash growth (boot + weekly)
-  systemd.timers.kdump-retention = {
-    description = "Run kdump vmcore retention cleanup";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "10min";
-      OnCalendar = "weekly";
-      Persistent = true;
-    };
-  };
-
+  # The /var/crash tmpfiles rule and the kdump-retention timer moved
+  # 2026-11-25 to modules/nixos/services/_kdump-capture-units.nix.
   # Run fstrim at idle I/O priority so it doesn't compete with host I/O.
   # fstrim is a background maintenance task; a 10-15 min trim run at idle
   # priority is preferable to a 5 min run that starves foreground I/O and
