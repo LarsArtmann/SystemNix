@@ -11,11 +11,12 @@
 # whole chart the moment the price row ships, at the true timestamps, with
 # no spike and no backfill step.
 #
-# The formula mirrors EstimateCost in pkgs/ai-meter/config.go. Two
-# implementations of one formula drift silently, so
-# checks.ai-meter-spend-promql (flake/parts/checks/ai-meter-guards.nix)
-# evaluates what this file generates against the same fixture the Go test
-# pins and fails when the numbers differ.
+# The formula mirrors the Go one (BreakdownCost in
+# pkgs/ai-meter/config.go). Two implementations of one formula drift
+# silently, so checks.ai-meter-spend-promql
+# (flake/parts/checks/ai-meter-guards.nix) evaluates what this file
+# generates against the same fixture the Go test pins, and fails when the
+# numbers differ.
 { lib }:
 let
   # A model name's dots (and any other regex metacharacter) must match
@@ -23,8 +24,9 @@ let
   regexSpecial = lib.strings.stringToCharacters ".+*?()|[]{}^$\\";
   escapeRegex =
     name:
-    lib.concatMapStrings (char: if builtins.elem char regexSpecial then "\\${char}" else char)
-      (lib.strings.stringToCharacters name);
+    lib.concatMapStrings (char: if builtins.elem char regexSpecial then "\\${char}" else char) (
+      lib.strings.stringToCharacters name
+    );
 
   # Tokens per second of one kind for one priced model. The label carries
   # whatever the client asked for; the proxy's price lookup strips one
@@ -52,8 +54,7 @@ let
   # The models are unioned with `or` because they carry different model
   # labels: adding them would match nothing, and a priced model without
   # traffic yields no samples at all.
-  spendTerms =
-    costs: lib.mapAttrsToList (model: price: spendPerHour model price) costs;
+  spendTerms = costs: lib.mapAttrsToList (model: price: spendPerHour model price) costs;
 
   # USD per hour across every priced model. The trailing vector(0) keeps a
   # number on the panel while no priced model has traffic.
@@ -70,7 +71,10 @@ let
     let
       terms = spendTerms costs;
     in
-    if terms == [ ] then "sum by (model) (rate(ai_meter_tokens_total[15m])) * 0" else lib.concatStringsSep " or " terms;
+    if terms == [ ] then
+      "sum by (model) (rate(ai_meter_tokens_total[15m])) * 0"
+    else
+      lib.concatStringsSep " or " terms;
 in
 {
   inherit spendRate spendRateByModel;
@@ -108,7 +112,9 @@ in
           quoted = builtins.toJSON promql;
         in
         lib.substring 1 (lib.stringLength quoted - 2) quoted;
-      rendered = lib.replaceStrings (builtins.attrNames queries) (map jsonBody (lib.attrValues queries)) template;
+      rendered = lib.replaceStrings (builtins.attrNames queries) (map jsonBody (
+        lib.attrValues queries
+      )) template;
     in
     if broken != { } then
       throw "ai-meter dashboard template: each spend placeholder must occur exactly once, but ${complaint}"

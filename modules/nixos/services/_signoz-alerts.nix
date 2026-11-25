@@ -945,7 +945,7 @@ in
     "signoz/rules/ai-span-export-silent.json".source = mkRule {
       name = "AI Trace Export Silent (ai-meter)";
       description = "AI calls were routed in the last hour but ai-meter attempted to export no span at all (neither ok, failed nor dropped): the exporter is a silent no-op and SigNoz's AI observability shows none of these calls. Check: journalctl -u ai-meter -b for 'span export enabled' (its absence means otlp_endpoint is missing from the rendered config).";
-      query = ''sum(increase(ai_meter_requests_total[1h])) unless sum(increase(ai_meter_spans_exported_total[1h]))'';
+      query = "sum(increase(ai_meter_requests_total[1h])) unless sum(increase(ai_meter_spans_exported_total[1h]))";
       target = 1;
       interval = "15m";
       severity = "warning";

@@ -92,34 +92,34 @@ let
   mkVmConfig =
     costs:
     pkgs.writeText "ai-meter-config.json" (
-    builtins.toJSON {
-      listen = "127.0.0.1:8107";
-      metrics_listen = "127.0.0.1:8108";
-      ledger_path = "/var/lib/ai-meter/usage.jsonl";
-      inject_stream_usage = true;
-      clients = [
-        {
-          name = "vmtest";
-          key_file = "/run/ai-meter-keys/config/vmtest";
-        }
-      ];
-      upstreams = [
-        {
-          name = "dead";
-          base_url = "http://127.0.0.1:9";
-          api_key = "unused";
-        }
-        {
-          name = "fake";
-          base_url = "http://127.0.0.1:${toString ports.llama-chat}";
-          api_key = "unused";
-        }
-      ];
-      inherit costs;
-      otlp_endpoint = "http://127.0.0.1:4318";
-      deployment_environment = "vmtest";
-    }
-  );
+      builtins.toJSON {
+        listen = "127.0.0.1:8107";
+        metrics_listen = "127.0.0.1:8108";
+        ledger_path = "/var/lib/ai-meter/usage.jsonl";
+        inject_stream_usage = true;
+        clients = [
+          {
+            name = "vmtest";
+            key_file = "/run/ai-meter-keys/config/vmtest";
+          }
+        ];
+        upstreams = [
+          {
+            name = "dead";
+            base_url = "http://127.0.0.1:9";
+            api_key = "unused";
+          }
+          {
+            name = "fake";
+            base_url = "http://127.0.0.1:${toString ports.llama-chat}";
+            api_key = "unused";
+          }
+        ];
+        inherit costs;
+        otlp_endpoint = "http://127.0.0.1:4318";
+        deployment_environment = "vmtest";
+      }
+    );
   vmConfig = mkVmConfig { };
   vmPricedConfig = mkVmConfig {
     m = {
