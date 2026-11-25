@@ -1175,21 +1175,68 @@ _: {
             SYSTEM_PROFILED=1
           fi
 
-          # === booted system vs newest profile (reboot-into-stale detector) ===
-          # The 2026-09-07 stuck-boot class: a deploy advances the bootloader
-          # DEFAULT (or the profile) to a toplevel the live store cannot serve,
-          # and a reboot boots a STALE/missing init. Also the exit-4 class:
-          # activation advances /run/current-system but skips the profile bump,
-          # and a reboot reverts. 1 = /run/booted-system IS the newest numbered
-          # profile; 0 = the machine is running (or boots into) something older
-          # than the newest profile. Emitted unconditionally (fail-closed:
-          # unresolvable links = 0).
-          BOOTED_NEWEST=0
-          BOOTED_SYS=$(readlink -f /run/booted-system 2>/dev/null) || BOOTED_SYS=""
-          NEWEST_SYS=$(readlink -f /nix/var/nix/profiles/system 2>/dev/null) || NEWEST_SYS=""
-          if [ -n "$BOOTED_SYS" ] && [ -n "$NEWEST_SYS" ] && [ "$BOOTED_SYS" = "$NEWEST_SYS" ]; then
-            BOOTED_NEWEST=1
-          fi
+          # === booted system vs the generation the boot should have picked ===
+          # The crash3 stale-boot class (a rollback generation ran for days)
+          # and the 2026-09-07 stuck-boot class: the machine BOOTED a
+          # generation older than the newest numbered profile that already
+          # existed at boot time (stale bootloader default, rollback boot).
+          # The reference is deliberately NOT the newest profile overall:
+          # every `nix run .#deploy` installs a newer generation live, so the
+          # old "booted == newest overall" form went red ~15 min after EVERY
+          # deploy and stayed red until the next reboot (2026-11-24 21:53:
+          # booted gen-1027, gen-1028 deployed 21:42) — a page on normal
+          # operation. A generation switched to after the boot is the running
+          # system, not a stale boot. 1 = the booted toplevel IS the newest
+          # generation that predates the boot; 0 = it is older, or nothing is
+          # resolvable (fail-closed). Emitted unconditionally.
+          newest_profile_at_boot() {
+            # Prints the store path of the newest numbered profile generation
+            # whose link predates the boot epoch. Falls back to the newest
+            # generation overall when the boot epoch is unknown or no
+            # generation predates the boot (legacy, fail-closed reading).
+            # $1 = nix profile dir, $2 = boot epoch (seconds; may be empty)
+            local profile_dir="$1" boot_epoch="$2"
+            local newest pre_boot
+            newest=$(readlink -f "$profile_dir/system" 2>/dev/null) || newest=""
+            if [ -z "$newest" ] || [ -z "$boot_epoch" ]; then
+              printf '%s\n' "$newest"
+              return 0
+            fi
+            pre_boot=$(stat -c '%Y %n' "$profile_dir"/system-*-link 2>/dev/null | awk -v boot="$boot_epoch" '
+              {
+                link = substr($0, index($0, " ") + 1)
+                if (link !~ /system-[0-9]+-link$/) next
+                if ($1 + 0 > boot + 0) next
+                number = link
+                sub(/^.*system-/, "", number)
+                sub(/-link$/, "", number)
+                if (number + 0 > best) { best = number + 0; winner = link }
+              }
+              END { if (best > 0) print winner }
+            ') || pre_boot=""
+            if [ -z "$pre_boot" ]; then
+              printf '%s\n' "$newest"
+            else
+              readlink -f "$pre_boot" 2>/dev/null || true
+            fi
+          }
+
+          booted_is_expected_generation() {
+            # Prints 1 when the booted toplevel is the generation
+            # newest_profile_at_boot selects, else 0.
+            # $1 = booted-system symlink, $2 = nix profile dir, $3 = /proc/stat
+            local booted_sys boot_epoch expected_sys
+            booted_sys=$(readlink -f "$1" 2>/dev/null) || booted_sys=""
+            boot_epoch=$(awk '/^btime /{print $2; exit}' "$3" 2>/dev/null) || boot_epoch=""
+            expected_sys=$(newest_profile_at_boot "$2" "$boot_epoch") || expected_sys=""
+            if [ -n "$booted_sys" ] && [ -n "$expected_sys" ] && [ "$booted_sys" = "$expected_sys" ]; then
+              echo 1
+            else
+              echo 0
+            fi
+          }
+
+          BOOTED_NEWEST=$(booted_is_expected_generation /run/booted-system /nix/var/nix/profiles /proc/stat) || BOOTED_NEWEST=0
 
           # === memory-emergency-guard collector freshness (2026-09-15) ===
           # node_exporter serves a textfile's LAST content forever, so the
@@ -1998,7 +2045,7 @@ _: {
             echo "# TYPE system_current_system_profiled gauge"
             echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
 
-            echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation, 0 if the machine runs (or would boot into) an older toplevel than the newest profile (exit-4 activation class / reboot-into-stale class)"
+            echo "# HELP system_booted_is_newest_profile 1 if /run/booted-system IS the newest numbered nix profile generation that already existed at boot time, 0 if the machine booted a generation older than one that predates the boot (stale bootloader default / rollback boot — crash3 + 2026-09-07 stuck-boot class) or nothing is resolvable. Generations deployed after the boot do not count: they are the running system, not a stale boot"
             echo "# TYPE system_booted_is_newest_profile gauge"
             echo "system_booted_is_newest_profile ''${BOOTED_NEWEST}"
 
@@ -2893,13 +2940,17 @@ _: {
               {
                 name = "Boot Generation Freshness";
                 group = "Monitoring";
-                # The 2026-09-07 stuck-boot class: parallel deploys advanced
-                # the loader DEFAULT past the store the machine boots from;
-                # a reboot then hangs pre-journal. Also the exit-4 class:
-                # activation advances /run/current-system but skips the
-                # profile bump, and a reboot silently reverts. deploy.sh's
-                # anchoring print cannot cover the reboot-into-stale case —
-                # only a runtime metric can. 0 = booted != newest profile.
+                # The crash3 stale-boot class (a rollback generation ran for
+                # days) and the 2026-09-07 stuck-boot class: the machine
+                # BOOTED a generation older than the newest numbered profile
+                # that already existed at boot time (stale bootloader
+                # default, rollback boot). The reference is the newest
+                # PRE-boot generation, not the newest overall: every deploy
+                # installs a newer generation live, and the newest-overall
+                # form paged ~15 min after EVERY deploy until the next reboot
+                # (2026-11-24 21:53). The exit-4 class (current-system outside
+                # every numbered profile) is System Profile Anchor's, not this
+                # check's. 0 = booted older than the newest pre-boot profile.
                 url = "http://localhost:${toString nodePort}/metrics";
                 interval = "5m";
                 conditions = [
@@ -2907,7 +2958,7 @@ _: {
                   "[BODY] != pat(*system_booted_is_newest_profile 0\n*)"
                   "[BODY] == pat(*\nsystem_booted_is_newest_profile *)"
                 ];
-                alert = "The BOOTED system does not match the newest numbered nix profile generation — a reboot would boot a DIFFERENT (possibly store-dead) toplevel (2026-09-07 stuck-boot class) or silently revert. Check: `readlink -f /run/booted-system` vs `readlink -f /nix/var/nix/profiles/system`, run `nix run .#deploy` to re-anchor, and `nix run .#pre-reboot-check` BEFORE any reboot.";
+                alert = "The machine BOOTED a nix generation older than the newest profile generation that already existed at boot time — a stale bootloader default or rollback boot (the crash3 days-long stale-boot + 2026-09-07 stuck-boot class). Deploys since the boot do not count. Check: `readlink -f /run/booted-system` vs `ls -lt /nix/var/nix/profiles/system-*-link | head -3`, and `bootctl list` for the default entry; run `nix run .#pre-reboot-check` BEFORE any reboot.";
               }
               {
                 name = "Memory Emergency Guard";
