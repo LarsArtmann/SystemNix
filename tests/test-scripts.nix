@@ -736,11 +736,17 @@
           # ── Active-churn gate (2026-11-25): slice the churn flag block ──
           # The per-svc block (svc="gatus" … churn echo + churn state append)
           # is sliced from the RENDERED collector and run against fixture
-          # NRestarts transitions + growth epochs. NOW is pinned to 1000000,
-          # so fresh (999000: 1000s ago) vs stale (500000: far past the
-          # window) growth epochs are unambiguous against the 60-min window.
-          sed -n '/^ *svc="gatus"$/,/CHURN_STATE_TMP"$/p' "$SCRIPT" > "$WORK/churnbody.sh"
+          # NRestarts transitions + growth epochs. Two-stage slice: the
+          # CPU-percent emission section ALSO renders svc="…" assignments,
+          # so the crash/churn section (ANY_CHURN=0 … the state mv) is
+          # extracted first, and the gatus block scoped within it. NOW is
+          # pinned to 1000000, so fresh (999000: 1000s ago) vs stale
+          # (500000: far past the window) growth epochs are unambiguous
+          # against the 60-min window.
+          sed -n '/ANY_CHURN=0$/,/mv "$CHURN_STATE_TMP" "$CHURN_STATE"$/p' "$SCRIPT" \
+            | sed -n '/svc="gatus"$/,/CHURN_STATE_TMP"$/p' > "$WORK/churnbody.sh"
           grep -q 'system_service_restart_churn' "$WORK/churnbody.sh" || { echo "slice failed: churn block not found in rendered collector"; exit 1; }
+          [ "$(grep -c '^svc=' "$WORK/churnbody.sh")" = "1" ] || { echo "slice failed: expected exactly one per-svc block, got $(grep -c '^svc=' "$WORK/churnbody.sh")"; exit 1; }
 
           churn_case() {
             local cur="$1" prev="$2" pg="$3" want_flag="$4" want_state="$5" label="$6"
@@ -758,10 +764,10 @@
               source "'"$WORK"'/churnbody.sh"
               printf "FLAG:%s ANY:%s\n" "$churn" "$ANY_CHURN"
             ' 2>&1) || { echo "FAIL $label: runner died"; exit 1; }
-            case "$out" in
-              "FLAG:$want_flag"*) ;;
-              *) echo "FAIL $label: expected churn=$want_flag, got: $out"; exit 1 ;;
-            esac
+            # The sliced block's own echo lines (crash_loop + churn metrics)
+            # precede the FLAG marker in $out — match the marker line, not a
+            # prefix.
+            printf '%s\n' "$out" | grep -q "^FLAG:$want_flag " || { echo "FAIL $label: expected churn=$want_flag, got: $out"; exit 1; }
             local got_state
             got_state=$(awk '{print $2}' "$WORK/churn_state" 2>/dev/null)
             [ "$got_state" = "$want_state" ] || { echo "FAIL $label: expected state=$want_state, got: $got_state"; exit 1; }
