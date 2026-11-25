@@ -109,10 +109,10 @@ type durKey struct {
 
 // admissionGauge is the state of one gated upstream at a moment.
 type admissionGauge struct {
-	waiting         float64
-	inflight        float64
-	limit           float64
-	quotaExhausted  bool
+	waiting        float64
+	inflight       float64
+	limit          float64
+	quotaExhausted bool
 }
 
 type admissionKey struct{ client, upstream, model, outcome string }
@@ -120,21 +120,21 @@ type rejectionKey struct{ upstream, model, code, kind string }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		requests:     map[reqKey]float64{},
-		tokens:       map[tokenKey]float64{},
-		cost:         map[costKey]float64{},
-		secondsSum:   map[durKey]float64{},
-		secondsCount: map[durKey]float64{},
-		ttftSum:      map[durKey]float64{},
-		ttftCount:    map[durKey]float64{},
-		inflight:     map[inflightKey]float64{},
-		admission:     map[string]admissionGauge{},
-		admissionWait: map[string]float64{},
+		requests:        map[reqKey]float64{},
+		tokens:          map[tokenKey]float64{},
+		cost:            map[costKey]float64{},
+		secondsSum:      map[durKey]float64{},
+		secondsCount:    map[durKey]float64{},
+		ttftSum:         map[durKey]float64{},
+		ttftCount:       map[durKey]float64{},
+		inflight:        map[inflightKey]float64{},
+		admission:       map[string]admissionGauge{},
+		admissionWait:   map[string]float64{},
 		admissionWaited: map[string]float64{},
-		admissions:    map[admissionKey]float64{},
-		rejections:    map[rejectionKey]float64{},
-		spanExports:  map[string]float64{},
-		startTime:    time.Now(),
+		admissions:      map[admissionKey]float64{},
+		rejections:      map[rejectionKey]float64{},
+		spanExports:     map[string]float64{},
+		startTime:       time.Now(),
 	}
 }
 
@@ -446,17 +446,17 @@ func (r *Registry) Render() string {
 		writeSeries(&b, "ai_meter_upstream_rejections_total", r.rejections[k], "upstream", k.upstream, "model", k.model, "code", k.code, "kind", k.kind)
 	}
 
-	outcomes := make([]admissionKey, 0, len(r.admissions))
+	leaves := make([]admissionKey, 0, len(r.admissions))
 	for k := range r.admissions {
-		outcomes = append(outcomes, k)
+		leaves = append(leaves, k)
 	}
-	sort.Slice(outcomes, func(i, j int) bool {
-		a, c := outcomes[i], outcomes[j]
+	sort.Slice(leaves, func(i, j int) bool {
+		a, c := leaves[i], leaves[j]
 		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && (a.model < c.model || a.model == c.model && a.outcome < c.outcome))
 	})
 	b.WriteString("# HELP ai_meter_admission_outcomes_total How calls to a gated upstream left the proxy: \"admitted\" (sent once, answered), \"absorbed\" (a rate-limit rejection was retried and a later attempt was answered), \"gave_up\" (the last allowed attempt was rejected too), \"timeout\" (never sent: the wait budget ran out), \"circuit\" (not sent: the upstream's usage quota is spent), \"cancelled\" (the client went away while waiting).\n")
 	b.WriteString("# TYPE ai_meter_admission_outcomes_total counter\n")
-	for _, k := range outcomes {
+	for _, k := range leaves {
 		writeSeries(&b, "ai_meter_admission_outcomes_total", r.admissions[k], "client", k.client, "upstream", k.upstream, "model", k.model, "outcome", k.outcome)
 	}
 

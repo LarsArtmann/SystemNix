@@ -140,12 +140,12 @@ func (c *Config) loadAndValidate() error {
 		default:
 			return fmt.Errorf("upstream %s: unknown auth_style %q (want bearer or x-goog-api-key)", up.Name, up.AuthStyle)
 		}
-			if up.Admission != nil {
-				if _, err := up.Admission.config(); err != nil {
-					return fmt.Errorf("upstream %s: admission: %w", up.Name, err)
-				}
+		if up.Admission != nil {
+			if _, err := up.Admission.config(); err != nil {
+				return fmt.Errorf("upstream %s: admission: %w", up.Name, err)
 			}
 		}
+	}
 	if c.OTLPEndpoint != "" {
 		u, err := url.Parse(c.OTLPEndpoint)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {

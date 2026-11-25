@@ -3,10 +3,11 @@
 // Every AI call from every client (crush, paperless-gpt, inboxclean, …)
 // flows through one endpoint. The proxy is TRANSPARENT: model names,
 // request shapes, and response bodies are forwarded untouched. It only
-// adds four things: per-client authentication, Prometheus metrics on a
-// separate admin port, a durable JSONL usage ledger, and — when the config
-// names an OTLP endpoint — one OpenTelemetry span per call carrying the GenAI
-// semantic-convention attributes SigNoz's AI observability reads.
+// adds: per-client authentication, Prometheus metrics on a separate admin
+// port, a durable JSONL usage ledger, one OpenTelemetry span per call when
+// the config names an OTLP endpoint, and, for an upstream configured with
+// it, admission control that keeps the upstream inside the request rate it
+// tolerates.
 //
 // Routing is path-based so client model names stay stable everywhere:
 //

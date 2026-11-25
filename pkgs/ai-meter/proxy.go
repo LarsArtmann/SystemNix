@@ -4,15 +4,25 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/subtle"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
-const maxMeteredBodyBytes = 128 << 20 // 128 MiB — long-context chat requests
+const (
+	maxMeteredBodyBytes = 128 << 20 // 128 MiB — long-context chat requests
+	// maxErrorBodyBytes bounds the error answers the proxy reads to record
+	// and classify them; a larger one is relayed unread.
+	maxErrorBodyBytes = 64 << 10
+	// statusClientClosedRequest (nginx's 499) is the ledger status of a call
+	// whose client went away before the proxy answered it.
+	statusClientClosedRequest = 499
+)
 
 // Proxy is the metering reverse proxy. It is transparent by contract:
 // bodies pass through unmodified except the single opt-in
@@ -25,6 +35,9 @@ type Proxy struct {
 	logger   *slog.Logger
 	client   *http.Client
 	spans    spanSink
+	// gates is the admission control of each upstream configured with one,
+	// by upstream name.
+	gates map[string]*Gate
 }
 
 // ProxyOption configures an optional part of a proxy.
@@ -43,6 +56,7 @@ func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logg
 		ledger:   ledger,
 		logger:   logger,
 		spans:    noSpans{},
+		gates:    map[string]*Gate{},
 		client: &http.Client{
 			Transport: &http.Transport{
 				MaxIdleConns:        32,
@@ -54,6 +68,20 @@ func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logg
 	}
 	for _, opt := range opts {
 		opt(p)
+	}
+	for _, up := range cfg.Upstreams {
+		if up.Admission == nil {
+			continue
+		}
+		adm, err := up.Admission.config()
+		if err != nil {
+			// LoadConfig refuses this config. A proxy built around it anyway
+			// stays up and leaves the upstream ungated, and says so.
+			p.logger.Error("admission config invalid, upstream left ungated", "upstream", up.Name, "err", err)
+			continue
+		}
+		p.gates[up.Name] = NewGate(up.Name, adm, registry, p.logger)
+		p.logger.Info("admission control enabled", "upstream", up.Name, "max_concurrency", adm.MaxConcurrency, "min_concurrency", adm.MinConcurrency, "max_wait", adm.MaxWait.String(), "max_retries", adm.MaxRetries, "grow_after", adm.GrowAfter.String())
 	}
 	return p
 }
@@ -147,6 +175,7 @@ func isMeteredPath(subPath string) bool {
 
 func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call, client Client, upstream Upstream, subPath string, genai *GenAIRequest) {
 	rec := callRecord(r, client, upstream, subPath, time.Now())
+	rec.Attempts = 1
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxMeteredBodyBytes+1))
 	if err != nil {
@@ -180,31 +209,159 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 
 	forwardBody := InjectStreamUsage(body, info, p.cfg.InjectStreamUsage)
 
-	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, upstreamURL(upstream, subPath, r.URL.RawQuery), bytes.NewReader(forwardBody))
-	if err != nil {
-		writeError(w, http.StatusBadGateway, "build upstream request: "+err.Error())
+	pend := p.admissionFor(upstream, rec.StartedAt)
+	for {
+		if err := pend.enter(r.Context()); err != nil {
+			p.notAdmitted(w, rec, pend, err)
+			return
+		}
+		if r.Context().Err() != nil {
+			pend.stamp(&rec)
+			rec.Status, rec.UsageMissing, rec.Admission = statusClientClosedRequest, true, outcomeCancelled
+			pend.leave()
+			p.record(rec)
+			return
+		}
+
+		resp, err := p.send(r, upstream, subPath, forwardBody)
+		if err != nil {
+			pend.stamp(&rec)
+			rec.Status, rec.UsageMissing = http.StatusBadGateway, true
+			rec.Trace.TransportError = transportCause(err)
+			pend.leave()
+			p.record(rec)
+			writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
+			return
+		}
+		pend.answered()
+		pend.stamp(&rec)
+
+		if resp.StatusCode != http.StatusTooManyRequests || !pend.gated() {
+			p.answer(w, resp, rec)
+			pend.leave()
+			return
+		}
+
+		errBody, complete := readUpTo(resp.Body, maxErrorBodyBytes)
+		kind, code := kindOther, ""
+		if complete {
+			kind, code = pend.gate.cfg.classify(errBody)
+		}
+		rec.UpstreamCode = code
+		if kind != kindOther {
+			p.registry.UpstreamRejection(upstream.Name, rec.Model, code, kind)
+			if kind == kindRateLimit {
+				pend.rejected++
+				pend.gate.rejected()
+			} else if reset, ok := pend.gate.cfg.quotaReset(errBody); ok {
+				pend.gate.exhausted(reset, errBody, resp.Header.Get("Content-Type"), code)
+			}
+		}
+		// The slot is free again before the retry decision, and after the
+		// allowance was lowered: the retry queues afresh under it.
+		pend.leave()
+		if kind == kindRateLimit && pend.retryable() && pend.pause(r.Context(), resp.Header) {
+			_ = resp.Body.Close()
+			continue
+		}
+		if kind == kindRateLimit {
+			rec.Admission = outcomeGaveUp
+		}
+		p.replay(w, resp, errBody, complete, rec)
+		_ = resp.Body.Close()
 		return
+	}
+}
+
+// admissionFor opens the admission of a call that arrived at started: at
+// the gate of an upstream configured with one, or nowhere.
+func (p *Proxy) admissionFor(upstream Upstream, started time.Time) *pending {
+	if gate, gated := p.gates[upstream.Name]; gated {
+		return gate.open(started)
+	}
+	return ungated()
+}
+
+// send makes one attempt at the call.
+func (p *Proxy) send(r *http.Request, upstream Upstream, subPath string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, upstreamURL(upstream, subPath, r.URL.RawQuery), bytes.NewReader(body))
+	if err != nil {
+		return nil, err
 	}
 	copyForwardHeaders(req, r)
 	applyUpstreamAuth(req, upstream)
-	req.ContentLength = int64(len(forwardBody))
+	req.ContentLength = int64(len(body))
+	return p.client.Do(req)
+}
 
-	resp, err := p.client.Do(req)
-	if err != nil {
-		rec.Status, rec.UsageMissing = http.StatusBadGateway, true
-		rec.Trace.TransportError = transportCause(err)
-		p.record(rec)
-		writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
+// answer relays an answer the client gets as it came: a success streamed
+// or buffered, an error read first so its business code can be recorded.
+func (p *Proxy) answer(w http.ResponseWriter, resp *http.Response, rec Record) {
+	if resp.StatusCode >= http.StatusBadRequest {
+		body, complete := readUpTo(resp.Body, maxErrorBodyBytes)
+		if complete {
+			rec.UpstreamCode = errorOf(body).Code
+		}
+		p.replay(w, resp, body, complete, rec)
 		return
 	}
-	defer func() { _ = resp.Body.Close() }()
-	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
-
-	if info.Stream {
+	if rec.Stream {
 		p.streamResponse(w, resp, rec)
 		return
 	}
 	p.bufferedResponse(w, resp, rec)
+}
+
+// replay answers the client with an upstream error answer. body is what
+// was read of it; when complete is false the rest follows it unread.
+func (p *Proxy) replay(w http.ResponseWriter, resp *http.Response, body []byte, complete bool, rec Record) {
+	copyResponseHeaders(w, resp)
+	w.WriteHeader(resp.StatusCode)
+	_, _ = w.Write(body)
+	if !complete {
+		_, _ = io.Copy(w, resp.Body)
+	}
+
+	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
+	// An error answer carries no token, so it has no time to a first one.
+	rec.Status, rec.UsageMissing, rec.TTFTMS = resp.StatusCode, true, -1
+	p.record(rec)
+}
+
+// notAdmitted answers a call the proxy stopped waiting for, with why it
+// stopped.
+func (p *Proxy) notAdmitted(w http.ResponseWriter, rec Record, pend *pending, err error) {
+	pend.stamp(&rec)
+	rec.UsageMissing = true
+	var quota *quotaRejection
+	switch {
+	case errors.Is(err, errAdmissionTimeout):
+		rec.Status, rec.Admission = http.StatusTooManyRequests, outcomeTimeout
+		// Come back at once: the retry re-enters the queue with a whole new
+		// budget, so a client with a short fixed retry schedule is not spent
+		// while the queue drains.
+		w.Header().Set("Retry-After", "1")
+		writeError(w, http.StatusTooManyRequests, fmt.Sprintf("%s is at its concurrency limit: ai-meter held this call for %.0fs without a slot, retry", rec.Upstream, pend.gate.cfg.MaxWait.Seconds()))
+	case errors.As(err, &quota):
+		rec.Status, rec.Admission, rec.UpstreamCode = http.StatusTooManyRequests, outcomeCircuit, quota.code
+		if quota.contentType != "" {
+			w.Header().Set("Content-Type", quota.contentType)
+		}
+		w.Header().Set("Retry-After", strconv.Itoa(max(int(pend.gate.now().Sub(quota.until).Seconds())+1, 1)))
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = w.Write(quota.body)
+	default:
+		// The client went away: nobody is left to answer.
+		rec.Status, rec.Admission = statusClientClosedRequest, outcomeCancelled
+	}
+	p.record(rec)
+}
+
+// readUpTo reads at most limit bytes of body and reports whether that was
+// all of it.
+func readUpTo(body io.Reader, limit int64) ([]byte, bool) {
+	data, err := io.ReadAll(io.LimitReader(body, limit+1))
+	return data, err == nil && int64(len(data)) <= limit
 }
 
 // callRecord opens the Record of one request with everything known before

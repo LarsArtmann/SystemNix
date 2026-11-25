@@ -173,7 +173,7 @@ const (
 )
 
 var (
-	rateLimitWording = regexp.MustCompile(`(?i)rate limit`)
+	rateLimitWording  = regexp.MustCompile(`(?i)rate limit`)
 	quotaResetWording = regexp.MustCompile(`(?i)\breset(?:s)? at (\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})?)`)
 )
 
