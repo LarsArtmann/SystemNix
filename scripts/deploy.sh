@@ -749,6 +749,38 @@ if nix run .#pre-deploy-check; then
       printf '%s\n' "$num"
     done | sort -n | tail -1
   }
+  # Boot-entry anchor (2026-11-25, the gen-1030 revert): the profile anchor
+  # proves only `system-N-link == /run/current-system`. It cannot see a
+  # generation that is live AND profile-anchored but has NO bootloader
+  # entry, which is exactly what an exit-4 activation leaves behind (nh:
+  # "Activation failed; the new generation will not be added to the
+  # bootloader"). gen-1030 ran that way for 3.5 h; the 08:57 WDT reset
+  # booted gen-1029 and the deploy had silently reverted.
+  # Prints one of:
+  #   ok                     the loader's preferred entry boots $1
+  #   unanchored: <reason>   a reboot boots something else
+  #   unknown: <reason>     ESP unreadable, or a loader shape this check does
+  #                          not know (never reported as a pass)
+  # Seams for the fixture tests: BOOT_LOADER_CONF / BOOT_ENTRIES_DIR.
+  boot_entry_anchor_status() {
+    local cur="$1"
+    local loader_conf="${BOOT_LOADER_CONF:-/boot/loader/loader.conf}"
+    local entries_dir="${BOOT_ENTRIES_DIR:-/boot/loader/entries}"
+    local entry_name
+    # `preferred <entry>` (NixOS >= 26.11, content-addressed names) wins;
+    # a concrete `default <entry>` is the older form. A glob default
+    # (`nixos-*`) and `@saved` name no entry this check can read.
+    entry_name=$(sudo -n sed -n -e 's/^preferred[[:space:]]//p' -e 's/^default[[:space:]]//p' "$loader_conf" 2>/dev/null | grep -v -e '^@' -e '[][*?]' | head -n 1 || true)
+    if [ -z "$entry_name" ]; then
+      printf 'unknown: %s names no concrete preferred/default entry (ESP unreadable, or a non-systemd-boot loader)' "$loader_conf"
+      return 0
+    fi
+    if sudo -n grep -q -- "init=$cur/init" "$entries_dir/$entry_name" 2>/dev/null; then
+      printf 'ok'
+    else
+      printf 'unanchored: %s prefers %s, which does not boot %s' "$loader_conf" "$entry_name" "$cur"
+    fi
+  }
   prev_gen=$(latest_system_generation)
   set +e
   nh_output="$(nh os switch . 2>&1 | tee /dev/stderr)"
@@ -837,6 +869,35 @@ if nix run .#pre-deploy-check; then
       echo "❌ anchor self-repair FAILED — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline"
     fi
   fi
+
+  # Boot-entry anchor, the third leg of the anchor discipline (2026-11-25
+  # gen-1030 revert; see boot_entry_anchor_status above). Runs on EVERY
+  # switch, because the exit-4 branch above is the shape that produces the
+  # gap and it looks successful (rc=0, new profile generation). Re-arming
+  # the boot entries is `nixos-rebuild boot` semantics only, no activation:
+  # the running system is the activated truth and a reboot must come back
+  # on it. It runs BEFORE the provisioner loop that restarts
+  # boot-mirror-sync, so the 2nd-boot ESP mirrors the repaired entry.
+  cur_system="$(readlink /run/current-system 2>/dev/null)"
+  boot_entry_status=$(boot_entry_anchor_status "$cur_system")
+  case "$boot_entry_status" in
+    ok) echo "✓ Boot-entry anchored: the loader's preferred entry boots the running system" ;;
+    unanchored:*)
+      echo "⚠ $boot_entry_status — self-repairing: re-arming the boot entries for the running system"
+      if sudo "$cur_system/bin/switch-to-configuration" boot; then
+        boot_entry_status=$(boot_entry_anchor_status "$cur_system")
+        case "$boot_entry_status" in
+          ok) echo "✓ Boot-entry anchor repaired (the activation had not added this generation to the bootloader)" ;;
+          *) echo "❌ Boot-entry self-repair did not take ($boot_entry_status) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline" ;;
+        esac
+      else
+        echo "❌ Boot-entry self-repair FAILED (switch-to-configuration boot) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline"
+      fi
+      ;;
+    unknown:*)
+      echo "⚠ Boot-entry anchor NOT verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check"
+      ;;
+  esac
 
   # Start critical services that deploy may have left in inactive/dead state.
   # reset-failed only clears the failure counter — it does NOT start the service.
@@ -1332,6 +1393,22 @@ if nix run .#pre-deploy-check; then
     echo "❌ UNANCHORED: /run/current-system != system-${anchor_gen} profile — a REBOOT WILL REVERT. Re-run: nix run .#deploy"
     exit 14
   fi
+
+  # Third leg of the same class (2026-11-25 gen-1030 revert): live and
+  # profile-anchored but with NO boot entry also reverts on reboot (an
+  # exit-4 activation leaves exactly that shape). Checked here, before the
+  # smoke exit, for the same reason as the profile anchor: no smoke verdict
+  # may shadow it. An unreadable ESP is a WARN, never a pass.
+  cur_system="$(readlink /run/current-system 2>/dev/null)"
+  boot_entry_status=$(boot_entry_anchor_status "$cur_system")
+  case "$boot_entry_status" in
+    ok) ;;
+    unanchored:*)
+      echo "❌ UNANCHORED (boot entry): $boot_entry_status — a REBOOT WILL REVERT. Repair: sudo $cur_system/bin/switch-to-configuration boot && sudo systemctl restart boot-mirror-sync, then re-verify: nix run .#pre-reboot-check"
+      exit 14
+      ;;
+    *) echo "⚠ Boot-entry anchor not verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check" ;;
+  esac
 
   if [ "$smoke_rc" -eq 3 ]; then
     exit 3

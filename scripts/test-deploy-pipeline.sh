@@ -23,8 +23,14 @@
 #      literal "!= 1" override site may remain (=2 must clear gate 1)
 #   F  media-atlas provisioner batch — the hub's provisioners restart in ONE
 #      transaction (REAL function text under the deploy's set-flags), the
-#      budget argument survives the multi-unit form, and the batch stays
-#      out of the per-unit loop (tripwire)
+#     budget argument survives the multi-unit form, and the batch stays
+#     out of the per-unit loop (tripwire)
+#   G  boot-entry anchor (2026-11-25 gen-1030 revert) — the third anchor
+#      leg on the REAL function text: preferred entry boots the running
+#      toplevel -> ok; another generation -> unanchored; glob-only or
+#      unreadable loader.conf -> unknown (never a pass); ordering
+#      tripwires (repair before the boot-mirror restart, assertion before
+#      the smoke exit)
 # Run: bash scripts/test-deploy-pipeline.sh  (also a flake check)
 set -uo pipefail
 
@@ -364,6 +370,71 @@ for unit in immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision
 done
 assert_contains "the batch runs after the loop" "$(grep -c '^  restart_media_atlas_provisioners$' "$DEPLOY_SH")" "1"
 rm -f "$RESTART_LOG" "$BUDGET_LOG"
+
+# ---------------------------------------------------------------------------
+echo "G. boot-entry anchor (third anchor leg; the 2026-11-25 gen-1030 revert)"
+
+# boot_entry_anchor_status() extracted live from deploy.sh (the group-C
+# pattern): an exit-4 activation leaves a generation that is live and
+# profile-anchored but has NO bootloader entry, which the profile anchor
+# cannot see. gen-1030 reverted on the next crash because of exactly that.
+boot_src=$(sed -n '/^  boot_entry_anchor_status() {/,/^  }/p' "$DEPLOY_SH")
+if [ -n "$boot_src" ]; then ok "boot_entry_anchor_status extracted from deploy.sh"; else bad "boot_entry_anchor_status not found in deploy.sh"; fi
+
+# deploy.sh probes the ESP with `sudo -n`; the shim drops the flag.
+boot_shim=$(mktemp -d)
+mkdir -p "$boot_shim/bin"
+cat >"$boot_shim/bin/sudo" <<'EOS'
+#!/bin/sh
+[ "$1" = "-n" ] && shift
+exec "$@"
+EOS
+chmod +x "$boot_shim/bin/sudo"
+
+boot_esp=$(mktemp -d)
+mkdir -p "$boot_esp/loader/entries"
+GEN_A=/nix/store/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-nixos-system-evo-x2-26.11.20261121.aaaaaaa
+GEN_B=/nix/store/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-nixos-system-evo-x2-26.11.20261121.bbbbbbb
+printf 'title NixOS\nversion Generation 1029 NixOS Zokor\noptions init=%s/init quiet\n' "$GEN_A" >"$boot_esp/loader/entries/nixos-aaaa.conf"
+printf 'title NixOS\nversion Generation 1030 NixOS Zokor\noptions init=%s/init quiet\n' "$GEN_B" >"$boot_esp/loader/entries/nixos-bbbb.conf"
+
+boot_status() { # $1 = toplevel -> status, against the current fixture loader.conf
+  PATH="$boot_shim/bin:$PATH" BOOT_LOADER_CONF="${2:-$boot_esp/loader/loader.conf}" BOOT_ENTRIES_DIR="$boot_esp/loader/entries" \
+    bash -c "$boot_src"' && boot_entry_anchor_status "$1"' _ "$1"
+}
+
+printf 'timeout 1\npreferred nixos-aaaa.conf\ndefault nixos-*\n' >"$boot_esp/loader/loader.conf"
+assert_eq "preferred entry boots the system -> ok" "$(boot_status "$GEN_A")" "ok"
+assert_contains "preferred entry boots another generation -> unanchored" "$(boot_status "$GEN_B")" "unanchored:"
+
+printf 'timeout 1\ndefault nixos-bbbb.conf\n' >"$boot_esp/loader/loader.conf"
+assert_eq "concrete default entry (older loader layout) is honored" "$(boot_status "$GEN_B")" "ok"
+
+printf 'timeout 1\ndefault nixos-*\n' >"$boot_esp/loader/loader.conf"
+assert_contains "glob-only default names no entry -> unknown (never a pass)" "$(boot_status "$GEN_A")" "unknown:"
+assert_contains "unreadable loader.conf -> unknown (never a pass)" "$(boot_status "$GEN_A" "$boot_esp/loader/missing.conf")" "unknown:"
+
+# Ordering tripwires: the self-repair runs before the provisioner loop that
+# restarts boot-mirror-sync (the 2nd-boot ESP must mirror the repaired
+# entry), and the final assertion runs before the smoke exit (no rc=3 may
+# shadow a reboot-revertible state).
+boot_repair_line=$(grep -n 'Boot-entry anchored: the loader' "$DEPLOY_SH" | head -1 | cut -d: -f1)
+boot_mirror_line=$(grep -n '^  for provisioner in signoz-provision' "$DEPLOY_SH" | head -1 | cut -d: -f1)
+boot_final_line=$(grep -n 'UNANCHORED (boot entry)' "$DEPLOY_SH" | head -1 | cut -d: -f1)
+smoke_exit_line=$(grep -n '^    exit 3$' "$DEPLOY_SH" | tail -1 | cut -d: -f1)
+if [ -n "$boot_repair_line" ] && [ -n "$boot_mirror_line" ] && [ "$boot_repair_line" -lt "$boot_mirror_line" ]; then
+  ok "boot-entry self-repair precedes the boot-mirror-sync restart"
+else
+  bad "boot-entry self-repair must precede the boot-mirror-sync restart (repair@$boot_repair_line mirror-loop@$boot_mirror_line)"
+fi
+if [ -n "$boot_final_line" ] && [ -n "$smoke_exit_line" ] && [ "$boot_final_line" -lt "$smoke_exit_line" ]; then
+  ok "boot-entry final assertion precedes the smoke exit 3"
+else
+  bad "boot-entry final assertion must precede the smoke exit (assert@$boot_final_line exit3@$smoke_exit_line)"
+fi
+assert_eq "boot_entry_anchor_status is consulted twice (repair + final assertion)" "$(grep -c 'boot_entry_anchor_status "\$cur_system"' "$DEPLOY_SH")" "2"
+assert_contains "final boot-entry assertion exits 14 (reboot-revertible class)" "$(sed -n '/UNANCHORED (boot entry)/,/esac/p' "$DEPLOY_SH")" "exit 14"
+rm -rf "$boot_shim" "$boot_esp"
 
 # ---------------------------------------------------------------------------
 echo
