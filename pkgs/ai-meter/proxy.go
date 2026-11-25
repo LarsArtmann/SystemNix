@@ -291,6 +291,7 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 			rec.Admission = outcomeGaveUp
 		}
 		p.replay(w, resp, errBody, complete, rec)
+		return
 	}
 }
 
