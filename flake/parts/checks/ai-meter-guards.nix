@@ -70,11 +70,13 @@
           ];
           # One promtool unit test per price table: the total is a label-less
           # sample, the by-model chart one sample for the called model.
+          # promtool's own keys, so the file is its native format (it accepts
+          # JSON as YAML).
           testCase =
             costs: total:
             {
               interval = "1m";
-              inherit inputSeries;
+              input_series = inputSeries;
               promql_expr_test = [
                 {
                   expr = renderer.spendRate costs;
