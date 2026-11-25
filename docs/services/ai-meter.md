@@ -66,10 +66,26 @@ Prometheus families on :8108 (job `ai-meter`, SigNoz collector):
 
 - `ai_meter_requests_total{client,upstream,model,code}`
 - `ai_meter_tokens_total{client,upstream,model,kind=prompt|completion|cached}`
-- `ai_meter_cost_usd_total{client,upstream,model}` — from `services.ai-meter.costs` (USD per 1M tokens; zai entries are PAYG REFERENCE prices — docs.z.ai/guides/overview/pricing: glm-5.3 1.4/4.4/0.26, glm-5.3-flash 0.15/0.5/0.03, the latter mirroring the crushrc — even though the Max Yearly coding plan bills credits, not tokens, so real marginal spend is $0; owner chose reference visibility 2026-10-17, spend panels overstate by design; unknown/local models cost $0 but meter tokens exactly)
+- `ai_meter_cost_usd_total{client,upstream,model}` — CUMULATIVE since the ledger began: replayed from it at every start at the CURRENT table in `services.ai-meter.costs` (USD per 1M tokens; zai entries are PAYG REFERENCE prices — docs.z.ai/guides/overview/pricing: glm-5.3 1.4/4.4/0.26, glm-5.3-flash 0.15/0.5/0.03, the latter mirroring the crushrc — even though the Max Yearly coding plan bills credits, not tokens, so real marginal spend is $0; owner chose reference visibility 2026-10-17, spend panels overstate by design; unknown/local models cost $0 but meter tokens exactly). The only family that is replayed; every other counter keeps its restart-reset semantics (see Restatement)
 - `ai_meter_request_seconds_{sum,count}`, `ai_meter_ttft_seconds_{sum,count}` (streaming only), `ai_meter_active_requests`, `ai_meter_unauthorized_total`, `ai_meter_metering_errors_total` (recording failures that did NOT fail live traffic — watch this: nonzero means usage blocks are going missing)
 
-Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (the true-up source; Prometheus counters reset on restart, the ledger does not).
+Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call, FACTS ONLY (client, upstream, model, status, token counts, durations). It stores no cost on purpose: cost is a derivation (tokens x the price table), the table changes, and a stored cost would go stale the moment it does. The ledger is the true-up source; Prometheus counters reset on restart, the ledger does not.
+
+### Restatement: a price row that lands late
+
+A model is routinely used before its price is published (glm-5.4 from 2026-11-24: tokens metered exactly, cost $0). Adding its row to `services.ai-meter.costs` and deploying IS the whole backfill. There is no separate step:
+
+| Surface | Where its number comes from | After the row ships |
+| ------- | --------------------------- | ------------------ |
+| Ledger | facts (tokens) | unchanged: nothing was ever wrong |
+| `ai_meter_cost_usd_total` (the "Spend (all-time)" panel) | `Ledger.ReplayCosts` at every start, pricing each recorded call at the current table | every earlier call of that model is priced; the counter steps up once, at the restart |
+| "Spend Rate" and "Spend Rate by Model" panels | PromQL derived from the exact token counters x the current table (`_ai-meter-dashboard.nix`), recomputed at query time | the chart's whole history is restated at the true timestamps, with no spike |
+| crush's own per-session cost | crush's `--price-*` flags on the model declaration, applied by crush itself | not an ai-meter surface; whether crush re-prices sessions it already recorded is unverified |
+
+- The same mechanism restates a price that is CORRECTED or withdrawn, in either direction.
+- Only the cost family is replayed. Re-baselining requests or tokens would read as one enormous spike in every rate() panel and in the "AI Upstream Failure Rate" ratio alert that consume them.
+- A ledger line that does not parse (torn write, foreign content) is skipped at replay, counted in `ai_meter_metering_errors_total` and logged (`ledger has unparseable lines`); it never keeps the proxy from starting, because every routed call depends on it.
+- `OpenLedger` terminates a final line that lacks its newline, so a torn write costs exactly one entry instead of two.
 
 ## Traps
 
@@ -80,9 +96,11 @@ Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (th
 
 ## Checks
 
-Gatus: "ai-meter" (:8107/health, 200 + <500ms) and "ai-meter metrics" (:8108/metrics, 200 + `pat(*ai_meter_requests_total*)`). Eval gates: ports registered, port-registry audit (no literals), gatus coverage (both ports probed), deploy-restart-audit (ai-meter-keys in the deploy.sh provisioner loop).
+Gatus: "ai-meter" (:8107/health, 200 + <500ms) and "ai-meter metrics" (:8108/metrics, 200 + `pat(*ai_meter_requests_total*)`). Eval gates: ports registered, port-registry audit (no literals), gatus coverage (both ports probed), deploy-restart-audit (ai-meter-keys in the deploy.sh provisioner loop), and the dashboard template must carry each spend placeholder exactly once (`_ai-meter-dashboard.nix` throws at eval otherwise).
+
+`checks.x86_64-linux.ai-meter-spend-promql` (`flake/parts/checks/ai-meter-guards.nix`): the dashboard's spend-rate PromQL and the Go cost formula are two implementations of one formula, so the check evaluates what the generator REALLY emits with promtool's engine on a fixture, then holds the Go side (`TestEstimateCostMatchesDashboardPromQL`) to the same number. Either formula moving alone fails it. It also asserts that the dashboard evo-x2 provisions keeps both spend panels, mentions every priced model and carries no template placeholder. Negative legs: `CASES=aimeter bash scripts/negative-test-lints.sh` (either formula drifting, a dropped placeholder, a neutered ledger replay).
 
 ## Tests
 
-- Go: `buildflow -s test-race` (auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream; genai.go adapter: native path/auth/usage/query-preservation e2e vs a fake gemini upstream)
-- VM: `nix build .#checks.x86_64-linux.ai-meter-vm` — unit boot, key mint ownership/perms (consumer copies + ai-meter mirrors + non-root chown path), health, unauthorized 401, unknown-upstream 404, metrics exposition
+- Go: `buildflow -s test-race` (auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream; genai.go adapter: native path/auth/usage/query-preservation e2e vs a fake gemini upstream; ledger replay: a price that lands, is withdrawn or stays across restarts, old-format lines that still carry a cost, unparseable lines, a torn tail line)
+- VM: `nix build .#checks.x86_64-linux.ai-meter-vm` — unit boot, key mint ownership/perms (consumer copies + ai-meter mirrors + non-root chown path), health, unauthorized 401, unknown-upstream 404, metrics exposition, the hardened unit replaying the ledger at start (cost family only), and a price row that lands after a call restating it on the same ledger

@@ -77,6 +77,9 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 | **Post-deploy check** | Functional smoke test that verifies services work (not just that they're alive)     |
 | **Incident pipeline** | go-taskqueue ADR-0021 flow: error reports (`POST /api/v1/errors`, token-gated) become `error.observed` facts on `incident:<fingerprint>` streams; the pool's sweeper mints prio-120 (first) / prio-150 (regression) agent fix tasks |
 | **Error beacon**      | `problems.home.lan/beacon.js` — embeddable script capturing web client errors (`onerror` + `unhandledrejection`), POSTing to `/report` where Caddy injects the tq-api Bearer token server-side (the token never reaches the browser) |
+| **ai-meter** | Loopback metering proxy every OpenAI-compatible AI call routes through. Records token counts (facts) in a JSONL ledger and derives reference cost at the current price table |
+| **Reference price** | The pay-as-you-go list price configured for a model in `services.ai-meter.costs`: what routed traffic WOULD cost, not what the coding plan bills (credits). Invented prices are banned; an unpriced model meters tokens exactly at $0 |
+| **Restatement** | Re-pricing of every recorded call when a reference price lands, is corrected or is withdrawn. Automatic: the cost counter replays the ledger at each ai-meter start and the spend-rate panels derive cost from the token counters at query time. Never a manual backfill |
 
 ## Service Patterns
 
