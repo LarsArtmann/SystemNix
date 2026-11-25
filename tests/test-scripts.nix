@@ -733,6 +733,46 @@
           check_state "$CPU_STATE_TMP" not-set 0 "cpu not-set ([not set] sanitized to 0)"
           check_state "$CPU_STATE_TMP" missing-cpu 0 "cpu missing-cpu (absent line defaults 0)"
 
+          # ── Active-churn gate (2026-11-25): slice the churn flag block ──
+          # The per-svc block (svc="gatus" … churn echo + churn state append)
+          # is sliced from the RENDERED collector and run against fixture
+          # NRestarts transitions + growth epochs. NOW is pinned to 1000000,
+          # so fresh (999000: 1000s ago) vs stale (500000: far past the
+          # window) growth epochs are unambiguous against the 60-min window.
+          sed -n '/^ *svc="gatus"$/,/CHURN_STATE_TMP"$/p' "$SCRIPT" > "$WORK/churnbody.sh"
+          grep -q 'system_service_restart_churn' "$WORK/churnbody.sh" || { echo "slice failed: churn block not found in rendered collector"; exit 1; }
+
+          churn_case() {
+            local cur="$1" prev="$2" pg="$3" want_flag="$4" want_state="$5" label="$6"
+            rm -f "$WORK/churn_state"
+            local out
+            out=$(bash -c 'set -euo pipefail
+              systemctl_value() { printf "%s\n" "'"$cur"'"; }
+              declare -A prev_restarts prev_churn_growth
+              prev_restarts[gatus]='"$prev"'
+              prev_churn_growth[gatus]='"$pg"'
+              NOW_EPOCH=1000000
+              CHURN_STATE_TMP="'"$WORK"'/churn_state"
+              ANY_CRASH_LOOP=0
+              ANY_CHURN=0
+              source "'"$WORK"'/churnbody.sh"
+              printf "FLAG:%s ANY:%s\n" "$churn" "$ANY_CHURN"
+            ' 2>&1) || { echo "FAIL $label: runner died"; exit 1; }
+            case "$out" in
+              "FLAG:$want_flag"*) ;;
+              *) echo "FAIL $label: expected churn=$want_flag, got: $out"; exit 1 ;;
+            esac
+            local got_state
+            got_state=$(awk '{print $2}' "$WORK/churn_state" 2>/dev/null)
+            [ "$got_state" = "$want_state" ] || { echo "FAIL $label: expected state=$want_state, got: $got_state"; exit 1; }
+          }
+          churn_case 10 8 500000 1 1000000 "active churn (restart seen this collection)"
+          churn_case 26 26 500000 0 500000 "recovered churn (stale growth, counter stuck high — the 2026-11-25 tq-agent-pool incident shape)"
+          churn_case 26 26 999000 1 999000 "fresh growth window still open"
+          churn_case 4 4 999000 0 999000 "below threshold"
+          churn_case 0 26 999000 0 0 "counter drop resets growth (explicit restart)"
+          churn_case 26 26 0 0 0 "migration (untracked growth reads quiet)"
+
           # ── Static tripwires: the consumption wiring exists ────────────
           grep -qF 'case "$prop" in' "$HEALTH_MODULE" || { echo "module lost the keyed parse"; exit 1; }
           grep -qF 'CPUUsageNSec) cpu_nsec="$val"' "$HEALTH_MODULE" || { echo "module lost the CPU key match"; exit 1; }
@@ -743,8 +783,10 @@
           grep -qF 'UNIT CRASH LOOP' "$SEV1_MODULE" || { echo "sev1 bridge lost the crash-loop title"; exit 1; }
           grep -qF 'system_any_service_crash_loop' "$SIGNOZ_MODULE" || { echo "signoz lost the crash-loop rule"; exit 1; }
           grep -qF 'system_any_service_restart_churn' "$SIGNOZ_MODULE" || { echo "signoz lost the churn rule"; exit 1; }
+          grep -qF 'restartChurnQuietMinutes' "$HEALTH_MODULE" || { echo "module lost the churn quiet window"; exit 1; }
+          grep -qF 'prev_churn_growth' "$HEALTH_MODULE" || { echo "module lost the churn growth tracking"; exit 1; }
 
-          echo "PASS: system-health restart tracking — keyed parse order-immune, [not set]/missing guarded, consumption wired"
+          echo "PASS: system-health restart tracking — keyed parse order-immune, [not set]/missing guarded, active-churn gated, consumption wired"
         '';
       };
     in

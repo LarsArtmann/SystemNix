@@ -2147,7 +2147,7 @@ _: {
               echo "system_service_restart_churn{service=\"$svc\"} ''${churn}"
               echo "$svc $upd_g" >> "$CHURN_STATE_TMP"
             '') allMonitoredServices}
-          mv "$CHURN_STATE_TMP" "$CHURN_STATE"
+            mv "$CHURN_STATE_TMP" "$CHURN_STATE"
 
             echo "# HELP system_any_service_crash_loop 1 if ANY monitored service is crash-looping (>=${toString crashLoopRestartThreshold} restarts per interval), 0 otherwise"
             echo "# TYPE system_any_service_crash_loop gauge"
