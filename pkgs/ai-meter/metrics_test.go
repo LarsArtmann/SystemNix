@@ -27,8 +27,8 @@ func TestCallMovesItsInFlightMark(t *testing.T) {
 	}
 
 	call.End()
-	call.End()            // a second End must not push the gauge below zero
-	call.SetModel("x")    // a finished call cannot re-enter the gauge
+	call.End()         // a second End must not push the gauge below zero
+	call.SetModel("x") // a finished call cannot re-enter the gauge
 
 	for _, line := range strings.Split(r.Render(), "\n") {
 		if strings.HasPrefix(line, "ai_meter_active_requests{") && !strings.HasSuffix(line, " 0") {

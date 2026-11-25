@@ -572,10 +572,10 @@ func TestOTLPEndpointIsValidatedAtLoad(t *testing.T) {
 	for endpoint, wantErr := range map[string]bool{
 		"http://127.0.0.1:4318":               false,
 		"https://collector.example/v1/traces": false,
-		"":                                   false,
-		"127.0.0.1:4318":                     true,
-		"grpc://127.0.0.1:4317":              true,
-		"http://":                            true,
+		"":                                    false,
+		"127.0.0.1:4318":                      true,
+		"grpc://127.0.0.1:4317":               true,
+		"http://":                             true,
 	} {
 		body := `{"listen":"127.0.0.1:0","metrics_listen":"127.0.0.1:0","ledger_path":"` + filepath.Join(dir, "usage.jsonl") +
 			`","clients":[{"name":"crush","key_file":"` + keyFile + `"}],"upstreams":[{"name":"zai","base_url":"https://example.test"}],"otlp_endpoint":"` + endpoint + `"}`

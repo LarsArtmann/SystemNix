@@ -17,6 +17,11 @@
 #   ai-meter.home.lan  static viewer embedding the SigNoz ai-meter
 #                      dashboard (registry vHost.root; frameAncestors on
 #                      the signoz entry allows the iframe)
+#   OTLP/HTTP → SigNoz collector: one GenAI-semconv span per proxied call, so
+#                      SigNoz's native AI observability (Overview +
+#                      Explorer, signoz.<domain>/ai-observability) covers
+#                      every routed model. Metadata only — prompts and
+#                      completions never leave the proxy (traces.go).
 #
 # Secrets doctrine:
 #   - UPSTREAM provider keys: sops-declared COPIES owned by the ai-meter
@@ -196,6 +201,12 @@ _: {
           inherit (cost) output;
           cached_input = cost.cachedInput;
         }) cfg.costs;
+        # Span export into SigNoz's native AI observability. The collector's
+        # OTLP/HTTP receiver is the registry port (signoz-coverage registers
+        # this unit as wiring "config": the runtime collector pages when the
+        # spans stop landing).
+        otlp_endpoint = "http://127.0.0.1:${toString ports.signoz-otlp-http}";
+        deployment_environment = "production";
       };
 
       clientList = lib.mapAttrsToList (name: client: {
@@ -537,7 +548,8 @@ _: {
               }
               {
                 # Functional: the admin plane must actually EXPOSE the metering
-                # families (presence check; values are per-call).
+                # families (presence check; values are per-call), including
+                # the span-export outcomes the trace-pipeline alerts read.
                 name = "ai-meter metrics";
                 group = "AI";
                 url = "http://localhost:${toString cfg.metricsPort}/metrics";
@@ -545,6 +557,7 @@ _: {
                 conditions = [
                   "[STATUS] == 200"
                   "[BODY] == pat(*ai_meter_requests_total*)"
+                  "[BODY] == pat(*# TYPE ai_meter_spans_exported_total counter*)"
                 ];
                 alert = "ai-meter admin plane down - metering metrics are not scrapeable. Check: journalctl -u ai-meter -n 50";
               }

@@ -80,7 +80,7 @@ const (
 	attrCostCacheRead = "signoz.gen_ai.usage.cache_read.input_tokens.cost"
 	attrCostTotal     = "signoz.gen_ai.usage.tokens.cost"
 
-	attrRequestMethod     = "http.request.method"
+	attrRequestMethod      = "http.request.method"
 	attrResponseStatusCode = "http.response.status_code"
 	attrErrorType          = "error.type"
 
@@ -504,15 +504,15 @@ func (rec *Record) span(price Cost) (*otlpSpan, error) {
 		traceID, parentSpanID = rec.Trace.Parent.TraceID, rec.Trace.Parent.ParentSpanID
 	}
 	return &otlpSpan{
-		TraceID:         traceID,
-		SpanID:          hex.EncodeToString(ids[16:]),
-		ParentSpanID:    parentSpanID,
-		Name:            rec.spanName(),
-		Kind:            spanKindClient,
-		StartUnixNano:   strconv.FormatInt(rec.StartedAt.UnixNano(), 10),
-		EndUnixNano:     strconv.FormatInt(rec.EndedAt.UnixNano(), 10),
-		Attributes:      rec.attributes(price),
-		Status:          rec.spanStatus(),
+		TraceID:       traceID,
+		SpanID:        hex.EncodeToString(ids[16:]),
+		ParentSpanID:  parentSpanID,
+		Name:          rec.spanName(),
+		Kind:          spanKindClient,
+		StartUnixNano: strconv.FormatInt(rec.StartedAt.UnixNano(), 10),
+		EndUnixNano:   strconv.FormatInt(rec.EndedAt.UnixNano(), 10),
+		Attributes:    rec.attributes(price),
+		Status:        rec.spanStatus(),
 	}, nil
 }
 
@@ -656,15 +656,15 @@ type otlpScope struct {
 }
 
 type otlpSpan struct {
-	TraceID         string          `json:"traceId"`
-	SpanID          string          `json:"spanId"`
-	ParentSpanID    string          `json:"parentSpanId,omitempty"`
-	Name            string          `json:"name"`
-	Kind            int             `json:"kind"`
-	StartUnixNano   string          `json:"startTimeUnixNano"`
-	EndUnixNano     string          `json:"endTimeUnixNano"`
-	Attributes      []otlpAttribute `json:"attributes"`
-	Status          *otlpStatus     `json:"status,omitempty"`
+	TraceID       string          `json:"traceId"`
+	SpanID        string          `json:"spanId"`
+	ParentSpanID  string          `json:"parentSpanId,omitempty"`
+	Name          string          `json:"name"`
+	Kind          int             `json:"kind"`
+	StartUnixNano string          `json:"startTimeUnixNano"`
+	EndUnixNano   string          `json:"endTimeUnixNano"`
+	Attributes    []otlpAttribute `json:"attributes"`
+	Status        *otlpStatus     `json:"status,omitempty"`
 }
 
 type otlpStatus struct {

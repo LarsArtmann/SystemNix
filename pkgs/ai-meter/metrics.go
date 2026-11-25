@@ -86,16 +86,16 @@ type durKey struct {
 
 func NewRegistry() *Registry {
 	return &Registry{
-		requests:      map[reqKey]float64{},
-		tokens:        map[tokenKey]float64{},
-		cost:          map[costKey]float64{},
-		secondsSum:    map[durKey]float64{},
-		secondsCount:  map[durKey]float64{},
-		ttftSum:       map[durKey]float64{},
-		ttftCount:     map[durKey]float64{},
-		inflight:      map[inflightKey]float64{},
-		spanExports:   map[string]float64{},
-		startTime:     time.Now(),
+		requests:     map[reqKey]float64{},
+		tokens:       map[tokenKey]float64{},
+		cost:         map[costKey]float64{},
+		secondsSum:   map[durKey]float64{},
+		secondsCount: map[durKey]float64{},
+		ttftSum:      map[durKey]float64{},
+		ttftCount:    map[durKey]float64{},
+		inflight:     map[inflightKey]float64{},
+		spanExports:  map[string]float64{},
+		startTime:    time.Now(),
 	}
 }
 
