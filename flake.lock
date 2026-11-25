@@ -8661,11 +8661,11 @@
         "templ-components": "templ-components_7"
       },
       "locked": {
-        "lastModified": 1795565002,
-        "narHash": "sha256-o//hY2fVKUH44QSR9kxtap3YzS1f+UMl2OCkKWzgy2o=",
+        "lastModified": 1795569036,
+        "narHash": "sha256-gfBCDrhcXQKZrnGkxTzZx09TiMQV+b7r9xyl8ceBuxA=",
         "ref": "refs/heads/master",
-        "rev": "e092b4005541a537a5716e1006840e89b032d3b6",
-        "revCount": 1526,
+        "rev": "a60fda4b5fc3f952ffe7db833e3576bd64fa5ac9",
+        "revCount": 1532,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
