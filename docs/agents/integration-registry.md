@@ -210,7 +210,7 @@ drift red. Regenerate after any registry change:
 | dnsblockd | dnsblockd | — | none | dnsblockd | 4 | /mnt/pool/backups/dnsblockd |
 | emeet-pixyd | emeet-pixyd | 8090 | protected | emeet-pixyd | 2 | — |
 | file-and-image-renamer | renamer | 8086 | protected | file-and-image-renamer | 2 | — |
-| forgejo | forgejo | 3000 | plain | forgejo | 5 | /mnt/pool/backups/forgejo |
+| forgejo | forgejo | 3000 | plain | forgejo | 6 | /mnt/pool/backups/forgejo |
 | gatus | status | 9410 | plain | gatus | — | — |
 | geometrikks | geo | 8102 | plain | geometrikks | 1 | /mnt/pool/backups/geometrikks |
 | gotenberg | — | — | none | gotenberg | — | — |
@@ -258,6 +258,7 @@ drift red. Regenerate after any registry change:
 | project-discovery-admin | discover | 8765 | protected | project-discovery-admin | 2 | — |
 | projects-management-automation | — | — | none | projects-management-automation | 2 | — |
 | projects-subvol | — | — | none | projects-subvol | 1 | — |
+| quotaboard | quotaboard | 8791 | protected | quotaboard | 2 | — |
 | restic-app-dumps | — | — | none | restic-app-dumps | — | /mnt/pool/backups/restic-app-dumps |
 | rust-cache | — | — | none | rust-cache | 3 | — |
 | searxng | search | 8889 | protected | searxng | 1 | — |

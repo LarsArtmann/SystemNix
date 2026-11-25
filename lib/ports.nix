@@ -280,12 +280,12 @@
         ai-meter = 8107;
         ai-meter-metrics = 8108;
 
-        # quotaboard — AI coding-plan quota dashboard (always-on user service
-        # from the quotaboard flake input, wired in desktop/quickshell.nix).
-        # Loopback bind, fronted by the quotaboard vHost (Layer 2
-        # protectedVHost — the web UI has no auth of its own;
+        # quotaboard, the AI coding-plan quota dashboard (always-on user
+        # service from the quotaboard flake input, wired in
+        # desktop/quickshell.nix). Loopback bind, fronted by the quotaboard
+        # vHost (Layer 2 protectedVHost: the web UI has no auth of its own;
         # modules/nixos/services/quotaboard.nix); the DMS bar widget reads
-        # the JSON API here. 8791 is the app's own compiled-in default —
+        # the JSON API here. 8791 is the app's own compiled-in default;
         # registering it makes the eval-enforced port registry the single
         # owner of record.
         quotaboard = 8791;

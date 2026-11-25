@@ -59,6 +59,17 @@ ob_pre_deploy() {
   else
     "$OB_FAIL" "borgbackup-job-hetzner IO tier is '${borg_io_class:-absent}/${borg_io_prio:-absent}', not best-effort/6 — nixpkgs' idle class STARVES on this box (a starved nightly job pages stale with no path to green; the ioTier.background deliverable, lib/default.nix ioTier doctrine)"
   fi
+  borg_type=$(printf '%s' "$svc_json" | jq -r '.Type // ""' 2>/dev/null || echo "")
+  if [ "$borg_type" = "oneshot" ]; then
+    "$OB_PASS" "job type oneshot (ExecStartPost marker runs only after a successful run)"
+  else
+    "$OB_FAIL" "borgbackup-job-hetzner is Type='${borg_type:-unset (=simple)}', not oneshot — ExecStartPost then runs at job START, a failed run still touches .last_success and backup_ever_succeeded reads 1 (2026-11-25 phantom-success class)"
+  fi
+  if printf '%s' "$borg_pre" | grep -q 'borg-offsite-key-check'; then
+    "$OB_PASS" "key pre-flight wired (ExecStartPre key-check names an unloadable borg_ssh_key)"
+  else
+    "$OB_FAIL" "borgbackup-job-hetzner has no key pre-flight on ExecStartPre — an unloadable borg_ssh_key surfaces as a bare 'Load key: invalid format' (nine nights 2026-11-17..25 without naming the secret or the fix)"
+  fi
 }
 
 ob_post_deploy() {
@@ -68,7 +79,9 @@ ob_post_deploy() {
     "$OB_SKIP" "Offsite Borg - not deployed (services.offsite-borg.enable = false)"
     return 0
   fi
-  _borg_pre="$(sed -n 's/^ExecStartPre=//p' "$unit_path" | head -1)"
+  # Every ExecStartPre line is a candidate; the tripwire is the one naming it
+  # (the key pre-flight rides the same list).
+  _borg_pre="$(sed -n 's/^ExecStartPre=//p' "$unit_path" | grep 'borg-offsite-golive-check' | head -1)"
   case "$_borg_pre" in
   *borg-offsite-golive-check*)
     if [ -x "$_borg_pre" ]; then
@@ -99,6 +112,26 @@ ob_post_deploy() {
   else
     "$OB_FAIL" "Offsite Borg - IO tier not best-effort/6 in the deployed unit - nixpkgs' idle class starves on this box; a starved nightly job pages stale with no path to green (ioTier.background deliverable)"
   fi
+
+  if grep -qx 'Type=oneshot' "$unit_path"; then
+    "$OB_PASS" "Offsite Borg - job is Type=oneshot (marker runs only after a successful run)"
+  else
+    "$OB_FAIL" "Offsite Borg - unit is not Type=oneshot - ExecStartPost then runs at job START and a failed run still touches .last_success (backup_ever_succeeded reads 1; 2026-11-25 phantom-success class)"
+  fi
+
+  _borg_key="$(sed -n 's/^ExecStartPre=//p' "$unit_path" | grep 'borg-offsite-key-check' | head -1)"
+  case "$_borg_key" in
+  *borg-offsite-key-check*)
+    if [ -x "$_borg_key" ]; then
+      "$OB_PASS" "Offsite Borg - key pre-flight wired and present ($_borg_key)"
+    else
+      "$OB_FAIL" "Offsite Borg - key pre-flight binary not executable/missing ($_borg_key)"
+    fi
+    ;;
+  *)
+    "$OB_FAIL" "Offsite Borg - key pre-flight missing from ExecStartPre ('$_borg_key') - an unloadable borg_ssh_key surfaces as a bare 'Load key: invalid format'"
+    ;;
+  esac
 
   if [ -f "$prom_path" ]; then
     if grep -q '^backup_ever_succeeded{backup="offsite-borg"} ' "$prom_path"; then

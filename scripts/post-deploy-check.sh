@@ -408,7 +408,10 @@ check_local "Gatus Alert Relay" "9411" "/healthz" "200" "forwarded" 2>/dev/null 
 
 check_local "DNS Blocker" "9090" "/health" "200" "" 2>/dev/null || true
 
-# quotaboard (user unit, loopback quota dashboard + DMS bar widget).
+# quotaboard (ALWAYS-ON user unit since 2026-11-25: it backs the
+# quotaboard.home.lan vHost and the DMS bar widget, so a refusal here is a
+# real regression, never an expected-down SSH-only state; the standing
+# 2026-11-23 NEW-failure signal was the OLD session-scoped binding).
 # The API body check is functional, not just alive: "generatedAt" proves
 # the JSON envelope rendered (2026-11-04).
 check_local "Quotaboard API" "8791" "/api/quotas" "200" '"generatedAt"' 2>/dev/null || true

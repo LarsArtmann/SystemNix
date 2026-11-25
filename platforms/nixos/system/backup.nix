@@ -321,6 +321,13 @@ in
           startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [
             {
+              # oneshot, not nixpkgs' implicit simple: ExecStartPost must run
+              # AFTER create + prune + compact succeeded. Under simple the
+              # marker was touched at job START, so a failed run still wrote
+              # .last_success and backup_ever_succeeded read 1 (2026-11-16 and
+              # 2026-11-25 06:30:00.07, 73 ms into runs that failed at +1 s).
+              # Shape guard: offsite-borg-positive-render + the §13/§16 smoke.
+              Type = "oneshot";
               EnvironmentFile = envPath;
               StateDirectory = "borg-offsite";
               # First run seeds the whole irreplaceable set over WAN.

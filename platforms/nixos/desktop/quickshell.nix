@@ -150,16 +150,16 @@ in
 
     # ALWAYS-ON, not session-scoped (2026-11-25): the upstream home module
     # binds the user unit to the graphical session (PartOf/After/WantedBy =
-    # graphical-session.target) — fine for a bar-widget-only loopback tool,
-    # wrong once the LAN vHost fronts it (modules/nixos/services/
-    # quotaboard.nix; Gatus pages on it, PapDashboard links it): it must run
-    # at the SDDM greeter, in SSH-only periods and after a crash reboot
-    # before login. Linger on the primary user starts the user manager at
+    # graphical-session.target). That is right for a bar-widget-only loopback
+    # tool and wrong once the LAN vHost fronts it
+    # (modules/nixos/services/quotaboard.nix; Gatus pages on it, PapDashboard
+    # links it): the server must run at the SDDM greeter, in SSH-only periods
+    # and after a crash reboot before login. Linger on the primary user starts the user manager at
     # boot, so default.target pulls the unit up with the box; the sops env
     # template is rendered in the initrd stage, before the user manager
     # starts. ONLY these three lifecycle keys are overridden — the unit body
-    # (ExecStart, Type=notify, StateDirectory, hardening) stays upstream's
-    # single definition. Runbook: docs/services/quotaboard.md.
+    # (ExecStart, Type=notify, StateDirectory, hardening) stays the single
+    # upstream definition. Runbook: docs/services/quotaboard.md.
     systemd.user.services.quotaboard = {
       Unit.PartOf = lib.mkForce [ ];
       Unit.After = lib.mkForce [ ];

@@ -1524,6 +1524,11 @@
               # <file>/bin/<name>, which 203/EXECs every start (the nine-night
               # Nov 07-15 borg outage class).
               assert !lib.hasInfix "/bin/" (execLines svc.ExecStartPre);
+              # oneshot: under any other type ExecStartPost runs at START and
+              # a failed run still touches the freshness marker (2026-11-25:
+              # two phantom-success markers, backup_ever_succeeded read 1 on a
+              # job that never produced an archive).
+              assert svc.Type == "oneshot";
               assert lib.hasInfix "/var/lib/borg-offsite/.last_success" (execLines svc.ExecStartPost);
               assert execLines svc.EnvironmentFile == envTemplate;
               assert lib.hasSuffix "borg-env" envTemplate;
