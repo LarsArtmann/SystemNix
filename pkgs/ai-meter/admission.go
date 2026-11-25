@@ -38,9 +38,13 @@ const (
 	retryCeiling         = 8 * time.Second
 	maxHonoredRetryAfter = 10 * time.Second
 
-	quotaResetGuard    = 2 * time.Second
 	maxQuotaResetAhead = 8 * 24 * time.Hour
 )
+
+// quotaResetGuard is how long after the reset time the proxy waits before
+// it sends again, so a clock skew between the upstream and this host does
+// not turn the first call of a new window into another quota answer.
+var quotaResetGuard = 2 * time.Second
 
 // AdmissionSettings is the wire shape of one upstream's admission control,
 // as the host renders it into the config. Durations are whole seconds so
@@ -296,17 +300,18 @@ func (g *Gate) open(started time.Time) *pending {
 	return &pending{gate: g, deadline: started.Add(g.cfg.MaxWait)}
 }
 
-// acquire takes one in-flight slot, waiting for it in order of arrival. A
-// call that already waited once (front) rejoins ahead of the queue: it has
-// been waiting longer than any call in it. The context ends the wait.
-func (g *Gate) acquire(ctx context.Context, front bool) error {
+// acquire takes one in-flight slot, waiting for it in order of arrival, and
+// reports whether the call had to wait. A call that already waited once
+// (front) rejoins ahead of the queue: it has been waiting longer than any
+// call in it. The context ends the wait.
+func (g *Gate) acquire(ctx context.Context, front bool) (bool, error) {
 	g.mu.Lock()
 	g.grow()
 	if g.inflight < g.limit {
 		g.inflight++
 		g.publish()
 		g.mu.Unlock()
-		return nil
+		return false, nil
 	}
 	w := &waiter{ready: make(chan struct{})}
 	if front {
@@ -319,7 +324,7 @@ func (g *Gate) acquire(ctx context.Context, front bool) error {
 
 	select {
 	case <-w.ready:
-		return nil
+		return true, nil
 	case <-ctx.Done():
 		g.mu.Lock()
 		if w.granted {
@@ -335,7 +340,7 @@ func (g *Gate) acquire(ctx context.Context, front bool) error {
 		}
 		g.publish()
 		g.mu.Unlock()
-		return context.Cause(ctx)
+		return false, context.Cause(ctx)
 	}
 }
 
@@ -377,10 +382,11 @@ func (g *Gate) rejected() {
 	if now.Sub(g.shrunkAt) < rejectionCoalesceWindow {
 		return
 	}
-	g.shrunkAt = now
+	// The allowance counts as changed even at its floor: the next probe
+	// waits an interval, instead of every call trying the floor plus one.
+	g.shrunkAt, g.changedAt = now, now
 	if g.limit > g.cfg.MinConcurrency {
 		g.limit--
-		g.changedAt = now
 		g.logger.Info("admission allowance lowered", "upstream", g.name, "limit", g.limit)
 	}
 	g.publish()
@@ -495,14 +501,17 @@ func (p *pending) enter(ctx context.Context) error {
 	waitCtx, cancel := context.WithDeadlineCause(ctx, p.deadline, errAdmissionTimeout)
 	defer cancel()
 	since := g.now()
-	if err := g.acquire(waitCtx, p.attempts > 0); err != nil {
+	waited, err := g.acquire(waitCtx, p.attempts > 0)
+	if err != nil {
 		if errors.Is(err, errAdmissionTimeout) {
 			return err
 		}
 		return ctx.Err()
 	}
-	p.waited += g.now().Sub(since)
-	g.registry.AdmissionWaited(g.name, p.waited)
+	if waited {
+		p.waited += g.now().Sub(since)
+		g.registry.AdmissionWaited(g.name, p.waited)
+	}
 	return nil
 }
 
