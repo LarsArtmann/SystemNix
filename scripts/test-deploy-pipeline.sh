@@ -8,7 +8,7 @@
 # and the use-before-set probe-batch bug nearly shipped live
 # (GATUS_SERVICE_METRIC_PORTS must be computed BEFORE the batch).
 #
-# Four groups:
+# Six groups:
 #   A  manifest sed parse — normal / empty / single-unit JSON shapes
 #   B  stamp key semantics — stable per tracked tree, mutation-sensitive,
 #      untracked-blind; 12h expiry window honored by the find expression
@@ -21,6 +21,10 @@
 #      mapping on the REAL function text; the tier-2 extreme-band awk
 #      condition accepts/rejects the right (psi,disk) corners; no legacy
 #      literal "!= 1" override site may remain (=2 must clear gate 1)
+#   F  media-atlas provisioner batch — the hub's provisioners restart in ONE
+#      transaction (REAL function text under the deploy's set-flags), the
+#      budget argument survives the multi-unit form, and the batch stays
+#      out of the per-unit loop (tripwire)
 # Run: bash scripts/test-deploy-pipeline.sh  (also a flake check)
 set -uo pipefail
 
@@ -266,6 +270,114 @@ else
   bad "zone-6 branch lost the =2 veto condition"
 fi
 assert_contains "journal-timeout branch stays =1 territory" "$(grep -c 'DEPLOY_FORCE_PRESSURE=1 nix run' "$DEPLOY_SH")" "2"
+
+# ---------------------------------------------------------------------------
+echo "F. media-atlas provisioner batch (one transaction; extracted live)"
+
+# The 2026-11-24 outage: media-atlas.service Requires= both key
+# provisioners, so each separate loop restart bounced the hub; the second
+# stop landed mid-replay and ended in the 90s stop timeout + SIGKILL. The
+# batch must issue exactly ONE restart for the enabled members and must not
+# sit in the per-unit loop. Runs under the deploy's own set-flags.
+batch_src="set -euo pipefail
+$deploy_restart_src
+$(sed -n '/^restart_media_atlas_provisioners()/,/^}/p' "$DEPLOY_SH")"
+if [ "$batch_src" != "set -euo pipefail
+$deploy_restart_src
+" ]; then ok "restart_media_atlas_provisioners extracted from deploy.sh"; else bad "restart_media_atlas_provisioners not found in deploy.sh"; fi
+
+RESTART_LOG=$(mktemp)
+BUDGET_LOG=$(mktemp)
+REAL_TIMEOUT=$(command -v timeout)
+# systemctl shim: is-enabled answers from $ENABLED (space-separated unit
+# names), restart appends its argv to $RESTART_LOG (slow when $SLOW is set).
+cat >"$shim_dir/bin/systemctl" <<'EOS'
+#!/bin/sh
+case "$1" in
+is-enabled)
+  for unit in $ENABLED; do
+    [ "$3" = "$unit.service" ] && exit 0
+  done
+  exit 1
+  ;;
+restart)
+  printf '%s\n' "$*" >>"$RESTART_LOG"
+  [ -n "${SLOW:-}" ] && sleep 30
+  exit 0
+  ;;
+esac
+exit 0
+EOS
+# timeout shim: records the budget, then behaves like the real one.
+cat >"$shim_dir/bin/timeout" <<EOS
+#!/bin/sh
+printf '%s\n' "\$1" >>"\$BUDGET_LOG"
+shift
+exec "$REAL_TIMEOUT" "\$@"
+EOS
+chmod +x "$shim_dir/bin/systemctl" "$shim_dir/bin/timeout"
+
+run_batch() { # $1 = the enabled unit set
+  : >"$RESTART_LOG"
+  PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" ENABLED="$1" \
+    bash -c "$batch_src"
+'restart_media_atlas_provisioners'
+}
+
+hub_out=$(run_batch "immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision")
+assert_eq "hub enabled: exactly one restart transaction" "$(wc -l <"$RESTART_LOG")" "1"
+assert_eq "hub enabled: the transaction carries all three provisioners" "$(cat "$RESTART_LOG")" "restart immich-api-key-provision.service media-atlas-pg-ro.service media-atlas-key-provision.service"
+assert_eq "hub enabled: default budget" "$(cat "$BUDGET_LOG")" "120"
+assert_contains "hub enabled: the echo names the batch" "$hub_out" "Restarting provisioners (one transaction): immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision"
+
+run_batch "immich-api-key-provision media-atlas-pg-ro" >/dev/null
+assert_eq "hub disabled: only the enabled members, still one transaction" "$(cat "$RESTART_LOG")" "restart immich-api-key-provision.service media-atlas-pg-ro.service"
+
+none_out=$(run_batch "")
+assert_eq "nothing enabled: no restart issued" "$(wc -l <"$RESTART_LOG")" "0"
+assert_eq "nothing enabled: silent" "$none_out" ""
+
+# deploy_restart argument contract, unchanged for every existing caller:
+# a lone unit keeps the 120s default, a trailing number is the budget, and
+# on a batch it is the budget too, never a third unit.
+: >"$RESTART_LOG"
+: >"$BUDGET_LOG"
+PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
+  bash -c "$batch_src"
+'deploy_restart lone-unit'
+assert_eq "lone unit: default budget" "$(cat "$BUDGET_LOG")" "120"
+assert_eq "lone unit: plain restart" "$(cat "$RESTART_LOG")" "restart lone-unit.service"
+
+: >"$BUDGET_LOG"
+PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
+  bash -c "$batch_src"
+'deploy_restart heavy-unit 600'
+assert_eq "trailing budget honored (llama-rag-model-fetch call shape)" "$(cat "$BUDGET_LOG")" "600"
+
+: >"$RESTART_LOG"
+: >"$BUDGET_LOG"
+batch_out=$(PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
+  bash -c "$batch_src"
+'deploy_restart unit-a unit-b 5')
+assert_eq "batch: ONE systemctl restart carrying both units" "$(cat "$RESTART_LOG")" "restart unit-a.service unit-b.service"
+assert_eq "batch: trailing number is the budget" "$(cat "$BUDGET_LOG")" "5"
+assert_eq "batch: success path stays silent" "$batch_out" ""
+
+slow_out=$(PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" SLOW=1 \
+  bash -c "$batch_src"
+'deploy_restart unit-a unit-b 1')
+assert_contains "batch rc-124 path warns with every unit name" "$slow_out" "unit-a.service unit-b.service not active after 1s"
+
+# Tripwire: back in the per-unit loop the hub bounces twice again.
+loop_line=$(grep -m1 '^  for provisioner in ' "$DEPLOY_SH")
+for unit in immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision; do
+  case " $loop_line " in
+  *" $unit "*) bad "$unit is back in the per-unit loop (bounces the hub twice)" ;;
+  *) ok "$unit stays out of the per-unit loop" ;;
+  esac
+done
+assert_contains "the batch runs after the loop" "$(grep -c '^  restart_media_atlas_provisioners$' "$DEPLOY_SH")" "1"
+rm -f "$RESTART_LOG" "$BUDGET_LOG"
 
 # ---------------------------------------------------------------------------
 echo
