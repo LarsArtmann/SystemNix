@@ -119,15 +119,17 @@ in
     consoleLogLevel = 7;
 
     # ── kdump crash capture (2026-08-22 freeze forensics) ────────────────
-    # Both kernel freezes died SILENT (journal cut mid-write, no panic, no
-    # dump). softlockup_panic/hung_task_panic never fired: a scheduler
-    # LIVELOCK (all CPUs burning in zram refault with IRQs enabled, RCU
-    # progressing) pets the hardware watchdog "eventually", never trips the
-    # soft-lockup detector, and starves khungtaskd of CPU. Hang detection
-    # cannot catch that class — admission control + the emergency guard act
-    # BEFORE the cliff; kdump guarantees that when a panic DOES fire (driver
-    # bug, hung_task, future policy change) the vmcore lands in /var/crash
-    # and the postmortem is a 10-minute read instead of archaeology.
+    # Hang detection cannot catch a scheduler LIVELOCK (all CPUs burning in
+    # zram refault with IRQs enabled): it pets the hardware watchdog
+    # "eventually", never trips the soft-lockup detector and starves
+    # khungtaskd of CPU. Admission control + the emergency guard act BEFORE
+    # that cliff; kdump is the net for every panic that does fire (driver
+    # bug, hung_task, lockup, policy change). It is a net, not a guarantee:
+    # from 2026-11-17 to 2026-11-25 the capture kernel OOM-panicked on every
+    # cut and /var/crash never received a file. The capture-path contract
+    # lives in modules/nixos/services/kdump-capture-path.nix (read its header
+    # first), and its proof is a capture (one deliberate crash after a
+    # reboot), never "kexec_crash_loaded = 1".
     # Retention is bounded by kdump-retention.service below (root fs is tight).
     crashDump = {
       enable = true;
@@ -141,8 +143,10 @@ in
       # softlockup panics skipped crash_kexec entirely, hit the 10 s
       # kernel.panic timeout and wrote 0x6 to 0xCF9 (reset reason 0x00080800)
       # with ZERO vmcore. 512M = 0.4 % of 124 GiB: kernel + initrd +
-      # capture-kernel runtime fit inside the region. Post-deploy proof:
-      # /sys/kernel/kexec_crash_loaded must read 1.
+      # capture-kernel runtime fit inside the region. A loaded image
+      # (kexec_crash_loaded = 1) proves only that: from 2026-11-17 to
+      # 2026-11-25 it loaded on every boot while every capture failed
+      # (kdump-capture-path.nix, leg 1).
       reservedMemory = "512M";
     };
 
@@ -459,14 +463,14 @@ in
     "vm.vfs_cache_pressure" = 150; # Prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive). Default 100.
     "vm.dirty_ratio" = 5; # Start foreground writeback at 5% memory (~4.7GB) — lower than old 10% to reduce BTRFS writeback bursts on QLC NAND
     "vm.dirty_background_ratio" = 1; # Background writeback at 1% (~940MB) — start gentle writeback sooner, avoid sudden bursts
-    "vm.min_free_kbytes" = 2097152; # Keep 2GB free for kernel/GPU allocations
+    "vm.min_free_kbytes" = 2097152; # Keep 2GB free for kernel/GPU allocations. MAIN boot only: the kdump capture boot (512 MiB) never sees this bag (kdump-capture-path.nix); until 2026-11-25 it inherited 2 GiB and OOM-killed every capture
     "vm.max_map_count" = 2147483642; # Maximum for large model memory maps
     "vm.compaction_proactiveness" = 20; # Proactive compaction for hugepages
     "vm.oom_kill_allocating_task" = 0; # Let kernel pick the biggest memory hog (not the allocating process)
 
     # Crash recovery — prevent needing hard power cuts when GPU/driver hangs
     "kernel.sysrq" = 1; # Full SysRq — enables REISUB emergency reboot from keyboard
-    "kernel.panic" = 10; # Auto-reboot 10s after kernel panic — kdump captures the vmcore FIRST (crashkernel path reboots after dump completes); 10s is pure post-dump recovery latency. Was 30 (time to photograph a stack trace) — kdump makes the photo redundant.
+    "kernel.panic" = 10; # Auto-reboot 10s after kernel panic. The capture boot gets the same value through kdump-capture-boot-sysctl (it skips the sysctl bag). Was 30 (time to photograph a stack trace).
     "kernel.softlockup_panic" = 1; # Panic on soft lockup (CPU stuck in kernel with interrupts disabled)
     "kernel.watchdog_thresh" = 20; # Soft lockup detection threshold in seconds (default: 10, raised to avoid GPU compute false positives)
     "kernel.hung_task_panic" = 1; # Panic when a task is stuck in D state for too long
