@@ -47,8 +47,8 @@ NOT verified here:
 | --- | --- | --- |
 | Plan marked as executing (twin-executor tombstone) | commit `5db2bdb7e`; the header word changed from Written to Created because `scripts/plan-marker.sh` anchors on that line | the plan file |
 | T01: `admission` block on the zai upstream, with the evidence from the plan in its comment | scope row 6 | `modules/nixos/services/ai-meter.nix` |
-| T02 and T03: 13 end-to-end tests of the proxy against a gated fake upstream | scope rows 2 and 3 | `pkgs/ai-meter/admission_proxy_test.go` (new, 711 lines) |
-| 5 new unit tests: queue ordered by first arrival, first arrival kept for a resent call, ring of arrivals bounded, a raised allowance goes to the longest waiting call, wait time counted once per call | scope row 2 | `pkgs/ai-meter/admission_test.go` |
+| T02 and T03: 12 end-to-end tests of the proxy: 10 against a gated fake upstream, 2 against an ungated one | scope rows 2 and 3 | `pkgs/ai-meter/admission_proxy_test.go` (new, 711 lines) |
+| 5 new unit tests and one rewritten: queue ordered by first arrival, first arrival kept for a resent call, ring of arrivals bounded, a raised allowance goes to the longest waiting call, wait time counted once per call, the arrival key tells clients and bodies apart | scope row 2 | `pkgs/ai-meter/admission_test.go` |
 | Pre-deploy battery for T04.1 | scope rows 7 to 9 | none |
 | T08.1 premises | scope row 14 | none |
 
@@ -106,10 +106,10 @@ That is 15 of 18 plan tasks not started, 3 done, 1 at its first step.
 
 ### 1. The host runs gen 1029; gen 1030 is the newest. Not caused by this session. Live now.
 
-- **What is broken.** `readlink /run/current-system` is the toplevel of `system-1029-link`. `system-1030-link` is newer. The 04:59 deploy of another session installed 1030 and exited 0 at 06:26:27 after 5220 s (`/var/log/systemnix-deploys/2026-11-25_04-59-27.log`, with "Some smoke checks failed"). The host then rebooted twice, and since 11:06:51 it runs 1029.
-- **Severity.** High. Everything that deploy shipped is not running: the span export and everything else the 05:26 status report called live. Any "live" claim from that report is false again until the next deploy. This is the class AGENTS.md calls the exit-14 UNANCHORED anchor.
+- **What is broken.** `readlink /run/current-system` is the toplevel of `system-1029-link`. `system-1030-link` is newer. The newest generation was installed by the deploy that ran from 04:59 and exited 0 at 06:26:27 after 5220 s (`/var/log/systemnix-deploys/2026-11-25_04-59-27.log`, with "Some smoke checks failed"); which session ran it was not checked. The host then rebooted twice, and since 11:06:51 it runs 1029.
+- **Severity.** High. Everything that deploy shipped is not running, including what the 05:26 status report titles "span export live". Any "live" claim from that report is false again until the next deploy. This is the class AGENTS.md calls the exit-14 UNANCHORED anchor.
 - **Root cause.** Not established. The 08:57 end shows request logs as its last lines; the 11:05 end shows redis shutting down, which is an orderly shutdown. Whether 1030 was never anchored, or the loader rolled back after failed boot attempts, was not examined.
-- **Mitigation.** Either anchor what runs (`sudo nix build --no-link --profile /nix/var/nix/profiles/system $(readlink /run/current-system)`, then `sudo <that toplevel>/bin/switch-to-configuration boot`, then `nix run .#pre-reboot-check`), or deploy the current tree. Nothing was done: `sudo` works in this session and the report was ordered first.
+- **Mitigation.** Either anchor what runs (`sudo nix build --no-link --profile /nix/var/nix/profiles/system $(readlink /run/current-system)`, then `sudo <that toplevel>/bin/switch-to-configuration boot`, then `nix run .#pre-reboot-check`), or deploy the current tree. Nothing was done. `sudo` works in this session (`sudo -n true` rc=0 at 06:21, and a sudo read of the ledger succeeded after the reboot); the report was ordered first.
 - **Also noticed.** A deploy attempt at 11:23 by someone else was refused by the pressure gate (`deploy exited code=12 ... after 3s`).
 
 ### 2. Five defects sat in code that the planning session called done and green
@@ -165,7 +165,7 @@ Honest answers to the review questions, then what follows from them.
 **Ghost systems** (built, never wired into anything):
 
 - Admission control itself: in the tree, wired in the config, not deployed.
-- Seven metric families (`ai_meter_admission_inflight`, `_waiting`, `_limit`, `_wait_seconds_sum`, `_wait_seconds_count`, `_kept_arrival_total`, `ai_meter_quota_exhausted`, plus `_outcomes_total` and `ai_meter_upstream_rejections_total`): no dashboard panel and no alert rule reads them. T07.4 hands them to the dashboard rewrite.
+- The admission metric families (four gauges: `ai_meter_admission_inflight`, `_waiting`, `_limit`, `ai_meter_quota_exhausted`; the wait pair `ai_meter_admission_wait_seconds_sum` and `_count`; three counters: `ai_meter_admission_kept_arrival_total`, `ai_meter_admission_outcomes_total`, `ai_meter_upstream_rejections_total`): no dashboard panel and no alert rule reads them. T07.4 hands them to the dashboard rewrite.
 - The `arrivalKey` ring is wired, but its value depends on an unverified assumption.
 
 **Split brains:**
@@ -206,7 +206,7 @@ Ranked by impact. The first four decide whether today's work reaches the user.
 | 18 | T09: `git subtree split --prefix=pkgs/ai-meter`, verify 31 commits and an empty tree diff, clone to `~/projects/ai-meter`, push to both remotes | Medium | S | Feature |
 | 19 | T10: repo scaffolding (LICENSE, README, AGENTS.md, STACK.md, CHANGELOG, FEATURES, ROADMAP, TODO_LIST, CONTRIBUTING, SECURITY, tooling, domain language) | Medium | L | Feature |
 | 20 | T11: flake in the new repo (package, checks with `go test`, devShell, treefmt) and a green `buildflow --build-mode dev` | Medium | M | Feature |
-| 21 | T12: module path `github.com/larsArtmann/ai-meter`, no build artifacts tracked, same metric families from both builds | Medium | S | Feature |
+| 21 | T12: module path `github.com/LarsArtmann/ai-meter`, no build artifacts tracked, same metric families from both builds | Medium | S | Feature |
 | 22 | T13: SystemNix input `ai-meter` with the two follows; float the lock with `nix flake update ai-meter` | Medium | S | Feature |
 | 23 | T14: call sites on the input; the two sed-in-place negative legs moved onto a copy | Medium | M | Refactor |
 | 24 | T15: parity proof (same VM subtests, same `-help`, closure references the input source) and deploy | Medium | M | Deploy |
