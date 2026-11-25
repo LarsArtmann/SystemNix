@@ -233,7 +233,7 @@ func TestGateQueueIsOrderedByFirstArrivalNotByQueueing(t *testing.T) {
 	retried := g.openAt(base.Add(time.Second))
 	fresh := g.openAt(base.Add(2 * time.Second))
 	go func() {
-		if _, err := fresh.enter(ctx); err != nil {
+		if err := fresh.enter(ctx); err != nil {
 			t.Errorf("fresh call: %v", err)
 		}
 		admitted <- "fresh"
@@ -243,7 +243,7 @@ func TestGateQueueIsOrderedByFirstArrivalNotByQueueing(t *testing.T) {
 		return waiting == 1
 	})
 	go func() {
-		if _, err := retried.enter(ctx); err != nil {
+		if err := retried.enter(ctx); err != nil {
 			t.Errorf("retried call: %v", err)
 		}
 		admitted <- "retried"
@@ -332,12 +332,12 @@ func TestGateARaisedAllowanceGoesToTheLongestWaitingCall(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	waiting := make(chan struct{}, 2)
+	admitted := make(chan string, 2)
 	go func() {
 		if _, err := g.acquire(ctx, base.Add(time.Second)); err != nil {
 			t.Errorf("the waiting call: %v", err)
 		}
-		waiting <- struct{}{}
+		admitted <- "waiting"
 	}()
 	awaitFor(t, "the call to queue", func() bool {
 		_, n := g.snapshot()
@@ -352,16 +352,16 @@ func TestGateARaisedAllowanceGoesToTheLongestWaitingCall(t *testing.T) {
 		if _, err := g.acquire(ctx, late); err != nil {
 			t.Errorf("the late call: %v", err)
 		}
-		waiting <- struct{}{}
+		admitted <- "late"
 	}()
-	awaitFor(t, "the waiting call to be admitted by the raised allowance", func() bool {
-		select {
-		case <-waiting:
-			return true
-		default:
-			return false
+	select {
+	case got := <-admitted:
+		if got != "waiting" {
+			t.Fatalf("the %s call took the raised slot, want the call that had waited longest", got)
 		}
-	})
+	case <-time.After(5 * time.Second):
+		t.Fatal("the raised allowance admitted nobody")
+	}
 	awaitFor(t, "the late call to queue", func() bool {
 		_, n := g.snapshot()
 		return n == 1
@@ -372,7 +372,10 @@ func TestGateARaisedAllowanceGoesToTheLongestWaitingCall(t *testing.T) {
 
 	g.Release()
 	select {
-	case <-waiting:
+	case got := <-admitted:
+		if got != "late" {
+			t.Fatalf("%s was admitted, want the late call", got)
+		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("the late call was never admitted")
 	}
@@ -409,7 +412,7 @@ func TestGateACallThatGivesUpLeavesNoSlotBehind(t *testing.T) {
 	cfg.MaxConcurrency = 1
 	g, _ := clockedGate(cfg)
 	ctx := context.Background()
-	if _, err := g.acquire(ctx, false); err != nil {
+	if _, err := g.acquire(ctx, g.now()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -548,7 +551,7 @@ func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 	if _, err := short.acquire(ctx, time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	call := g.openAt(time.Now())
+	call := short.openAt(time.Now())
 	started := time.Now()
 	if err := call.enter(ctx); !errors.Is(err, errAdmissionTimeout) {
 		t.Fatalf("enter = %v, want the wait budget to run out", err)
