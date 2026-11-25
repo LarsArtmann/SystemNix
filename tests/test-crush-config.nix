@@ -81,10 +81,15 @@ let
         && !lib.hasInfix "mcp add qmd" rc;
     }
     {
+      # Model DECLARATIONS are not text-asserted here (2026-11-25): crush-config
+      # owns them (its `module-render-defaults` check pins the model block), and
+      # a text conjunct on `model add zai/glm-5.3-flash` would have turned red
+      # at the lock bump that dropped that hand declaration. This consumer
+      # asserts the model as deployed BEHAVIOR instead:
+      # scripts/post-deploy-check.sh -> crush-rc-test.sh --expect-model.
       name = "personal-set-rendered";
       pass =
         lib.hasInfix "crush_key synthetic synthetic_api_key" rc
-        && lib.hasInfix "model add zai/glm-5.3-flash" rc
         && lib.hasInfix "option context-path $HOME/.config/crush/AGENTS.md" rc;
     }
     {

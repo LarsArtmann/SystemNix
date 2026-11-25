@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -403,9 +404,12 @@ func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 	if waited := time.Since(started); waited < 20*time.Millisecond {
 		t.Fatalf("enter gave up after %v, before the budget", waited)
 	}
-	short.Release()
 	if inflight, waiting := short.snapshot(); inflight != 1 || waiting != 0 {
 		t.Fatalf("the call that gave up left a mark: in flight %d, waiting %d", inflight, waiting)
+	}
+	short.Release()
+	if inflight, waiting := short.snapshot(); inflight != 0 || waiting != 0 {
+		t.Fatalf("after the holder left: in flight %d, waiting %d", inflight, waiting)
 	}
 }
 
@@ -527,7 +531,7 @@ func TestRetryAfterReadsWholeSeconds(t *testing.T) {
 func TestPendingHonorsAShortRetryAfterAndDefersALongOneToTheClient(t *testing.T) {
 	g, clock := clockedGate(testAdmission())
 	header := http.Header{}
-	header.Set("Retry-After", (maxHonoredRetryAfter + time.Second).String())
+	header.Set("Retry-After", strconv.Itoa(int((maxHonoredRetryAfter+time.Second)/time.Second)))
 	call := g.open(*clock)
 	call.rejected = 1
 	if call.pause(context.Background(), header) {
@@ -541,7 +545,7 @@ func TestPendingHonorsAShortRetryAfterAndDefersALongOneToTheClient(t *testing.T)
 		t.Fatal("a zero Retry-After was not honored")
 	}
 
-	expired := g.open(*clock.Add(-time.Hour))
+	expired := g.open(clock.Add(-time.Hour))
 	expired.rejected = 1
 	if expired.pause(context.Background(), nil) {
 		t.Fatal("a call past its budget was paused for a retry")
