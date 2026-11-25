@@ -2,6 +2,8 @@ package main
 
 import (
 	"math"
+	"os"
+	"strconv"
 	"testing"
 )
 
@@ -51,5 +53,26 @@ func TestCostForStripsOneProviderPrefix(t *testing.T) {
 		if got := cfg.CostFor(test.model).Input; got != test.want {
 			t.Errorf("CostFor(%q).Input = %v, want %v", test.model, got, test.want)
 		}
+	}
+}
+
+// The dashboard's spend-rate queries mirror EstimateCost in PromQL
+// (modules/nixos/services/_ai-meter-dashboard.nix). The ai-meter-spend-promql
+// check evaluates them with a real PromQL engine on the fixture above, then
+// hands the result to this test through AI_METER_PROMQL_SPEND_RATE_USD_PER_HOUR,
+// so the build fails when the two formulas disagree. Unset, it is skipped.
+func TestEstimateCostMatchesDashboardPromQL(t *testing.T) {
+	evaluated := os.Getenv("AI_METER_PROMQL_SPEND_RATE_USD_PER_HOUR")
+	if evaluated == "" {
+		t.Skip("set by the ai-meter-spend-promql check")
+	}
+	got, err := strconv.ParseFloat(evaluated, 64)
+	if err != nil {
+		t.Fatalf("parse %q: %v", evaluated, err)
+	}
+	// The check's series grows by one fixture call per minute.
+	want := EstimateCost(100, 20, 50, Cost{Input: 2, Output: 4, CachedInput: 0.5}) * 60
+	if math.Abs(got-want) > 1e-9 {
+		t.Fatalf("the dashboard PromQL prices the fixture at %v USD/hour, EstimateCost at %v", got, want)
 	}
 }
