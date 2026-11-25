@@ -72,6 +72,9 @@ in
 {
   inherit spendRate spendRateByModel;
 
+  # How a model name is spelled inside the generated `model=~` selectors.
+  escapeRegex = escapeRegex;
+
   # Substitutes the spend-rate queries into the dashboard template. Throws
   # when a placeholder is missing or occurs more than once, so a renamed or
   # duplicated panel can never ship an unrendered or ambiguous query.

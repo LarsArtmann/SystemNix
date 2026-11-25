@@ -120,8 +120,9 @@
           ) hostDashboard.spec.panels;
           spendPanelList = lib.attrValues spendPanels;
           spendQueries = map (panel: (lib.head panel.spec.queries).spec.plugin.spec.query) spendPanelList;
+          # The queries spell a model name regex-escaped ("glm-5\.3").
           uncovered = lib.filter (
-            model: !builtins.all (lib.hasInfix model) spendQueries
+            model: !builtins.all (lib.hasInfix (renderer.escapeRegex model)) spendQueries
           ) (builtins.attrNames host.costs);
           wiringHolds =
             assert
