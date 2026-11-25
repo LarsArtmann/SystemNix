@@ -136,14 +136,14 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
     esac
     hit=0
     case "$s" in
-    "${dq}${want}${dq}" | "${dq}${want}${dq}"[[:space:]]*) hit=1 ;;
+    "${dq}${want}${dq}"*) hit=1 ;;
     "${dq}"*) ;;
     *) return 1 ;;
     esac
     s=${s:1}
     s=${s#*"${dq}"} # the key is a plain identifier: skip to its closing quote
     s=${s#"${s%%[![:space:]]*}"}
-    case "$s" in ':') ;; *) return 1 ;; esac
+    case "$s" in ':'*) ;; *) return 1 ;; esac
     s=${s:1}
     s=${s#"${s%%[![:space:]]*}"}
     case "$s" in
