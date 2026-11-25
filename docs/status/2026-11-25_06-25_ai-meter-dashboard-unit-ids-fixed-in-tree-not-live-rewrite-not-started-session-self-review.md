@@ -63,7 +63,7 @@
 
 | # | What works now | What is open | Blocker | Effort |
 | --- | --- | --- | --- | --- |
-| 1 | Unit fix committed (`ba2536b48`). | Not live: the running system (gen 1030) was built from the 04:59 tree, before the fix. Not gated. Not dry-run on the API. | A deploy. | S |
+| 1 | Unit fix committed (`ba2536b48`). | Not live: the running system (gen 1030, produced by the deploy that started 04:59:27) still carries the broken units, so it was built from a tree that predates the fix. Not gated. Not dry-run on the API. | A deploy. | S |
 | 2 | Dashboard schema research: panel query shapes, sections, variables, thresholds, metrics builder spec. | Two live probes never executed: a metrics `builder_query` and a dynamic variable value request. | None. | S |
 | 3 | Lint design decided: unit-id allowlist leg; overlap check over every Grid layout. | Not written, no negative legs. | None. | M |
 | 4 | Live state of the exporter and of span export captured twice (05:45 and 06:23). | Nothing else. | None. | done |
@@ -88,14 +88,14 @@ All of it is the owner's original ask. After four loop instructions the user-vis
 
 **Mine:**
 
-1. **The dashboard the owner looks at is unchanged.** Live at 06:23: 13 panels, 1 layout, 0 variables, units `{percent}`, `{req/min}` (4), `{USD}`, `{USD/h}` (2), `{tokens/min}`, three `{count}` and one `s`. The provisioner even re-PUT it at 06:09:24 with the broken units, because gen 1030 carries the 04:59 snapshot. Severity: the task itself. Root cause: I researched instead of shipping.
+1. **The dashboard the owner looks at is unchanged.** Live at 06:23: 13 panels, 1 layout, 0 variables, units `{percent}`, `{req/min}` (4), `{USD}`, `{USD/h}` (2), `{tokens/min}`, three `{count}` and one `s`. The provisioner even re-PUT it at 06:09:24 with the broken units, because gen 1030 still carries the pre-fix dashboard file. Severity: the task itself. Root cause: I researched instead of shipping.
 2. **Attribution of the unit fix is buried.** `ba2536b48` is a heuristic auto-commit that also carries another session's `proxy.go` line. HEAD has moved, so no amend; only this report names it.
 3. **Process misses.** No mid-session scan of `docs/status/` and `docs/planning/`. No gate next to the edit. Root cause not written to `monitoring.md` at discovery.
-4. **Tool fumbles in this stretch:** an `ls` on an empty variable printed the whole `/nix/store` listing (17,000+ lines) into the session; a 404 from scraping 8107; four failed throwaway python one-liners before writing a proper script; one `rg -r` call blocked by the hook (the documented replace trap).
+4. **Tool fumbles in this stretch:** an `ls` on an empty variable printed the whole `/nix/store` listing (17,000+ lines) into the session; a 404 from scraping 8107; two failed throwaway python one-liners before writing a proper script; a wrong rename offset; one `rg -r` call blocked by the hook (the documented replace trap).
 
 **Found, not mine, not fixed:**
 
-5. **`gcp.json` "Cloud Run — Active Containers" uses unit `req`.** Not in the catalog and not universal, so it renders literally: "42 req" on a panel about containers. Fix: `none`.
+5. **`gcp.json` "Cloud Run — Active Containers" uses unit `req`.** Not in the catalog and not universal, so it renders literally (formatter run: `42 req` gives "42 req"). The panel is about containers. Fix: `none`.
 6. **`signoz-query-lint` check 5 reads `layouts[0]` only** (`lint-static.nix` line 568). A dashboard with several Grid sections gets only its first section checked for overlaps, and the SigNoz API rejects an overlap with HTTP 400, which fails the deploy. Must be closed before any sectioned dashboard ships.
 7. **Small rates collapse to zero.** `suffix:USD/h` at precision 2 renders `0.0042` as "0 USD/h". Precision 4 gives "0.0042 USD/h" and "12.3 USD/h".
 8. **The `locale` unit truncates thousands in SigNoz** (13805.7 renders as "13"). Avoid it.
@@ -103,9 +103,9 @@ All of it is the owner's original ask. After four loop instructions the user-vis
 
 **Foreign observations, not investigated:**
 
-10. **The deploy started 04:59:27 ended in exit code 4.** Its log reads: "switching to system configuration …hggzirywc… failed (status 4)", "Activation failed; the new generation will not be added to the bootloader", "nh os switch: activation completed with failed units (exit code 4)", "New profile generation: system-1030 (was system-1029)". Failed units in that log: `post-crash-calm-gate` ("REFUSE: still storming after 60 min / 241 probe(s)"), `inboxclean-sync` (75, Gmail 429), `forgejo-github-sync` (1), `service-health-check` (1). The profile is anchored: `/run/current-system` equals the newest link, `system-1030-link`. The bootloader entry was not checked.
+10. **The deploy started 04:59:27 ended in exit code 4.** Its log reads: "switching to system configuration …hggzirywc… failed (status 4)", "Activation failed; the new generation will not be added to the bootloader", "nh os switch: activation completed with failed units (exit code 4)", "New profile generation: system-1030 (was system-1029)". Failed units in that log: `post-crash-calm-gate` ("REFUSE: still storming after 60 min / 241 probe(s)"), `inboxclean-sync` (75, Gmail 429), `forgejo-github-sync` (1), `service-health-check` (1). The profile is anchored: `/run/current-system` equals the newest link, `system-1030-link`. The bootloader entry was not checked. The same log shows the box storming for the hour before: `post-crash-calm-gate` refused admission at 06:09:19 after 60 minutes and 241 probes. One timestamp I can not place: the `/etc/signoz/dashboards/ai-meter.json` symlink carries a 05:09:10 mtime although the log names system-1030 as the new generation about an hour later. The timeline was not reconstructed.
 11. **The provisioner "updated in place" the caddy and gcp dashboards at 06:09:24**, although their files have not changed in weeks. The live copies had drifted from the tree. Cause unknown.
-12. **z.ai rejections:** 123 of 357 calls in the current ai-meter process (06:09:56 to 06:23) were answered 429. The executing plan addresses this with admission control; the three new families are in tree, not deployed.
+12. **z.ai rejections:** 123 of 357 calls in the current ai-meter process (06:09:56 to 06:23) were answered 429. The executing plan addresses this with admission control; the four new families are in tree, not deployed.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -188,7 +188,7 @@ Decided by default, object if you disagree: the proxy stays the cost authority a
 | Calls in this process | 357: 234 with 200, 123 with 429 | 06:23 |
 | Spans exported | ok 357, failed 0, dropped 0 (previous process: ok 1027, failed 0, dropped 0) | 06:23 |
 | In flight | crush/zai/glm-5.4 = 3, cvagent/zai/glm-5.3-flash = 1 | 06:23 |
-| Metric families live | 12. In tree at HEAD: 16 (plus the three admission families). | 06:25 |
+| Metric families live | 12. In tree at HEAD: 16 (four not yet deployed: `admission_outcomes_total`, `admission_wait_seconds_sum`, `admission_wait_seconds_count`, `upstream_rejections_total`). | 06:25 |
 | System | `/run/current-system` equals `system-1030-link` | 06:23 |
 
 ## Appendix C: scratch (not volatile, `~/.cache/aimeter/`)

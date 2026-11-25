@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,6 +35,11 @@ const (
 	maxRetriesForBackoff    = 5 // a later rejection waits the ceiling, not longer
 	maxProbeInterval        = 10 * time.Minute
 	rejectionCoalesceWindow = time.Second
+	// arrivalMemory is how long a gate remembers when a call first arrived.
+	arrivalMemory = 5 * time.Minute
+	// maxArrivals bounds the first arrivals a gate remembers; the oldest
+	// give way first.
+	maxArrivals = 4096
 
 	retryBase            = 500 * time.Millisecond
 	retryCeiling         = 8 * time.Second
@@ -268,6 +275,12 @@ type Gate struct {
 	lastWasRaise  bool
 	shrunkAt      time.Time // when a rejection last lowered the allowance
 	quota         quotaState
+
+	// arrivals is a ring of the first arrivals the gate remembers, and
+	// arrivalAt where each remembered call sits in it.
+	arrivals    [maxArrivals]arrival
+	arrivalAt   map[arrivalKey]int
+	arrivalNext int
 }
 
 // quotaState is the upstream's own answer that a usage window is spent,
@@ -282,6 +295,27 @@ type quotaState struct {
 type waiter struct {
 	ready   chan struct{}
 	granted bool
+	arrived time.Time
+}
+
+// arrival is when a call first reached the gate.
+type arrival struct {
+	key arrivalKey
+	at  time.Time
+}
+
+// arrivalKey tells a call the client sends again from a new one: the same
+// client, sending the same bytes.
+type arrivalKey [sha256.Size]byte
+
+func arrivalKeyOf(client string, body []byte) arrivalKey {
+	digest := sha256.New()
+	_, _ = digest.Write([]byte(client))
+	_, _ = digest.Write([]byte{0})
+	_, _ = digest.Write(body)
+	var key arrivalKey
+	copy(key[:], digest.Sum(nil))
+	return key
 }
 
 func NewGate(name string, cfg AdmissionConfig, registry *Registry, logger *slog.Logger) *Gate {
@@ -293,22 +327,43 @@ func NewGate(name string, cfg AdmissionConfig, registry *Registry, logger *slog.
 		now:           time.Now,
 		limit:         cfg.MaxConcurrency,
 		probeInterval: cfg.GrowAfter,
+		arrivalAt:     map[arrivalKey]int{},
 	}
 	g.changedAt = g.now()
 	g.publish()
 	return g
 }
 
-// open starts the admission of one call that arrived at started.
-func (g *Gate) open(started time.Time) *pending {
-	return &pending{gate: g, deadline: started.Add(g.cfg.MaxWait)}
+// open starts the admission of one call that arrived at started. A call
+// whose key the gate still remembers keeps the time it first arrived: a
+// client that sends it again after the proxy sent it back would otherwise
+// start over behind every call that came in the meantime, and under a
+// lasting overload the oldest call would be the one that never gets in.
+// Its wait budget starts anew either way.
+func (g *Gate) open(started time.Time, key arrivalKey) *pending {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	call := &pending{gate: g, arrived: started, deadline: started.Add(g.cfg.MaxWait)}
+	if slot, known := g.arrivalAt[key]; known {
+		if first := g.arrivals[slot].at; started.Sub(first) <= arrivalMemory {
+			call.arrived = first
+			g.registry.AdmissionKeptArrival(g.name)
+			g.logger.Debug("call keeps the place of its first arrival", "upstream", g.name, "first_arrival", first)
+			return call
+		}
+	}
+	slot := g.arrivalNext
+	g.arrivalNext = (slot + 1) % len(g.arrivals)
+	delete(g.arrivalAt, g.arrivals[slot].key)
+	g.arrivals[slot] = arrival{key: key, at: started}
+	g.arrivalAt[key] = slot
+	return call
 }
 
-// acquire takes one in-flight slot, waiting for it in order of arrival, and
-// reports whether the call had to wait. A call that already waited once
-// (front) rejoins ahead of the queue: it has been waiting longer than any
-// call in it. The context ends the wait.
-func (g *Gate) acquire(ctx context.Context, front bool) (bool, error) {
+// acquire takes one in-flight slot, waiting for it in order of arrival (see
+// open), and reports whether the call had to wait. The context ends the
+// wait.
+func (g *Gate) acquire(ctx context.Context, arrived time.Time) (bool, error) {
 	g.mu.Lock()
 	g.grow()
 	if g.inflight < g.limit {
@@ -317,12 +372,8 @@ func (g *Gate) acquire(ctx context.Context, front bool) (bool, error) {
 		g.mu.Unlock()
 		return false, nil
 	}
-	w := &waiter{ready: make(chan struct{})}
-	if front {
-		g.waiters = append([]*waiter{w}, g.waiters...)
-	} else {
-		g.waiters = append(g.waiters, w)
-	}
+	w := &waiter{ready: make(chan struct{}), arrived: arrived}
+	g.queue(w)
 	g.publish()
 	g.mu.Unlock()
 
@@ -337,7 +388,7 @@ func (g *Gate) acquire(ctx context.Context, front bool) (bool, error) {
 		} else {
 			for i, other := range g.waiters {
 				if other == w {
-					g.waiters = append(g.waiters[:i], g.waiters[i+1:]...)
+					g.waiters = slices.Delete(g.waiters, i, i+1)
 					break
 				}
 			}
@@ -346,6 +397,16 @@ func (g *Gate) acquire(ctx context.Context, front bool) (bool, error) {
 		g.mu.Unlock()
 		return false, context.Cause(ctx)
 	}
+}
+
+// queue puts a call among the waiters, in order of arrival. The caller
+// holds the lock.
+func (g *Gate) queue(w *waiter) {
+	position := len(g.waiters)
+	for position > 0 && g.waiters[position-1].arrived.After(w.arrived) {
+		position--
+	}
+	g.waiters = slices.Insert(g.waiters, position, w)
 }
 
 // Release gives back a slot taken by acquire and hands it to the first
@@ -360,6 +421,12 @@ func (g *Gate) Release() {
 // release is Release for a caller that holds the lock.
 func (g *Gate) release() {
 	g.inflight--
+	g.handOut()
+}
+
+// handOut gives free slots to waiting calls in order of arrival. The caller
+// holds the lock.
+func (g *Gate) handOut() {
 	for len(g.waiters) > 0 && g.inflight < g.limit {
 		w := g.waiters[0]
 		g.waiters[0] = nil
@@ -423,6 +490,9 @@ func (g *Gate) grow() {
 	g.limit++
 	g.changedAt, g.lastWasRaise = g.now(), true
 	g.logger.Info("admission allowance raised", "upstream", g.name, "limit", g.limit)
+	// The new slot goes to the call that has waited longest, not to the
+	// arrival whose turn it was to raise the allowance.
+	g.handOut()
 }
 
 // quotaBlocked is the reset the upstream is known to be exhausted until and
@@ -448,10 +518,13 @@ func (g *Gate) publish() {
 // gate, whose every method does nothing.
 type pending struct {
 	gate     *Gate
-	deadline time.Time // arrival + MaxWait, across queueing and retries
+	arrived  time.Time // first arrival: the call's place in the queue
+	deadline time.Time // this arrival + MaxWait, across queueing and retries
 	attempts int       // answers the upstream has given this call
 	rejected int       // of those, the "too much at once" ones
 	waited   time.Duration
+	reported time.Duration // of waited, what the metrics already carry
+	counted  bool          // whether the metrics count this call as one that waited
 }
 
 // ungated is the admission of a call to an upstream without a gate.
@@ -463,6 +536,10 @@ func (p *pending) gated() bool { return p.gate != nil }
 // errAdmissionTimeout is the wait budget running out before the upstream
 // had room, so that the call was not sent again.
 var errAdmissionTimeout = errors.New("admission wait budget exhausted")
+
+// errRetryAfterTooLong is an upstream that asked to wait longer than the
+// proxy waits on a call's behalf.
+var errRetryAfterTooLong = errors.New("upstream Retry-After is longer than the proxy waits")
 
 // quotaRejection is why a call was not sent: the upstream's usage quota is
 // spent. Body is the upstream's own answer, to replay as is.
@@ -505,7 +582,7 @@ func (p *pending) enter(ctx context.Context) error {
 	waitCtx, cancel := context.WithDeadlineCause(ctx, p.deadline, errAdmissionTimeout)
 	defer cancel()
 	since := g.now()
-	waited, err := g.acquire(waitCtx, p.attempts > 0)
+	waited, err := g.acquire(waitCtx, p.arrived)
 	if err != nil {
 		if errors.Is(err, errAdmissionTimeout) {
 			return err
@@ -514,7 +591,10 @@ func (p *pending) enter(ctx context.Context) error {
 	}
 	if waited {
 		p.waited += g.now().Sub(since)
-		g.registry.AdmissionWaited(g.name, p.waited)
+		// A call that waits again adds only what it waited since, and
+		// counts as a waiting call once.
+		g.registry.AdmissionWaited(g.name, p.waited-p.reported, !p.counted)
+		p.reported, p.counted = p.waited, true
 	}
 	return nil
 }
@@ -549,18 +629,19 @@ func (p *pending) retryable() bool {
 
 // pause waits out the delay the upstream asked for after a "too much at
 // once" answer, or the proxy's own backoff when it asked for none. It
-// returns false when the call is not to be tried again: the delay would
-// outlast the budget, the upstream asked for longer than the proxy waits,
-// or the client went away.
-func (p *pending) pause(ctx context.Context, header http.Header) bool {
+// returns nil once the whole delay passed, and otherwise why the call is
+// not to be tried again: errAdmissionTimeout when the delay would outlast
+// the budget, errRetryAfterTooLong when the upstream asked for longer than
+// the proxy waits, or the client's departure.
+func (p *pending) pause(ctx context.Context, header http.Header) error {
 	delay := p.backoff()
 	if asked, ok := retryAfter(header); ok {
 		if asked > maxHonoredRetryAfter {
-			return false
+			return errRetryAfterTooLong
 		}
 		delay = asked
 	}
-	return p.sleep(ctx, delay) == nil
+	return p.sleep(ctx, delay)
 }
 
 // backoff is the proxy's own wait before the next attempt: exponential from

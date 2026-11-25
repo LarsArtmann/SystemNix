@@ -82,9 +82,10 @@ type Registry struct {
 	inflight     map[inflightKey]float64
 
 	admission       map[string]admissionGauge
-	admissionWait   map[string]float64
-	admissionWaited map[string]float64
-	admissions      map[admissionKey]float64
+	admissionWait    map[string]float64
+	admissionWaited  map[string]float64
+	admissionKept    map[string]float64
+	admissions       map[admissionKey]float64
 	rejections      map[rejectionKey]float64
 
 	unauthorized   float64
@@ -129,9 +130,10 @@ func NewRegistry() *Registry {
 		ttftCount:       map[durKey]float64{},
 		inflight:        map[inflightKey]float64{},
 		admission:       map[string]admissionGauge{},
-		admissionWait:   map[string]float64{},
-		admissionWaited: map[string]float64{},
-		admissions:      map[admissionKey]float64{},
+		admissionWait:    map[string]float64{},
+		admissionWaited:  map[string]float64{},
+		admissionKept:    map[string]float64{},
+		admissions:       map[admissionKey]float64{},
 		rejections:      map[rejectionKey]float64{},
 		spanExports:     map[string]float64{},
 		startTime:       time.Now(),
@@ -249,13 +251,24 @@ func (r *Registry) AdmissionState(upstream string, waiting, inflight, limit int,
 	}
 }
 
-// AdmissionWaited adds the time one call waited for the upstream to have
-// room. Each call counts once, on its last admission.
-func (r *Registry) AdmissionWaited(upstream string, waited time.Duration) {
+// AdmissionWaited adds the time a call waited for the upstream to have
+// room. The count of calls that waited grows only on a call's first wait
+// (first), however many times it waits again.
+func (r *Registry) AdmissionWaited(upstream string, waited time.Duration, first bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.admissionWait[upstream] += waited.Seconds()
-	r.admissionWaited[upstream]++
+	if first {
+		r.admissionWaited[upstream]++
+	}
+}
+
+// AdmissionKeptArrival counts a call that took the place of an earlier
+// arrival: the client sent it again after the proxy sent it back.
+func (r *Registry) AdmissionKeptArrival(upstream string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.admissionKept[upstream]++
 }
 
 // UpstreamRejection counts a 429 the upstream answered, by the business
@@ -431,6 +444,16 @@ func (r *Registry) Render() string {
 	for _, upstream := range waits {
 		writeSeries(&b, "ai_meter_admission_wait_seconds_count", r.admissionWaited[upstream], "upstream", upstream)
 	}
+	kept := make([]string, 0, len(r.admissionKept))
+	for upstream := range r.admissionKept {
+		kept = append(kept, upstream)
+	}
+	sort.Strings(kept)
+	b.WriteString("# HELP ai_meter_admission_kept_arrival_total Calls that took the place of an earlier arrival, because the client sent them again after the proxy sent them back.\\n")
+	b.WriteString("# TYPE ai_meter_admission_kept_arrival_total counter\\n")
+	for _, upstream := range kept {
+		writeSeries(&b, "ai_meter_admission_kept_arrival_total", r.admissionKept[upstream], "upstream", upstream)
+	}
 
 	rejects := make([]rejectionKey, 0, len(r.rejections))
 	for k := range r.rejections {
@@ -454,7 +477,7 @@ func (r *Registry) Render() string {
 		a, c := leaves[i], leaves[j]
 		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && (a.model < c.model || a.model == c.model && a.outcome < c.outcome))
 	})
-	b.WriteString("# HELP ai_meter_admission_outcomes_total How calls to a gated upstream left the proxy: \"admitted\" (sent once, answered), \"absorbed\" (a rate-limit rejection was retried and a later attempt was answered), \"gave_up\" (the last allowed attempt was rejected too), \"timeout\" (never sent: the wait budget ran out), \"circuit\" (not sent: the upstream's usage quota is spent), \"cancelled\" (the client went away while waiting).\n")
+	b.WriteString("# HELP ai_meter_admission_outcomes_total How calls to a gated upstream left the proxy: \"admitted\" (sent once, answered), \"absorbed\" (a rate-limit rejection was retried and a later attempt was answered), \"gave_up\" (the retries were spent, or the upstream asked to wait longer than the proxy waits; the client got the upstream's answer), \"timeout\" (the wait budget ran out, in the queue or between attempts), \"circuit\" (not sent: the upstream's usage quota is spent), \"cancelled\" (the client went away while the proxy waited on its behalf).\n")
 	b.WriteString("# TYPE ai_meter_admission_outcomes_total counter\n")
 	for _, k := range leaves {
 		writeSeries(&b, "ai_meter_admission_outcomes_total", r.admissions[k], "client", k.client, "upstream", k.upstream, "model", k.model, "outcome", k.outcome)
