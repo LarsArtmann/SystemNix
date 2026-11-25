@@ -7,6 +7,8 @@
 
 ---
 
+> **[ANNOTATED 2026-11-25 21:00 (same session, self-review):]** two claims below were stronger than the evidence. (1) §a.5 "named the real error behind last night's WARNs": the gate named the error behind the **11:36** failure (nix rc=102, tree churn); the 01:35 WARN's own error text was discarded, so its cause is unproven. (2) §b.2 "each boot reached IO PSI some 65-99% within minutes": first-hand only for boot `0737ecd7` (77% at +3.5 min); for boot `8b31b428` I hold one reading (99% at 11:05:42, 9 s before its journal ended) and no early-boot sample. AGENTS.md wording corrected in place. Full self-review: the 20-59 status report.
+
 ## a) FULLY DONE
 
 1. **Root cause of the pasted failure.** The consumer-side vendorHash shim in `lib/lars-packages.nix` was pure treadmill: the overnight daemon float moved `library-policy` `8d2b87bf` → `e092b400` (commit `477059e19`, 00:32) while the shim still carried `gYkUTyDk…` (measured at `8d2b87bf` on 11-24). Upstream `e092b400` flake.nix:146 already bakes exactly the deploy's got-hash `UCnKnjhq…` (`a031de3` "refresh vendor hash for the go-datastar version bump"). got == bake is the documented drop-safety test (docs/agents/nix-flakes.md "Misattributed FOD hashes").

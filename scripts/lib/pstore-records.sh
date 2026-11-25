@@ -67,20 +67,20 @@ PSTORE_ARCHIVE_ROOT="${PSTORE_ARCHIVE_ROOT-/var/lib/systemd/pstore}"
 # descending scan below can never loop on a garbage number.
 PSTORE_MAX_PART=100000
 
-# ── JSON (journalctl -o json writes one object per line; values are strings
-# or numbers) ─────────────────────────────────────────────────────────────
+# --- JSON (journalctl -o json writes one object per line; values are
+# strings or numbers) ---------------------------------------------------------
 
 pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newline)
-  local s="$1" out='' pre esc hex cp lo ch
+  local s="$1" out='' pre esc hex cp lo ch bs=$'\\'
   while :; do
-    pre=${s%%\\*}
+    pre=${s%%"$bs"*}
     out+=$pre
     s=${s#"$pre"}
     case "$s" in
     '') break ;;
-    '\')
+    "$bs")
       # a lone trailing backslash is not a valid escape: keep it literally
-      out+='\'
+      out+=$bs
       break
       ;;
     esac
@@ -96,7 +96,7 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
     u)
       hex=${s:0:4}
       if [[ ! $hex =~ ^[0-9a-fA-F]{4}$ ]]; then
-        out+='\u' # not an escape this decoder knows: keep it literally
+        out+=$bs'u' # not an escape this decoder knows: keep it literally
         continue
       fi
       s=${s:4}
@@ -113,7 +113,7 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
       printf -v ch '%b' "\\U$(printf '%08x' "$cp")"
       out+=$ch
       ;;
-    *) out+='\'$esc ;;
+    *) out+=$bs$esc ;;
     esac
   done
   printf '%s' "$out"
@@ -125,7 +125,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
   # the real key, which a plain substring search would.  dq is the double
   # quote character; quoting it through a variable keeps the case patterns
   # below readable.
-  local s="$1" want="$2" dq='"' v chunk out tb hit
+  local s="$1" want="$2" dq='"' bs=$'\\' v chunk out tb hit
   s=${s#"${s%%[![:space:]]*}"}
   case "$s" in '{'*) ;; *) return 1 ;; esac
   s=${s:1}
@@ -158,7 +158,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
         chunk=${s%%"${dq}"*}
         v+=$chunk
         tb=0
-        while [[ $chunk == *'\' ]]; do
+        while [[ $chunk == *"$bs"* ]]; do
           tb=$((tb + 1))
           chunk=${chunk%?}
         done
@@ -191,7 +191,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
   done
 }
 
-# ── records: parse, assemble, classify ────────────────────────────────────
+# --- records: parse, assemble, classify ---------------------------------------
 # pstore_jsonl_parse fills these globals in the CALLER shell, so call it
 # with a redirect (`pstore_jsonl_parse < file` or `<<< "$jsonl"`), never as a
 # pipeline segment.  Index of PSTORE_BODY = count * 1000000 + part, so a dump
@@ -424,7 +424,7 @@ pstore_facts() { # PSTORE_* records -> key=value lines (token= first): whose log
   return 0
 }
 
-# ── live read ─────────────────────────────────────────────────────────────
+# --- live read ---------------------------------------------------------------
 
 pstore_journal_fetch() { # <boot id or index> -> JSON lines on stdout
   # rc 0 = the journal answered (zero lines is a valid answer: "no pstore
@@ -468,4 +468,5 @@ pstore_fact() { # <key=value block> <key> -> value ('' and rc 1 when absent)
 }
 
 # Marker for the sourcing scripts: the library is present and usable.
+# shellcheck disable=SC2034  # read by the sourcing scripts
 PSTORE_RECORDS_LOADED=1

@@ -766,7 +766,100 @@ else
   fi
 fi
 
-# 12. Boot assessment (systemd-boot counting + bless timing) — the
+# 12. Crash-capture contract of the generation the reboot will boot. The
+#     crash image is loaded ONCE per boot (kexec -p in postBootCommands) with
+#     the BOOTING generation's init baked into its cmdline, so a deploy never
+#     reloads it: this reboot is the only moment the capture path changes.
+#     Read statically from the loader entry the reboot loads: its kernel
+#     options, then the units inside the generation toplevel its init= names.
+#     Verdict table: kdump_capture_verdict above (selftest-driven). Until
+#     2026-11-25 nothing read it: kexec_crash_loaded read 1 on every check
+#     while two panics that day captured nothing.
+echo ""
+echo "12. Crash-capture contract (generation the reboot boots)"
+KDUMP_ENTRY="$(kdump_next_boot_entry "$BOOT_DIR/loader/entries" "$LOADER_CONF" "$DEFAULT_ENTRY")"
+if [ -z "$KDUMP_ENTRY" ]; then
+  warn "no boot entry resolvable (no single default in §1, no usable loader.conf preferred) - crash-capture contract of the next generation NOT audited"
+else
+  KDUMP_OPTIONS="$(awk '$1 == "options" { $1 = ""; sub(/^ /, ""); print; exit }' "$KDUMP_ENTRY" 2>/dev/null || true)"
+  KDUMP_INIT="$(grep -ao 'init=[^ ]*' "$KDUMP_ENTRY" 2>/dev/null | head -1 | cut -d= -f2- || true)"
+  KDUMP_TOPLEVEL="$([ -n "$KDUMP_INIT" ] && dirname "$KDUMP_INIT" || true)"
+  KDUMP_GEN="$(basename "${KDUMP_TOPLEVEL:-no-generation}")"
+  if [ -z "$KDUMP_OPTIONS" ]; then
+    fail "$(basename "$KDUMP_ENTRY") has no readable options line - crash-capture contract of the next generation unauditable"
+  elif [ -z "$KDUMP_INIT" ] || [ ! -d "$KDUMP_TOPLEVEL/etc/systemd/system" ]; then
+    fail "$(basename "$KDUMP_ENTRY") names no generation on the live store (init=${KDUMP_INIT:-none}; $KDUMP_GEN has no etc/systemd/system) - crash-capture units unauditable (2026-09-07 stuck-boot class)"
+  else
+    echo "  booting: $(basename "$KDUMP_ENTRY") -> $KDUMP_GEN"
+    KDUMP_SYSCTL_TEXT="$(kdump_read_unit "$KDUMP_TOPLEVEL/etc/systemd/system" systemd-sysctl.service)"
+    KDUMP_CAPTURE_TEXT="$(kdump_read_unit "$KDUMP_TOPLEVEL/etc/systemd/system" kdump-capture-boot-sysctl.service)"
+    KDUMP_SAVE_TEXT="$(kdump_read_unit "$KDUMP_TOPLEVEL/etc/systemd/system" kdump-save.service)"
+    KDUMP_VERDICT="$(kdump_capture_verdict "$KDUMP_OPTIONS" "$KDUMP_SYSCTL_TEXT" "$KDUMP_CAPTURE_TEXT" "$KDUMP_SAVE_TEXT")"
+    if [ "$KDUMP_VERDICT" = "disabled" ]; then
+      pass "kdump disabled in the next generation (no crashkernel= on its options) - capture contract not applicable"
+    else
+      KDUMP_RESERVATION=""
+      read -r -a kdump_opts <<<"$KDUMP_OPTIONS" || true
+      for kdump_opt in "${kdump_opts[@]}"; do
+        case "$kdump_opt" in
+        crashkernel=*) KDUMP_RESERVATION="${kdump_opt#crashkernel=}" ;;
+        esac
+      done
+      read -r -a kdump_legs <<<"$KDUMP_VERDICT" || true
+      for kdump_leg in "${kdump_legs[@]}"; do
+        case "$kdump_leg" in
+        no-post-notifiers)
+          fail "$KDUMP_GEN kernel options lack crash_kexec_post_notifiers - with a crash image loaded the kernel kexecs BEFORE its kmsg dump, so the panic text never reaches pstore (modules/nixos/services/kdump-capture-path.nix leg 2)"
+          ;;
+        no-sysctl-condition)
+          if [ -z "$KDUMP_SYSCTL_TEXT" ]; then
+            fail "systemd-sysctl.service missing in $KDUMP_GEN - its ConditionPathExists=!/proc/vmcore guard is gone with it: the capture kernel would apply vm.min_free_kbytes=2097152 (a 2 GiB watermark) inside the ${KDUMP_RESERVATION:-512M} capture kernel and OOM-deadlock (leg 1; the 2026-11-25 zero-evidence cuts)"
+          else
+            fail "systemd-sysctl.service (+ drop-ins) in $KDUMP_GEN lacks ConditionPathExists=!/proc/vmcore - the capture kernel would apply vm.min_free_kbytes=2097152 (a 2 GiB watermark) inside the ${KDUMP_RESERVATION:-512M} capture kernel and OOM-deadlock (leg 1; the 2026-11-25 zero-evidence cuts)"
+          fi
+          ;;
+        no-capture-sysctl-unit)
+          if [ -z "$KDUMP_CAPTURE_TEXT" ]; then
+            fail "kdump-capture-boot-sysctl.service missing in $KDUMP_GEN - the capture kernel keeps kernel.panic=0: a capture boot that panics itself never reboots on its own, only the hardware watchdog ends it (leg 1)"
+          else
+            fail "kdump-capture-boot-sysctl.service in $KDUMP_GEN lacks ConditionPathExists=/proc/vmcore - it is no longer selected for the capture boot and would also run in the normal one (leg 1)"
+          fi
+          ;;
+        no-save-unit)
+          if [ -z "$KDUMP_SAVE_TEXT" ]; then
+            fail "kdump-save.service missing in $KDUMP_GEN - nothing writes /var/crash/<ts>/vmcore-dmesg.txt: a captured panic leaves no evidence"
+          else
+            fail "kdump-save.service in $KDUMP_GEN lacks ConditionPathExists=/proc/vmcore - nothing selects it for the capture boot, so the vmcore-dmesg evidence is never written"
+          fi
+          ;;
+        esac
+      done
+      if [ "$KDUMP_VERDICT" = "ok" ]; then
+        pass "kdump capture contract holds in $KDUMP_GEN (crash_kexec_post_notifiers, systemd-sysctl conditioned on !/proc/vmcore, capture-sysctl + save units conditioned on /proc/vmcore)"
+      fi
+      # Advisory: the RUNNING kernel keeps the pre-fix path until this reboot.
+      # Said only when the next generation really carries the fix - otherwise
+      # "the reboot fixes it" would be false (the FAIL above owns that case).
+      if [ -r /proc/cmdline ]; then
+        case " $(cat /proc/cmdline 2>/dev/null || true) " in
+        *" crash_kexec_post_notifiers "*)
+          pass "running kernel already carries crash_kexec_post_notifiers"
+          ;;
+        *)
+          case "$KDUMP_VERDICT" in
+          *no-post-notifiers*) ;;
+          *)
+            warn "running kernel lacks crash_kexec_post_notifiers - this boot still runs the pre-fix capture path (a panic's text never reaches pstore); the reboot loads the next generation's crash image and fixes it"
+            ;;
+          esac
+          ;;
+        esac
+      fi
+    fi
+  fi
+fi
+
+# 13. Boot assessment (systemd-boot counting + bless timing) — the
 #     auto-rollback contract (tries=3) is only real when BOTH hold:
 #     (a) a fresh entry carries a +tries counter, and (b) bless-boot runs at
 #     END of boot (after multi-user), not ~11s in via the generator's
@@ -775,7 +868,7 @@ fi
 #     newest entry is benign ONLY when the previous boot provably blessed
 #     late; a bless BEFORE multi-user is a live regression and BLOCKS.
 echo ""
-echo "12. Boot assessment (counting + bless timing)"
+echo "13. Boot assessment (counting + bless timing)"
 prev_boot_monotonic() {
   # First monotonic timestamp (seconds) of the previous boot's line matching $1.
   # Drain journalctl into a variable first: a grep -m1/head pipeline SIGPIPEs

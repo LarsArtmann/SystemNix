@@ -1010,6 +1010,12 @@ in
       rust-cache-projects-links = lib.mkIf projectsSubvolArmed {
         description = "rust-cache target symlinks inside ~/projects (mount-gated)";
         wantedBy = [ "multi-user.target" ];
+        # /run/user/1000 exists only once logind has started the user's
+        # manager; at 11:07:00 on 2026-11-25 (boot +9 s) the multi-user pull
+        # won that race and the flock line died on the missing directory.
+        # The uid literal matches the XDG_RUNTIME_DIR pin below.
+        after = [ "user@1000.service" ];
+        wants = [ "user@1000.service" ];
         unitConfig = {
           RequiresMountsFor = [
             "/home/${primaryUser}/projects"

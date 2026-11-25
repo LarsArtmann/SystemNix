@@ -1996,6 +1996,12 @@ in
           "tq=http://127.0.0.1:${toString ports.tq}/health"
           "pma=http://127.0.0.1:${toString ports.pma-health}/readyz"
           "dnsblockd=http://127.0.0.1:${toString ports.dns-blocker-stats}/readyz"
+          # Adopted go-health after the 2026-11-02 sweep; the daily
+          # rediscover unit named both every run until they were listed
+          # (2026-11-25 11:21 journal). A `warn` remote does not trip the
+          # aggregate /readyz (docs/services/health-dashboard.md).
+          "indexer-web=http://127.0.0.1:${toString ports.indexer-web}/readyz"
+          "timesheets=http://127.0.0.1:${toString ports.timesheets}/health"
           # nsfw EXCLUDED 2026-11-19 (down-by-design): the classifier is
           # disabled on this host (owner decree), so federating it made the
           # aggregate /readyz a PERMANENT 503 — a red pager nobody reads,
