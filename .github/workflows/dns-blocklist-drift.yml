@@ -1,23 +1,35 @@
 name: DNS blocklist hash drift
 
-# Nightly guard against the HaGeZi mirror SRI-hash drift class
-# (docs/status/2026-10-03_02-25_hagezi-hash-drift-deploy-unblock.md):
-# the HaGeZi GitLab-mirror main branch is UNPINNED by design, so the
-# `hash = "sha256-..."` lines in platforms/common/dns-blocklists.nix
-# silently drift and every drift hard-fails the toplevel build at
-# DEPLOY time — which killed deploys on 2026-10-01, 10-03, 10-14 and
-# twice on 2026-10-16.
+# Nightly consistency check for the blocklist SRI hashes
+# (born as the HaGeZi mirror drift guard,
+# docs/status/2026-10-03_02-25_hagezi-hash-drift-deploy-unblock.md).
+#
+# MODEL CHANGED 2026-11-24: the HaGeZi lists are PINNED-COMMIT GitHub raw
+# URLs (see the `hagezi` helper in platforms/common/dns-blocklists.nix), so
+# their bytes are immutable and cannot drift. This workflow now re-hashes
+# against that pinned commit and is a REPAIR pass: a hash diff means the
+# file's hash lines disagreed with the bytes the build fetches.
+#
+# THE 2026-11-25 DEPLOY BOMB THIS GUARD CAUSED: the script still hashed the
+# MOVING GitLab-mirror main branch while the file pointed at the pinned
+# GitHub commit, so the 04:30 UTC run (c7fb34007) wrote GitLab-HEAD hashes
+# under pinned URLs. Six lists then mismatched their immutable bytes and
+# every deploy died at the HaGeZi fixed-output derivations until the hashes
+# were restored the same evening. scripts/dns-update.sh now reads the base
+# URL from the file itself; never reintroduce a hardcoded mirror here or in
+# the script.
 #
 # Loop semantics: run `scripts/dns-update.sh --hashes-only` nightly
 # (--hashes-only so an auto-commit never bundles the unrelated
 # StevenBlack commit-pin advance). A hash diff auto-commits and pushes
-# directly; a green tree is a no-op. Drift therefore lands as a green
-# commit the owner can deploy, instead of a failed deploy window.
+# directly; a green tree is a no-op. Moving the lists to a newer upstream
+# release is NOT this job's work: bump the helper's commit and the hashes
+# together in one deliberate change.
 #
 # The auto-commit does NOT build the toplevel (the refreshed hashes ARE
 # the build fix — validation happens in nix-check.yml on the push, which
-# runs the full `nix flake check` including the build-time fetch of the
-# updated lists; a bad hash there opens a normal CI failure).
+# runs the full `nix flake check`; a bad hash there opens a normal CI
+# failure).
 
 on:
   schedule:
@@ -56,8 +68,9 @@ jobs:
           git add platforms/common/dns-blocklists.nix
           git commit -m "chore: refresh dns blocklist SRI hashes (HaGeZi mirror drift)
 
-          Nightly drift guard (dns-blocklist-drift.yml): the unpinned
-          HaGeZi GitLab-mirror main branch moved; refreshed all list
-          hashes via scripts/dns-update.sh --hashes-only so the next
-          deploy's toplevel build fetches clean."
+          Nightly consistency check (dns-blocklist-drift.yml): the list
+          hash lines in platforms/common/dns-blocklists.nix disagreed with
+          the bytes their pinned URLs serve; re-hashed via
+          scripts/dns-update.sh --hashes-only so the next deploy's toplevel
+          build fetches clean."
           git push

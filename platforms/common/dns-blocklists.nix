@@ -31,17 +31,17 @@ in
     {
       name = "HaGeZi-ultimate";
       url = hagezi "dnsmasq/ultimate.txt";
-      hash = "sha256-yikFgqQiK1rPD7nSqxdFbYV+tHi6kbaBYd86KRfYC9I=";
+      hash = "sha256-aUAJpXiTKZohAW1qkjdjuMIQR09suDmoKj4vk4aQ6wI=";
     }
     {
       name = "HaGeZi-tif";
       url = hagezi "dnsmasq/tif.txt";
-      hash = "sha256-QRb1sYOoYhaAjfiCw0snZVQY9BSmwu2kRoB3ym5eQv0=";
+      hash = "sha256-igQ6eU7FQLVjlSU7f4pQZ7e2y58LXdrEJutkwYFva0Y=";
     }
     {
       name = "HaGeZi-doh";
       url = hagezi "dnsmasq/doh.txt";
-      hash = "sha256-75bL/zOcBBVv2nr4UrNEwvI23IyAzk3gB546n1A941k=";
+      hash = "sha256-WP8dcztSD4f9uFmroa+pbeHa5E7ArALZWxmy4ZqpgCg=";
     }
     {
       name = "HaGeZi-native-apple";
@@ -101,12 +101,12 @@ in
     {
       name = "HaGeZi-gambling";
       url = hagezi "dnsmasq/gambling.txt";
-      hash = "sha256-NjiMC7Y1rb28JANMbTygswZK/KFxxTo498q+H3thTIk=";
+      hash = "sha256-68K1Dff0fW59xUWMtaLHWUs+Qm/M8L0sFy6iZDCvMTk=";
     }
     {
       name = "HaGeZi-nsfw";
       url = hagezi "dnsmasq/nsfw.txt";
-      hash = "sha256-CrlsIgpvj3z9yCO8+6qUYab02QAxWl0AmfTiJAN+v4g=";
+      hash = "sha256-uAGE08k1xOvtjV42f+6WRSySQ6K2Qx7NrfGZMNLViBI=";
     }
     {
       name = "HaGeZi-social";
@@ -126,7 +126,7 @@ in
       # STABLE twice 20s apart via nix store prefetch-file before this edit.
       # Commit-pinned URLs are immutable, so no oscillation is possible —
       # future mismatches here mean GitLab history rewrite, not drift.
-      hash = "sha256-LZzEbBxCO5rolBNZgVZBztYw2EVqBDeuy8MfC0X/ceU=";
+      hash = "sha256-/f0RNGjB8mPTl37NRTWtoLrGT9HydfUEC8Ls6tkey0Y=";
     }
     {
       name = "HaGeZi-hoster";
@@ -134,12 +134,12 @@ in
       # Re-pinned 2026-10-14: upstream content update broke the build with a
       # hash mismatch (old yq5KLUId…); new content probed STABLE twice 20s
       # apart via nix store prefetch-file before this edit.
-      hash = "sha256-mxac7psQ3nMD5EwzEarCEchtmIVqzIoNXB7Mn29J+Ks=";
+      hash = "sha256-uvDRPqnSdWO89lI/IShGQgFATC0e4w7AkOPDh4yZHmM=";
     }
     {
       name = "HaGeZi-urlshortener";
       url = hagezi "dnsmasq/urlshortener.txt";
-      hash = "sha256-Q0qqxSEc/5A687N/jdi4vNEw+L2leEamrkuUO7ip2jw=";
+      hash = "sha256-VUwrZYZBlqE+BShtUX81lLcguGUFvHlu9BEZBP6eroc=";
     }
     {
       name = "HaGeZi-nosafesearch";

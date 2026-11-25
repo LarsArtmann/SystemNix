@@ -13,12 +13,24 @@ if [[ ${1:-} == "--hashes-only" ]]; then
   HASHES_ONLY=1
 fi
 
-# Two list families, two update models:
+# Two list families, one update model each:
 #   - StevenBlack: commit-pinned raw.githubusercontent.com URLs. Advance the
 #     pin to upstream HEAD, then re-hash.
-#   - HaGeZi: UNPINNED GitLab-mirror main-branch URLs (github.com/hagezi is
-#     repeatedly locked by GitHub fraud detection) rendered through the
-#     `hagezi` helper. The URL never changes; only the SRI hash drifts.
+#   - HaGeZi: GitHub PINNED-COMMIT raw URLs (since 2026-11-24) rendered
+#     through the file's own `hagezi` helper. The base URL, commit included,
+#     is READ FROM THE FILE (extract_hagezi_base): the fixed-output
+#     derivations fetch exactly that URL, so the hash must come from exactly
+#     those bytes.
+#
+# NEVER hash a URL the file does not fetch (2026-11-25 deploy bomb): the base
+# used to be hardcoded to the MOVING GitLab-mirror main branch. After the
+# source of truth moved to the pinned GitHub commit, the nightly
+# dns-blocklist-drift workflow kept re-hashing GitLab HEAD and wrote those
+# hashes under the pinned URLs; six lists no longer matched their immutable
+# bytes and every deploy died at the HaGeZi FODs (c7fb34007, 05:36 CET, until
+# repaired the same evening). At a pinned commit a hash diff means the FILE
+# was wrong, never that upstream moved: moving the lists is a deliberate
+# commit bump plus re-hash in one change.
 #
 # NEVER rewrite HaGeZi URLs. The pre-2026-09-29 version of this script
 # grep'd for raw.githubusercontent.com/hagezi (which matched nothing once the
@@ -26,11 +38,10 @@ fi
 # every helper argument, breaking every HaGeZi fetch at build time.
 #
 # Flags:
-#   --hashes-only  skip the StevenBlack pin advance and only re-hash. Use when
-#                  upstream list content drifted and a build fix must not
+#   --hashes-only  skip the StevenBlack pin advance and only re-hash: repairs
+#                  HaGeZi hashes against the pinned commit and must not
 #                  bundle an unrelated StevenBlack list refresh with it.
 #   --selftest     run the offline extraction/hash-lookup self-tests.
-HAGEZI_BASE="https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists"
 SB_REPO="https://github.com/StevenBlack/hosts.git"
 
 extract_sb_pin() {
@@ -39,6 +50,14 @@ extract_sb_pin() {
   # path segment instead of the commit, and the global sed then rewrote every
   # "hosts" substring in the file — corrupting all 15 hagezi "hosts/…" URLs.
   grep -oP "raw\.githubusercontent\.com/StevenBlack/hosts/\K[a-f0-9]{40}" "$1" | head -1 || true
+}
+
+extract_hagezi_base() {
+  # Full base INCLUDING the 40-hex commit, from the `hagezi` helper's code
+  # line (comment lines are dropped first). Anything unpinned (a branch name,
+  # another host) extracts empty on purpose: the caller fails loud instead
+  # of silently hashing bytes the file never fetches.
+  sed '/^[[:space:]]*#/d' "$1" | grep -oP 'https://raw\.githubusercontent\.com/hagezi/dns-blocklists/[a-f0-9]{40}' | head -1 || true
 }
 
 # Entries may carry rationale comments between the url line and the hash line
@@ -97,6 +116,36 @@ EOF
   got=$(extract_sb_pin "$tmp/decoy.nix")
   if [[ -z $got ]]; then ok "hagezi hosts/ decoy never matches"; else bad "hagezi decoy matched '$got'"; fi
 
+  # extract_hagezi_base: the hash must come from the URL the file FETCHES
+  # (2026-11-25 deploy bomb: GitLab-HEAD hashes under pinned-GitHub URLs).
+  hagezi_commit=4efe36574890b5ceacfb0ca8c693fee5c7395fb6
+  cat >"$tmp/hagezi-helper.nix" <<EOF
+  # the pinned commit lives in the helper's code line, not here
+  hagezi =
+    subpath:
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/${hagezi_commit}/\${subpath}";
+  {
+    url = hagezi "dnsmasq/tif.txt";
+EOF
+  got=$(extract_hagezi_base "$tmp/hagezi-helper.nix")
+  if [[ $got == "https://raw.githubusercontent.com/hagezi/dns-blocklists/$hagezi_commit" ]]; then
+    ok "hagezi helper fixture extracts the pinned base"
+  else
+    bad "hagezi base returned '$got'"
+  fi
+
+  printf "hagezi = subpath: \"https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/\${subpath}\";\n" >"$tmp/moving-ref.nix"
+  got=$(extract_hagezi_base "$tmp/moving-ref.nix")
+  if [[ -z $got ]]; then
+    ok "a moving-ref helper (GitLab main) extracts empty (the 2026-11-25 class)"
+  else
+    bad "moving-ref helper matched '$got'"
+  fi
+
+  printf 'url = "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/dnsmasq/tif.txt";\n' >"$tmp/unpinned.nix"
+  got=$(extract_hagezi_base "$tmp/unpinned.nix")
+  if [[ -z $got ]]; then ok "an unpinned GitHub ref extracts empty"; else bad "unpinned ref matched '$got'"; fi
+
   # find_hash_line: re-pin comments sit between the url and hash lines.
   cat >"$tmp/comment-between.nix" <<'NIX'
       url = hagezi "dnsmasq/hoster.txt";
@@ -135,6 +184,17 @@ NIX
   fi
   exit 0
 fi
+
+# The HaGeZi base is resolved BEFORE anything edits the file: a file whose
+# helper lost its pinned commit must fail here, not half-updated.
+HAGEZI_BASE=$(extract_hagezi_base "$BLOCKLIST_FILE")
+if [[ -z $HAGEZI_BASE ]]; then
+  echo "ERROR: could not extract the pinned HaGeZi base from $BLOCKLIST_FILE"
+  echo "       (expected the hagezi helper to carry a raw.githubusercontent.com/hagezi/dns-blocklists/<40-hex>/ URL)"
+  echo "       Refusing to hash a URL the file does not fetch."
+  exit 1
+fi
+echo "=== HaGeZi base (pinned, read from the file): $HAGEZI_BASE ==="
 
 if [[ $HASHES_ONLY == 1 ]]; then
   echo "=== Skipping the StevenBlack commit-pin advance (--hashes-only) ==="
