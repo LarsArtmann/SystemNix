@@ -235,6 +235,7 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		}
 		pend.answered()
 		pend.stamp(&rec)
+		rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
 
 		if resp.StatusCode != http.StatusTooManyRequests || !pend.gated() {
 			p.answer(w, resp, rec)
@@ -322,7 +323,6 @@ func (p *Proxy) replay(w http.ResponseWriter, resp *http.Response, body []byte, 
 		_, _ = io.Copy(w, resp.Body)
 	}
 
-	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
 	// An error answer carries no token, so it has no time to a first one.
 	rec.Status, rec.UsageMissing, rec.TTFTMS = resp.StatusCode, true, -1
 	p.record(rec)

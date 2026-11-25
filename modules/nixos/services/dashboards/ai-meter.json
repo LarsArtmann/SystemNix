@@ -28,7 +28,7 @@
                 "timePreference": "global_time"
               },
               "formatting": {
-                "unit": "{percent}",
+                "unit": "percent",
                 "decimalPrecision": "1"
               },
               "thresholds": null
@@ -70,7 +70,7 @@
                 "timePreference": "global_time"
               },
               "formatting": {
-                "unit": "{req/min}",
+                "unit": "reqpm",
                 "decimalPrecision": "0"
               },
               "thresholds": null
@@ -112,7 +112,7 @@
                 "timePreference": "global_time"
               },
               "formatting": {
-                "unit": "{req/min}",
+                "unit": "reqpm",
                 "decimalPrecision": "0"
               },
               "thresholds": null
@@ -196,7 +196,7 @@
                 "timePreference": "global_time"
               },
               "formatting": {
-                "unit": "{USD/h}",
+                "unit": "suffix:USD/h",
                 "decimalPrecision": "2"
               },
               "thresholds": null
@@ -238,7 +238,7 @@
                 "timePreference": "global_time"
               },
               "formatting": {
-                "unit": "{USD}",
+                "unit": "currencyUSD",
                 "decimalPrecision": "2"
               },
               "thresholds": null
@@ -281,7 +281,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "{req/min}",
+                "unit": "reqpm",
                 "decimalPrecision": "1"
               },
               "chartAppearance": {
@@ -344,7 +344,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "{req/min}",
+                "unit": "reqpm",
                 "decimalPrecision": "1"
               },
               "chartAppearance": {
@@ -407,7 +407,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "{tokens/min}",
+                "unit": "count:tokens/min",
                 "decimalPrecision": "0"
               },
               "chartAppearance": {
@@ -533,7 +533,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "{USD/h}",
+                "unit": "suffix:USD/h",
                 "decimalPrecision": "2"
               },
               "chartAppearance": {
