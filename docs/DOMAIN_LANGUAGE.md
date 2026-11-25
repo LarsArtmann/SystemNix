@@ -72,7 +72,7 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 | Term                  | Definition                                                                          |
 | --------------------- | ----------------------------------------------------------------------------------- |
 | **SigNoz**            | OpenTelemetry-native observability platform. Traces, metrics, logs                  |
-| **Gatus**             | Automated health check monitor. 321 endpoints (2026-11-24), Discord alerts on failure |
+| **Gatus**             | Automated health check monitor. 320 endpoints (2026-11-25), Discord alerts on failure |
 | **system-health**     | Prometheus textfile collector for systemd state, memory, GPUActive, DuckDB pressure |
 | **Post-deploy check** | Functional smoke test that verifies services work (not just that they're alive)     |
 | **Incident pipeline** | go-taskqueue ADR-0021 flow: error reports (`POST /api/v1/errors`, token-gated) become `error.observed` facts on `incident:<fingerprint>` streams; the pool's sweeper mints prio-120 (first) / prio-150 (regression) agent fix tasks |

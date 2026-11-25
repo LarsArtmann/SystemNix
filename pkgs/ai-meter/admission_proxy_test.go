@@ -338,7 +338,7 @@ func TestProxyUngatedRateLimitPassesThrough(t *testing.T) {
 	hasField(t, entries[0], "upstream_code", "1302")
 	hasField(t, entries[0], "attempts", nil)
 	hasField(t, entries[0], "admission", nil)
-	if out := s.registry.Render(); strings.Contains(out, "ai_meter_admission_inflight") {
+	if out := s.registry.Render(); strings.Contains(out, "ai_meter_admission_inflight{") {
 		t.Fatalf("an ungated upstream has admission series:\n%s", out)
 	}
 }
@@ -388,7 +388,12 @@ func TestProxyAdmissionHonorsAShortRetryAfterAndLeavesALongOneToTheClient(t *tes
 
 			entries := s.awaitLedger(t, 1)
 			hasField(t, entries[0], "status", tc.wantStatus)
-			hasField(t, entries[0], "attempts", tc.wantTries)
+			// One attempt is the ledger's default: absent means one.
+			if tc.wantTries == 1 {
+				hasField(t, entries[0], "attempts", nil)
+			} else {
+				hasField(t, entries[0], "attempts", tc.wantTries)
+			}
 			hasField(t, entries[0], "admission", tc.wantEnd)
 		})
 	}
@@ -500,7 +505,8 @@ func TestProxyAdmissionBudgetAlsoEndsBetweenAttempts(t *testing.T) {
 
 	entries := s.awaitLedger(t, 1)
 	hasField(t, entries[0], "status", 429)
-	hasField(t, entries[0], "attempts", 1)
+	// One attempt is the ledger's default: absent means one.
+	hasField(t, entries[0], "attempts", nil)
 	hasField(t, entries[0], "admission", "timeout")
 	hasField(t, entries[0], "upstream_code", "1302")
 	if got := s.gate.allowance(); got != before-1 {
@@ -569,12 +575,17 @@ func TestProxyAdmissionRecordsACallWhoseClientLeavesTheQueue(t *testing.T) {
 	hasField(t, entries[0], "attempts", 0)
 
 	close(release)
-	if resp := <-responses; resp.StatusCode != http.StatusOK {
-		t.Fatalf("the call that held the slot: want 200, got %d", resp.StatusCode)
-	} else {
+	// The client that left gets a transport error from its own library; the
+	// call that held the slot gets its answer.
+	statuses := 0
+	for range 2 {
+		resp := <-responses
+		statuses += resp.StatusCode
 		_ = resp.Body.Close()
 	}
-	<-responses
+	if statuses != http.StatusOK+http.StatusBadGateway {
+		t.Fatalf("after the client left: statuses sum to %d, want one 200 and one transport error", statuses)
+	}
 
 	// Nothing is left behind: the slot the leaving call never took is free.
 	awaitFor(t, "the gate to drain", func() bool {

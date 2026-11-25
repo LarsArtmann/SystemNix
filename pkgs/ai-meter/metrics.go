@@ -449,8 +449,8 @@ func (r *Registry) Render() string {
 		kept = append(kept, upstream)
 	}
 	sort.Strings(kept)
-	b.WriteString("# HELP ai_meter_admission_kept_arrival_total Calls that took the place of an earlier arrival, because the client sent them again after the proxy sent them back.\\n")
-	b.WriteString("# TYPE ai_meter_admission_kept_arrival_total counter\\n")
+	b.WriteString("# HELP ai_meter_admission_kept_arrival_total Calls that took the place of an earlier arrival, because the client sent them again after the proxy sent them back.\n")
+	b.WriteString("# TYPE ai_meter_admission_kept_arrival_total counter\n")
 	for _, upstream := range kept {
 		writeSeries(&b, "ai_meter_admission_kept_arrival_total", r.admissionKept[upstream], "upstream", upstream)
 	}
