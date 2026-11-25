@@ -23,7 +23,7 @@ Every number below comes from a command run in this session. The plan stands on 
 | Reset times in quota answers | printed without a zone, they are UTC+8 (two lockout ends in the ledger match the printed time plus 8 h) | logs against ledger |
 | Crush HTTP timeout | none by default (openai-go `http.DefaultClient`, no request timeout) | module cache `openai-go` `requestconfig.go`, `fantasy` providers |
 | Crush and `Retry-After` | honored when between 0 and 60 s | `fantasy/retry.go` |
-| Traffic that bypasses the proxy | `quotaboard` only, and it polls the quota API, not the model API | `ss -tnp` against the z.ai addresses |
+| Processes on this host connected to z.ai outside the proxy, at probe time | `quotaboard` only; by its README it polls the quota endpoint, not the model API. A device elsewhere using the same key is invisible to this probe | `ss -tnp` against the z.ai addresses |
 | Commits that touch `pkgs/ai-meter` | 31 | `git log --oneline -- pkgs/ai-meter` |
 
 Two conclusions shape everything after:
@@ -134,7 +134,7 @@ Sums: 180 + 180 + 348 + 102 = 810 minutes.
 
   with a comment that carries the table in section 1. 8 is below the 9-in-flight cliff; 2 keeps one probing call alive when the upstream is throttling hard; 30 s stays inside any 60 s client header timeout and, with Crush's four attempts, gives about 2 minutes.
 - **T04** deploys through the house protocol: capture-once `nix flake check --no-build`, the existing VM test, `scripts/deploy-when-quiescent.sh --fire`, then the anchor check (`readlink /run/current-system` equals the newest `system-N-link`). The restart of ai-meter cuts calls in flight for every session; fire it between turns.
-- **T08** follows the quotaboard precedent exactly: SSH push-to-create on `forgejo@evo-x2.home.lan:lars/ai-meter.git` (private by default), `gh repo create LarsArtmann/ai-meter --private`, entry in `platforms/nixos/system/configuration.nix` `forgejo.canonicalRepos` with its comment, `meta set --project ai-meter` with tags `go, http, proxy, ai, metrics, tool, app`.
+- **T08** follows the quotaboard precedent exactly: SSH push-to-create on `forgejo@evo-x2.home.lan:lars/ai-meter.git` (private by default), `gh repo create LarsArtmann/ai-meter --private`, entry in `platforms/nixos/system/configuration.nix` `forgejo.canonicalRepos` with its comment (phase 5 of the Forgejo sync attaches the push mirror on the next deploy), `meta set --project ai-meter` with tags `go, http, proxy, ai, metrics, tool, app`.
 - **T14** is the one place where the extraction removes an ability: two negative legs (`go-formula-drifted`, `replay-neutered`) sed-mutate `pkgs/ai-meter/*.go` in place. A flake input is a read-only store path, so the legs must copy the source into a derivation and mutate the copy. Deleting the legs instead would be a quiet loss of two gates.
 - **T16** uses `trash`, never `rm`, and stages the deletions with `git add -A pkgs/ai-meter`.
 
@@ -220,7 +220,6 @@ Each task's minutes are the exact sum of its micro-tasks. A micro-task is laid o
 ```mermaid
 flowchart LR
   O1{{"O1: visibility<br/>default PRIVATE"}} --> T08
-  O2{{"O2: sync token<br/>needs the new repo"}} -.-> M["push mirror attaches<br/>on the next deploy"]
 
   subgraph Tier1["Tier 1: rate-limit failures gone, 3.0 h, 46 points"]
     direction LR
@@ -262,9 +261,10 @@ Tier 1 and the repo lane of Tier 2 (T08, T09) do not depend on each other; one s
 | # | Gate | Where it bites | Default if unanswered |
 | --- | --- | --- | --- |
 | O1 | Visibility of the Forgejo repo and the GitHub twin | T08.2 | PRIVATE, the quotaboard precedent; reversible later |
-| O2 | The Forgejo sync token is scoped to named repositories: add `ai-meter` to it (or regenerate it and redeploy the sops secret) | the push mirror in `forgejo.canonicalRepos`; nothing else | the GitHub twin is seed-pushed by hand in T09.3, so the mirror can wait |
-| O3 | Credit pacer for the 5-hour quota | outside this plan | the `[decision]` row from T07.3 |
-| O4 | Cut `v0.2.0` after the extraction | after T15 | no tag; SystemNix floats `master` |
+| O2 | Credit pacer for the 5-hour quota | outside this plan | the `[decision]` row from T07.3 |
+| O3 | Cut `v0.2.0` after the extraction | after T15 | no tag; SystemNix floats `master` |
+
+No owner action is needed for the push mirror. Its credential is the sops `GITHUB_TOKEN` with the `repo` scope, which covers every private repo of the owner (docs/services/forgejo.md, "Staged-primary"); the one constraint is D12.
 
 ## 9. Guardrails
 
@@ -277,7 +277,7 @@ Tier 1 and the repo lane of Tier 2 (T08, T09) do not depend on each other; one s
 7. `nix flake update <input>`, never `nix flake lock --update-input` (silent no-op on this nix). Read the lock with python3 or grep, never with a jq file argument in a direnv shell.
 8. Heavy evals are captured once (`tee ~/.cache/aimeter/fc.log`) and grepped from the file.
 9. No `.github/workflows/` in the new repo (D12).
-10. The quota class is not claimed fixed. T04's success is measured on the 1302 class; the 1308 class keeps failing turns until O3 is decided.
+10. The quota class is not claimed fixed. T04's success is measured on the 1302 class; the 1308 class keeps failing turns until O2 is decided.
 11. The dashboard JSON and `_ai-meter-dashboard.nix` belong to the session doing the dashboard rewrite; this plan leaves them alone and hands over a list of families (T07.4).
 12. Nothing in the new repo needs a secret: client keys are minted at runtime, upstream keys live in SystemNix sops.
 
