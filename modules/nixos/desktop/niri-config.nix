@@ -171,6 +171,49 @@ _: {
               ];
             };
 
+            # Sticky-env zombie gate (2026-11-24 logout-path incident, second
+            # live occurrence of the 2026-08-18 black-screen class — full
+            # forensics: docs/status/2026-11-24_22-35_zombie-*.md). The
+            # wrapper's `systemctl --user import-environment` persists
+            # XDG_SESSION_ID in the user manager FOREVER: after logout the
+            # DEAD session's ID is still set, so niri.service's
+            # ConditionEnvironment=XDG_SESSION_ID gate passes for
+            # post-logout starts and a headless zombie niri blocks the next
+            # SDDM login ("A niri session is already running"). Upstream
+            # niri-session's teardown unsets WAYLAND_DISPLAY & friends but
+            # NOT XDG_SESSION_ID — and it never runs when the wrapper itself
+            # is killed at session close (sddm-helper's exit SIGTERMs the
+            # whole session scope, live 21:35:26→21:35:27). So the scrub
+            # rides the one teardown signal that does not depend on the
+            # wrapper: PartOf propagates graphical-session.target's STOP to
+            # this unit (same legal shape as focus-new-windows — PartOf is
+            # not a pull edge, session-boot-audit-safe), and ExecStop scrubs
+            # the sticky var. Stray post-logout starts then log the
+            # ConditionEnvironment skip and stay dead; the manual recovery
+            # recipe (StopUnit graphical-session.target) arms the gate as a
+            # side effect. ExecStop HERE, not niri.service ExecStopPost: that
+            # would strip the env on mid-session restarts and kill legitimate
+            # Restart=on-failure heals (niri-drm-healthcheck). The target
+            # never stops mid-session (niri.service only Wants= it; Wants
+            # does not propagate stop), so the gate fires at real session
+            # teardown only.
+            services.niri-session-env-gate = {
+              description = "Scrub sticky XDG_SESSION_ID from the user manager at graphical-session teardown";
+              partOf = [ "graphical-session.target" ];
+              wantedBy = [ "graphical-session.target" ];
+              serviceConfig = lib.mkMerge [
+                (hardenUser { MemoryMax = "64M"; })
+                {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  # No-op start: the unit exists for its ExecStop scrub.
+                  ExecStart = "${pkgs.coreutils}/bin/true";
+                  ExecStop = "${pkgs.systemd}/bin/systemctl --user unset-environment XDG_SESSION_ID";
+                  TimeoutStartSec = "5s";
+                }
+              ];
+            };
+
             timers.niri-drm-healthcheck = {
               description = "Check niri DRM health every 60 seconds";
               wantedBy = [ "timers.target" ];
