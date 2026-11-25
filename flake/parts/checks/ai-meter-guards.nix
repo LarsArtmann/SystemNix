@@ -10,8 +10,10 @@
 # generator's text:
 #
 #   1. promtool's PromQL engine evaluates what the generator REALLY emits,
-#      on the token fixture TestEstimateCost pins (100/20/50 at 2/0.5/4 USD
-#      per 1M = 0.00037 per call), and must land on 0.00037 x 60 calls/hour.
+#      on a token series chosen so every intermediate value is exact in
+#      floating point (promtool 3.16 compares samples exactly): each minute
+#      adds 900 prompt tokens (180 cached) and 450 completions at 2/0.5/4
+#      USD per 1M, which is 0.1998 USD per hour.
 #   2. The Go side is held to the very same number, by running
 #      TestEstimateCostMatchesDashboardPromQL with the value in its
 #      environment. Either formula moving alone fails this check.
@@ -39,8 +41,8 @@
           host = inputs.self.nixosConfigurations.evo-x2.config.services.ai-meter;
           hostDashboard = builtins.fromJSON (builtins.readFile host.dashboard);
 
-          # One call per minute: prompt 100 (20 of them cached), completion
-          # 50. "quiet" is priced but never called: the total must not
+          # Each minute adds prompt 900 (180 of them cached) and completion
+          # 450. "quiet" is priced but never called: the total must not
           # collapse and the by-model chart must not show it.
           fixture = {
             m = {
@@ -54,8 +56,8 @@
               cachedInput = 9;
             };
           };
-          # 0.00037 USD per call x 60 calls per hour.
-          usdPerHour = 0.0222;
+          # 0.00333 USD per minute x 60 minutes.
+          usdPerHour = 0.1998;
 
           series =
             kind: perMinute:
@@ -64,9 +66,9 @@
               values = "0+${toString perMinute}x40";
             };
           inputSeries = [
-            (series "prompt" 100)
-            (series "cached" 20)
-            (series "completion" 50)
+            (series "prompt" 900)
+            (series "cached" 180)
+            (series "completion" 450)
           ];
           # One promtool unit test per price table: the total is a label-less
           # sample, the by-model chart one sample for the called model.
@@ -157,7 +159,7 @@
           grep -q '@@' ${fixtureDashboard} && fail "the rendered fixture dashboard still carries a template placeholder"
 
           promtool test rules ${promqlTest} \
-            || fail "the generated PromQL disagrees with the Go cost formula (pkgs/ai-meter/config.go EstimateCost) on the 100/20/50 at 2/0.5/4 fixture"
+            || fail "the generated PromQL disagrees with the Go cost formula (pkgs/ai-meter/config.go EstimateCost) on the 900/180/450 at 2/0.5/4 fixture"
 
           cp -r ${root + "/pkgs/ai-meter"} src
           (

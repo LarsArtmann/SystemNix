@@ -70,8 +70,9 @@ func TestEstimateCostMatchesDashboardPromQL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse %q: %v", evaluated, err)
 	}
-	// The check's series grows by one fixture call per minute.
-	want := EstimateCost(100, 20, 50, Cost{Input: 2, Output: 4, CachedInput: 0.5}) * 60
+	// Each minute of the check's series carries 900 prompt tokens (180 of
+	// them cached) and 450 completion tokens at 2/0.5/4 USD per 1M.
+	want := EstimateCost(900, 180, 450, Cost{Input: 2, Output: 4, CachedInput: 0.5}) * 60
 	if math.Abs(got-want) > 1e-9 {
 		t.Fatalf("the dashboard PromQL prices the fixture at %v USD/hour, EstimateCost at %v", got, want)
 	}

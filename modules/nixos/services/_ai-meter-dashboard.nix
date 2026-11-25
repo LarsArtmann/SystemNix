@@ -34,23 +34,26 @@ let
     model: kind:
     ''sum by (model) (rate(ai_meter_tokens_total{model=~"(.*/)?${escapeRegex model}",kind="${kind}"}[15m]))'';
 
-  # USD per second for one priced model: the cached subset of the prompt at
+  # USD per HOUR for one priced model: the cached subset of the prompt at
   # its own rate, the rest of the prompt at the input rate, completions at
   # the output rate. Prices are USD per 1M tokens, hence the divisor.
-  spendPerSecond =
+  spendPerHour =
     model: price:
     let
       prompt = tokensPerSecond model "prompt";
       cached = tokensPerSecond model "cached";
       completion = tokensPerSecond model "completion";
     in
-    "((${prompt} - ${cached}) * ${toString price.input}"
+    "(((${prompt} - ${cached}) * ${toString price.input}"
     + " + ${cached} * ${toString price.cachedInput}"
-    + " + ${completion} * ${toString price.output}"
-    + ") / 1000000";
+    + " + ${completion} * ${toString price.output})"
+    + " * 3600) / 1000000";
 
+  # The models are unioned with `or` because they carry different model
+  # labels: adding them would match nothing, and a priced model without
+  # traffic yields no samples at all.
   spendTerms =
-    costs: lib.mapAttrsToList (model: price: spendPerSecond model price) costs;
+    costs: lib.mapAttrsToList (model: price: spendPerHour model price) costs;
 
   # USD per hour across every priced model. The trailing vector(0) keeps a
   # number on the panel while no priced model has traffic.
@@ -59,7 +62,7 @@ let
     let
       terms = spendTerms costs;
     in
-    if terms == [ ] then "vector(0)" else "sum(${lib.concatStringsSep " or " terms} or vector(0)) * 3600";
+    if terms == [ ] then "vector(0)" else "sum(${lib.concatStringsSep " or " terms} or vector(0))";
 
   # USD per hour per priced model.
   spendRateByModel =
