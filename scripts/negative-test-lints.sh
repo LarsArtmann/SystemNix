@@ -1026,5 +1026,23 @@ run_case bootmetrics open-path-forced-closed bootmetrics-openpath-selftest fail 
   'open variant: transaction_open 1 missing' \
   'sed:modules/nixos/services/boot-metrics.nix:s|tx_open=1|tx_open=0|'
 
+# ── ai-meter-spend-promql: the two spend formulas + the dashboard template ──
+# The reference cost is computed in Go (EstimateCost, the cumulative counter)
+# AND in generated PromQL (the dashboard's spend-rate queries). Either one
+# drifting alone must fail checks.ai-meter-spend-promql; a template that
+# loses or duplicates a spend placeholder must fail the eval that renders
+# the dashboard, before any unrendered query can be provisioned.
+run_case aimeter promql-scaling-dropped ai-meter-spend-promql fail \
+  'ai-meter-spend-promql: the generated PromQL disagrees' \
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s| \* 3600) / 1000000";|)";|'
+run_case aimeter go-formula-drifted ai-meter-spend-promql fail \
+  'ai-meter-spend-promql: EstimateCost disagrees' \
+  'sed:pkgs/ai-meter/config.go:s|float64(cachedTokens)\*price.CachedInput|float64(cachedTokens)*price.Input|'
+run_case aimeter placeholder-dropped ai-meter-spend-promql fail \
+  'each spend placeholder must occur exactly once' \
+  'sed:modules/nixos/services/dashboards/ai-meter.json:s|"query": "@@spendRate@@"|"query": "vector(0)"|'
+run_case aimeter comment-control ai-meter-spend-promql pass '' \
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s|^{ lib }:$|{ lib }:\n# control comment|'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]
