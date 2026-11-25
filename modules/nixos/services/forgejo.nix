@@ -1823,6 +1823,22 @@ _: {
                 alert = "Forgejo mirror reconcile broken or never completed: journalctl -u forgejo-github-sync (listing failure, publish warn, or the unit never finished a run since the 2026-09-18 reconcile ship).";
               }
               {
+                # Re-interval quarantine (N-strike de-escalation, 2026-11-25): a
+                # mirror whose interval PATCH fails three runs in a row is
+                # quarantined and the sync unit succeeds from then on, so this
+                # metric is the ONLY durable signal for a zombie mirror. Absent
+                # line = the re-interval pass never completed a run = red too.
+                name = "Forgejo Mirror Re-interval";
+                group = "Development";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nforgejo_mirror_reinterval_quarantined 0*)"
+                ];
+                alert = "Forgejo mirror re-interval has a quarantined repo: its interval PATCH failed 3+ runs in a row (zombie mirror: the repo row says mirror, the mirror record behind it is missing). journalctl -u forgejo-github-sync | grep quarantined names it. Repair = remove the half-created mirror on Forgejo so the next run re-mirrors it (owner decision: a delete); the quarantine clears by itself on the first 200.";
+              }
+              {
                 # Dead pull-mirror candidates (plan M07, redesigned 2026-09-18):
                 # per-repo failing syncs from forgejo's notice table, minus
                 # known-stale names — catches the redirect-frozen 12-day

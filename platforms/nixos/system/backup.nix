@@ -219,6 +219,23 @@ in
             exit 1
           fi
         '';
+
+        # Fail fast with the cause when the stored key cannot be loaded. The
+        # job spent every night from 2026-11-17 on a bare "Load key: invalid
+        # format" plus "Permission denied", which names neither the secret nor
+        # the fix. ssh-keygen runs the same parser as the job's ssh, so this
+        # pre-flight gates exactly what gated the real connection.
+        keyCheck = pkgs.writeShellScript "borg-offsite-key-check" ''
+          key=/run/secrets/borg_ssh_key
+          if ! ${pkgs.openssh}/bin/ssh-keygen -y -P "" -f "$key" > /dev/null 2>&1; then
+            echo "offsite-borg: the sops secret borg_ssh_key is not a loadable private key."
+            echo "No archive leaves this host until it is replaced (the job cannot authenticate)."
+            echo "Fix: generate a key with ssh-keygen -t ed25519, install its public half on the"
+            echo "StorageBox (install-ssh-key), store the private half in the borg_ssh_key secret,"
+            echo "then nix run .#deploy."
+            exit 1
+          fi
+        '';
       in
       {
         # nixpkgs borgbackup module owns the job unit + timer (init-on-first-run,
@@ -316,7 +333,10 @@ in
               # nightly runs died 203/EXEC Nov 07-15, journal-verified,
               # backup_ever_succeeded stayed 0). Shape guard:
               # offsite-borg-positive-render asserts no "/bin/" infix.
-              ExecStartPre = "${goliveCheck}";
+              ExecStartPre = [
+                "${goliveCheck}"
+                "${keyCheck}"
+              ];
               # Freshness marker for backup-coordination — only after create +
               # prune + compact all succeeded.
               ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";

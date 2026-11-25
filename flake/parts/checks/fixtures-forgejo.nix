@@ -252,6 +252,12 @@
               # ============ reinterval (converger, 2026-10-12) ============
               REINT="$FIX/forgejo-reinterval-mirrors"
               inject ${lib.getExe forgejoScripts.reintervalScript} "$REINT"
+              # strike state + textfile dir are redirected for every run
+              # (the default state dir lives under $HOME, unwritable here)
+              RI="$FIX/reinterval-state"
+              mkdir -p "$RI" "$FIX/reinterval-tf"
+              export FORGEJO_REINTERVAL_STATE_DIR="$RI"
+              export FORGEJO_MIRROR_TEXTFILE_DIR="$FIX/reinterval-tf"
               FJL=localhost_3000_api_v1_user_repos_limit_50_page_1.GET
               # numbered .1 here; the reconcile section below only defines
               # the unnumbered fallback, so its runs continue at .2+
@@ -281,20 +287,65 @@
               [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_native-repo.PATCH.1.json" ] \
                 || { echo "FAIL reinterval: non-mirror repo was PATCHed"; exit 1; }
 
-              # PATCH failure: warn + counted, exit 1 AFTER the full pass
+              # PATCH failure, strike 1: warn + counted, the run still succeeds
+              # (N-strike de-escalation, docs/todo/services.md)
               printf 200 > "$STUB_HTTP/$FJL.2.code"
               printf '[{"owner":{"login":"lars"},"mirror":true,"name":"flaky","mirror_interval":"8h0m0s"}]' > "$STUB_HTTP/$FJL.2.body"
               printf 500 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_flaky.PATCH.code"
-              run "$REINT"; need_rc reint2 1
-              need_has reint2 "PATCH lars/flaky failed (HTTP 500) — retried next run"
-              need_has reint2 "checked=1 patched=0 already-at-target=0 failed=1"
+              run "$REINT"; need_rc reint-strike1 0
+              need_has reint-strike1 "PATCH lars/flaky failed (HTTP 500) — retried next run"
+              need_has reint-strike1 "strike 1 of 3"
+              need_has reint-strike1 "checked=1 patched=0 already-at-target=0 failed=1"
+              grep -qx '1' "$RI/lars__flaky" || { echo "FAIL reinterval: strike file after strike 1"; cat "$RI/lars__flaky"; exit 1; }
 
-              # non-array listing dies loud (phantom-green guard)
+              # strike 2: still a success for the unit
               printf 200 > "$STUB_HTTP/$FJL.3.code"
-              printf '{"message":"token expired"}' > "$STUB_HTTP/$FJL.3.body"
+              printf '[{"owner":{"login":"lars"},"mirror":true,"name":"flaky","mirror_interval":"8h0m0s"}]' > "$STUB_HTTP/$FJL.3.body"
+              run "$REINT"; need_rc reint-strike2 0
+              need_has reint-strike2 "strike 2 of 3"
+
+              # fail-fail-pass resets the counter: the next single failure is strike 1 again
+              printf 200 > "$STUB_HTTP/$FJL.4.code"
+              printf '[{"owner":{"login":"lars"},"mirror":true,"name":"flaky","mirror_interval":"8h0m0s"}]' > "$STUB_HTTP/$FJL.4.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_flaky.PATCH.code"
+              run "$REINT"; need_rc reint-recover 0
+              need_has reint-recover "checked=1 patched=1 already-at-target=0 failed=0 quarantined=0"
+              [ ! -f "$RI/lars__flaky" ] || { echo "FAIL reinterval: a 200 must clear the strike file"; exit 1; }
+              printf 500 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_flaky.PATCH.code"
+              printf 200 > "$STUB_HTTP/$FJL.5.code"
+              cp "$STUB_HTTP/$FJL.4.body" "$STUB_HTTP/$FJL.5.body"
+              run "$REINT"; need_rc reint-reset 0
+              need_has reint-reset "strike 1 of 3"
+
+              # the 3rd consecutive failure is the one loud run (the alert)
+              printf 200 > "$STUB_HTTP/$FJL.6.code"
+              cp "$STUB_HTTP/$FJL.4.body" "$STUB_HTTP/$FJL.6.body"
+              run "$REINT"; need_rc reint-strike2b 0
+              printf 200 > "$STUB_HTTP/$FJL.7.code"
+              cp "$STUB_HTTP/$FJL.4.body" "$STUB_HTTP/$FJL.7.body"
+              run "$REINT"; need_rc reint-loud 1
+              need_has reint-loud "3 runs in a row"
+              grep -q '^forgejo_mirror_reinterval_loud_failures 1$' "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom" \
+                || { echo "FAIL reinterval: loud-failure metric not published"; cat "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom"; exit 1; }
+
+              # from the 4th failure on the repo is quarantined: probe, WARN, metric, rc 0
+              printf 200 > "$STUB_HTTP/$FJL.8.code"
+              cp "$STUB_HTTP/$FJL.4.body" "$STUB_HTTP/$FJL.8.body"
+              run "$REINT"; need_rc reint-quarantined 0
+              need_has reint-quarantined "quarantined"
+              need_has reint-quarantined "failed=1 quarantined=1"
+              grep -q '^forgejo_mirror_reinterval_quarantined 1$' "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom" \
+                || { echo "FAIL reinterval: quarantine metric not published"; cat "$FIX/reinterval-tf/forgejo_mirror_reinterval.prom"; exit 1; }
+              unset FORGEJO_REINTERVAL_STATE_DIR FORGEJO_MIRROR_TEXTFILE_DIR
+              # non-array listing dies loud (phantom-green guard)
+              printf 200 > "$STUB_HTTP/$FJL.9.code"
+              printf '{"message":"token expired"}' > "$STUB_HTTP/$FJL.9.body"
               run "$REINT"; need_rc reint3 1; need_has reint3 "did not return an array"
-              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_flaky.PATCH.2.json" ] \
-                || { echo "FAIL reinterval: ran after failed listing"; exit 1; }
+              # one PATCH per listing run that reached the PATCH: strikes 1, 2,
+              # recovery, reset-strike-1, strike-2, loud, quarantined = 7 PATCHes
+              # on flaky, none for the failed listing
+              flaky_patches=$(ls "$STUB_STATE" | grep -c '^req.localhost_3000_api_v1_repos_lars_flaky.PATCH.[0-9]*.json$')
+              [ "$flaky_patches" = 7 ] || { echo "FAIL reinterval: PATCH request count on flaky is $flaky_patches, want 7 (the failed listing must not PATCH)"; exit 1; }
 
               # ============ mirror-github (org-inclusive, 2026-10-02) ============
               GH_USER_REPOS=api.github.com_user_repos_visibility_all_affiliation_owner_per_page_100_page_1.GET

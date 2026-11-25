@@ -563,10 +563,48 @@ in
 
       echo "=== Forgejo mirror re-interval (target: $TARGET_INTERVAL) ==="
 
+      # N-strike de-escalation: one failed PATCH is noise (a transient 5xx),
+      # three in a row on the same repo is the signal (the zombie-mirror
+      # class: a repo row that says mirror with no mirror record behind it
+      # answers 500 forever). Strikes 1-2 warn and the run still succeeds;
+      # the 3rd consecutive failure fails the run once (that is the alert);
+      # from the 4th on the repo is quarantined: one probe per run, a WARN
+      # line, a metric, and the run succeeds. A 200 clears the strikes, so a
+      # repaired repo leaves the quarantine by itself. Before this the unit
+      # sat permanently failed on one zombie (service-health-check red every
+      # cycle, and a manual switch outside deploy.sh exit-4'd on it).
+      STRIKE_MAX=3
+      STRIKE_DIR="''${FORGEJO_REINTERVAL_STATE_DIR:-''${XDG_STATE_HOME:-$HOME/.local/state}/forgejo-mirror-reinterval}"
+      mkdir -p "$STRIKE_DIR"
+      # node_exporter textfile dir (sticky 1777): this unit is the ONLY writer
+      # of forgejo_mirror_reinterval.prom (mktemp+mv over an own-owned target).
+      # Best-effort, like reconcile: a publish problem WARNs, the stale file
+      # makes gatus fire, the interval pass itself is never failed by it.
+      TEXTFILE_DIR="''${FORGEJO_MIRROR_TEXTFILE_DIR:-/var/lib/prometheus-node-exporter/textfile_collectors}"
+      publish_prom() {
+        if [[ ! -d "$TEXTFILE_DIR" ]]; then
+          echo "  (metrics: textfile dir absent — skipping prom publish)"
+          return 0
+        fi
+        local tmp
+        tmp=$(mktemp "$TEXTFILE_DIR/forgejo_mirror_reinterval.XXXXXX") || {
+          echo "  warn: mktemp in textfile dir failed"
+          return 0
+        }
+        cat > "$tmp"
+        chmod 644 "$tmp"
+        mv "$tmp" "$TEXTFILE_DIR/forgejo_mirror_reinterval.prom" 2>/dev/null || {
+          echo "  warn: cannot publish forgejo_mirror_reinterval.prom (foreign-owned leftover?)"
+          rm -f "$tmp"
+        }
+      }
+
       checked=0
       patched=0
       already=0
       failed=0
+      loud=0
+      quarantined=0
       page=1
       while true; do
         response=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" \
@@ -594,19 +632,45 @@ in
           if [[ "$code" == "200" ]]; then
             echo "  $owner/$name: '$cur' -> $TARGET_INTERVAL"
             patched=$((patched + 1))
+            rm -f "$STRIKE_DIR/${owner}__${name}"
           else
-            echo "  warn: PATCH $owner/$name failed (HTTP $code) — retried next run"
             failed=$((failed + 1))
+            key="$owner/$name"
+            strike_file="$STRIKE_DIR/${owner}__${name}"
+            strikes=$(cat "$strike_file" 2>/dev/null || echo 0)
+            [[ "$strikes" =~ ^[0-9]+$ ]] || strikes=0
+            strikes=$((strikes + 1))
+            echo "$strikes" > "$strike_file"
+            if [[ "$strikes" -lt "$STRIKE_MAX" ]]; then
+              echo "  warn: PATCH $key failed (HTTP $code) — retried next run (strike $strikes of $STRIKE_MAX)"
+            elif [[ "$strikes" -eq "$STRIKE_MAX" ]]; then
+              echo "  ERROR: PATCH $key failed $strikes runs in a row (HTTP $code) — not a transient: a zombie mirror (its row says mirror, the mirror record is missing)? Quarantined from the next run on (metric forgejo_mirror_reinterval_quarantined)"
+              loud=$((loud + 1))
+            else
+              echo "  warn: PATCH $key quarantined: $strikes failed runs in a row (HTTP $code) — one probe per run, metric forgejo_mirror_reinterval_quarantined"
+              quarantined=$((quarantined + 1))
+            fi
           fi
         done < <(echo "$response" | jq -r '.[] | select(.mirror == true) | "\(.owner.login)\t\(.name)\t\(.mirror_interval // "")"')
         [[ $(echo "$response" | jq 'length') -lt 50 ]] && break
         page=$((page + 1))
       done
 
-      echo "=== Re-interval summary: checked=$checked patched=$patched already-at-target=$already failed=$failed"
-      # Fail loud AFTER the full pass: a transient PATCH 5xx must not skip
-      # the remaining repos; the next hourly timer run retries the misses.
-      [[ "$failed" -eq 0 ]]
+      echo "=== Re-interval summary: checked=$checked patched=$patched already-at-target=$already failed=$failed quarantined=$quarantined"
+      {
+        echo "# forgejo mirror re-interval metrics"
+        echo "forgejo_mirror_reinterval_checked $checked"
+        echo "forgejo_mirror_reinterval_patched $patched"
+        echo "forgejo_mirror_reinterval_failed $failed"
+        echo "forgejo_mirror_reinterval_quarantined $quarantined"
+        echo "forgejo_mirror_reinterval_loud_failures $loud"
+        echo "forgejo_mirror_reinterval_last_run_timestamp $(date +%s)"
+      } | publish_prom
+      # Fail loud AFTER the full pass, and only on the run that observes the
+      # third consecutive failure of one repo: a transient PATCH 5xx must not
+      # skip the remaining repos and must not fail the unit. From the fourth
+      # failure on the repo is quarantined and the metric carries the signal.
+      [[ "$loud" -eq 0 ]]
     '';
   };
 

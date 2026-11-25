@@ -417,6 +417,11 @@
               Type = "oneshot";
               User = primaryUser;
               WorkingDirectory = cfg.mountPoint;
+              # The rate-limit stamp lives here, not on the cache mount: the
+              # mount root is root-owned 0755, so the user running this unit
+              # cannot create a file there (touch EPERM, unit failed on its
+              # first non-skipped run 2026-11-24 23:38).
+              StateDirectory = "rust-cache-gc";
               # rm -rf of metadata-bound target trees on a DRAM-less USB SSD is
               # slow; 30min is generous but bounded.
               TimeoutStartSec = "30min";
@@ -450,7 +455,7 @@
             # the reclaim flag every 5 min while usage is high, re-arming the
             # path unit each time the GC goes inactive. Without this stamp that
             # would re-sweep the disk continuously. 6h = one sweep per window.
-            stamp="$mnt/.gc-stamp"
+            stamp="/var/lib/rust-cache-gc/stamp"
             if [ -f "$stamp" ]; then
               age=$(( $(date +%s) - $(stat -c %Y "$stamp") ))
               if [ "$age" -lt 21600 ]; then
@@ -627,7 +632,7 @@
         # unit re-arms every time the GC unit goes inactive (plain oneshot,
         # deliberately NO RemainAfterExit: the boot-mirror class-11
         # deaf-trigger trap) — and removed below threshold. The GC service's
-        # own .gc-stamp rate-limits to one sweep per 6h.
+        # own stamp (its StateDirectory) rate-limits to one sweep per 6h.
         systemd.paths.rust-cache-reclaim = lib.mkIf cfg.gc.enable {
           description = "Trigger rust-cache-gc when rust-cache usage crosses the reclaim threshold";
           wantedBy = [ "multi-user.target" ];

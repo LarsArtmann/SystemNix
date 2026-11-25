@@ -1515,6 +1515,10 @@
               assert svc.IOSchedulingClass == "best-effort";
               assert toString svc.IOSchedulingPriority == "6";
               assert lib.hasInfix "borg-offsite-golive-check" (execLines svc.ExecStartPre);
+              # The key pre-flight must ride the same ExecStartPre (2026-11-25:
+              # the job failed nine nights on an unloadable stored key with a
+              # bare "invalid format"; this leg names the secret and the fix).
+              assert lib.hasInfix "borg-offsite-key-check" (execLines svc.ExecStartPre);
               # writeShellScript single-file drv: ExecStartPre must route to
               # the flat store file. lib.getExe AND lib.getExe' render
               # <file>/bin/<name>, which 203/EXECs every start (the nine-night

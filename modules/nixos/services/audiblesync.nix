@@ -141,13 +141,20 @@
                 (mkPoolDirUnit {
                   description = "Create AudibleSync DB backup directory on the HDD pool";
                   directory = "/mnt/pool/backups/audiblesync";
-                  # owner stays root (the browser-history pattern): the backup
+                  # owner is root (the browser-history pattern): the backup
                   # unit runs as hardened root with an empty
                   # CapabilityBoundingSet, so it CANNOT write a 0755 dir owned
                   # by another user — owner = "audible-sync" made every
                   # nightly mktemp fail EPERM from 2026-11-14 (the pool
                   # re-provision) until 2026-11-24; backup_healthy sat 0 with
-                  # age pinned at the 999h sentinel.
+                  # age pinned at the 999h sentinel. Spelled out, not omitted:
+                  # the generator grants CAP_CHOWN/CAP_FOWNER only for a
+                  # non-null owner, and the directory on disk stayed owned by
+                  # audible-sync after the pool re-provision, so with no owner
+                  # the chmod EPERMed and this unit failed on every deploy
+                  # from 2026-11-24 21:36 to 2026-11-25 (the nightly backup
+                  # never ran: its service depends on this unit).
+                  owner = "root";
                 })
                 # mkPoolDirUnit bakes no IO tier; the boot-transaction audit
                 # requires one on every wantedBy multi-user unit
