@@ -39,14 +39,45 @@ trap deploy_exit_record EXIT
 # slow unit still converges in the background — only the deploy stops
 # waiting. rc 124 (timeout) warns with the journal pointer; every other
 # failure stays silent (the old `|| true` semantics: provisioner re-runs
-# converge, units self-report via their own monitoring).
+# converge, units self-report via their own monitoring). Several units in one
+# call restart in ONE systemctl transaction, so a service that Requires= two
+# of them is bounced once, not twice; a trailing numeric argument is the budget.
 deploy_restart() {
-  local unit="$1" budget="${2:-120}" rc=0
-  timeout "$budget" sudo systemctl restart "$unit.service" 2>/dev/null || rc=$?
+  (($#)) || return 0
+  local rc=0 unit
+  local units=("$@") args=()
+  local budget="${units[-1]}"
+  if [[ "$budget" =~ ^[0-9]+$ ]]; then unset 'units[-1]'; else budget=120; fi
+  for unit in "${units[@]}"; do args+=("$unit.service"); done
+  timeout "$budget" sudo systemctl restart "${args[@]}" 2>/dev/null || rc=$?
   if [ "$rc" -eq 124 ]; then
-    echo "⚠ $unit.service not active after ${budget}s — still converging in the background; check: journalctl -u $unit.service -n 30"
+    echo "⚠ ${args[*]} not active after ${budget}s — still converging in the background; check: journalctl -u ${args[0]} -n 30"
   fi
   return 0
+}
+
+# MediaAtlas provisioner batch (2026-11-25). media-atlas.service Requires=
+# both key provisioners, so systemd restarts the hub as a dependent of EVERY
+# separate `systemctl restart` of either one. The loop restarted them ~5s
+# apart: the second stop landed during the first start's multi-minute
+# journal replay, where the hub does not observe SIGTERM, systemd burned
+# its 90s stop timeout, SIGKILLed the hub and the replay began again from
+# zero (2026-11-24 21:43:31-21:54:03 — 10.5 min down, gatus "MediaAtlas map
+# plate" paged; same kill shape 11-20 23:13 and 11-23 05:07). One
+# transaction bounces the hub once (systemd 262 probe: two transactions
+# restarted a unit that Requires= both TWICE, one transaction restarted it
+# once). Same per-unit is-enabled gate as the loop.
+restart_media_atlas_provisioners() {
+  local provisioner units=()
+  for provisioner in immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision; do
+    if timeout 10 systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
+      units+=("$provisioner")
+    fi
+  done
+  if [ "${#units[@]}" -gt 0 ]; then
+    echo "Restarting provisioners (one transaction): ${units[*]}"
+    deploy_restart "${units[@]}"
+  fi
 }
 
 # Phase timing (2026-10-17): "why does the deploy take so long" was
@@ -868,6 +899,9 @@ if nix run .#pre-deploy-check; then
   # media-atlas-key-provision: idempotent API-key converger for the hub
   # (inbound hub-api-key once + outbound Immich key, file-first reconcile)
   # — re-runs converge after DB restores and re-render the key files.
+  #   media-atlas-pg-ro, media-atlas-key-provision and immich-api-key-provision
+  #   left this loop on 2026-11-25: one transaction in
+  #   restart_media_atlas_provisioners (separate restarts bounce the hub twice).
   # media-atlas-backup-dir: mount-gated pool leaf creator for the nightly
   # journal dump dir (cv-backup-dir pattern; C10.3).
   # rust-cache-projects-links: idempotent ~/projects/<p>/target symlink
@@ -883,7 +917,7 @@ if nix run .#pre-deploy-check; then
   # re-runs converge after DB restores; a FRESH mint try-restarts the
   # declared consumer units.
   phase "Provisioner convergence (restart oneshots) ==="
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup bank-sync-storage-dir google-sync-dirs audible-sync-dirs audiblesync-backup-dir cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir crush-daily-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys immich-api-key-provision opencloud-storage-dir media-atlas-pg-ro media-atlas-key-provision media-atlas-archive-perms media-atlas-backup-dir rust-cache-projects-links dnsblockd-allowlist-backup-dir timesheets-backup-dir invoices-dashboard-backup-dir summit-planner-backup-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup bank-sync-storage-dir google-sync-dirs audible-sync-dirs audiblesync-backup-dir cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir crush-daily-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys opencloud-storage-dir media-atlas-archive-perms media-atlas-backup-dir rust-cache-projects-links dnsblockd-allowlist-backup-dir timesheets-backup-dir invoices-dashboard-backup-dir summit-planner-backup-dir; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
@@ -938,6 +972,8 @@ if nix run .#pre-deploy-check; then
       esac
     fi
   done
+
+  restart_media_atlas_provisioners
 
   # crush-hot-db-migrate: daily-timer oneshot converging per-project
   # crush DBs onto /mnt/hot (Samsung TLC). Deploy-time convergence
