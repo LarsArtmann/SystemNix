@@ -486,6 +486,21 @@
             # smokes — 26h request-driven budget (an overnight without
             # requests is healthy, not dark; dnsblockd doctrine).
             caddy = env "caddy" 26;
+            # ai-meter (2026-11-25): one OTLP/JSON GenAI span per routed call,
+            # posted by the proxy's own stdlib exporter to the collector
+            # (pkgs/ai-meter/traces.go). Config-key wiring (otlp_endpoint in
+            # the sops-rendered config), so no env assertion. Request-driven
+            # on an agent cadence: 6k-52k calls every day for 30 days with a
+            # longest quiet stretch of 4h (store query 2026-11-25), so the 26h
+            # request-driven budget holds with more than 6x margin. The tight
+            # tripwires are the traffic-gated ai-span-export-* and
+            # ai-traces-not-landing rules (_signoz-alerts.nix); this entry is
+            # the 26h backstop.
+            ai-meter = {
+              serviceName = "ai-meter";
+              wiring = "config";
+              maxAgeHours = 26;
+            };
             # ── Known upstream gaps (binary cannot emit yet) ──
             projects-management-automation = {
               serviceName = "projects-management-automation";

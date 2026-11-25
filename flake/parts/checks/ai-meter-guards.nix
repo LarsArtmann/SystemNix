@@ -115,19 +115,18 @@
             "Spend Rate"
             "Spend Rate by Model"
           ];
-          spendPanels = lib.filter (
+          spendPanels = lib.filterAttrs (
             _: panel: builtins.elem panel.spec.display.name spendPanelNames
           ) hostDashboard.spec.panels;
-          spendQueries = map (panel: (lib.head panel.spec.queries).spec.plugin.spec.query) (
-            lib.attrValues spendPanels
-          );
+          spendPanelList = lib.attrValues spendPanels;
+          spendQueries = map (panel: (lib.head panel.spec.queries).spec.plugin.spec.query) spendPanelList;
           uncovered = lib.filter (
             model: !builtins.all (lib.hasInfix model) spendQueries
           ) (builtins.attrNames host.costs);
           wiringHolds =
             assert
-            lib.assertMsg (lib.length spendPanels == 2)
-              "ai-meter-spend-promql: the dashboard must keep exactly one panel each for ${toString spendPanelNames}, found ${toString (lib.length spendPanels)}"
+            lib.assertMsg (lib.length spendPanelList == 2)
+              "ai-meter-spend-promql: the dashboard must keep exactly one panel each for ${toString spendPanelNames}, found ${toString (lib.length spendPanelList)}"
             ;
             assert
             lib.assertMsg (uncovered == [ ])
