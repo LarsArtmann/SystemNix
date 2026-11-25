@@ -1375,22 +1375,26 @@
                   url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
                   interval = "2m";
                   # Gatus 5.36.0 cannot do numeric comparison on Prometheus text
-                  # metrics ([BODY].jsonpath is broken, pat() is presence-only).
-                  # We verify the sync subsystem is ACTIVE by checking both the
-                  # backlog gauge and the consecutive-failures gauge exist.
-                  # NOTE: cloud_sync_consecutive_failures is always emitted (set
-                  # on every sync cycle: 0 on success, incremented on failure).
-                  # The previous condition used cloud_sync_upload_rejected_events_total
-                  # which is only emitted when rejections > 0, so it's ABSENT when
-                  # the agent has zero rejections — a permanent false negative.
-                  # This check catches the agent STOPPING sync entirely (circuit
-                  # breaker stuck open, crash loop, auth failure). For VALUE-based
-                  # alerting (backlog > N threshold), wire Prometheus/SigNoz
-                  # to scrape this endpoint and add an alert rule there.
+                  # metrics ([BODY].jsonpath is broken, pat() is presence-only),
+                  # so this is a LIVENESS check: the sync subsystem is ACTIVE iff
+                  # the metrics it sets on EVERY sync cycle are present.
+                  # cloud_sync_upload_backlog_size (upstream upload.rs, set
+                  # unconditionally each cycle) and cloud_sync_cycle_duration
+                  # (upstream sync_loop.rs, recorded at the end of every cycle;
+                  # the summary renders cloud_sync_cycle_duration_count) are both
+                  # per-cycle emissions.
+                  # The previous condition cloud_sync_consecutive_failures went
+                  # permanently red 2026-11-25: pinned upstream rev 18ed4b70 sets
+                  # that gauge ONLY on failure paths (no success-path reset), so a
+                  # healthy agent NEVER emits it — same trap class as the
+                  # 2026-08-06 rejected-events counter (emitted only when > 0).
+                  # For VALUE-based alerting (backlog > N threshold), wire
+                  # Prometheus/SigNoz to scrape this endpoint and add an alert
+                  # rule there.
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*cloud_sync_upload_backlog_size*)"
-                    "[BODY] == pat(*cloud_sync_consecutive_failures*)"
+                    "[BODY] == pat(*cloud_sync_cycle_duration_count*)"
                   ];
                   alert = "Monitor365 cloud sync subsystem not emitting metrics — agent may have stopped syncing (circuit breaker open, auth failure, or crash loop). Check: journalctl -u monitor365 -n 50";
                 }

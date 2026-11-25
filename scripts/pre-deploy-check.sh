@@ -967,7 +967,7 @@ done
 # because they're phantom metrics in the config.
 # Read by the sourced metrics-gate.sh.
 # shellcheck disable=SC2034
-MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures cloud_sync_upload_backlog_size"
+MONITOR365_METRICS="collector_events_collected cloud_sync_cycle_duration_count cloud_sync_upload_backlog_size"
 
 # Textfile-collector breakage on the RUNNING system (2026-09-02, live twice):
 # a collector emitting a value-less line ("metric " + empty var) makes
