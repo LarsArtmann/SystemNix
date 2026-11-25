@@ -59,3 +59,7 @@
 ---
 
 *Report scope: this session only. Parallel-session note (flagged, not co-verified): the 00:32 library-policy lock wave `477059e`, further library-policy floats through 00:46, the `tracking-papers` input + supplements-weekly-print work (`5a2e9f9`), and the ai-meter dashboard files are other sessions' changes that rode the same daemon commits.*
+
+---
+
+**Correction (appended 2026-11-25 ~01:45, same session, non-destructive):** §a row 5 says "3 synthetic variants (root input, dangling follow, shared node) at 0.03 s each" — only TWO ran. The third generator (`variant-hot.json`, the highest string-edge fan-in node) crashed on a node without inputs and was never re-run; shared-consumer path resolution is covered only by the small fixture `evil-deep-treefmt-paths.lock`, not by a real-graph variant. Open as 2026-11-25_01-41_lock-audit-deep-treefmt-regrowth-full-status.md §f.3. Second inaccuracy: the header's "only uncommitted edits of mine" under-counted — three more edits went into this file after the header was written (header + rows 3 and 7). The full status update that supersedes this narrative: `2026-11-25_01-41_lock-audit-deep-treefmt-regrowth-full-status.md`.
