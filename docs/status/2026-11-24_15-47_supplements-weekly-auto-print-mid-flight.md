@@ -266,3 +266,77 @@ SystemNix commit 9fbc9335 (module); store paths
 `x99zb8q67l54w1incyc7g4j5ra9yibhb-print-safe`; dry-run transcript in §a.5.
 Working files at report time: both trees clean; no unpushed local edits of
 mine outstanding except the deferred docs pass.
+
+---
+
+## Completion section (2026-11-25 01:00–04:30, continuation session)
+
+**Owner questions resolved by proceeding on the recommended defaults** (the
+`question` prompts were interrupted twice; all three recommended answers ARE
+the already-verified implementation, so no code changed): (1) sheets land in
+the 8-week staging dir only — `sheets/` gallery stays manually curated;
+(2) pipeline keeps writing `docs/printer-log.md` rows; revisit recorded as
+tracking-papers TODO row 99 (`print-log export --markdown` integration once
+stable — print-safe's own ledger hooks fire best-effort whenever
+`~/.local/bin/print-log` resolves, including under the timer); (3) Monday
+00:00 with `Persistent=true` only, no `WakeSystem`.
+
+### Landed this continuation
+
+- **tracking-papers docs pass** (pushed `4651119` + `c6dd241`): TODO #2
+  RESOLVED / #5 DONE annotations, CHANGELOG entry, README automation note,
+  AGENTS.md print-safe digest rewrite (219/220 lines, cap held),
+  sheets/README + printing-safety "Automated weekly print" sections,
+  decisions.md long-form record, TODO row 99. Buildflow legs touching these
+  files green; the 4 remaining `docs-gates` findings (annotate spacing ×2,
+  freshness unharvested ×4) belong to the LIVE docs-gates-grind session's
+  own 00-07 report — not harvested to avoid a double-harvest collision.
+- **SystemNix wiring** (daemon commit `1c2a3bf9f`): flake input
+  `tracking-papers` (`git+ssh://…?ref=refs/heads/main` — this repo's default
+  branch is MAIN; the handoff's master template was wrong and the first
+  lock attempt failed `couldn't find remote ref refs/heads/master`),
+  locked `4651119a` == origin tip; `nixpkgs` + `flake-parts` followed (revs
+  matched root at adoption), `go-nix-helpers` deliberately NOT followed
+  (rev differs from root's). Module enabled in configuration.nix; runbook
+  `docs/services/supplements-weekly-print.md`.
+- **CI private-input auth** (bundle recipe, docs/agents/go-ecosystem.md):
+  ed25519 keypair generated, public key registered read-only
+  (key id `171030558`, title systemnix-ci-readonly), sops archive
+  `platforms/nixos/secrets/ci-deploy-keys-bundle2.yaml` gained
+  `tracking_papers_key` (4 keys total), `NIX_DEPLOY_KEYS_BUNDLE_2` rebuilt
+  from the archive (4 @REPO sections) and set via stdin. Private material
+  trashed after the set. sudo probed rc=0 in this session (v0.102.0).
+- **Gates**: `nix flake check --no-build --all-systems` → **all checks
+  passed** (log `~/.cache/fc-2026-11-25.log`, only pre-existing warnings);
+  package attr probe
+  `(getFlake …).inputs.tracking-papers.packages.x86_64-linux.print-supplements-weekly`
+  resolves. Pre-deploy battery first run: 152 ✓ / 8 warn / 1 fail — the
+  fail was check 2 (evo-x2 eval) racing sibling commits transiently;
+  re-probe green.
+
+### Deploy status: BLOCKED (external, not this task's tree)
+
+Three deploy attempts by parallel sessions all died on ONE foreign cause:
+library-policy's go-modules FOD hash mismatch (`gYkU…` specified vs
+`UCnK…` got). The library-policy session fixed the vendorHash locally
+(`2ffc8c6`, 01:59) and its lineage reached the remote briefly (SystemNix's
+lock floated to `e092b400` at 01:38), but **origin/master was force-pushed
+BACK to `3737422`** — the fix is now remote-unfetchable and lives only in
+that session's local checkout (session cwd ~/projects/library-policy, live
+per /proc, last commit 02:10, dirty `fleet_scan.go` mid-feature). Per the
+never-touch-foreign-work rules this session did NOT push, float, or repair
+their repo. Consequences recorded: SystemNix's locked `e092b400` is a
+time bomb (evals survive on the fetcher cache until eviction) and every
+fleet deploy fails until that session pushes its 5-commit lineage. Harvest
+rows queued (`ac905845e`): deploy row `[blocked:push]` + first-fire watch
+(Mon 2026-11-30 00:00). Boot id pinned `b4931451` (PSI storms 31–98%
+overnight from sibling builds; no reboot through 04:26).
+
+**Residual work for the next session**: when origin/master contains
+`2ffc8c6`: `nix flake update library-policy` → `nix run .#deploy` (skip if
+a sibling's deploy already landed the wave — check
+`ls -t /var/log/systemnix-deploys/` + the drv-equality probe) → post-deploy
+verify (timer NextElapse Mon 00:00, rendered unit HOME=%h + ReadWritePaths
++ onFailureP0, tmpfiles `stat ~/.local/state/tracking-papers`, anchor
+discipline) → tick the `[blocked:push]` rows in TODO_LIST +
+docs/todo/services.md.
