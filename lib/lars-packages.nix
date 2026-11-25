@@ -466,8 +466,14 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-24 nixpkgs-root float wave (fresh AAAA spec — upstream
   # bake long stale): got gYkUTyDk (first-hand keep-going,
   # ~/.cache/gtd-pipeline/toplevel-build3.log). Drop when upstream bakes.
-  library-policy = flakePkgShim inputs.library-policy "default"
-    "sha256-gYkUTyDkea3jqQmx6kpzFEmH0W7IiR03TKnMXt15eyI=";
+  # DROPPED 2026-11-25 (treadmill drop-protocol): the daemon float to
+  # e092b400 re-staled gYkUTyDk (spec gYkUTyDk, got UCnKnjhq; first-hand
+  # deploy enumeration, /var/log/systemnix-deploys/2026-11-25_01-35-47.log,
+  # drv library-policy-e092b400-...-go-modules), and upstream e092b400
+  # ALREADY BAKES exactly UCnKnjhq (flake.nix:146, a031de3; got==bake).
+  # Bake unchanged at the next float a60fda4b (go.mod/go.sum untouched).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  library-policy = flakePkg inputs.library-policy;
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
