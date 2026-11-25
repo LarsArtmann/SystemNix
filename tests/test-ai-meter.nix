@@ -19,17 +19,49 @@
 #      port: the recorded call arrives at the fake endpoint as a GenAI span
 #      (the wire contract itself is covered by traces_test.go; this proves
 #      the sandbox, the rendered otlp_endpoint and the async worker).
+#   6. Cost survives a restart inside the HARDENED unit: the cost counter is
+#      replayed from the ledger at every start, and nothing else is.
+#   7. A price row that lands after a call was made restates that call: the
+#      same binary, user and ledger with only the price table changed.
 {
   pkgs,
   ...
 }:
 let
+  inherit (import ../lib/default.nix pkgs.lib) ports;
+
+  # The derivation the unit runs (identical src and file at both call
+  # sites), so the restatement leg starts the real binary by hand.
+  aiMeterExe = pkgs.lib.getExe (
+    pkgs.callPackage ../pkgs/ai-meter.nix { src = pkgs.lib.sources.cleanSource ../pkgs/ai-meter; }
+  );
   aiMeterFlakeOutput = (import ../modules/nixos/services/ai-meter.nix) { };
   aiMeterModule = aiMeterFlakeOutput.flake.nixosModules.ai-meter;
 
   catalogModule = (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog;
   integrationModule =
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
+
+  # Fake OpenAI-compatible upstream: answers every chat completion with the
+  # usage block of one 100/20/50-token call, which prices at 0.00037 USD.
+  fakeUpstream = pkgs.writeText "fake-upstream.py" ''
+    import http.server
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            body = b'{"choices":[],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150,"prompt_tokens_details":{"cached_tokens":20}}}'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    http.server.ThreadingHTTPServer(("127.0.0.1", ${toString ports.llama-chat}), Handler).serve_forever()
+  '';
 
   # Fake OTLP/HTTP endpoint: answers every export and appends its body to
   # /tmp/otlp-spans.jsonl, so the test can read the span the proxy sent.
@@ -53,8 +85,13 @@ let
   '';
 
   # Same shape the sops template renders; keys are fake (the VM never talks
-  # to a real upstream — the "dead" upstream points at a closed port).
-  vmConfig = pkgs.writeText "ai-meter-config.json" (
+  # to a real upstream: the "dead" upstream points at a closed port, and the
+  # fake one stands in for a local model server, on llama-chat's registered
+  # port). The price table is the only difference between the config the
+  # unit deploys with and the one the restatement leg starts by hand.
+  mkVmConfig =
+    costs:
+    pkgs.writeText "ai-meter-config.json" (
     builtins.toJSON {
       listen = "127.0.0.1:8107";
       metrics_listen = "127.0.0.1:8108";
@@ -72,12 +109,25 @@ let
           base_url = "http://127.0.0.1:9";
           api_key = "unused";
         }
+        {
+          name = "fake";
+          base_url = "http://127.0.0.1:${toString ports.llama-chat}";
+          api_key = "unused";
+        }
       ];
-      costs = { };
+      inherit costs;
       otlp_endpoint = "http://127.0.0.1:4318";
       deployment_environment = "vmtest";
     }
   );
+  vmConfig = mkVmConfig { };
+  vmPricedConfig = mkVmConfig {
+    m = {
+      input = 2;
+      output = 4;
+      cached_input = 0.5;
+    };
+  };
 in
 {
   name = "ai-meter";
@@ -133,11 +183,24 @@ in
         serviceConfig.ExecStart = "${pkgs.python3}/bin/python3 ${otlpSink}";
       };
 
+      systemd.services.ai-meter-fake-upstream = {
+        description = "fake OpenAI-compatible upstream for the ai-meter VM test";
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig.ExecStart = "${pkgs.python3}/bin/python3 ${fakeUpstream}";
+      };
+
       system.stateVersion = "25.11";
     };
 
   testScript = ''
     import json
+
+    def cost_of(metrics, upstream):
+        for line in metrics.splitlines():
+            if line.startswith("ai_meter_cost_usd_total{") and f'upstream="{upstream}",model="m"' in line:
+                return float(line.rsplit(" ", 1)[1])
+        raise AssertionError(f"no cost series for upstream {upstream}:\n{metrics}")
 
     machine.start()
 
@@ -229,5 +292,57 @@ in
     with subtest("admin plane exposes the family surface"):
         machine.succeed("curl -sf http://127.0.0.1:8108/metrics | grep '# TYPE ai_meter_tokens_total counter'")
         machine.succeed("curl -sf http://127.0.0.1:8108/metrics | grep '# TYPE ai_meter_spans_exported_total counter'")
+
+    with subtest("an unpriced call is metered at zero cost"):
+        machine.wait_for_unit("ai-meter-fake-upstream.service")
+        machine.wait_for_open_port(${toString ports.llama-chat})
+        machine.succeed(
+            "curl -sf -o /dev/null -XPOST http://127.0.0.1:8107/v1/fake/chat/completions"
+            + " -H 'Authorization: Bearer '$(cat /run/ai-meter-keys/vmtest)"
+            + " -H 'Content-Type: application/json' -d '{\"model\":\"m\"}'"
+        )
+        machine.succeed("sleep 1")
+        metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
+        assert 'ai_meter_tokens_total{client="vmtest",upstream="fake",model="m",kind="prompt"} 100' in metrics, metrics
+        assert cost_of(metrics, "fake") == 0, metrics
+
+    with subtest("the hardened unit replays the ledger at start, cost family only"):
+        machine.systemctl("restart ai-meter.service")
+        machine.wait_for_unit("ai-meter.service")
+        machine.wait_for_open_port(8108)
+        metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
+        # No call has been made since the restart, yet both earlier calls have
+        # a cost series; the restart-reset families are still empty.
+        assert cost_of(metrics, "fake") == 0, metrics
+        assert cost_of(metrics, "dead") == 0, metrics
+        assert "ai_meter_requests_total{" not in metrics, metrics
+
+    with subtest("a price row that lands later restates the earlier call"):
+        machine.systemctl("stop ai-meter.service")
+        machine.succeed(
+            "systemd-run --unit=ai-meter-priced --uid=ai-meter ${aiMeterExe} -config ${vmPricedConfig}"
+        )
+        machine.wait_for_unit("ai-meter-priced.service")
+        machine.wait_for_open_port(8108)
+        metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
+        assert abs(cost_of(metrics, "fake") - 0.00037) < 1e-12, metrics
+
+        # A second start at the same price must not count the call twice...
+        machine.systemctl("restart ai-meter-priced.service")
+        machine.wait_for_open_port(8108)
+        metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
+        assert abs(cost_of(metrics, "fake") - 0.00037) < 1e-12, metrics
+
+        # ...and a call made after the price landed adds on top of it.
+        machine.succeed(
+            "curl -sf -o /dev/null -XPOST http://127.0.0.1:8107/v1/fake/chat/completions"
+            + " -H 'Authorization: Bearer '$(cat /run/ai-meter-keys/vmtest)"
+            + " -H 'Content-Type: application/json' -d '{\"model\":\"m\"}'"
+        )
+        machine.succeed("sleep 1")
+        metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
+        assert abs(cost_of(metrics, "fake") - 0.00074) < 1e-12, metrics
+        ledger_lines = machine.succeed("wc -l < /var/lib/ai-meter/usage.jsonl").strip()
+        assert ledger_lines == "3", f"the ledger must hold exactly the three calls made, has {ledger_lines}"
   '';
 }
