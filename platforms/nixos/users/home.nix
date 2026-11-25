@@ -741,6 +741,22 @@ in
       # (/mnt/rust-cache) - see modules/nixos/services/rust-cache.nix.
       CARGO_HOME = "/mnt/rust-cache/cargo";
 
+      # Rust parallelism caps (2026-11-25, crashes #64 + #65). Both cuts hit
+      # while agent sessions ran cargo/nextest batteries at the default job
+      # count (32 logical CPUs here): 32 concurrent rustc took Tctl from 50
+      # to 98 C in 30 s and pinned the USB rust-cache SSD at 100 % busy for
+      # minutes; nextest then ran up to 32 test processes x 32 threads
+      # (load1 1000+). Env caps reach every cargo of this user, including
+      # `nix develop -c cargo ...`: the devshell puts its own cargo in front
+      # of the PATH-shim cargo-gate, so that start gate never sees those
+      # builds (live-verified 2026-11-25). Nix sandbox builds are not
+      # affected (nix `cores` bounds them). One-off override:
+      # `CARGO_BUILD_JOBS=32 cargo build ...` or `cargo build -j 32`.
+      CARGO_BUILD_JOBS = "12";
+      RUST_TEST_THREADS = "8";
+      NEXTEST_JOBS = "8";
+      NEXTEST_TEST_THREADS = "8";
+
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";
       QT_QPA_PLATFORM = "wayland";

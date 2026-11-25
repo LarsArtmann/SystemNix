@@ -27,6 +27,13 @@
 # .envrc files (the devShell profile lands in front of lib-level edits).
 # rust-analyzer is unaffected: its constant `cargo metadata` calls are
 # pass-through subcommands.
+# LIMIT (live-verified 2026-11-25, crashes #64 + #65): `nix develop -c cargo ...`
+# and nix shells put the devshell cargo in FRONT of this shim, so
+# agent-style invocations never pass these start gates (inside the
+# devshell `type -a cargo` resolves the store toolchain first). Those
+# paths are bounded by the session env caps in platforms/nixos/users/
+# home.nix (CARGO_BUILD_JOBS=12, RUST_TEST_THREADS=8, NEXTEST_JOBS=8,
+# NEXTEST_TEST_THREADS=8) and by the IO-PAUSE zone-6 guard.
 set -uo pipefail
 
 SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
