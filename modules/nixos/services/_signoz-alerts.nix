@@ -910,6 +910,38 @@ in
       interval = "5m";
       severity = "critical";
     };
+    # ai-meter span export (2026-11-25): the proxy hands one GenAI span per
+    # routed call to the SigNoz collector, which is what fills SigNoz's native
+    # AI observability (Overview + Explorer). Three failure shapes, each gated
+    # on traffic so a quiet hour never fires: (1) the export itself fails,
+    # (2) nothing is even attempted (a silent no-op exporter, the fastflowlm
+    # class), (3) the collector accepted the spans but none reached
+    # ClickHouse (read through signoz_traces_last_span_age_seconds, which the
+    # signoz-coverage collector computes from ClickHouse every 5 min).
+    "signoz/rules/ai-span-export-failing.json".source = mkRule {
+      name = "AI Trace Export Failing (ai-meter)";
+      description = "ai-meter could not hand the spans of routed AI calls to the SigNoz OTLP endpoint for 15m (rejected batches, timeouts, or a full export queue). The calls themselves, their metrics and the ledger are unaffected; only SigNoz's AI observability is losing them. Check: journalctl -u ai-meter -n 50 (the 'span export failed' line names the cause), then signoz-otel-collector.";
+      query = ''sum(increase(ai_meter_spans_exported_total{outcome!="ok"}[15m]))'';
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
+    "signoz/rules/ai-span-export-silent.json".source = mkRule {
+      name = "AI Trace Export Silent (ai-meter)";
+      description = "AI calls were routed in the last hour but ai-meter attempted to export no span at all (neither ok, failed nor dropped): the exporter is a silent no-op and SigNoz's AI observability shows none of these calls. Check: journalctl -u ai-meter -b for 'span export enabled' (its absence means otlp_endpoint is missing from the rendered config).";
+      query = ''sum(increase(ai_meter_requests_total[1h])) unless sum(increase(ai_meter_spans_exported_total[1h]))'';
+      target = 1;
+      interval = "15m";
+      severity = "warning";
+    };
+    "signoz/rules/ai-traces-not-landing.json".source = mkRule {
+      name = "AI Traces Not Landing In SigNoz (ai-meter)";
+      description = "ai-meter routed AI calls in the last 30 minutes, yet the newest ai-meter trace in SigNoz is over 30 minutes old: the collector is accepting spans that never reach ClickHouse, or the trace pipeline is down. Check: journalctl -u signoz-otel-collector -u clickhouse -n 50.";
+      query = ''(signoz_traces_last_span_age_seconds{service="ai-meter"} > 1800) and on() (sum(increase(ai_meter_requests_total[30m])) > 0)'';
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
     # NetBird mesh health (2026-10-29 leverage pass): the client's local
     # metrics endpoint (scrape job "netbird", loopback 9465) exposes
     # netbird_management_connected — the ONLY signal that distinguishes

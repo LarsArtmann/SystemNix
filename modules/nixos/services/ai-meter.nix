@@ -20,8 +20,8 @@
 #   OTLP/HTTP → SigNoz collector: one GenAI-semconv span per proxied call, so
 #                      SigNoz's native AI observability (Overview +
 #                      Explorer, signoz.<domain>/ai-observability) covers
-#                      every routed model. Metadata only — prompts and
-#                      completions never leave the proxy (traces.go).
+#                      every routed model. Metadata only: prompts and
+#                      completions never leave the proxy (pkgs/ai-meter/traces.go).
 #
 # Secrets doctrine:
 #   - UPSTREAM provider keys: sops-declared COPIES owned by the ai-meter

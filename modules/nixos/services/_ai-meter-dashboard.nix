@@ -21,7 +21,10 @@ let
   # A model name's dots (and any other regex metacharacter) must match
   # literally inside the `model=~` selector.
   regexSpecial = lib.strings.stringToCharacters ".+*?()|[]{}^$\\";
-  escapeRegex = lib.concatMapStrings (char: if builtins.elem char regexSpecial then "\\${char}" else char);
+  escapeRegex =
+    name:
+    lib.concatMapStrings (char: if builtins.elem char regexSpecial then "\\${char}" else char)
+      (lib.strings.stringToCharacters name);
 
   # Tokens per second of one kind for one priced model. The label carries
   # whatever the client asked for; the proxy's price lookup strips one
@@ -41,27 +44,33 @@ let
       cached = tokensPerSecond model "cached";
       completion = tokensPerSecond model "completion";
     in
-    "(${prompt} - ${cached}) * ${toString price.input}"
+    "((${prompt} - ${cached}) * ${toString price.input}"
     + " + ${cached} * ${toString price.cachedInput}"
     + " + ${completion} * ${toString price.output}"
-    + " / 1000000";
+    + ") / 1000000";
 
   spendTerms =
     costs: lib.mapAttrsToList (model: price: spendPerSecond model price) costs;
-in
-{
+
   # USD per hour across every priced model. The trailing vector(0) keeps a
   # number on the panel while no priced model has traffic.
   spendRate =
     costs:
-    let terms = spendTerms costs in
+    let
+      terms = spendTerms costs;
+    in
     if terms == [ ] then "vector(0)" else "sum(${lib.concatStringsSep " or " terms} or vector(0)) * 3600";
 
   # USD per hour per priced model.
   spendRateByModel =
     costs:
-    let terms = spendTerms costs in
+    let
+      terms = spendTerms costs;
+    in
     if terms == [ ] then "sum by (model) (rate(ai_meter_tokens_total[15m])) * 0" else lib.concatStringsSep " or " terms;
+in
+{
+  inherit spendRate spendRateByModel;
 
   # Substitutes the spend-rate queries into the dashboard template. Throws
   # when a placeholder is missing or occurs more than once, so a renamed or
@@ -89,7 +98,10 @@ in
       # a JSON string BODY: toJSON's output minus its surrounding quotes.
       jsonBody =
         promql:
-        let quoted = builtins.toJSON promql in lib.substring 1 (lib.stringLength quoted - 2) quoted;
+        let
+          quoted = builtins.toJSON promql;
+        in
+        lib.substring 1 (lib.stringLength quoted - 2) quoted;
       rendered = lib.replaceStrings (builtins.attrNames queries) (map jsonBody (lib.attrValues queries)) template;
     in
     if broken != { } then
