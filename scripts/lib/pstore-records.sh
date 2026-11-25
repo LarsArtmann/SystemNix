@@ -76,7 +76,7 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
     s=${s#"$pre"}
     case "$s" in
     '') break ;;
-    '\') 
+    '\')
       # a lone trailing backslash is not a valid escape: keep it literally
       out+='\'
       break
@@ -94,7 +94,7 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
     u)
       hex=${s:0:4}
       if [[ ! $hex =~ ^[0-9a-fA-F]{4}$ ]]; then
-        out+=' \u'
+        out+='\u' # not an escape this decoder knows: keep it literally
         continue
       fi
       s=${s:4}
@@ -116,8 +116,6 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
   done
   printf '%s' "$out"
 }
-# shellcheck disable=SC2317  # the fallback branches above are exercised by the selftest
-pstore_json_bogus_marker() { :; }
 
 pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when absent
   # Minimal object walker (keys are plain identifiers, values are strings or
@@ -191,7 +189,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
 }
 
 # ── records: parse, assemble, classify ────────────────────────────────────
-# pstore_jsonl_parse fills these globals in the CALLER's shell, so call it
+# pstore_jsonl_parse fills these globals in the CALLER shell, so call it
 # with a redirect (`pstore_jsonl_parse < file` or `<<< "$jsonl"`), never as a
 # pipeline segment.  Index of PSTORE_BODY = count * 1000000 + part, so a dump
 # set that holds several panic counts cannot collide.
@@ -367,7 +365,9 @@ pstore_facts() { # PSTORE_* records -> key=value lines (token= first): whose log
           pages_ram=${BASH_REMATCH[1]}
         fi
         if [[ $line =~ $re_zone ]] && [[ $line =~ $re_min ]]; then
-          [ "${BASH_REMATCH[1]}" -le "$min_kb" ] || min_kb=${BASH_REMATCH[1]}
+          if [ -z "$min_kb" ] || [ "${BASH_REMATCH[1]}" -gt "$min_kb" ]; then
+            min_kb=${BASH_REMATCH[1]}
+          fi
         fi
         case "$line" in
         *'System is deadlocked on memory'*) deadlocked=$((deadlocked + 1)) ;;
