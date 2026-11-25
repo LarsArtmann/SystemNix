@@ -75,11 +75,13 @@ func replayCosts(input io.Reader, cfg *Config, registry *Registry) (ReplaySummar
 
 // seedCostCounter primes the cost counter from the ledger while the proxy is
 // already serving: the ledger grows without bound, and its size must never
-// lengthen the window in which routed calls fail. Until the pass ends the
-// cost counter reads low by the replayed amount, which no rate panel or
-// alert consumes. It must never fail the proxy: every error is counted and
-// logged, and the proxy then runs with a cost counter that begins at zero.
+// lengthen the window in which routed calls fail. The caller withholds the
+// cost family first (BeginCostReplay); this publishes it once the pass has
+// ended, so the counter is only ever scraped whole. It must never fail the
+// proxy: every error is counted and logged, and the proxy then runs with a
+// cost counter that begins at zero.
 func seedCostCounter(cfg *Config, ledger *Ledger, registry *Registry, logger *slog.Logger) {
+	defer registry.EndCostReplay()
 	started := time.Now()
 	summary, err := ledger.ReplayCosts(cfg, registry)
 	if err != nil {

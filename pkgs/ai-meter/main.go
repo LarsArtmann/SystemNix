@@ -66,7 +66,9 @@ func run(configPath string, logger *slog.Logger) error {
 
 	registry := NewRegistry()
 	// Replayed alongside serving, never ahead of it: the ledger's size must
-	// not decide how long routed calls fail after a restart.
+	// not decide how long routed calls fail after a restart. The cost family
+	// stays out of /metrics until the pass has ended.
+	registry.BeginCostReplay()
 	go seedCostCounter(cfg, ledger, registry, logger)
 
 	var proxyOpts []ProxyOption

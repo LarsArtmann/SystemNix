@@ -159,6 +159,21 @@ null
 // The replay reads only what the ledger held when it began: a call recorded
 // after that moment is folded in live by the request path, and reading it a
 // second time here would count it twice.
+// The replay runs while the proxy serves; a half-replayed total must never
+// be scraped as if it were the whole spend.
+func TestCostCounterIsOnlyScrapedWhole(t *testing.T) {
+	registry := NewRegistry()
+	registry.BeginCostReplay()
+	registry.RestoreCost(Record{Client: "crush", Upstream: "zai", Model: "m", CostUSD: 1})
+	if strings.Contains(registry.Render(), "ai_meter_cost_usd_total") {
+		t.Fatalf("a half-replayed cost counter was rendered:\n%s", registry.Render())
+	}
+	// A call that lands meanwhile is added on top, not lost.
+	registry.Record(Record{Client: "crush", Upstream: "zai", Model: "m", Status: 200, CostUSD: 0.5})
+	registry.EndCostReplay()
+	assertCost(t, registry.Render(), "m", 1.5)
+}
+
 func TestReplayCostsReadsOnlyTheLedgerAsItStood(t *testing.T) {
 	call := `{"time":"t","client":"crush","upstream":"zai","model":"m","status":200,"prompt_tokens":100,"completion_tokens":50,"cached_tokens":20}` + "\n"
 	ledger := call + call + call

@@ -70,7 +70,10 @@ type Registry struct {
 	unauthorized   float64
 	meteringErrors float64
 	spanExports    map[string]float64
-	startTime      time.Time
+	// costWithheld: a ledger replay is in progress and the cost counter is
+	// not whole yet, so Render leaves the cost family out.
+	costWithheld bool
+	startTime    time.Time
 }
 
 type reqKey struct{ client, upstream, model, code string }
@@ -164,11 +167,28 @@ func (r *Registry) MeteringError() {
 }
 
 // RestoreCost folds a replayed call into the cost counter alone. It runs
-// once per ledger entry at startup (Ledger.ReplayCosts), before any traffic.
+// once per ledger entry while the proxy is already serving, so a call that
+// arrives meanwhile is simply added on top.
 func (r *Registry) RestoreCost(rec Record) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.cost[costKey{rec.Client, rec.Upstream, rec.Model}] += rec.CostUSD
+}
+
+// BeginCostReplay withholds the cost family from Render until
+// EndCostReplay, so a half-replayed total is never scraped as if it were
+// the whole spend.
+func (r *Registry) BeginCostReplay() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.costWithheld = true
+}
+
+// EndCostReplay publishes the cost counter again, however the replay went.
+func (r *Registry) EndCostReplay() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.costWithheld = false
 }
 
 // SpanExported counts count spans by how handing them to the OTLP endpoint
@@ -244,10 +264,12 @@ func (r *Registry) Render() string {
 		a, c := costs[i], costs[j]
 		return a.client < c.client || a.client == c.client && (a.upstream < c.upstream || a.upstream == c.upstream && a.model < c.model)
 	})
-	b.WriteString("# HELP ai_meter_cost_usd_total Estimated spend in USD since the ledger began, priced at the CURRENT per-model cost table (replayed at every start, so a price row that lands late restates earlier usage; 0 for unknown and local models).\n")
-	b.WriteString("# TYPE ai_meter_cost_usd_total counter\n")
-	for _, k := range costs {
-		writeSeries(&b, "ai_meter_cost_usd_total", r.cost[k], "client", k.client, "upstream", k.upstream, "model", k.model)
+	if !r.costWithheld {
+		b.WriteString("# HELP ai_meter_cost_usd_total Estimated spend in USD since the ledger began, priced at the CURRENT per-model cost table (replayed at every start, so a price row that lands late restates earlier usage; 0 for unknown and local models).\n")
+		b.WriteString("# TYPE ai_meter_cost_usd_total counter\n")
+		for _, k := range costs {
+			writeSeries(&b, "ai_meter_cost_usd_total", r.cost[k], "client", k.client, "upstream", k.upstream, "model", k.model)
+		}
 	}
 
 	durs := make([]durKey, 0, len(r.secondsCount))
