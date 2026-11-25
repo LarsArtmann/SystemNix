@@ -53,7 +53,7 @@ in
         machine.succeed("grep -q crashkernel=256M /proc/cmdline")
         machine.execute("echo c > /proc/sysrq-trigger", check_return=False, check_output=False)
         machine.wait_for_shutdown()
-        machine.switch_root()
+        machine.start()
 
 
     start_all()
