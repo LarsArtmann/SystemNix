@@ -10,10 +10,15 @@
 #   node `broken` imports only _kdump-capture-units (the capture-side units
 #                 without the two legs). The capture kernel inherits
 #                 vm.min_free_kbytes from the host sysctl bag, a watermark
-#                 larger than its own RAM, OOM-panics ("System is deadlocked
-#                 on memory"), nothing lands in /var/crash and the only pstore
-#                 dump is the capture kernel's own: the live signature of the
-#                 cuts #61, #62, #64 and #65.
+#                 larger than its own RAM, right after "Apply Kernel
+#                 Variables" (5.2 s): nothing lands in /var/crash and the box
+#                 only comes back through the capture kernel's own panic
+#                 (kernel.panic=10 from the same bag). That is the live
+#                 signature of the cuts #61, #62, #64 and #65. On the host the
+#                 capture kernel additionally OOM-panics loudly and its log
+#                 lands in EFI pstore; under OVMF a kexec-ed kernel cannot
+#                 write EFI variables, so the VM asserts the empty
+#                 /var/crash only.
 #
 # Sizing mirrors evo-x2 in miniature: a 256 MiB crashkernel inside 2048 MiB,
 # and a main-boot watermark (307 MiB) that is harmless in the main boot and
@@ -86,7 +91,7 @@ in
         crash_cycle(broken)
         broken.wait_for_unit("multi-user.target")
         broken.succeed("test -z \"$(ls -1 /var/crash)\"")
-        broken.succeed("grep -rq 'System is deadlocked on memory' /var/lib/systemd-pstore/")
+        broken.log("pstore archive after the unfixed crash: " + broken.execute("ls -R /var/lib/systemd/pstore")[1].strip()[:300])
         broken.fail("grep -rq 'sysrq triggered crash' /var/lib/systemd-pstore/")
   '';
 }
