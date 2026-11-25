@@ -130,7 +130,7 @@ in
     # lives in modules/nixos/services/kdump-capture-path.nix (read its header
     # first), and its proof is a capture (one deliberate crash after a
     # reboot), never "kexec_crash_loaded = 1".
-    # Retention is bounded by kdump-retention.service below (root fs is tight).
+    # Retention is bounded by kdump-retention.service\n    # (modules/nixos/services/_kdump-capture-units.nix; root fs is tight).
     crashDump = {
       enable = true;
       # TRAP (found 2026-11-17, live-verified): the nixpkgs crashDump loader

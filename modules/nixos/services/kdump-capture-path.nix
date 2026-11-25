@@ -34,7 +34,9 @@
 # after a reboot (echo c | sudo tee /proc/sysrq-trigger): it must leave
 # /var/crash/<ts>/vmcore-dmesg.txt and a main-kernel pstore dump
 # (scripts/crash-triage.sh prints the verdict). VM regression test:
-# tests/test-kdump-capture-boot.nix.
+# tests/test-kdump-capture-boot.nix (fixed and unfixed nodes). The
+# capture-side units (kdump-save, kdump-retention, /var/crash) live in
+# _kdump-capture-units.nix and are imported here.
 _: {
   flake.nixosModules.kdump-capture-path =
     { config, lib, ... }:
@@ -45,6 +47,8 @@ _: {
       panicTimeout = toString (config.boot.kernel.sysctl."kernel.panic" or 10);
     in
     {
+      imports = [ ./_kdump-capture-units.nix ];
+
       config = lib.mkIf config.boot.crashDump.enable {
         boot.kernelParams = [ "crash_kexec_post_notifiers" ];
 
