@@ -49,8 +49,12 @@ convergent corpus** rather than a one-shot upload:
   scans + 32 Qonto fee invoices). Seeded from the owner's Drive export
   (`~/Downloads/drive-extract-20261019`); `--source` re-stages a fresh export.
 - **Reconciler**: `scripts/archive-qonto-corpus.sh` (= `nix run
-  .#archive-qonto-corpus`, or the `bank-sync-qonto-corpus` oneshot, boot +
-  weekly Sun 05:00). It is checksum-driven: each file is looked up by SHA-256
+  .#archive-qonto-corpus`, or the `bank-sync-qonto-corpus` oneshot: every boot,
+  10 min in (its timer's `OnBootSec`), plus weekly Sun 05:00; it is NOT
+  wanted by `multi-user.target` on purpose (2026-11-25): a oneshot there is
+  inactive after every run, so each deploy's switch transaction restarted it
+  and held the activation for its duration, 28 min behind a paperless storm
+  that day). It is checksum-driven: each file is looked up by SHA-256
   in Paperless before upload, so re-runs never duplicate; metadata patches are
   diffed (a converged run issues zero writes); ledger inserts are
   `INSERT OR IGNORE`. It heals the archive after a Paperless DB loss — the
