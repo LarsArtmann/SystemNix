@@ -161,7 +161,7 @@
                 # back empty. The former `/` probe ([RESPONSE_TIME] <
                 # 15000, 20s timeout) therefore straddled the rebuild time
                 # and paged "down" 12x between 2026-11-17 and 2026-11-24
-                # (mostly overnight and in IO storms) while the process was
+                # (11 of them between 21:00 and 09:00) while the process was
                 # healthy. /favicon.ico serves the embedded SVG without any
                 # rebuild: 4ms under that same storm. The slow rebuild
                 # itself is upstream work (serve stale + background

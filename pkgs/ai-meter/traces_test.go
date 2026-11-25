@@ -62,24 +62,38 @@ func (c *otlpCapture) setStatus(status int) {
 	c.status = status
 }
 
-// wireSpan is one span as it travelled the wire: attribute values are the
-// raw OTLP/JSON value objects, so a test asserts the type as well as the
-// content.
+// wireAttribute is one attribute as it travelled the wire: Value is the raw
+// OTLP/JSON value object, so a test asserts the type as well as the content.
+type wireAttribute struct {
+	Key   string         `json:"key"`
+	Value map[string]any `json:"value"`
+}
+
+// wireSpan is one span as it travelled the wire.
 type wireSpan struct {
-	name       string
-	traceID    string
-	spanID     string
-	parentID   string
-	kind       float64
-	start, end string
-	status     map[string]any
-	attrs      map[string]any
+	name     string
+	traceID  string
+	spanID   string
+	parentID string
+	kind     float64
+	start    string
+	end      string
+	status   map[string]any
+	attrs    map[string]any
 }
 
 type wireExport struct {
 	resource map[string]any
 	scope    string
 	spans    []wireSpan
+}
+
+func attrMap(attrs []wireAttribute) map[string]any {
+	out := make(map[string]any, len(attrs))
+	for _, attr := range attrs {
+		out[attr.Key] = attr.Value
+	}
+	return out
 }
 
 func decodeExports(t *testing.T, bodies [][]byte) wireExport {
@@ -133,19 +147,6 @@ func decodeExports(t *testing.T, bodies [][]byte) wireExport {
 				attrs:    attrMap(span.Attributes),
 			})
 		}
-	}
-	return out
-}
-
-type wireAttribute struct {
-	Key   string         `json:"key"`
-	Value map[string]any `json:"value"`
-}
-
-func attrMap(attrs []wireAttribute) map[string]any {
-	out := make(map[string]any, len(attrs))
-	for _, attr := range attrs {
-		out[attr.Key] = attr.Value
 	}
 	return out
 }
@@ -211,19 +212,6 @@ func exported(t *testing.T, exposition, outcome string) float64 {
 	}
 	t.Fatalf("no %q series in exposition:\n%s", outcome, exposition)
 	return 0
-}
-
-// awaitExported polls until at least want spans reached an outcome; the
-// worker posts asynchronously.
-func awaitExported(t *testing.T, registry *Registry, outcome string, want float64) {
-	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for exported(t, registry.Render(), outcome) < want {
-		if time.Now().After(deadline) {
-			t.Fatalf("fewer than %v spans %s:\n%s", want, outcome, registry.Render())
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
 }
 
 // shutdownExporter stops the exporter and returns once every queued span was
@@ -540,7 +528,8 @@ func TestSpanExporterCountsEveryOutcome(t *testing.T) {
 		registry := NewRegistry()
 		spans := NewSpanExporter(exporterCfg(capture.server.URL), registry, slog.Default())
 
-		spans.Emit(&Record{Client: "crush", Upstream: "zai", Model: "glm-5.4", Status: 200})
+		call := Record{Client: "crush", Upstream: "zai", Model: "glm-5.4", Status: 200}
+		spans.Emit(&call)
 		shutdownExporter(t, spans)
 
 		if exported(t, registry.Render(), "failed") != 1 || len(capture.exports()) != 0 {
@@ -549,10 +538,10 @@ func TestSpanExporterCountsEveryOutcome(t *testing.T) {
 	})
 }
 
-func TestSpanExporterAppendsTheTracesPathToABaseURL(t *testing.T) {
+func TestSpanExporterPostsToTheTracesPath(t *testing.T) {
 	tests := map[string]string{
-		"http://127.0.0.1:4318":           "http://127.0.0.1:4318/v1/traces",
-		"http://127.0.0.1:4318/":          "http://127.0.0.1:4318/v1/traces",
+		"http://127.0.0.1:4318":               "http://127.0.0.1:4318/v1/traces",
+		"http://127.0.0.1:4318/":              "http://127.0.0.1:4318/v1/traces",
 		"http://collector.internal/v1/traces": "http://collector.internal/v1/traces",
 	}
 	for endpoint, want := range tests {
@@ -563,10 +552,14 @@ func TestSpanExporterAppendsTheTracesPathToABaseURL(t *testing.T) {
 
 	capture := newOTLPCapture(t)
 	spans := NewSpanExporter(exporterCfg(capture.server.URL), NewRegistry(), slog.Default())
-	spans.Emit(&chatCall(http.StatusOK))
+	call := chatCall(http.StatusOK)
+	spans.Emit(&call)
 	shutdownExporter(t, spans)
-	if capture.path != "/v1/traces" {
-		t.Fatalf("export posted to %q, want /v1/traces", capture.path)
+	capture.mu.Lock()
+	path := capture.path
+	capture.mu.Unlock()
+	if path != "/v1/traces" {
+		t.Fatalf("export posted to %q, want /v1/traces", path)
 	}
 }
 
@@ -577,12 +570,12 @@ func TestOTLPEndpointIsValidatedAtLoad(t *testing.T) {
 		t.Fatal(err)
 	}
 	for endpoint, wantErr := range map[string]bool{
-		"http://127.0.0.1:4318":         false,
+		"http://127.0.0.1:4318":               false,
 		"https://collector.example/v1/traces": false,
-		"":                              false,
-		"127.0.0.1:4318":                true,
-		"grpc://127.0.0.1:4317":         true,
-		"http://":                      true,
+		"":                                   false,
+		"127.0.0.1:4318":                     true,
+		"grpc://127.0.0.1:4317":              true,
+		"http://":                            true,
 	} {
 		body := `{"listen":"127.0.0.1:0","metrics_listen":"127.0.0.1:0","ledger_path":"` + filepath.Join(dir, "usage.jsonl") +
 			`","clients":[{"name":"crush","key_file":"` + keyFile + `"}],"upstreams":[{"name":"zai","base_url":"https://example.test"}],"otlp_endpoint":"` + endpoint + `"}`
@@ -622,10 +615,10 @@ func TestGenAIOperationNamesTheMeteredRoutes(t *testing.T) {
 
 func TestResponseMetaReadsBothProtocolFamilies(t *testing.T) {
 	tests := []struct {
-		name        string
-		payloads    []string
-		wantModel   string
-		wantReason  string
+		name       string
+		payloads   []string
+		wantModel  string
+		wantReason string
 	}{
 		{"OpenAI chat completion", []string{`{"model":"glm-5.4","choices":[{"finish_reason":"stop","message":{}}]}`}, "glm-5.4", "stop"},
 		{"OpenAI stream: model first, reason later", []string{
@@ -653,30 +646,42 @@ func TestResponseMetaReadsBothProtocolFamilies(t *testing.T) {
 	}
 }
 
-// exportingStack is a testStack whose proxy exports spans to a capture.
+// exportingStack is a testStack whose proxy exports every recorded call to a
+// capture, priced by the stack's own cost table.
 type exportingStack struct {
 	*testStack
 	capture *otlpCapture
-	spans   *SpanExporter
 }
 
-// ExportedSpans returns every span exported so far.
-func (s *exportingStack) exportedSpans(t *testing.T) []wireSpan {
+// awaitSpans waits until n calls were exported and returns their spans.
+func (s *exportingStack) awaitSpans(t *testing.T, n int) []wireSpan {
 	t.Helper()
-	awaitExported(t, s.registry, "ok", 1)
-	return decodeExports(t, s.capture.exports()).spans
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		spans := decodeExports(t, s.capture.exports()).spans
+		if len(spans) >= n {
+			return spans
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("want %d exported spans, got %d", n, len(spans))
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
 }
 
+// newExportingStack swaps the stack's proxy for one that exports spans.
 func newExportingStack(t *testing.T) *exportingStack {
 	t.Helper()
 	stack := newTestStack(t, map[string]Cost{"m": {Input: 2, Output: 4, CachedInput: 0.5}})
 	s := &exportingStack{testStack: stack, capture: newOTLPCapture(t)}
-	s.spans = NewSpanExporter(exporterCfg(s.capture.server.URL), stack.registry, slog.Default())
-	proxy := NewProxy(stack.cfg, stack.registry, stack.ledger, slog.Default(), WithSpanSink(s.spans))
+
 	stack.proxy.Close()
-	stack.proxy = httptest.NewServer(proxy)
+	stack.cfg.OTLPEndpoint = s.capture.server.URL
+	stack.cfg.DeploymentEnvironment = "production"
+	spans := NewSpanExporter(stack.cfg, stack.registry, slog.Default())
+	stack.proxy = httptest.NewServer(NewProxy(stack.cfg, stack.registry, stack.ledger, slog.Default(), WithSpanSink(spans)))
 	t.Cleanup(stack.proxy.Close)
-	t.Cleanup(func() { shutdownExporter(t, s.spans) })
+	t.Cleanup(func() { shutdownExporter(t, spans) })
 	return s
 }
 
@@ -690,10 +695,7 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		spans := s.exportedSpans(t)
-		if len(spans) == 0 {
-			t.Fatal("no span exported")
-		}
+		spans := s.awaitSpans(t, 1)
 		span := spans[len(spans)-1]
 		if span.name != "chat m" {
 			t.Fatalf("span name %q", span.name)
@@ -705,8 +707,9 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 		if wireInt(t, span.attrs, attrInputTokens) != 12 || wireInt(t, span.attrs, attrOutputTokens) != 4 || wireInt(t, span.attrs, attrCacheReadTokens) != 2 {
 			t.Fatalf("token attributes wrong: %v", span.attrs)
 		}
-		if wireFloat(t, span.attrs, attrTimeToFirstToken) < 0 || wireFloat(t, span.attrs, attrTimeToFirstToken) > 30 {
-			t.Fatalf("time to first token %v s is not a plausible sample", span.attrs[attrTimeToFirstToken])
+		ttft := wireFloat(t, span.attrs, attrTimeToFirstToken)
+		if ttft < 0 || ttft > 30 {
+			t.Fatalf("time to first token %v s is not a plausible sample", ttft)
 		}
 		if !wireBool(t, span.attrs, attrStream) || wireBool(t, span.attrs, attrUsageMissing) {
 			t.Fatalf("stream or usage attribute wrong: %v", span.attrs)
@@ -714,17 +717,13 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 	})
 
 	t.Run("buffered chat", func(t *testing.T) {
-		before := len(decodeExports(t, s.capture.exports()).spans)
 		resp := s.post("/v1/fake/chat/completions", "test-key-1", `{"model":"m","messages":[]}`)
 		defer func() { _ = resp.Body.Close() }()
 		if _, err := io.Copy(io.Discard, resp.Body); err != nil {
 			t.Fatal(err)
 		}
 
-		spans := s.exportedSpans(t)
-		if len(spans) <= before {
-			t.Fatalf("no span exported: %d", len(spans))
-		}
+		spans := s.awaitSpans(t, 2)
 		span := spans[len(spans)-1]
 		if wireString(t, span.attrs, attrResponseModel) != "m" {
 			t.Fatalf("the test upstream answers with the requested model: %v", span.attrs[attrResponseModel])
@@ -740,7 +739,6 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 	})
 
 	t.Run("passthrough without a model", func(t *testing.T) {
-		before := len(decodeExports(t, s.capture.exports()).spans)
 		req, _ := http.NewRequest(http.MethodGet, s.proxy.URL+"/v1/fake/models", nil)
 		req.Header.Set("Authorization", "Bearer test-key-1")
 		resp, err := http.DefaultClient.Do(req)
@@ -749,10 +747,7 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 		}
 		_ = resp.Body.Close()
 
-		spans := s.exportedSpans(t)
-		if len(spans) <= before {
-			t.Fatalf("no span exported: %d", len(spans))
-		}
+		spans := s.awaitSpans(t, 3)
 		span := spans[len(spans)-1]
 		if span.name != "GET models" || len(span.parentID) != 0 {
 			t.Fatalf("span %q parent %q", span.name, span.parentID)
@@ -765,14 +760,10 @@ func TestProxyExportsTheSpanOfEachKindOfCall(t *testing.T) {
 	})
 
 	t.Run("a non-JSON body on a metered path", func(t *testing.T) {
-		before := len(decodeExports(t, s.capture.exports()).spans)
 		resp := s.post("/v1/fake/chat/completions", "test-key-1", `not json`)
 		_ = resp.Body.Close()
 
-		spans := s.exportedSpans(t)
-		if len(spans) <= before {
-			t.Fatalf("no span exported: %d", len(spans))
-		}
+		spans := s.awaitSpans(t, 4)
 		span := spans[len(spans)-1]
 		if span.name != "POST chat/completions" {
 			t.Fatalf("span name %q: a call without a model is named after its route", span.name)
@@ -821,13 +812,13 @@ func TestProxySpanNamesTheModelThatServedAndWhyItStopped(t *testing.T) {
 	}
 	_ = resp.Body.Close()
 
-	spans := s.exportedSpans(t)
+	spans := s.awaitSpans(t, 1)
 	span := spans[len(spans)-1]
 	attrs := span.attrs
 	for key, want := range map[string]string{
-		attrRequestModel:     "glm-5.4",
-		attrResponseModel:    "glm-5.4-20261120", // what the upstream says served it
-		attrFinishReasons:    "length",           // and why it stopped
+		attrRequestModel:      "glm-5.4",
+		attrResponseModel:     "glm-5.4-20261120", // what the upstream says served it
+		attrFinishReasons:     "length",           // and why it stopped
 		attrUpstreamRequestID: "req_7f3",
 	} {
 		if got := wireString(t, attrs, key); got != want {
@@ -857,11 +848,12 @@ func TestProxyWithoutAnEndpointExportsNothing(t *testing.T) {
 }
 
 func TestSpanCostBucketsSumToTheCostCounter(t *testing.T) {
-	breakdown := BreakdownCost(100, 20, 50, Cost{Input: 2, Output: 4, CachedInput: 0.5})
+	price := Cost{Input: 2, Output: 4, CachedInput: 0.5}
+	breakdown := BreakdownCost(100, 20, 50, price)
 	if math.Abs(breakdown.Input+breakdown.CachedInput+breakdown.Output-breakdown.Total) > 1e-15 {
 		t.Fatalf("buckets %v do not sum to the total %v", breakdown, breakdown.Total)
 	}
-	if breakdown.Total != EstimateCost(100, 20, 50, Cost{Input: 2, Output: 4, CachedInput: 0.5}) {
+	if breakdown.Total != EstimateCost(100, 20, 50, price) {
 		t.Fatal("the total is not the cost counter's value")
 	}
 }
