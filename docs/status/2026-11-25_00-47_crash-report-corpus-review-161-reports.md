@@ -30,13 +30,13 @@
 Boot `b4931451` is the freeze-#63 recovery boot (up since 2026-11-24 20:46:44). It spent the
 whole review in the state the ledger calls "never-cooled":
 
-| Time          | Tctl          | io PSI some avg10 | load (1 m) | What was running                                                                                                                                                                |     |     |     |     |     |     |
-| ------------- | ------------- | ----------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --- | --- | --- | --- | --- |
-| 22:55         | (not read)    | 98.2 %            | 557        | 7 `ld.mold` linkers in D state, the top writer at 2.7 MB/s                                                                                                                      |     |     |     |     |     |     |
-| 00:00         | 90 °C         | 40 %              | 13         | calmest point of the session                                                                                                                                                    |     |     |     |     |     |     |
-| 00:43         | 99 °C         | 32 %              | 87         | 36 `crush` processes, 7 `java` (315 % CPU), 5 `go` (240 %), `govulncheck` (240 %), `buildflow` ×2, `shellcheck`, `execution.test`, six `btrfs-delayed-meta` kworkers in D state |     |     |     |     |     |     |
-| 00:47         | 98 °C         | 36 %              | 22         | 37 `crush` processes                                                                                                                                                            |     |     |     |     |     |     |
-| 01:09 → 01:10 | 62 °C → 96 °C | 38 %              | 13         | 38 `crush` processes; this session's 2-second scoped `nix fmt` eval ran inside that minute                                                                                      |     |     |     |     |     |     |
+| Time          | Tctl          | io PSI some avg10 | load (1 m) | What was running                                                                                                                                                                |
+| ------------- | ------------- | ----------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22:55         | (not read)    | 98.2 %            | 557        | 7 `ld.mold` linkers in D state, the top writer at 2.7 MB/s                                                                                                                      |
+| 00:00         | 90 °C         | 40 %              | 13         | calmest point of the session                                                                                                                                                    |
+| 00:43         | 99 °C         | 32 %              | 87         | 36 `crush` processes, 7 `java` (315 % CPU), 5 `go` (240 %), `govulncheck` (240 %), `buildflow` ×2, `shellcheck`, `execution.test`, six `btrfs-delayed-meta` kworkers in D state |
+| 00:47         | 98 °C         | 36 %              | 22         | 37 `crush` processes                                                                                                                                                            |
+| 01:09 → 01:10 | 62 °C → 96 °C | 38 %              | 13         | 38 `crush` processes; this session's 2-second scoped `nix fmt` eval ran inside that minute                                                                                      |
 
 Five of the last recovery boots died 5 m 55 s to 7 h 57 m after boot while re-entering this
 state (#48 8 m, #53 5 m 55 s, #60 55 m, #40 3 h, #47 7 h 57 m). Nothing was stopped: the
