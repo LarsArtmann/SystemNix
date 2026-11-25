@@ -2330,6 +2330,14 @@ in
       # No port/vHost — metrics-only, not web-facing.
       crush-events.enable = true;
 
+      # supplements-weekly-print — auto-print the current ISO week's
+      # supplement-stack sheet every Monday 00:00 (tracking-papers
+      # print-safe pipeline; decision long-form in that repo's
+      # docs/decisions.md). Dry-run-validates before ink, verifies
+      # completion, alerts Discord on failure. Not web-facing: no port,
+      # no vHost, no tile. Runbook: docs/services/supplements-weekly-print.md
+      supplements-weekly-print.enable = true;
+
       # Monitor365 server (dashboard + API) runs on the same machine.
       # RE-ENABLED 2026-10-18 with the agent — same preparedSrc unblock.
       monitor365-server = {

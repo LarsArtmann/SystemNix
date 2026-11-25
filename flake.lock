@@ -6690,7 +6690,9 @@
           "tracking-papers",
           "nixpkgs"
         ],
-        "treefmt-nix": "treefmt-nix"
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
       },
       "locked": {
         "lastModified": 1795093082,
@@ -10871,7 +10873,7 @@
         "todo-list-ai": "todo-list-ai",
         "tracking-papers": "tracking-papers",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix_2",
+        "treefmt-nix": "treefmt-nix",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
@@ -11812,28 +11814,6 @@
       }
     },
     "treefmt-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "tracking-papers",
-          "go-nix-helpers",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1795017206,
-        "narHash": "sha256-WSBJcYjPRxGetDNxVzKnRPs1TQasQQlAC25W/S4W6YE=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "0ba5d67225c3f5c88eb134e1a665a379bfd3bea9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

@@ -240,7 +240,7 @@ let
               builtins.concatStringsSep ", " (
                 builtins.map (line: "'${line}'") (builtins.map treefmtFollowsOverride consumers)
               )
-            } to the infra-follows group in flake.nix, then regenerate the lock"
+            } to the infra-follows group in flake.nix, then regenerate the lock (a plain `nix flake lock` in a throwaway worktree — docs/agents/nix-flakes.md, Infra follows & lock hygiene)"
         }"
       ]
     else

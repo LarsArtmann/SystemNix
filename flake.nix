@@ -1645,6 +1645,7 @@
     projects-management-automation.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     cv.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     pim-sync.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    tracking-papers.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =
