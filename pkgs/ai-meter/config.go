@@ -40,13 +40,20 @@ type Cost struct {
 }
 
 type Config struct {
-	Listen       string               `json:"listen"`
-	MetricsListen string              `json:"metrics_listen"`
-	LedgerPath   string               `json:"ledger_path"`
+	Listen            string          `json:"listen"`
+	MetricsListen     string          `json:"metrics_listen"`
+	LedgerPath        string          `json:"ledger_path"`
 	InjectStreamUsage bool            `json:"inject_stream_usage"`
-	Clients      []Client             `json:"clients"`
-	Upstreams    []Upstream           `json:"upstreams"`
-	Costs        map[string]Cost      `json:"costs"`
+	Clients           []Client        `json:"clients"`
+	Upstreams         []Upstream      `json:"upstreams"`
+	Costs             map[string]Cost `json:"costs"`
+	// OTLPEndpoint is where each call's span is posted (OTLP over HTTP, JSON
+	// encoded): a base URL such as http://127.0.0.1:4318, or a full
+	// .../v1/traces one. Empty disables span export.
+	OTLPEndpoint string `json:"otlp_endpoint"`
+	// DeploymentEnvironment is the resource attribute SigNoz groups traces by
+	// as "environment". Empty omits the attribute.
+	DeploymentEnvironment string `json:"deployment_environment"`
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -130,6 +137,12 @@ func (c *Config) loadAndValidate() error {
 			return fmt.Errorf("upstream %s: unknown auth_style %q (want bearer or x-goog-api-key)", up.Name, up.AuthStyle)
 		}
 	}
+	if c.OTLPEndpoint != "" {
+		u, err := url.Parse(c.OTLPEndpoint)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+			return fmt.Errorf("otlp_endpoint %q: want an http(s) URL such as http://127.0.0.1:4318", c.OTLPEndpoint)
+		}
+	}
 	return nil
 }
 
@@ -156,16 +169,39 @@ func (c *Config) CostFor(model string) Cost {
 	return Cost{}
 }
 
-// EstimateCost returns the reference cost, in USD, of one call's token counts
+// CostBreakdown is one call's reference cost split into the buckets providers
+// price. The total is the number every cost surface shows; the buckets are
+// what each part of the call cost on its own.
+type CostBreakdown struct {
+	Input       float64 // the prompt that was not read from a cache
+	CachedInput float64 // the cached subset of the prompt
+	Output      float64
+	Total       float64
+}
+
+// BreakdownCost returns the reference cost, in USD, of one call's token counts
 // at price. The cached subset of the prompt is billed at its own rate and the
 // rest of the prompt at the full input rate; an unpriced model (the zero
-// Cost) costs 0. The request path and the ledger replay both price through
-// Price, so live traffic and replayed history can never disagree.
-func EstimateCost(promptTokens, cachedTokens, completionTokens int, price Cost) float64 {
+// Cost) costs 0. It is the one implementation of the formula: the request
+// path and the ledger replay price through Price, and the span export reads
+// the same buckets, so no two cost surfaces can disagree.
+func BreakdownCost(promptTokens, cachedTokens, completionTokens int, price Cost) CostBreakdown {
 	billablePrompt := max(promptTokens-cachedTokens, 0)
-	return (float64(billablePrompt)*price.Input +
-		float64(cachedTokens)*price.CachedInput +
-		float64(completionTokens)*price.Output) / 1e6
+	input := float64(billablePrompt) * price.Input
+	cached := float64(cachedTokens) * price.CachedInput
+	output := float64(completionTokens) * price.Output
+	return CostBreakdown{
+		Input:       input / 1e6,
+		CachedInput: cached / 1e6,
+		Output:      output / 1e6,
+		Total:       (input + cached + output) / 1e6,
+	}
+}
+
+// EstimateCost returns the reference cost, in USD, of one call's token counts
+// at price.
+func EstimateCost(promptTokens, cachedTokens, completionTokens int, price Cost) float64 {
+	return BreakdownCost(promptTokens, cachedTokens, completionTokens, price).Total
 }
 
 // Price sets rec's cost at the current table.
