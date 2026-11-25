@@ -10,12 +10,14 @@
 set -euo pipefail
 
 DOMAIN="${SYSTEMNIX_DOMAIN:-home.lan}"
-# vHost TLS probe budget: 20s is the FLOOR — it matches the Gatus client
-# timeout of the slowest protected backend (mr-sync cold-start du-walks
-# ~/projects + ~/forks, docs/services/mr-sync.md) so a slow-but-alive
-# backend is not misread as unreachable. The integration manifest RAISES
-# it to max(client.timeout) across all checks when wider (plan T6
-# 2026-11-08: single-sourced from eval truth, not a hand-synced global).
+# vHost TLS probe budget: 20s is the FLOOR, sized for the slowest protected
+# backend (mr-sync `/` rebuilds its data on a cache miss,
+# docs/services/mr-sync.md) so a slow-but-alive backend is not misread as
+# unreachable. That backend's Gatus check probes /favicon.ico instead
+# (2026-11-25), so the floor is heritage, not a mirror of a Gatus timeout.
+# The integration manifest RAISES it to max(client.timeout) across all
+# checks when wider (plan T6 2026-11-08: single-sourced from eval truth,
+# not a hand-synced global).
 VHOST_PROBE_TIMEOUT=20
 PASS=0
 FAIL=0

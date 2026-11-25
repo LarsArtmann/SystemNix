@@ -153,19 +153,19 @@
                 # Liveness on the one route that never touches the data
                 # collector. `/` and every /api/* route rebuild the whole
                 # portfolio synchronously on a cache miss (60s TTL,
-                # single-flight; git subprocesses across ~/projects +
-                # ~/forks on the QLC): about 25s live (2026-11-17), 53s
-                # under io PSI ~44% (2026-11-25 01:03). Upstream's
-                # http.Server ReadTimeout (15s) cancels such a request's
-                # context, so the server answers a degraded page at 15.0x s
-                # or, past its 30s WriteTimeout, nothing at all. The former
-                # `/` probe ([RESPONSE_TIME] < 15000, 20s timeout) sat
-                # exactly on that cutoff and paged "down" 12x between
-                # 2026-11-17 and 2026-11-24 (mostly overnight and in IO
-                # storms) while the process was healthy. /favicon.ico
-                # serves the embedded SVG: 4ms under that same storm. The
-                # slow rebuild itself is upstream work (serve stale +
-                # background rebuild, docs/todo/services.md).
+                # single-flight; disk scan + git subprocesses across
+                # ~/projects + ~/forks on the QLC). That rebuild took
+                # about 25s live (2026-11-17) and 15.4s / 53s in two cold
+                # replays under io PSI ~45% (2026-11-25 01:03-01:17); the
+                # 53s one outran the server's own 30s WriteTimeout and came
+                # back empty. The former `/` probe ([RESPONSE_TIME] <
+                # 15000, 20s timeout) therefore straddled the rebuild time
+                # and paged "down" 12x between 2026-11-17 and 2026-11-24
+                # (mostly overnight and in IO storms) while the process was
+                # healthy. /favicon.ico serves the embedded SVG without any
+                # rebuild: 4ms under that same storm. The slow rebuild
+                # itself is upstream work (serve stale + background
+                # rebuild, docs/todo/services.md).
                 name = "mr-sync Dashboard";
                 group = "Development";
                 path = "/favicon.ico";
