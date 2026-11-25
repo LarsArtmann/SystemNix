@@ -180,11 +180,13 @@ func TestGateQueuesCallsInArrivalOrder(t *testing.T) {
 			}
 			admitted <- i
 		}()
+		// The next call must arrive after this one is queued, or the
+		// order under test is the scheduler's, not the gate's.
+		awaitFor(t, "a call to queue", func() bool {
+			_, waiting := g.snapshot()
+			return waiting == i-2
+		})
 	}
-	awaitFor(t, "three queued calls", func() bool {
-		_, waiting := g.snapshot()
-		return waiting == 3
-	})
 	if inflight, _ := g.snapshot(); inflight != 1 {
 		t.Fatalf("calls in flight = %d, want the allowance of 1", inflight)
 	}
@@ -388,7 +390,7 @@ func TestPendingWaitsForAResetWithinItsBudget(t *testing.T) {
 func TestPendingOutlivesItsBudgetOnlyAsAnError(t *testing.T) {
 	ctx := context.Background()
 	cfg := testAdmission()
-	cfg.MaxWait = 20 * time.Millisecond
+	cfg.MaxConcurrency, cfg.MaxWait = 1, 20*time.Millisecond
 	short := NewGate("short", cfg, NewRegistry(), quietLogger())
 	if _, err := short.acquire(ctx, false); err != nil {
 		t.Fatal(err)
@@ -523,20 +525,23 @@ func TestRetryAfterReadsWholeSeconds(t *testing.T) {
 }
 
 func TestPendingHonorsAShortRetryAfterAndDefersALongOneToTheClient(t *testing.T) {
-	g, _ := clockedGate(testAdmission())
+	g, clock := clockedGate(testAdmission())
 	header := http.Header{}
 	header.Set("Retry-After", (maxHonoredRetryAfter + time.Second).String())
-	call := g.open(time.Now())
+	call := g.open(*clock)
 	call.rejected = 1
 	if call.pause(context.Background(), header) {
 		t.Fatalf("a Retry-After above %v was waited out", maxHonoredRetryAfter)
 	}
+
 	header.Set("Retry-After", "0")
+	call = g.open(*clock)
+	call.rejected = 1
 	if !call.pause(context.Background(), header) {
 		t.Fatal("a zero Retry-After was not honored")
 	}
 
-	expired := g.open(time.Now().Add(-time.Hour))
+	expired := g.open(*clock.Add(-time.Hour))
 	expired.rejected = 1
 	if expired.pause(context.Background(), nil) {
 		t.Fatal("a call past its budget was paused for a retry")

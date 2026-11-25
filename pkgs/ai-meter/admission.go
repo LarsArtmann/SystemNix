@@ -234,11 +234,15 @@ func (c AdmissionConfig) quotaReset(body []byte) (time.Time, bool) {
 		return time.Time{}, false
 	}
 	zone := time.FixedZone("reset", int(c.QuotaResetUTCOffset/time.Second))
-	reset, err := time.ParseInLocation("2006-01-02T15:04:05Z07:00", strings.Replace(stamp[1], " ", "T", 1), zone)
-	if err != nil {
-		return time.Time{}, false
+	text := strings.Replace(stamp[1], " ", "T", 1)
+	// A stamp that names its zone is read as written; one that does not is
+	// read in the plan's zone.
+	for _, layout := range []string{time.RFC3339, "2006-01-02T15:04:05"} {
+		if reset, err := time.ParseInLocation(layout, text, zone); err == nil {
+			return reset, true
+		}
 	}
-	return reset, true
+	return time.Time{}, false
 }
 
 // Gate admits calls to one upstream. At most `limit` are in flight at any
