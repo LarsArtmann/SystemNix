@@ -185,7 +185,7 @@ System-level (severity, root cause, mitigation):
 | 5 | Guard: 3 of 3 zone-6 trips matched no pausable tree | guard is a no-op for this storm class | attribution patterns miss the writers (unnamed) | none |
 | 6 | Dying-boot forensic bundles vanish | death-window cgroup IO attribution lost again | deleter unresolved since #50 | none |
 | 7 | ClickHouse log pipeline dark in both death windows while metrics lived to T-19 s | the one source that could beat the journal's flush lag is missing | not investigated | none |
-| 8 | Root btrfs has `Device unallocated: 1.00MiB` (live `btrfs filesystem usage /` at ~11:45, df 93 %) | the "root unalloc 0 % CRITICAL" condition named in #59/#30 | space growth | owner decision |
+| 8 | Root btrfs has `Device unallocated: 1.00MiB` (live `btrfs filesystem usage /` read during the 11:08-11:38 work window, df 93 %) | the "root unalloc 0 % CRITICAL" condition named in #59/#30 | space growth | owner decision |
 | 9 | Ledger vs `crash-triage` disagree on deep-throttle ENTERs for three rows: #61 7 vs 254, #62 4 vs 109, #63 15 vs 427 | census numbers in the ledger are not reproducible | not investigated | none |
 | 10 | Recovery boot 0 re-armed the storm (IO-PAUSE captures 11:08:49, 11:13:14, 11:15:46) while I ran triage on it | risk | amplifier class | none; boot 0 survived (6 h 55 m at report time) |
 
