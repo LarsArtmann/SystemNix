@@ -878,7 +878,11 @@ in
     # stayed quiet because NOTHING consumed the restart flags). Two shapes:
     # fast loop (>=3 restarts in one 5-min collection interval) and slow
     # churn (>=5 NRestarts since the last explicit start — deploy restarts
-    # reset the counter, so deploys cannot false-fire). Note: the underlying
+    # reset the counter, so deploys cannot false-fire — AND, since
+    # 2026-11-25, a restart within the trailing 60-min quiet window:
+    # active churn only, so a storm-churned-but-recovered service such as
+    # tq-agent-pool mid PSI entry-gate refuse-refire reads 0 once quiet).
+    # Note: the underlying
     # system_service_nrestarts metric carried CPUUsageNSec from the
     # 2026-09-19 property-order swap until the 2026-10-25 keyed-parse fix;
     # these rules consume the derived flags, which are post-fix trustworthy.
@@ -891,8 +895,8 @@ in
       severity = "warning";
     };
     "signoz/rules/unit-restart-churn.json".source = mkRule {
-      name = "Unit Restart Churn (slow loop, >=5 since last deploy)";
-      description = "A monitored service accumulated >=5 automatic restarts since its last explicit (deploy/manual) start — slow crash-loop (the 2026-10-20..25 nsfw class: 239 restarts over 5 days, invisible to every layer). Attribution: the system_service_restart_churn{service} labels name the unit; journalctl -u <service> -n 50. Deploys reset NRestarts, so deploy churn cannot fire this.";
+      name = "Unit Restart Churn (slow active loop, >=5 with fresh restarts)";
+      description = "A monitored service accumulated >=5 automatic restarts since its last explicit (deploy/manual) start AND restarted within the trailing 60 min — active slow crash-loop (the 2026-10-20..25 nsfw class: 239 restarts over 5 days, invisible to every layer). Attribution: the system_service_restart_churn{service} labels name the unit; journalctl -u <service> -n 50. Deploys reset NRestarts, and a churned-in-a-past-storm-but-recovered service (tq-agent-pool's PSI entry-gate refuse-refire class) reads 0 once quiet.";
       query = "system_any_service_restart_churn";
       target = 1;
       interval = "5m";

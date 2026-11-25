@@ -221,6 +221,20 @@ _: {
       # cannot accumulate here.
       restartChurnThreshold = 5;
 
+      # Active-churn quiet window (2026-11-25, restart-churn false-positive
+      # class): NRestarts alone latches forever after a churny episode. The
+      # tq-agent-pool PSI entry gate refuses starts as DESIGNED unit
+      # failures during IO storms (refire-until-calm, tq-agent-pool.nix);
+      # the 2026-11-25 post-crash storm churned 26 restarts before the pool
+      # recovered — and the flag then stayed 1 for hours while the pool was
+      # healthy, because NRestarts resets only on reboot/explicit restart.
+      # The churn flag therefore additionally requires a restart observed
+      # within this window: it reports ACTIVE churn. 60min keeps every
+      # documented detection class live (hermes exit-75: restart every few
+      # minutes; the 2026-10-20..25 nsfw class: ~30-min cadence) while a
+      # recovered service reads 0 within the hour.
+      restartChurnQuietMinutes = 60;
+
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -260,13 +274,15 @@ _: {
           CPU_STATE_TMP=""
           RESTART_STATE_TMP=""
           OOMD_STATE_TMP=""
+          CHURN_STATE_TMP=""
           TMP="$(mktemp "${textfileDir}/system_health.prom.XXXXXX")"
           chmod 644 "$TMP"
           WALK_DIR="$(mktemp -d)"
-          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"; for f in "$CPU_STATE_TMP" "$RESTART_STATE_TMP" "$OOMD_STATE_TMP"; do if [ -n "$f" ]; then rm -f "$f"; fi; done' EXIT
+          trap 'rm -f "$TMP"; rm -rf "$WALK_DIR"; for f in "$CPU_STATE_TMP" "$RESTART_STATE_TMP" "$OOMD_STATE_TMP" "$CHURN_STATE_TMP"; do if [ -n "$f" ]; then rm -f "$f"; fi; done' EXIT
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           RESTART_STATE="${textfileDir}/.system_health_restart_state"
           OOMD_STATE="${textfileDir}/.system_health_oomd_state"
+          CHURN_STATE="${textfileDir}/.system_health_churn_state"
           NOW_EPOCH=$(date +%s)
 
           # === Enabled-but-inactive unit detection (2026-09-19) ===
@@ -448,7 +464,7 @@ _: {
           # crash-loop delta (correct cur_r vs swapped prev_r) could never be
           # positive — the fast detector was structurally dead. Keyed parse
           # (no --value, match on the `Key=` prefix) is order-immune.
-          declare -A prev_cpu_nsec prev_cpu_ts prev_restarts
+          declare -A prev_cpu_nsec prev_cpu_ts prev_restarts prev_churn_growth
           if [ -f "$CPU_STATE" ]; then
             while IFS=' ' read -r s n t; do
               [ -n "$s" ] && prev_cpu_nsec["$s"]="$n" && prev_cpu_ts["$s"]="$t"
@@ -459,11 +475,22 @@ _: {
               [ -n "$s" ] && prev_restarts["$s"]="$n"
             done < "$RESTART_STATE"
           fi
+          # Active-churn growth epochs (2026-11-25): per-service epoch of the
+          # most recent NRestarts increment, in a sibling state file — NOT a
+          # 3rd field of .system_health_restart_state, whose 2-field schema
+          # is pinned by the restart-tracking probe's slice + assertions. 0
+          # = never / pre-tracking / counter reset by an explicit restart.
+          if [ -f "$CHURN_STATE" ]; then
+            while IFS=' ' read -r s g; do
+              [ -n "$s" ] && prev_churn_growth["$s"]="$g"
+            done < "$CHURN_STATE"
+          fi
 
           # Write new state for next run (mktemp per file — sticky-dir
           # doctrine note at the top of this script).
           CPU_STATE_TMP="$(mktemp "''${CPU_STATE}.XXXXXX")"
           RESTART_STATE_TMP="$(mktemp "''${RESTART_STATE}.XXXXXX")"
+          CHURN_STATE_TMP="$(mktemp "''${CHURN_STATE}.XXXXXX")"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
             cpu_nsec=0
             cur_r=0
@@ -2090,19 +2117,43 @@ _: {
                 ANY_CRASH_LOOP=1
               fi
               echo "system_service_crash_loop{service=\"$svc\"} ''${crash_loop}"
+              # Active-churn gate (2026-11-25): NRestarts alone latches
+              # forever after a churny episode — the tq-agent-pool PSI entry
+              # gate refuses starts as designed unit failures during IO
+              # storms (refire-until-calm, tq-agent-pool.nix), and after the
+              # 2026-11-25 post-crash storm the pool recovered with
+              # NRestarts=26 stuck above the threshold: this check then
+              # failed for hours while the pool was healthy (NRestarts
+              # resets only on reboot/explicit restart). The flag now
+              # additionally requires fresh growth — a restart observed
+              # within restartChurnQuietMinutes (r_delta>0 counts as
+              # just-now; cur_r is the live NRestarts read).
+              last_g="''${prev_churn_growth[$svc]:-0}"
+              case "$last_g" in *[!0-9]* | ''') last_g=0 ;; esac
+              if [ "$r_delta" -gt 0 ]; then
+                last_g="$NOW_EPOCH"
+              fi
+              upd_g="$last_g"
+              if [ "$cur_r" -lt "$prev_r" ] 2>/dev/null; then
+                upd_g=0
+              fi
               churn=0
               if [ "$cur_r" -ge ${toString restartChurnThreshold} ] 2>/dev/null; then
-                churn=1
-                ANY_CHURN=1
+                if [ "$last_g" -gt 0 ] && [ $((NOW_EPOCH - last_g)) -lt ${toString (restartChurnQuietMinutes * 60)} ]; then
+                  churn=1
+                  ANY_CHURN=1
+                fi
               fi
               echo "system_service_restart_churn{service=\"$svc\"} ''${churn}"
+              echo "$svc $upd_g" >> "$CHURN_STATE_TMP"
             '') allMonitoredServices}
+          mv "$CHURN_STATE_TMP" "$CHURN_STATE"
 
             echo "# HELP system_any_service_crash_loop 1 if ANY monitored service is crash-looping (>=${toString crashLoopRestartThreshold} restarts per interval), 0 otherwise"
             echo "# TYPE system_any_service_crash_loop gauge"
             echo "system_any_service_crash_loop ''${ANY_CRASH_LOOP}"
 
-            echo "# HELP system_any_service_restart_churn 1 if ANY monitored service accumulated >=${toString restartChurnThreshold} automatic restarts since its last explicit start (slow churn under the crash-loop radar), 0 otherwise"
+            echo "# HELP system_any_service_restart_churn 1 if ANY monitored service accumulated >=${toString restartChurnThreshold} automatic restarts since its last explicit start AND restarted within the last ${toString restartChurnQuietMinutes}min (ACTIVE slow churn under the crash-loop radar; a recovered service with a stale unreset NRestarts reads 0), 0 otherwise"
             echo "# TYPE system_any_service_restart_churn gauge"
             echo "system_any_service_restart_churn ''${ANY_CHURN}"
 
@@ -2818,13 +2869,20 @@ _: {
                 # crash_loop = >=3 restarts within ONE 5-min collection
                 # interval (fast loop); restart_churn = >=5 NRestarts since
                 # the last explicit (deploy/manual) start — deploy restarts
-                # reset NRestarts, so deploy churn cannot false-fire.
+                # reset NRestarts, so deploy churn cannot false-fire. Since
+                # 2026-11-25 restart_churn ALSO requires a restart within
+                # the trailing 60-min quiet window (active churn only): the
+                # tq-agent-pool PSI entry gate refuses starts as designed
+                # failures during IO storms, the 2026-11-25 post-crash storm
+                # churned 26 restarts, and the cumulative-only flag then
+                # failed this check for hours AFTER the pool recovered
+                # (NRestarts resets only on reboot/explicit restart).
                 conditions = [
                   "[STATUS] == 200"
                   "[BODY] == pat(*\nsystem_any_service_crash_loop 0\n*)"
                   "[BODY] == pat(*\nsystem_any_service_restart_churn 0\n*)"
                 ];
-                alert = "A monitored service is crash-looping — the 2026-10-20..25 nsfw class (239 restarts, 5 days, invisible to every layer). Attribution: grep 'system_service_crash_loop{.*} 1' and 'system_service_restart_churn{.*} 1' in :9400/metrics, then journalctl -u <service> -n 50. crash_loop = >=3 restarts in one 5-min interval; restart_churn = >=5 restarts since the last deploy/manual restart.";
+                alert = "A monitored service is crash-looping — the 2026-10-20..25 nsfw class (239 restarts, 5 days, invisible to every layer). Attribution: grep 'system_service_crash_loop{.*} 1' and 'system_service_restart_churn{.*} 1' in :9400/metrics, then journalctl -u <service> -n 50. crash_loop = >=3 restarts in one 5-min interval; restart_churn = >=5 restarts since the last deploy/manual start with a new restart in the trailing 60 min (active churn; a storm-churned-but-recovered service — e.g. tq-agent-pool's PSI entry-gate refuse-refire — reads 0 once quiet).";
               }
               {
                 name = "FastFlowLM NPU LLM";

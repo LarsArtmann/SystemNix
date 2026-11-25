@@ -461,7 +461,7 @@ if [ "$SECTION11_ONLY" = true ]; then
   # SC2034: callbacks are read inside the sourced vendor-freshness.sh
   # (same sourced-lib indirection as the OB_PASS producers above).
   # shellcheck disable=SC2034
-  VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_WARN=warn VENDOR_FRESHNESS_FAIL=fail
+  VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_FAIL=fail
   vendor_freshness_run_gate
   echo ""
   echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
@@ -1217,11 +1217,15 @@ fi
 # output nix never produces — it warned "unable to determine status" on
 # every run and missed bank-sync, the one package that then hard-failed
 # the build.) Mechanics + fixtures: scripts/lib/vendor-freshness.sh.
+# A preview that cannot eval FAILs (2026-11-25: it degraded to a
+# context-free WARN, and the 01:35 deploy then died on a stale
+# library-policy vendorHash the gate never previewed); only the known-
+# benign nix error classes are read past.
 echo ""
 echo "11. vendorHash freshness (deploy FOD preview)"
 # SC2034: callbacks are read inside the sourced vendor-freshness.sh.
 # shellcheck disable=SC2034
-VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_WARN=warn VENDOR_FRESHNESS_FAIL=fail
+VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_FAIL=fail
 vendor_freshness_run_gate
 
 # 12. ExecStart executables exist — 203/EXEC prevention
