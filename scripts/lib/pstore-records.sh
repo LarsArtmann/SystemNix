@@ -41,7 +41,7 @@
 # Sourcing contract: defines functions and PSTORE_* seams only.  Nothing here
 # calls journalctl or touches the filesystem at source time, so the fixture
 # selftests of both scripts run without journalctl (and inside the nix
-# sandbox with bash + coreutils + grep only: no jq, no python, no awk).
+# sandbox with bash + coreutils only: no jq, no python, no awk).
 #
 # Testable seams (live default in parentheses):
 #   PSTORE_JOURNALCTL      journalctl command ("journalctl", or the value of
@@ -67,11 +67,14 @@ PSTORE_ARCHIVE_ROOT="${PSTORE_ARCHIVE_ROOT-/var/lib/systemd/pstore}"
 # descending scan below can never loop on a garbage number.
 PSTORE_MAX_PART=100000
 
-# --- JSON (journalctl -o json writes one object per line; values are
-# strings or numbers) ---------------------------------------------------------
+# --- JSON (journalctl -o json writes one object per line; values are strings
+# or numbers) ---------------------------------------------------------------
 
-pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newline)
-  local s="$1" out='' pre esc hex cp lo ch bs=$'\\'
+# bs is a backslash and dq a double quote; routing both through variables
+# keeps the case patterns below free of quote-escape acrobatics.
+
+pstore_unescape_set() { # <variable name> <escaped string body>: decodes INTO the variable (fork-free)
+  local __pv="$1" s="$2" out='' pre esc hex cp lo ch bs=$'\\'
   while :; do
     pre=${s%%"$bs"*}
     out+=$pre
@@ -102,7 +105,7 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
       s=${s:4}
       printf -v cp '%d' "0x$hex"
       # UTF-16 surrogate pair: combine the high and the low half
-      if [ "$cp" -ge 55296 ] && [ "$cp" -le 56319 ] && [ "${s:0:2}" = '\u' ] &&
+      if [ "$cp" -ge 55296 ] && [ "$cp" -le 56319 ] && [ "${s:0:2}" = "$bs${bs}u" ] &&
         [[ ${s:2:4} =~ ^[dcDC][0-9a-fA-F]{3}$ ]]; then
         printf -v lo '%d' "0x${s:2:4}"
         if [ "$lo" -ge 56320 ] && [ "$lo" -le 57343 ]; then
@@ -110,22 +113,27 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
           cp=$((65536 + (cp - 55296) * 1024 + (lo - 56320)))
         fi
       fi
-      printf -v ch '%b' "\\U$(printf '%08x' "$cp")"
+      printf -v ch '%b' "$bs${bs}U$(printf '%08x' "$cp")"
       out+=$ch
       ;;
     *) out+=$bs$esc ;;
     esac
   done
-  printf '%s' "$out"
+  printf -v "$__pv" '%s' "$out"
+  return 0
 }
 
-pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when absent
+pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newline)
+  local v
+  pstore_unescape_set v "$1"
+  printf '%s' "$v"
+}
+
+pstore_json_get_set() { # <json object> <key> <variable name>: value INTO the variable; rc 1 when absent
   # Minimal object walker (keys are plain identifiers, values are strings or
   # numbers): it never mistakes a `"key":"` sequence INSIDE a string value for
-  # the real key, which a plain substring search would.  dq is the double
-  # quote character; quoting it through a variable keeps the case patterns
-  # below readable.
-  local s="$1" want="$2" dq='"' bs=$'\\' v chunk out tb hit
+  # the real key, which a plain substring search would.
+  local s="$1" want="$2" __pv="$3" dq='"' bs=$'\\' v chunk tb hit
   s=${s#"${s%%[![:space:]]*}"}
   case "$s" in '{'*) ;; *) return 1 ;; esac
   s=${s:1}
@@ -143,7 +151,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
     s=${s:1}
     s=${s#*"${dq}"} # the key is a plain identifier: skip to its closing quote
     s=${s#"${s%%[![:space:]]*}"}
-    case "$s" in ':'*) ;; *) return 1 ;; esac
+    case "$s" in ':') ;; *) return 1 ;; esac
     s=${s:1}
     s=${s#"${s%%[![:space:]]*}"}
     case "$s" in
@@ -167,7 +175,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
         break
       done
       if [ "$hit" = 1 ]; then
-        pstore_json_unescape "$v"
+        pstore_unescape_set "$__pv" "$v"
         return 0
       fi
       ;;
@@ -175,7 +183,7 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
       v=${s%%[,\}]*}
       s=${s#"$v"}
       if [ "$hit" = 1 ]; then
-        printf '%s' "$v"
+        printf -v "$__pv" '%s' "$v"
         return 0
       fi
       ;;
@@ -188,41 +196,50 @@ pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when abs
   done
 }
 
-# --- records: parse, assemble, classify ---------------------------------------
-# pstore_jsonl_parse fills these globals in the CALLER shell, so call it
-# with a redirect (`pstore_jsonl_parse < file` or `<<< "$jsonl"`), never as a
+pstore_json_get() { # <json object> <key> -> decoded string value on stdout; rc 1 when absent
+  local v
+  pstore_json_get_set "$1" "$2" v || return 1
+  printf '%s' "$v"
+}
+
+# --- records: parse, assemble, classify -------------------------------------
+# pstore_jsonl_parse fills these globals in the CALLER shell, so call it with
+# a redirect (`pstore_jsonl_parse < file` or `<<< "$jsonl"`), never as a
 # pipeline segment.  Index of PSTORE_BODY = count * 1000000 + part, so a dump
 # set that holds several panic counts cannot collide.
 
-PSTORE_N=0          # records kept
+PSTORE_N=0           # records kept
 PSTORE_PARSE_LINES=0 # JSON lines seen (record entries and other messages)
-PSTORE_BODY=()      # record body (header line removed), keyed count*1000000+part
+PSTORE_BODY=()       # record body (header line removed), keyed count*1000000+part
 PSTORE_MAXCOUNT=0
 PSTORE_MAXPART=0
 PSTORE_MINPART=0
-PSTORE_EPOCHS=''    # distinct dump ids (epoch of the record id), first-seen order
-PSTORE_KINDS=''     # distinct header kinds, e.g. "Panic#1"
-PSTORE_BYTES=0      # bytes of the assembled dump text
-PSTORE_ARCH_HITS=0  # records whose body came from the archive (root run)
+PSTORE_EPOCHS=''     # distinct dump ids (epoch of the record id), first-seen order
+PSTORE_KINDS=''      # distinct header kinds, e.g. "Panic#1"
+PSTORE_BYTES=0       # bytes of the assembled dump text
+PSTORE_ARCH_HITS=0   # records whose body came from the archive (root run)
+PSTORE_EPOCH=''      # scratch of pstore_epoch_of
 
-pstore_epoch_of() { # <MESSAGE text> -> epoch of the record id ('' when undecodable)
+pstore_epoch_of() { # <MESSAGE text> -> sets PSTORE_EPOCH ('' and rc 1 when undecodable); fork-free
   local m="$1" id
   if [[ $m =~ pstore/([0-9]+)/ ]]; then
-    printf '%s\n' "${BASH_REMATCH[1]}"
+    PSTORE_EPOCH=${BASH_REMATCH[1]}
     return 0
   fi
   if [[ $m =~ efi_pstore-([0-9]+) ]]; then
     id=${BASH_REMATCH[1]}
     # <epoch><part:02d><count:03d>: drop the last five digits
-    printf '%s\n' "${id%?????}"
+    PSTORE_EPOCH=${id%?????}
     return 0
   fi
+  PSTORE_EPOCH=''
   return 1
 }
 
 pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
-  local line f m hdr body kind count part epoch idx rel b2
-  local nl=$'\n'
+  local line f m hdr body kind count part idx rel b2
+  local nl=$'\n' has_msg
+  local LC_ALL=C # byte counts (${#body}) stay byte counts under a UTF-8 locale
   PSTORE_N=0
   PSTORE_PARSE_LINES=0
   PSTORE_BODY=()
@@ -233,16 +250,18 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
   PSTORE_KINDS=''
   PSTORE_BYTES=0
   PSTORE_ARCH_HITS=0
-  while IFS= read -r line; do
+  while IFS= read -r line || [ -n "$line" ]; do
     [ -n "$line" ] || continue
     PSTORE_PARSE_LINES=$((PSTORE_PARSE_LINES + 1))
+    f=''
+    has_msg=0
     case "$line" in
-    *FILE* | *'Panic#'* | *'Oops#'*) ;;
-    *) continue ;;
+    *'"FILE":'*) pstore_json_get_set "$line" FILE f || f='' ;;
     esac
-    f=$(pstore_json_get "$line" FILE) || f=''
     case "$f" in
-    '') f=$(pstore_json_get "$line" MESSAGE) || f='' ;; # older systemd: no FILE field
+    Panic#* | Oops#*) ;;
+    # older systemd: no FILE field, the record text sits in MESSAGE
+    *) pstore_json_get_set "$line" MESSAGE f || f='' ;;
     esac
     hdr=${f%%"$nl"*}
     case "$hdr" in
@@ -251,7 +270,8 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
     esac
     body=${f#"$hdr"}
     body=${body#"$nl"}
-    m=$(pstore_json_get "$line" MESSAGE) || m=''
+    m=''
+    pstore_json_get_set "$line" MESSAGE m || m=''
     # Root run: the archived file wins when it is readable (the journal copy
     # stays the unprivileged path).  The file may repeat the header line.
     if [ -n "$PSTORE_ARCHIVE_ROOT" ]; then
@@ -285,7 +305,7 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
     esac
     PSTORE_BODY[idx]=$body
     PSTORE_N=$((PSTORE_N + 1))
-    PSTORE_BYTES=$((PSTORE_BYTES + $(printf '%s' "$body" | wc -c)))
+    PSTORE_BYTES=$((PSTORE_BYTES + ${#body}))
     [ "$count" -le "$PSTORE_MAXCOUNT" ] || PSTORE_MAXCOUNT=$count
     if [ "$PSTORE_N" -eq 1 ]; then
       PSTORE_MINPART=$part
@@ -298,11 +318,17 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
     *" $kind "*) ;;
     *) PSTORE_KINDS="${PSTORE_KINDS:+$PSTORE_KINDS }$kind" ;;
     esac
-    epoch=$(pstore_epoch_of "$m") || epoch=''
-    case " $PSTORE_EPOCHS " in
-    *" ${epoch:-unknown} "*) ;;
-    *) PSTORE_EPOCHS="${PSTORE_EPOCHS:+$PSTORE_EPOCHS }${epoch:-unknown}" ;;
-    esac
+    if pstore_epoch_of "$m"; then
+      case " $PSTORE_EPOCHS " in
+      *" $PSTORE_EPOCH "*) ;;
+      *) PSTORE_EPOCHS="${PSTORE_EPOCHS:+$PSTORE_EPOCHS }$PSTORE_EPOCH" ;;
+      esac
+    else
+      case " $PSTORE_EPOCHS " in
+      ' * unknown '* | ' unknown'*) ;;
+      *) PSTORE_EPOCHS="${PSTORE_EPOCHS:+$PSTORE_EPOCHS }unknown" ;;
+      esac
+    fi
   done
   return 0
 }
@@ -342,8 +368,8 @@ pstore_part_gaps() { # part numbers missing between the lowest and the highest p
 
 pstore_facts() { # PSTORE_* records -> key=value lines (token= first): whose log, and how it died
   local re_stamp='^[^[]*\[[[:space:]]*([0-9]+)\.([0-9]+)\]'
-  local re_ram='^[^]]*\[[0-9.]+\][[:space:]]*([0-9]+) pages RAM$'
-  local re_zone='^[^]]*\[[0-9.]+\][[:space:]]*Node [0-9]+ [A-Za-z0-9_]+ free:'
+  local re_ram='^[^[]*\[[[:space:]]*[0-9]+\.[0-9]+\][[:space:]]*([0-9]+) pages RAM$'
+  local re_zone='^[^[]*\[[[:space:]]*[0-9]+\.[0-9]+\][[:space:]]*Node [0-9]+ [A-Za-z0-9_]+ free:'
   local re_min=' min:([0-9]+)kB low:([0-9]+)kB high:([0-9]+)kB'
   local c p i line pages_ram='' min_kb='' up_key='' max_up=0 frac6 deadlocked=0 panic_lines=0
   local kernel='' basis='' token='' lines=0
@@ -451,7 +477,7 @@ pstore_facts_for() { # <next-boot id or ''> -> pstore_facts block plus fetch=ok|
   return 0
 }
 
-pstore_fact() { # <key=value block> <key> -> value ('' and rc 1 when absent)
+pstore_fact() { # <key=value block> <key> -> value on stdout ('' and rc 1 when absent)
   local l
   while IFS= read -r l; do
     case "$l" in
@@ -464,6 +490,5 @@ pstore_fact() { # <key=value block> <key> -> value ('' and rc 1 when absent)
   return 1
 }
 
-# Marker for the sourcing scripts: the library is present and usable.
 # shellcheck disable=SC2034  # read by the sourcing scripts
 PSTORE_RECORDS_LOADED=1
