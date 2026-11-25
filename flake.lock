@@ -6679,6 +6679,34 @@
         "type": "github"
       }
     },
+    "go-nix-helpers_19": {
+      "inputs": {
+        "flake-parts": [
+          "tracking-papers",
+          "flake-parts"
+        ],
+        "nix2container": "nix2container_15",
+        "nixpkgs": [
+          "tracking-papers",
+          "nixpkgs"
+        ],
+        "treefmt-nix": "treefmt-nix"
+      },
+      "locked": {
+        "lastModified": 1795093082,
+        "narHash": "sha256-67l2U/CfMManIMCwBpyoQwngRushVNYkgLW44RQ1Rv8=",
+        "owner": "LarsArtmann",
+        "repo": "go-nix-helpers",
+        "rev": "e0c4b7002621c89e66ef977b7a13380c5c0365e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "go-nix-helpers",
+        "type": "github"
+      }
+    },
     "go-nix-helpers_2": {
       "inputs": {
         "flake-parts": "flake-parts_3",
@@ -9264,6 +9292,28 @@
         "type": "github"
       }
     },
+    "nix2container_15": {
+      "inputs": {
+        "nixpkgs": [
+          "tracking-papers",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793342482,
+        "narHash": "sha256-poBaF2bJUH3yGMav3TSOi7k84jy8BnU8HD6PONQAwak=",
+        "owner": "nlewo",
+        "repo": "nix2container",
+        "rev": "42d1df94f001a9416ef08be7b305144074aca9d2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nlewo",
+        "repo": "nix2container",
+        "type": "github"
+      }
+    },
     "nix2container_2": {
       "inputs": {
         "nixpkgs": [
@@ -9473,11 +9523,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795564521,
-        "narHash": "sha256-bVSNKh188x9j0oY2BA/kDj0+7DvkPYbR8zi+ou7f0uw=",
+        "lastModified": 1795564799,
+        "narHash": "sha256-COuTNw2mveV9TV1TUvjN3FT0X8fCCxUBQLFesF6RCuM=",
         "owner": "LarsArtmann",
         "repo": "nixos-modules",
-        "rev": "210ecedb430e6971795184417065f29032311af8",
+        "rev": "05b69174745545173ad7747b34a8761f57a751c9",
         "type": "github"
       },
       "original": {
@@ -10819,8 +10869,9 @@
         "templ": "templ_6",
         "timesheets": "timesheets",
         "todo-list-ai": "todo-list-ai",
+        "tracking-papers": "tracking-papers",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix",
+        "treefmt-nix": "treefmt-nix_2",
         "uv2nix": "uv2nix",
         "vision-review-agent": "vision-review-agent",
         "wallpapers-src": "wallpapers-src"
@@ -11709,6 +11760,31 @@
         "url": "ssh://git@github.com/LarsArtmann/todo-list-ai"
       }
     },
+    "tracking-papers": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-nix-helpers": "go-nix-helpers_19",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795564709,
+        "narHash": "sha256-i6xrwkIfgC6kPXHlbYejg5kkW1DXnPPvjmgZMeDysQg=",
+        "ref": "refs/heads/main",
+        "rev": "4651119aa6d447861ff6c4fb52114dc4e6dcd236",
+        "revCount": 349,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/tracking-papers"
+      },
+      "original": {
+        "ref": "refs/heads/main",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/tracking-papers"
+      }
+    },
     "treefmt-full-flake": {
       "inputs": {
         "flake-parts": [
@@ -11736,6 +11812,28 @@
       }
     },
     "treefmt-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "tracking-papers",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795017206,
+        "narHash": "sha256-WSBJcYjPRxGetDNxVzKnRPs1TQasQQlAC25W/S4W6YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "0ba5d67225c3f5c88eb134e1a665a379bfd3bea9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

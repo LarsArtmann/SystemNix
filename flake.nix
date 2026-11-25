@@ -223,6 +223,19 @@
       url = "git+ssh://git@github.com/LarsArtmann/crush-config?ref=refs/heads/master";
     };
 
+    # tracking-papers — printable paper trackers + the print pipeline
+    # (print-supplements-weekly app + vendored print-safe) consumed by the
+    # supplements-weekly-print timer module. PRIVATE repo → git+ssh form
+    # (`github:`-type private inputs fetch as anonymous tarballs and 404 on
+    # CI); floats on main (owner-repo doctrine — never pin; this repo's
+    # default branch is main, unlike most owner repos). Infra follows
+    # (nixpkgs + flake-parts) live in the group at the end of the inputs
+    # attrset; go-nix-helpers deliberately NOT followed (its locked rev
+    # differs from root's — the bank-sync FOD-mismatch trap).
+    tracking-papers = {
+      url = "git+ssh://git@github.com/LarsArtmann/tracking-papers?ref=refs/heads/main";
+    };
+
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     # 2026-11-24 css-gate incident, resolved upstream: the 2026-11-18-era note
     # about a lock-node rollback was stale (no dnsblockd node ever persisted in
@@ -1602,6 +1615,8 @@
     superfile.inputs.flake-utils.follows = "flake-utils";
     superfile.inputs.nixpkgs.follows = "nixpkgs";
     todo-list-ai.inputs.nixpkgs.follows = "nixpkgs";
+    tracking-papers.inputs.flake-parts.follows = "flake-parts";
+    tracking-papers.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-full-flake.inputs.flake-parts.follows = "flake-parts";
     treefmt-full-flake.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-full-flake.inputs.treefmt-nix.follows = "treefmt-nix";
@@ -1760,7 +1775,7 @@
           || throw ''
             flake.lock infra-follows audit failed:
               ${lib.concatStringsSep "\n  " lockAuditViolations}
-            Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
+            Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, for a root-owned edge whose consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
           '';
         true;
       allEvalGuards = builtins.seq nixpkgsTarballGuard (
