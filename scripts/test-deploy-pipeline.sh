@@ -407,6 +407,18 @@ printf 'timeout 1\npreferred nixos-aaaa.conf\ndefault nixos-*\n' >"$boot_esp/loa
 assert_eq "preferred entry boots the system -> ok" "$(boot_status "$GEN_A")" "ok"
 assert_contains "preferred entry boots another generation -> unanchored" "$(boot_status "$GEN_B")" "unanchored:"
 
+# Boot counting: systemd-boot renames an entry that has not completed a boot
+# to `<name>+<tries>[-<attempts>].conf` while `preferred` keeps the plain
+# name. Live case 2026-11-25 19:33: the gen-1031 install landed as
+# `...+3.conf` and a plain-name lookup read the anchored ESP as unanchored
+# (the deploy exited 14 on a false alarm).
+mv "$boot_esp/loader/entries/nixos-aaaa.conf" "$boot_esp/loader/entries/nixos-aaaa+3.conf"
+assert_eq "boot-counting suffix (+3) on disk, plain name in preferred -> ok" "$(boot_status "$GEN_A")" "ok"
+mv "$boot_esp/loader/entries/nixos-aaaa+3.conf" "$boot_esp/loader/entries/nixos-aaaa+2-1.conf"
+assert_eq "boot-counting suffix (+tries-attempts) -> ok" "$(boot_status "$GEN_A")" "ok"
+assert_contains "boot-counting file that boots another generation -> unanchored" "$(boot_status "$GEN_B")" "unanchored:"
+mv "$boot_esp/loader/entries/nixos-aaaa+2-1.conf" "$boot_esp/loader/entries/nixos-aaaa.conf"
+
 printf 'timeout 1\ndefault nixos-bbbb.conf\n' >"$boot_esp/loader/loader.conf"
 assert_eq "concrete default entry (older loader layout) is honored" "$(boot_status "$GEN_B")" "ok"
 
