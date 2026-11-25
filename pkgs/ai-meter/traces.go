@@ -159,6 +159,30 @@ func isHexID(s string, size int) bool {
 	return false
 }
 
+// CallTrace is what the span of a call needs beyond its metering facts.
+type CallTrace struct {
+	// Method is the client's HTTP method; Route is the upstream-relative
+	// sub-path the call went to ("chat/completions").
+	Method string
+	Route  string
+	// Operation is the span's gen_ai.operation.name, empty for a call that
+	// names no model.
+	Operation string
+	// ResponseModel is the model the upstream's answer names as the one that
+	// served the call, empty when the answer names none.
+	ResponseModel string
+	// FinishReason is why the upstream stopped generating, in its own
+	// spelling, empty when it did not say.
+	FinishReason string
+	// UpstreamRequestID is the upstream's correlation id of the call, empty
+	// when it sent none.
+	UpstreamRequestID string
+	// TransportError is the cause of a call whose upstream never answered.
+	TransportError string
+	// Parent is the trace context the client propagated.
+	Parent TraceContext
+}
+
 // genAIOperation names the GenAI operation of a metered route, the span's
 // gen_ai.operation.name. The Responses API is the successor of chat
 // completions and is recorded as a chat; ai_meter.route keeps the two apart.

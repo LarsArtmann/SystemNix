@@ -3,8 +3,10 @@
 // Every AI call from every client (crush, paperless-gpt, inboxclean, …)
 // flows through one endpoint. The proxy is TRANSPARENT: model names,
 // request shapes, and response bodies are forwarded untouched. It only
-// adds three things: per-client authentication, Prometheus metrics on a
-// separate admin port, and a durable JSONL usage ledger.
+// adds four things: per-client authentication, Prometheus metrics on a
+// separate admin port, a durable JSONL usage ledger, and — when the config
+// names an OTLP endpoint — one OpenTelemetry span per call carrying the GenAI
+// semantic-convention attributes SigNoz's AI observability reads.
 //
 // Routing is path-based so client model names stay stable everywhere:
 //
@@ -64,7 +66,21 @@ func run(configPath string, logger *slog.Logger) error {
 
 	registry := NewRegistry()
 	seedCostCounter(cfg, ledger, registry, logger)
-	proxy := NewProxy(cfg, registry, ledger, logger)
+
+	var proxyOpts []ProxyOption
+	if cfg.OTLPEndpoint != "" {
+		spans := NewSpanExporter(cfg, registry, logger)
+		proxyOpts = append(proxyOpts, WithSpanSink(spans))
+		// Deferred after the ledger, so it runs before the ledger closes and
+		// after both servers stopped: every span of a finished call is posted.
+		defer func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			spans.Shutdown(ctx)
+		}()
+		logger.Info("span export enabled", "endpoint", spans.Endpoint())
+	}
+	proxy := NewProxy(cfg, registry, ledger, logger, proxyOpts...)
 
 	proxyServer := &http.Server{
 		Addr:              cfg.Listen,

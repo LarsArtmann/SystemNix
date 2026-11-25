@@ -22,8 +22,8 @@ func modelName(model string) string {
 	return model
 }
 
-// Record is one completed AI call — the unit of both the metrics registry
-// and the JSONL ledger.
+// Record is one completed AI call — the unit of the metrics registry, the
+// JSONL ledger and the exported span.
 type Record struct {
 	Client           string
 	Upstream         string
@@ -41,6 +41,14 @@ type Record struct {
 	// sample: non-streaming call, or the stream ended before any byte.
 	TTFTMS       int64
 	UsageMissing bool // upstream returned no usage block
+
+	// StartedAt is when the proxy accepted the request, EndedAt when the call
+	// was recorded. A duration alone cannot place a call on a timeline, so the
+	// span needs both.
+	StartedAt time.Time
+	EndedAt   time.Time
+	// Trace carries what only the span needs.
+	Trace CallTrace
 }
 
 // Registry is a minimal hand-rolled Prometheus registry. Counters and
@@ -61,6 +69,7 @@ type Registry struct {
 
 	unauthorized   float64
 	meteringErrors float64
+	spanExports    map[string]float64
 	startTime      time.Time
 }
 
@@ -85,6 +94,7 @@ func NewRegistry() *Registry {
 		ttftSum:       map[durKey]float64{},
 		ttftCount:     map[durKey]float64{},
 		inflight:      map[inflightKey]float64{},
+		spanExports:   map[string]float64{},
 		startTime:     time.Now(),
 	}
 }
@@ -159,6 +169,14 @@ func (r *Registry) RestoreCost(rec Record) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.cost[costKey{rec.Client, rec.Upstream, rec.Model}] += rec.CostUSD
+}
+
+// SpanExported counts count spans by how handing them to the OTLP endpoint
+// went (spanOutcomeOK, spanOutcomeFailed, spanOutcomeDropped).
+func (r *Registry) SpanExported(outcome string, count float64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.spanExports[outcome] += count
 }
 
 // Record folds one completed call into every metric family.
@@ -282,6 +300,16 @@ func (r *Registry) Render() string {
 	b.WriteString("# TYPE ai_meter_active_requests gauge\n")
 	for _, k := range flights {
 		writeSeries(&b, "ai_meter_active_requests", r.inflight[k], "client", k.client, "upstream", k.upstream, "model", k.model)
+	}
+
+	// Every outcome is exposed, also at zero, so a rate or alert over it
+	// never meets an absent series.
+	b.WriteString("# HELP ai_meter_spans_exported_total Proxied calls by how handing their span to the OTLP endpoint went: \"ok\" (the endpoint accepted the batch), \"failed\" (the endpoint rejected it or never answered), \"dropped\" (the export queue was full, or the proxy stopped before the span was sent).\n")
+	b.WriteString("# TYPE ai_meter_spans_exported_total counter\n")
+	outcomes := []string{spanOutcomeDropped, spanOutcomeFailed, spanOutcomeOK}
+	sort.Strings(outcomes)
+	for _, outcome := range outcomes {
+		writeSeries(&b, "ai_meter_spans_exported_total", r.spanExports[outcome], "outcome", outcome)
 	}
 
 	b.WriteString("# HELP ai_meter_unauthorized_total Rejected client authentications.\n")

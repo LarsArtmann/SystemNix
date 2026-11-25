@@ -24,14 +24,25 @@ type Proxy struct {
 	ledger   *Ledger
 	logger   *slog.Logger
 	client   *http.Client
+	spans    spanSink
 }
 
-func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logger) *Proxy {
-	return &Proxy{
+// ProxyOption configures an optional part of a proxy.
+type ProxyOption func(*Proxy)
+
+// WithSpanSink sends every recorded call to sink, in addition to the metrics
+// and the ledger.
+func WithSpanSink(sink spanSink) ProxyOption {
+	return func(p *Proxy) { p.spans = sink }
+}
+
+func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logger, opts ...ProxyOption) *Proxy {
+	p := &Proxy{
 		cfg:      cfg,
 		registry: registry,
 		ledger:   ledger,
 		logger:   logger,
+		spans:    noSpans{},
 		client: &http.Client{
 			Transport: &http.Transport{
 				MaxIdleConns:        32,
@@ -41,6 +52,10 @@ func NewProxy(cfg *Config, registry *Registry, ledger *Ledger, logger *slog.Logg
 			// No overall timeout: streamed completions run for minutes.
 		},
 	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +146,7 @@ func isMeteredPath(subPath string) bool {
 }
 
 func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call, client Client, upstream Upstream, subPath string, genai *GenAIRequest) {
-	start := time.Now()
+	rec := callRecord(r, client, upstream, subPath, time.Now())
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, maxMeteredBodyBytes+1))
 	if err != nil {
@@ -148,7 +163,7 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		// Not a JSON body on a metered path: forward it anyway so the
 		// proxy never becomes the reason a call fails — metered as a
 		// request with unknown model and no token counts.
-		p.forwardAndRecord(w, r, client, upstream, subPath, body, info, start)
+		p.forwardAndRecord(w, r, upstream, subPath, rec, body)
 		return
 	}
 	if genai != nil {
@@ -160,6 +175,8 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 		info.GenAI = true
 	}
 	call.SetModel(info.Model)
+	rec.Model, rec.Stream = info.Model, info.Stream
+	rec.Trace.Operation = genAIOperation(subPath, genai != nil)
 
 	forwardBody := InjectStreamUsage(body, info, p.cfg.InjectStreamUsage)
 
@@ -174,27 +191,40 @@ func (p *Proxy) serveMetered(w http.ResponseWriter, r *http.Request, call *Call,
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		rec := Record{
-			Client: client.Name, Upstream: upstream.Name, Model: info.Model,
-			Status: http.StatusBadGateway, Path: r.URL.Path, UsageMissing: true,
-			DurationMS: time.Since(start).Milliseconds(),
-		}
+		rec.Status, rec.UsageMissing = http.StatusBadGateway, true
+		rec.Trace.TransportError = transportCause(err)
 		p.record(rec)
 		writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
+	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
 
 	if info.Stream {
-		p.streamResponse(w, resp, client, upstream, info, r.URL.Path, start)
+		p.streamResponse(w, resp, rec)
 		return
 	}
-	p.bufferedResponse(w, resp, client, upstream, info, r.URL.Path, start)
+	p.bufferedResponse(w, resp, rec)
+}
+
+// callRecord opens the Record of one request with everything known before
+// the upstream answers. The model stays unset until the request names one.
+func callRecord(r *http.Request, client Client, upstream Upstream, route string, start time.Time) Record {
+	return Record{
+		Client:    client.Name,
+		Upstream:  upstream.Name,
+		StartedAt: start,
+		Trace: CallTrace{
+			Method: r.Method,
+			Route:  route,
+			Parent: traceContext(r.Header.Get("traceparent")),
+		},
+	}
 }
 
 // forwardAndRecord passes a non-JSON body through untouched and records
 // the call with empty token counts.
-func (p *Proxy) forwardAndRecord(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string, body []byte, info RequestInfo, start time.Time) {
+func (p *Proxy) forwardAndRecord(w http.ResponseWriter, r *http.Request, upstream Upstream, subPath string, rec Record, body []byte) {
 	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstreamURL(upstream, subPath, r.URL.RawQuery), bytes.NewReader(body))
 	if err != nil {
 		writeError(w, http.StatusBadGateway, "build upstream request: "+err.Error())
@@ -206,8 +236,10 @@ func (p *Proxy) forwardAndRecord(w http.ResponseWriter, r *http.Request, client 
 
 	resp, err := p.client.Do(req)
 	if err != nil {
+		rec.Status, rec.UsageMissing = http.StatusBadGateway, true
+		rec.Trace.TransportError = transportCause(err)
+		p.record(rec)
 		writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
-		p.record(Record{Client: client.Name, Upstream: upstream.Name, Model: info.Model, Status: http.StatusBadGateway, Path: r.URL.Path, UsageMissing: true, DurationMS: time.Since(start).Milliseconds()})
 		return
 	}
 	defer func() { _ = resp.Body.Close() }()
@@ -215,43 +247,36 @@ func (p *Proxy) forwardAndRecord(w http.ResponseWriter, r *http.Request, client 
 	w.WriteHeader(resp.StatusCode)
 	_, _ = io.Copy(w, resp.Body)
 
-	p.record(Record{
-		Client: client.Name, Upstream: upstream.Name, Model: info.Model,
-		Status: resp.StatusCode, Path: r.URL.Path, UsageMissing: true,
-		DurationMS: time.Since(start).Milliseconds(),
-	})
+	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
+	rec.Status, rec.UsageMissing = resp.StatusCode, true
+	p.record(rec)
 }
 
-func (p *Proxy) bufferedResponse(w http.ResponseWriter, resp *http.Response, client Client, upstream Upstream, info RequestInfo, path string, start time.Time) {
+func (p *Proxy) bufferedResponse(w http.ResponseWriter, resp *http.Response, rec Record) {
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxMeteredBodyBytes+1))
 	if err != nil {
-		p.record(Record{Client: client.Name, Upstream: upstream.Name, Model: info.Model, Status: resp.StatusCode, Path: path, UsageMissing: true, DurationMS: time.Since(start).Milliseconds()})
+		rec.Status, rec.UsageMissing = resp.StatusCode, true
+		p.record(rec)
 		writeError(w, http.StatusBadGateway, "read upstream response: "+err.Error())
 		return
 	}
 
 	usage, hasUsage := extractUsageAny(body)
+	var meta responseMeta
+	meta.observe(body)
 
 	copyResponseHeaders(w, resp)
 	w.WriteHeader(resp.StatusCode)
 	_, _ = w.Write(body)
 
-	p.record(Record{
-		Client:           client.Name,
-		Upstream:         upstream.Name,
-		Model:            info.Model,
-		Status:           resp.StatusCode,
-		Path:             path,
-		TTFTMS:           -1,
-		PromptTokens:     usage.PromptTokens,
-		CompletionTokens: usage.CompletionTokens,
-		CachedTokens:     usage.CachedTokens,
-		DurationMS:       time.Since(start).Milliseconds(),
-		UsageMissing:     !hasUsage,
-	})
+	rec.Status, rec.UsageMissing = resp.StatusCode, !hasUsage
+	rec.TTFTMS = -1
+	rec.PromptTokens, rec.CompletionTokens, rec.CachedTokens = usage.PromptTokens, usage.CompletionTokens, usage.CachedTokens
+	rec.Trace.ResponseModel, rec.Trace.FinishReason = meta.Model, meta.FinishReason
+	p.record(rec)
 }
 
-func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, client Client, upstream Upstream, info RequestInfo, path string, start time.Time) {
+func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, rec Record) {
 	flusher, _ := w.(http.Flusher)
 
 	copyResponseHeaders(w, resp)
@@ -261,13 +286,14 @@ func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, clien
 	usage := Usage{}
 	hasUsage := false
 	ttft := int64(-1) // no sample until the first byte is written
+	var meta responseMeta
 
 	reader := bufio.NewReaderSize(resp.Body, 64*1024)
 	for {
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
 			if ttft < 0 {
-				ttft = time.Since(start).Milliseconds()
+				ttft = time.Since(rec.StartedAt).Milliseconds()
 			}
 			_, _ = w.Write(line)
 			if flusher != nil {
@@ -283,36 +309,32 @@ func (p *Proxy) streamResponse(w http.ResponseWriter, resp *http.Response, clien
 					} else if u, ok := ExtractGenAIUsageSSE(payload); ok {
 						usage = u
 						hasUsage = true
+					} else {
+						// Every other payload may name the serving model or
+						// carry the finish reason; neither sits on a usage chunk.
+						meta.observe(payload)
 					}
 				}
 			}
 		}
 		if err != nil {
 			if err != io.EOF {
-				p.logger.Warn("stream read error", "upstream", upstream.Name, "err", err)
+				p.logger.Warn("stream read error", "upstream", rec.Upstream, "err", err)
 			}
 			break
 		}
 	}
 
-	p.record(Record{
-		Client:           client.Name,
-		Upstream:         upstream.Name,
-		Model:            info.Model,
-		Status:           resp.StatusCode,
-		Stream:           true,
-		Path:             path,
-		PromptTokens:     usage.PromptTokens,
-		CompletionTokens: usage.CompletionTokens,
-		CachedTokens:     usage.CachedTokens,
-		DurationMS:       time.Since(start).Milliseconds(),
-		TTFTMS:           ttft,
-		UsageMissing:     !hasUsage,
-	})
+	rec.Status, rec.UsageMissing = resp.StatusCode, !hasUsage
+	rec.Stream = true
+	rec.PromptTokens, rec.CompletionTokens, rec.CachedTokens = usage.PromptTokens, usage.CompletionTokens, usage.CachedTokens
+	rec.TTFTMS = ttft
+	rec.Trace.ResponseModel, rec.Trace.FinishReason = meta.Model, meta.FinishReason
+	p.record(rec)
 }
 
 func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client Client, upstream Upstream, subPath string) {
-	start := time.Now()
+	rec := callRecord(r, client, upstream, subPath, time.Now())
 
 	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstreamURL(upstream, subPath, r.URL.RawQuery), r.Body)
 	if err != nil {
@@ -324,7 +346,9 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 
 	resp, err := p.client.Do(req)
 	if err != nil {
-		p.record(Record{Client: client.Name, Upstream: upstream.Name, Model: modelNone, Status: http.StatusBadGateway, Path: r.URL.Path, UsageMissing: true, DurationMS: time.Since(start).Milliseconds()})
+		rec.Status, rec.UsageMissing = http.StatusBadGateway, true
+		rec.Trace.TransportError = transportCause(err)
+		p.record(rec)
 		writeError(w, http.StatusBadGateway, "upstream unreachable: "+err.Error())
 		return
 	}
@@ -336,22 +360,27 @@ func (p *Proxy) servePassthrough(w http.ResponseWriter, r *http.Request, client 
 
 	// Passthrough calls count as requests with no token attribution
 	// (models listing, file uploads, legacy routes).
-	p.record(Record{
-		Client:       client.Name,
-		Upstream:     upstream.Name,
-		Model:        modelNone,
-		Status:       resp.StatusCode,
-		Path:         r.URL.Path,
-		DurationMS:   time.Since(start).Milliseconds(),
-		UsageMissing: true,
-	})
+	rec.Trace.UpstreamRequestID = upstreamRequestID(resp.Header)
+	rec.Status, rec.UsageMissing = resp.StatusCode, true
+	p.record(rec)
 }
 
+// record folds one ended call into every output: the metrics, the ledger and
+// the span sink. It completes the call's bookkeeping fields first, so each
+// output sees the same call.
 func (p *Proxy) record(rec Record) {
+	rec.EndedAt = time.Now()
+	rec.DurationMS = rec.EndedAt.Sub(rec.StartedAt).Milliseconds()
+	rec.Path = "/v1/" + rec.Upstream + "/" + rec.Trace.Route
 	rec.Model = modelName(rec.Model)
+	if rec.Model == modelNone {
+		// No model, no LLM call: the span leaves the GenAI attributes out.
+		rec.Trace.Operation = ""
+	}
 	p.cfg.Price(&rec)
 
 	p.registry.Record(rec)
+	p.spans.Emit(&rec)
 	if err := p.ledger.Append(rec); err != nil {
 		p.registry.MeteringError()
 		p.logger.Error("ledger append failed", "err", err, "client", rec.Client, "upstream", rec.Upstream)
