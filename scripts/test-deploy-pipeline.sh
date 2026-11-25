@@ -317,59 +317,46 @@ exec "$REAL_TIMEOUT" "\$@"
 EOS
 chmod +x "$shim_dir/bin/systemctl" "$shim_dir/bin/timeout"
 
-run_batch() { # $1 = the enabled unit set
+run_fn() { # $1 = the call, $2 = the enabled unit set; logs reset per call
   : >"$RESTART_LOG"
-  PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" ENABLED="$1" \
-    bash -c "$batch_src"
-'restart_media_atlas_provisioners'
+  : >"$BUDGET_LOG"
+  PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
+    SLOW="${SLOW:-}" ENABLED="${2:-}" bash -c "$batch_src"$'\n'"$1"
 }
 
-hub_out=$(run_batch "immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision")
+hub_out=$(run_fn 'restart_media_atlas_provisioners' "immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision")
 assert_eq "hub enabled: exactly one restart transaction" "$(wc -l <"$RESTART_LOG")" "1"
 assert_eq "hub enabled: the transaction carries all three provisioners" "$(cat "$RESTART_LOG")" "restart immich-api-key-provision.service media-atlas-pg-ro.service media-atlas-key-provision.service"
 assert_eq "hub enabled: default budget" "$(cat "$BUDGET_LOG")" "120"
 assert_contains "hub enabled: the echo names the batch" "$hub_out" "Restarting provisioners (one transaction): immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision"
 
-run_batch "immich-api-key-provision media-atlas-pg-ro" >/dev/null
+run_fn 'restart_media_atlas_provisioners' "immich-api-key-provision media-atlas-pg-ro" >/dev/null
 assert_eq "hub disabled: only the enabled members, still one transaction" "$(cat "$RESTART_LOG")" "restart immich-api-key-provision.service media-atlas-pg-ro.service"
 
-none_out=$(run_batch "")
+none_out=$(run_fn 'restart_media_atlas_provisioners')
 assert_eq "nothing enabled: no restart issued" "$(wc -l <"$RESTART_LOG")" "0"
 assert_eq "nothing enabled: silent" "$none_out" ""
 
 # deploy_restart argument contract, unchanged for every existing caller:
 # a lone unit keeps the 120s default, a trailing number is the budget, and
 # on a batch it is the budget too, never a third unit.
-: >"$RESTART_LOG"
-: >"$BUDGET_LOG"
-PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
-  bash -c "$batch_src"
-'deploy_restart lone-unit'
+run_fn 'deploy_restart lone-unit' >/dev/null
 assert_eq "lone unit: default budget" "$(cat "$BUDGET_LOG")" "120"
 assert_eq "lone unit: plain restart" "$(cat "$RESTART_LOG")" "restart lone-unit.service"
 
-: >"$BUDGET_LOG"
-PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
-  bash -c "$batch_src"
-'deploy_restart heavy-unit 600'
+run_fn 'deploy_restart heavy-unit 600' >/dev/null
 assert_eq "trailing budget honored (llama-rag-model-fetch call shape)" "$(cat "$BUDGET_LOG")" "600"
 
-: >"$RESTART_LOG"
-: >"$BUDGET_LOG"
-batch_out=$(PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" \
-  bash -c "$batch_src"
-'deploy_restart unit-a unit-b 5')
+batch_out=$(run_fn 'deploy_restart unit-a unit-b 5')
 assert_eq "batch: ONE systemctl restart carrying both units" "$(cat "$RESTART_LOG")" "restart unit-a.service unit-b.service"
 assert_eq "batch: trailing number is the budget" "$(cat "$BUDGET_LOG")" "5"
 assert_eq "batch: success path stays silent" "$batch_out" ""
 
-slow_out=$(PATH="$shim_dir/bin:$PATH" RESTART_LOG="$RESTART_LOG" BUDGET_LOG="$BUDGET_LOG" SLOW=1 \
-  bash -c "$batch_src"
-'deploy_restart unit-a unit-b 1')
+slow_out=$(SLOW=1 run_fn 'deploy_restart unit-a unit-b 1')
 assert_contains "batch rc-124 path warns with every unit name" "$slow_out" "unit-a.service unit-b.service not active after 1s"
 
 # Tripwire: back in the per-unit loop the hub bounces twice again.
-loop_line=$(grep -m1 '^  for provisioner in ' "$DEPLOY_SH")
+loop_line=$(grep -A1 -m1 '^  phase "Provisioner convergence' "$DEPLOY_SH" | tail -1)
 for unit in immich-api-key-provision media-atlas-pg-ro media-atlas-key-provision; do
   case " $loop_line " in
   *" $unit "*) bad "$unit is back in the per-unit loop (bounces the hub twice)" ;;
