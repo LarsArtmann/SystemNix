@@ -10,7 +10,8 @@
 # will actually boot) -> initrd-required devices present -> btrfs health -> no
 # zombie mounts -> quiet-window advisories (incl. the exit-4 predictor: failed
 # units whose unit FILES changed) -> GC anchoring of boot entries (§10) ->
-# boot mirror (§11: tree parity AND an armed path trigger).
+# boot mirror (§11: tree parity AND an armed path trigger) -> crash-capture
+# contract of the generation the reboot boots (§12).
 #
 # Run: nix run .#pre-reboot-check   (self-elevates to root; /boot is root-only)
 # Exit: 0 = safe to reboot (warnings allowed), 1 = REBOOT BLOCKED (fix first).
@@ -60,6 +61,105 @@ mirror_trigger_probe() {
     read -r MIRROR_SVC_SUB || true
   } <<<"$svc_pair"
   MIRROR_VERDICT="$(mirror_trigger_verdict "$MIRROR_PATH_STATE" "$MIRROR_PATH_SUB" "$MIRROR_SVC_STATE" "$MIRROR_SVC_SUB")"
+}
+
+# --- crash-capture contract verdict (pure) ---------------------------------
+# kdump is configured (crashkernel=512M) yet from 2026-11-17 to 2026-11-25
+# every capture died with ZERO evidence while kexec_crash_loaded read 1: the
+# capture kernel booted the normal systemd userspace, applied the host sysctl
+# bag (vm.min_free_kbytes = 2097152) inside the 512M reservation and
+# OOM-panicked, and the crashed kernel kexec'd BEFORE its kmsg dump, so pstore
+# stayed empty too. The crash image is loaded ONCE per boot with the BOOTING
+# generation's init baked in, so a deploy never reloads it: the contract that
+# counts is the one of the generation the REBOOT boots. §12 reads it from that
+# generation's loader entry; `selftest` drives the table without root.
+
+# kdump_unit_has_condition <unit text> <condition line>
+# True when the text carries the EXACT unit line (whitespace-normalized, so
+# the systemd-accepted `Key = value` spacing counts too). Line-exact on
+# purpose: ConditionPathExists=!/proc/vmcore and ConditionPathExists=/proc/vmcore
+# are opposite verdicts, and a substring match would conflate them.
+kdump_unit_has_condition() {
+  local text="$1" want="$2" line
+  local -a words
+  while IFS= read -r line; do
+    read -r -a words <<<"$line" || true
+    [ "${#words[@]}" -gt 0 ] || continue
+    line="${words[*]}"
+    [ "${line// /}" = "$want" ] && return 0
+  done <<<"$text"
+  return 1
+}
+
+# kdump_capture_verdict <kernel options line> <systemd-sysctl unit + drop-in text>
+#                       <kdump-capture-boot-sysctl.service text> <kdump-save.service text>
+# Prints `disabled` when the options carry no crashkernel= (nothing to capture
+# with, the contract does not apply), else the space-separated broken legs,
+# else `ok`. An EMPTY unit text = the unit file is missing; an EMPTY options
+# line = unreadable (its two legs are then not judged).
+kdump_capture_verdict() {
+  local options="$1" sysctl_text="$2" capture_text="$3" save_text="$4" verdict=""
+  if [ -n "$options" ]; then
+    case " $options " in
+    *" crashkernel="*) ;;
+    *)
+      echo disabled
+      return 0
+      ;;
+    esac
+    case " $options " in
+    *" crash_kexec_post_notifiers "*) ;;
+    *) verdict="no-post-notifiers" ;;
+    esac
+  fi
+  kdump_unit_has_condition "$sysctl_text" 'ConditionPathExists=!/proc/vmcore' || verdict="$verdict no-sysctl-condition"
+  kdump_unit_has_condition "$capture_text" 'ConditionPathExists=/proc/vmcore' || verdict="$verdict no-capture-sysctl-unit"
+  kdump_unit_has_condition "$save_text" 'ConditionPathExists=/proc/vmcore' || verdict="$verdict no-save-unit"
+  verdict="${verdict# }"
+  echo "${verdict:-ok}"
+}
+
+# kdump_read_unit <systemd unit dir> <unit>
+# The unit file plus every file of its <unit>.d/ drop-in dir as one text (a
+# NixOS drop-in is where unitConfig lands). Prints nothing when the unit file
+# itself is missing; an unreadable piece is skipped, never fatal.
+kdump_read_unit() {
+  local dir="$1" unit="$2" f part text=""
+  [ -f "$dir/$unit" ] || return 0
+  for f in "$dir/$unit" "$dir/$unit.d"/*; do
+    [ -f "$f" ] || continue
+    if part="$(cat "$f" 2>/dev/null)"; then
+      text="$text$part"$'\n'
+    fi
+  done
+  printf '%s' "$text"
+}
+
+# kdump_next_boot_entry <loader entries dir> <loader.conf> <entry §1 resolved>
+# Prints the entry file the next boot loads, or nothing when none is
+# resolvable. §1's default wins when it named a single entry; otherwise
+# loader.conf `preferred` does: NixOS writes it next to `default nixos-*`
+# (boot counting on) and systemd-boot boots it ahead of the glob unless its
+# boot counter ran out. Boot counting renames the file with a
+# `+<tries>[-<attempts>]` suffix, so the bare id and the suffixed form both
+# resolve.
+kdump_next_boot_entry() {
+  local entries="$1" loader_conf="$2" default_entry="$3" key value f
+  if [ -n "$default_entry" ] && [ -f "$entries/$default_entry" ]; then
+    echo "$entries/$default_entry"
+    return 0
+  fi
+  while read -r key value _; do
+    [ "$key" != "preferred" ] || {
+      value="${value%$'\r'}"
+      for f in "$entries/$value" "$entries/${value%.conf}"+*.conf; do
+        [ -f "$f" ] || continue
+        echo "$f"
+        return 0
+      done
+    }
+  done 2>/dev/null <"$loader_conf" || true
+  return 0
 }
 
 if [ "${1:-}" = "selftest" ]; then
@@ -116,11 +216,72 @@ if [ "${1:-}" = "selftest" ]; then
     echo "FAIL: unavailable systemctl gave verdict $MIRROR_VERDICT (expected dead, never a crash)"
     selftest_fails=$((selftest_fails + 1))
   fi
+  # Crash-capture contract (§12), pure table: kdump disabled, the fixed
+  # generation, each broken leg alone and all four together, and the polarity
+  # traps (a positive condition on systemd-sysctl or a negative one on a
+  # capture unit must NOT read as the contract). Nothing read this contract
+  # until 2026-11-25: two panics, zero evidence, kexec_crash_loaded reading 1.
+  selftest_kdump() {
+    local expected="$1" got
+    got="$(kdump_capture_verdict "$2" "$3" "$4" "$5")"
+    if [ "$got" != "$expected" ]; then
+      echo "FAIL: kdump verdict($2) = '$got', expected '$expected'"
+      selftest_fails=$((selftest_fails + 1))
+    fi
+  }
+  kd_opts_fixed="init=/nix/store/fixed-nixos-system-evo-x2-1/init crashkernel=512M crash_kexec_post_notifiers loglevel=7"
+  kd_sysctl="[Unit]
+ConditionPathExists=!/proc/vmcore"
+  kd_capture="[Unit]
+ConditionPathExists=/proc/vmcore"
+  kd_save="[Unit]
+ConditionPathExists=/proc/vmcore"
+  selftest_kdump disabled "init=/nix/store/off-nixos-system-evo-x2-1/init loglevel=7" "$kd_sysctl" "" ""
+  selftest_kdump ok "$kd_opts_fixed" "$kd_sysctl" "$kd_capture" "$kd_save"
+  selftest_kdump no-post-notifiers "init=/nix/store/fixed-nixos-system-evo-x2-1/init crashkernel=512M loglevel=7" "$kd_sysctl" "$kd_capture" "$kd_save"
+  selftest_kdump no-sysctl-condition "$kd_opts_fixed" "[Unit]" "$kd_capture" "$kd_save"
+  selftest_kdump no-capture-sysctl-unit "$kd_opts_fixed" "$kd_sysctl" "" "$kd_save"
+  selftest_kdump no-save-unit "$kd_opts_fixed" "$kd_sysctl" "$kd_capture" ""
+  selftest_kdump "no-post-notifiers no-sysctl-condition no-capture-sysctl-unit no-save-unit" "crashkernel=512M" "" "" ""
+  selftest_kdump no-sysctl-condition "$kd_opts_fixed" "$kd_capture" "$kd_capture" "$kd_save"
+  selftest_kdump no-capture-sysctl-unit "$kd_opts_fixed" "$kd_sysctl" "$kd_sysctl" "$kd_save"
+  selftest_kdump no-save-unit "$kd_opts_fixed" "$kd_sysctl" "$kd_capture" "# ConditionPathExists=/proc/vmcore"
+  selftest_kdump disabled "xcrashkernel=512M" "$kd_sysctl" "$kd_capture" "$kd_save"
+  selftest_kdump no-post-notifiers "crashkernel=512M crash_kexec_post_notifiers_bogus" "$kd_sysctl" "$kd_capture" "$kd_save"
+  # Parser legs (the table reads no file): the unit reader folds the drop-in
+  # dir into the unit text and reads a missing unit as empty; the entry
+  # resolver falls back from §1's unresolved default glob to loader.conf
+  # `preferred`, through the boot-counting `+tries` suffix.
+  kd_fix="$(mktemp -d)"
+  trap '[ -n "${kd_fix:-}" ] && rm -rf -- "$kd_fix"' EXIT
+  mkdir -p "$kd_fix/entries" "$kd_fix/etc/systemd/system/systemd-sysctl.service.d"
+  printf '[Unit]\nDescription=Apply Kernel Variables\n' >"$kd_fix/etc/systemd/system/systemd-sysctl.service"
+  printf '[Unit]\nConditionPathExists = !/proc/vmcore\n' >"$kd_fix/etc/systemd/system/systemd-sysctl.service.d/overrides.conf"
+  if kdump_unit_has_condition "$(kdump_read_unit "$kd_fix/etc/systemd/system" systemd-sysctl.service)" 'ConditionPathExists=!/proc/vmcore' &&
+    [ -z "$(kdump_read_unit "$kd_fix/etc/systemd/system" kdump-save.service)" ]; then
+    echo "kdump parser leg OK (drop-in condition folded in, missing unit reads empty)"
+  else
+    echo "FAIL: kdump unit reader lost the drop-in condition or the missing-unit shape"
+    selftest_fails=$((selftest_fails + 1))
+  fi
+  printf 'timeout 1\npreferred nixos-aaaa.conf\ndefault nixos-*\n' >"$kd_fix/loader.conf"
+  printf 'title NixOS\noptions init=/nix/store/off-nixos-system-evo-x2-1/init loglevel=7\n' >"$kd_fix/entries/nixos-old+3.conf"
+  printf 'title NixOS\noptions init=/nix/store/fixed-nixos-system-evo-x2-1/init crashkernel=512M\n' >"$kd_fix/entries/nixos-aaaa+3.conf"
+  kd_entry="$(kdump_next_boot_entry "$kd_fix/entries" "$kd_fix/loader.conf" "")"
+  if [ "$kd_entry" = "$kd_fix/entries/nixos-aaaa+3.conf" ] &&
+    [ "$(kdump_next_boot_entry "$kd_fix/entries" "$kd_fix/loader.conf" "nixos-old+3.conf")" = "$kd_fix/entries/nixos-old+3.conf" ] &&
+    [ -z "$(kdump_next_boot_entry "$kd_fix/entries" "$kd_fix/no-loader.conf" "")" ]; then
+    echo "kdump parser leg OK (preferred +tries entry, default wins, nothing resolvable stays empty)"
+  else
+    echo "FAIL: entry resolver gave '$kd_entry' (expected the +tries preferred entry)"
+    selftest_fails=$((selftest_fails + 1))
+  fi
   if [ "$selftest_fails" -ne 0 ]; then
     echo "pre-reboot-check trigger-verdict selftest: $selftest_fails FAIL"
     exit 1
   fi
   echo "pre-reboot-check trigger-verdict selftest OK (12 state pairs)"
+  echo "pre-reboot-check kdump-capture-contract selftest OK (13 verdict cases + 2 parser legs)"
   exit 0
 fi
 

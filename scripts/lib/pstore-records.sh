@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck shell=bash
 # pstore-records.sh: shared EFI-pstore record decoding for the boot autopsy
 # scripts (the "pstore (EFI) crash dump" section of boot-evidence-pull.sh and
 # the `kdump=` verdict line of crash-triage.sh).  Sourced, never executed.
@@ -50,7 +51,7 @@
 #                          practice means a root run (/var/lib/systemd/pstore;
 #                          an EMPTY value disables the direct read)
 #
-# verdict tokens (shared vocabulary, keep both scripts in step):
+# Verdict tokens (shared vocabulary, keep both scripts in step):
 #   capture-kernel-OOM           the log is the capture kernel's and it died
 #                                of the inherited watermark: the MAIN kernel's
 #                                panic text is NOT in pstore
@@ -61,6 +62,7 @@
 
 PSTORE_CAPTURE_PAGES_MAX=2000000
 PSTORE_MAIN_UPTIME_MIN=600
+PSTORE_ARCHIVE_ROOT="${PSTORE_ARCHIVE_ROOT-/var/lib/systemd/pstore}"
 # A part number above this bound is treated as a malformed header, so the
 # descending scan below can never loop on a garbage number.
 PSTORE_MAX_PART=100000
@@ -120,48 +122,49 @@ pstore_json_unescape() { # <escaped string body> -> decoded text (adds no newlin
 pstore_json_get() { # <json object> <key> -> decoded string value; rc 1 when absent
   # Minimal object walker (keys are plain identifiers, values are strings or
   # numbers): it never mistakes a `"key":"` sequence INSIDE a string value for
-  # the real key, which a plain substring search would.
-  local s="$1" want="$2" k v chunk out tb hit
+  # the real key, which a plain substring search would.  dq is the double
+  # quote character; quoting it through a variable keeps the case patterns
+  # below readable.
+  local s="$1" want="$2" dq='"' v chunk out tb hit
   s=${s#"${s%%[![:space:]]*}"}
   case "$s" in '{'*) ;; *) return 1 ;; esac
   s=${s:1}
   while :; do
     s=${s#"${s%%[![:space:]]*}"}
     case "$s" in
-    '' | '}'*) return 1 ;;
+    '' | '}') return 1 ;;
     esac
     hit=0
     case "$s" in
-    '"'"$want"'" | '"'"$want"'"[[:space:]]*) hit=1 ;;
-    '"'"*) ;;
+    "${dq}${want}${dq}" | "${dq}${want}${dq}"[[:space:]]*) hit=1 ;;
+    "${dq}"*) ;;
     *) return 1 ;;
     esac
     s=${s:1}
-    k=${s%%'"'*}
-    s=${s#*'"'}
+    s=${s#*"${dq}"} # the key is a plain identifier: skip to its closing quote
     s=${s#"${s%%[![:space:]]*}"}
-    case "$s" in ':'*) ;; *) return 1 ;; esac
+    case "$s" in ':') ;; *) return 1 ;; esac
     s=${s:1}
     s=${s#"${s%%[![:space:]]*}"}
     case "$s" in
-    '"'*)
+    "${dq}"*)
       s=${s:1}
       v=''
       while :; do
         case "$s" in
-        '"'*) ;;
+        "${dq}"*) ;;
         *) return 1 ;; # unterminated string
         esac
-        chunk=${s%%'"'*}
+        chunk=${s%%"${dq}"*}
         v+=$chunk
         tb=0
         while [[ $chunk == *'\' ]]; do
           tb=$((tb + 1))
           chunk=${chunk%?}
         done
-        s=${s#*'"'}
+        s=${s#*"${dq}"}
         if [ $((tb % 2)) -eq 1 ]; then
-          v+='"' # the quote was escaped: the string continues
+          v+="${dq}" # the quote was escaped: the string continues
           continue
         fi
         break

@@ -9,790 +9,2747 @@
   ],
   "spec": {
     "display": {
-      "name": "AI Meter \u2014 Routed AI Calls",
-      "description": "Per-client/model token, cost, latency and status attribution for every AI call routed through ai-meter (:8107). Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours."
+      "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, and whether the metering itself is healthy. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
+      "name": "AI Meter DRYRUN delete me"
     },
-    "variables": [],
-    "panels": {
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-success": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Success Rate (5m)",
-            "description": "Share of routed AI calls returning 2xx. Dropped to ~7% during the 2026-10-17 Z.ai 1113 balance outage \u2014 this panel + the failure-rate rule exist to catch that class within minutes."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "percent",
-                "decimalPrecision": "1"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "100 * sum(rate(ai_meter_requests_total{code=\"200\"}[5m])) / clamp_min(sum(rate(ai_meter_requests_total[5m])), 1e-9)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-reqmin": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Requests / min",
-            "description": "All routed AI calls through ai-meter, 5m rate."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "reqpm",
-                "decimalPrecision": "0"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(ai_meter_requests_total[5m])) * 60",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-errmin": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Non-2xx / min",
-            "description": "Failed routed calls (4xx/5xx) per minute, 5m rate. Includes billing rejections (Z.ai 1113 arrives as HTTP 429) and rate limits."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "reqpm",
-                "decimalPrecision": "0"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-active": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "In-Flight",
-            "description": "Requests currently in flight through the proxy."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "{count}",
-                "decimalPrecision": "0"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "ai_meter_active_requests",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendh": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Spend Rate",
-            "description": "Estimated USD/hour from the exact token counters at the current reference prices (services.ai-meter.costs). A price row that lands late restates the whole history, so a restatement never shows as a spike."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "suffix:USD/h",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "@@spendRate@@",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendtotal": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Spend (all-time)",
-            "description": "Cumulative estimated USD since the ledger began, at the current reference prices. The counter is replayed from the ledger at every ai-meter start: it survives restarts, and a price row that lands late restates all earlier usage."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "currencyUSD",
-                "decimalPrecision": "2"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(ai_meter_cost_usd_total)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-bymodel": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Requests by Model \u00d7 Code",
-            "description": "Per-model request rate split by HTTP status \u2014 the 429 lines are upstream billing/rate rejections."
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "reqpm",
-                "decimalPrecision": "1"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum by (model, code) (rate(ai_meter_requests_total[5m])) * 60",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{model}} {{code}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-bycode": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Failures by Code",
-            "description": "Non-2xx request rate by HTTP status code."
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "reqpm",
-                "decimalPrecision": "1"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum by (code) (rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{code}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-tokens": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Tokens by Kind",
-            "description": "Token throughput; 'cached' is a subset of 'prompt'."
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "count:tokens/min",
-                "decimalPrecision": "0"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum by (kind) (rate(ai_meter_tokens_total[5m])) * 60",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{kind}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-ttft": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Avg TTFT by Model",
-            "description": "Mean time-to-first-token for streaming calls (sum/count over 5m)."
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "s",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum by (model) (rate(ai_meter_ttft_seconds_sum[5m])) / clamp_min(sum by (model) (rate(ai_meter_ttft_seconds_count[5m])), 1e-9)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{model}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendmodel": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Spend Rate by Model",
-            "description": "Estimated USD/hour per model from the exact token counters at the current reference prices; only priced models appear. A price row that lands late restates the whole history."
-          },
-          "plugin": {
-            "kind": "signoz/TimeSeriesPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time",
-                "fillSpans": false
-              },
-              "formatting": {
-                "unit": "suffix:USD/h",
-                "decimalPrecision": "2"
-              },
-              "chartAppearance": {
-                "lineInterpolation": "spline",
-                "showPoints": false,
-                "lineStyle": "solid",
-                "fillMode": "none",
-                "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
-                }
-              },
-              "axes": {
-                "softMin": 0,
-                "softMax": 0,
-                "isLogScale": false
-              },
-              "legend": {
-                "position": "bottom",
-                "mode": "list",
-                "customColors": null
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "@@spendRateByModel@@",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": "{{model}}"
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-meteringerr": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Metering Errors",
-            "description": "Metering failures (ledger/usage parse) that did NOT fail the live call. Should stay 0."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "{count}",
-                "decimalPrecision": "0"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(ai_meter_metering_errors_total)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-unauth": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "name": "Unauthorized",
-            "description": "Rejected client authentications against the proxy. Should stay 0."
-          },
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "visualization": {
-                "timePreference": "global_time"
-              },
-              "formatting": {
-                "unit": "{count}",
-                "decimalPrecision": "0"
-              },
-              "thresholds": null
-            }
-          },
-          "queries": [
-            {
-              "kind": "time_series",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "name": "A",
-                    "query": "sum(ai_meter_unauthorized_total)",
-                    "disabled": false,
-                    "step": 0,
-                    "stats": false,
-                    "legend": ""
-                  }
-                }
-              }
-            }
-          ],
-          "links": []
-        }
-      }
-    },
+    "duration": "",
     "layouts": [
       {
         "kind": "Grid",
         "spec": {
           "items": [
             {
-              "x": 0,
-              "y": 0,
-              "width": 2,
-              "height": 4,
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-success"
-              }
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
             },
             {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-table"
+              },
+              "height": 5,
+              "width": 10,
               "x": 2,
-              "y": 0,
-              "width": 2,
-              "height": 4,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-provider"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 0,
+              "y": 5
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-model"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 6,
+              "y": 5
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-client"
+              },
+              "height": 5,
+              "width": 12,
+              "x": 0,
+              "y": 11
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Traffic"
+          },
+          "items": [
+            {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-reqmin"
-              }
+              },
+              "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
             },
             {
-              "x": 4,
-              "y": 0,
-              "width": 2,
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-success"
+              },
               "height": 4,
+              "width": 2,
+              "x": 2,
+              "y": 0
+            },
+            {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-errmin"
-              }
+              },
+              "height": 4,
+              "width": 2,
+              "x": 4,
+              "y": 0
             },
             {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-up"
+              },
+              "height": 4,
+              "width": 2,
               "x": 6,
-              "y": 0,
-              "width": 2,
-              "height": 4,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-active"
-              }
+              "y": 0
             },
             {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-uptime"
+              },
+              "height": 4,
+              "width": 2,
               "x": 8,
-              "y": 0,
-              "width": 2,
-              "height": 4,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendh"
-              }
+              "y": 0
             },
             {
-              "x": 10,
-              "y": 0,
-              "width": 2,
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-req-provider"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-req-model-code"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 6,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-fail-code"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 0,
+              "y": 9
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-errrate-provider"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 6,
+              "y": 9
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Tokens & spend"
+          },
+          "items": [
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-tokmin"
+              },
               "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-cachehit"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 2,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 4,
+              "y": 0
+            },
+            {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendtotal"
-              }
-            },
-            {
-              "x": 0,
-              "y": 4,
-              "width": 6,
-              "height": 5,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-bymodel"
-              }
-            },
-            {
+              },
+              "height": 4,
+              "width": 2,
               "x": 6,
-              "y": 4,
-              "width": 6,
-              "height": 5,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-bycode"
-              }
+              "y": 0
             },
             {
-              "x": 0,
-              "y": 9,
-              "width": 6,
-              "height": 5,
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-tokens"
-              }
-            },
-            {
-              "x": 6,
-              "y": 9,
-              "width": 6,
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate-model"
+              },
               "height": 5,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-ttft"
-              }
-            },
-            {
-              "x": 0,
-              "y": 14,
               "width": 8,
-              "height": 5,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendmodel"
-              }
+              "x": 0,
+              "y": 4
             },
             {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-tok-kind"
+              },
+              "height": 5,
+              "width": 4,
               "x": 8,
-              "y": 14,
-              "width": 2,
-              "height": 5,
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-meteringerr"
-              }
+              "y": 4
             },
             {
-              "x": 10,
-              "y": 14,
-              "width": 2,
-              "height": 5,
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-unauth"
-              }
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-models-table"
+              },
+              "height": 7,
+              "width": 12,
+              "x": 0,
+              "y": 9
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Latency"
+          },
+          "items": [
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-ttft"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-duration"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 2,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-ttft-model"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-duration-model"
+              },
+              "height": 5,
+              "width": 6,
+              "x": 6,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-speed-model"
+              },
+              "height": 5,
+              "width": 12,
+              "x": 0,
+              "y": 9
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Health"
+          },
+          "items": [
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-restarts"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-metering"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 2,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-unauthorized"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 4,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-span-fail"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 6,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-trace-cover"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 8,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-span-outcome"
+              },
+              "height": 5,
+              "width": 12,
+              "x": 0,
+              "y": 4
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Admission (z.ai rate limit)"
+          },
+          "items": [
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-quota"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 0,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 2,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-state"
+              },
+              "height": 5,
+              "width": 8,
+              "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-outcomes"
+              },
+              "height": 5,
+              "width": 4,
+              "x": 8,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-table"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 0,
+              "y": 9
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-wait"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 6,
+              "y": 9
             }
           ]
         }
       }
     ],
-    "refreshInterval": "5m",
-    "links": []
+    "links": [],
+    "panels": {
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls the proxy could not get through: the retry budget ran out, the wait timed out, or the quota was spent. The client received an error.",
+            "name": "Calls Lost to Admission (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 0
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_admission_outcomes_total{outcome=~\"gave_up|timeout|circuit\"}[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-outcomes": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "How calls to a throttled upstream left the proxy: admitted (sent once), absorbed (a rate-limit rejection was retried and answered), gave_up, timeout, circuit, cancelled.",
+            "name": "Admission Outcomes (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/PieChartPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "visualization": {
+                "timePreference": "last_1_day"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "Q",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "aggregations": [
+                      {
+                        "metricName": "ai_meter_admission_outcomes_total",
+                        "reduceTo": "sum",
+                        "spaceAggregation": "sum",
+                        "temporality": "",
+                        "timeAggregation": "increase"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "outcome",
+                        "signal": ""
+                      }
+                    ],
+                    "legend": "{{outcome}}",
+                    "name": "A",
+                    "signal": "metrics",
+                    "source": "",
+                    "stepInterval": 300
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-state": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Per throttled upstream: calls sent (in flight), calls queued for room (waiting), and the concurrency the proxy currently allows (limit). The limit drops by one per rate-limit rejection and grows back after a quiet half minute.",
+            "name": "Admission: In Flight, Waiting, Limit"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{role}} ({{upstream}})",
+                    "name": "A",
+                    "query": "label_replace(ai_meter_admission_inflight, \"role\", \"in flight\", \"\", \"\") or label_replace(ai_meter_admission_waiting, \"role\", \"waiting\", \"\", \"\") or label_replace(ai_meter_admission_limit, \"role\", \"limit\", \"\", \"\")",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-wait": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean seconds a call spent queued for upstream room.",
+            "name": "Avg Admission Wait"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "s"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{upstream}}",
+                    "name": "A",
+                    "query": "sum by (upstream) (rate(ai_meter_admission_wait_seconds_sum[15m])) / sum by (upstream) (rate(ai_meter_admission_wait_seconds_count[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-duration": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean wall time of a completed call over the last 15 minutes, streaming and not.",
+            "name": "Avg Duration"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "s"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_request_seconds_sum[15m])) / sum(rate(ai_meter_request_seconds_count[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-ttft": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean time to the first streamed byte over the last 15 minutes (streaming calls only). This is the wait a user feels before text appears.",
+            "name": "Avg TTFT"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "s"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 10
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 5
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_ttft_seconds_sum[15m])) / sum(rate(ai_meter_ttft_seconds_count[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-cachehit": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Share of prompt tokens served from the provider's prompt cache (cached is a subset of prompt). Higher is cheaper: a cached input token costs a fraction of a fresh one. Only meaningful for models with prompt caching.",
+            "name": "Cache Hit Rate"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "percent"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "100 * (sum(rate(ai_meter_tokens_total{kind=\"cached\"}[15m])) or vector(0)) / sum(rate(ai_meter_tokens_total{kind=\"prompt\"}[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-duration-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean wall time per completed call per model.",
+            "name": "Avg Duration by Model"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "s"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}}",
+                    "name": "A",
+                    "query": "sum by (model) (rate(ai_meter_request_seconds_sum[5m])) / sum by (model) (rate(ai_meter_request_seconds_count[5m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-errmin": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute that did not return 200: upstream 429s, 5xx, timeouts and client cancellations. Orange past 2/min, red past 10/min.",
+            "name": "Non-2xx / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 10
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 2
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60 or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-errrate-provider": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Share of a provider's calls that did not return 200. This is the panel that names which upstream is failing while the overall success rate drops.",
+            "name": "Error Rate by Provider"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "percent"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": [
+                {
+                  "color": "#F5B225",
+                  "label": "10%",
+                  "unit": "",
+                  "value": 10
+                }
+              ],
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{upstream}}",
+                    "name": "A",
+                    "query": "100 * (sum by (upstream) (rate(ai_meter_requests_total{code!=\"200\"}[5m])) or (sum by (upstream) (rate(ai_meter_requests_total[5m])) * 0)) / sum by (upstream) (rate(ai_meter_requests_total[5m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-fail-code": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Non-200 calls per minute by HTTP status.",
+            "name": "Failures by Code"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{code}}",
+                    "name": "A",
+                    "query": "sum by (code) (rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls inside the proxy right now, all providers. In flight means the client is waiting on ai-meter; it says nothing about whether the upstream is throttling (see Admission).",
+            "name": "In Flight"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(ai_meter_active_requests) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-client": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Concurrent calls per client (the service holding the key) over time. One client hogging the upstream is visible here first.",
+            "name": "In Flight by Client"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{client}}",
+                    "name": "A",
+                    "query": "sum by (client) (ai_meter_active_requests)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Concurrent calls per model over time.",
+            "name": "In Flight by Model"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}}",
+                    "name": "A",
+                    "query": "sum by (model) (ai_meter_active_requests)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-provider": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Concurrent calls per upstream over time. A line that sits pinned at z.ai's cliff (about 6 to 9 before admission control) is the shape that produced the 429 storms.",
+            "name": "In Flight by Provider"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{upstream}}",
+                    "name": "A",
+                    "query": "sum by (upstream) (ai_meter_active_requests)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-table": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Every combination with a call in flight right now, busiest first. An empty table means nothing is waiting. `none` is a call whose request body named no model (embeddings, non-chat routes).",
+            "name": "In Flight: Provider x Model x Client"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "formatting": {
+                "columnUnits": {
+                  "A": "{count}"
+                },
+                "decimalPrecision": "0"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "Q",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "aggregations": [
+                      {
+                        "metricName": "ai_meter_active_requests",
+                        "reduceTo": "last",
+                        "spaceAggregation": "sum",
+                        "temporality": "",
+                        "timeAggregation": "latest"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "upstream",
+                        "signal": ""
+                      },
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "model",
+                        "signal": ""
+                      },
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "client",
+                        "signal": ""
+                      }
+                    ],
+                    "having": {
+                      "expression": "__result > 0"
+                    },
+                    "legend": "in flight",
+                    "name": "A",
+                    "order": [
+                      {
+                        "direction": "desc",
+                        "key": {
+                          "fieldContext": "",
+                          "fieldDataType": "",
+                          "name": "__result",
+                          "signal": ""
+                        }
+                      }
+                    ],
+                    "signal": "metrics",
+                    "source": "",
+                    "stepInterval": 60
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-metering": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls whose token usage could not be read from the response or written to the ledger. The call itself still succeeded, but its tokens and cost are missing.",
+            "name": "Metering Errors (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 0
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_metering_errors_total[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-models-table": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls, tokens and success per model over the last 24 hours, one row per model. Spend is not a column on purpose: the cost counter restates when a price row lands, so a 24-hour increase of it would report the restatement as spend (see the spend panels above).",
+            "name": "Models: Last 24 Hours"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "formatting": {
+                "columnUnits": {
+                  "A": "short",
+                  "B": "count:tokens",
+                  "C": "count:tokens",
+                  "D": "count:tokens",
+                  "F": "percent"
+                },
+                "decimalPrecision": "1"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "last_1_day"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "Q",
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
+                              "metricName": "ai_meter_requests_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": ""
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "calls",
+                          "name": "A",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 300
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
+                              "metricName": "ai_meter_tokens_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "kind = \"prompt\""
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "prompt tokens",
+                          "name": "B",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 300
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
+                              "metricName": "ai_meter_tokens_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "kind = \"cached\""
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "cached tokens",
+                          "name": "C",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 300
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
+                              "metricName": "ai_meter_tokens_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "kind = \"completion\""
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "output tokens",
+                          "name": "D",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 300
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
+                              "metricName": "ai_meter_requests_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "code = \"200\""
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "",
+                          "name": "E",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 300
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "disabled": false,
+                          "expression": "(E / A) * 100",
+                          "functions": null,
+                          "legend": "success",
+                          "name": "F",
+                          "order": null
+                        },
+                        "type": "builder_formula"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-quota": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "True while z.ai reports a spent usage window: the proxy sends nothing until the reset time the answer named.",
+            "name": "Quota Exhausted"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "bool"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 1
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "max(ai_meter_quota_exhausted) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-table": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "HTTP 429 answers from throttled upstreams by business code: rate_limit (too much at once; retried within the budget) or quota (a usage window is spent).",
+            "name": "Upstream Rejections: Last 24 Hours"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TablePanel",
+            "spec": {
+              "formatting": {
+                "columnUnits": {
+                  "A": "{count}"
+                },
+                "decimalPrecision": "0"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "last_1_day"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "Q",
+                "plugin": {
+                  "kind": "signoz/BuilderQuery",
+                  "spec": {
+                    "aggregations": [
+                      {
+                        "metricName": "ai_meter_upstream_rejections_total",
+                        "reduceTo": "sum",
+                        "spaceAggregation": "sum",
+                        "temporality": "",
+                        "timeAggregation": "increase"
+                      }
+                    ],
+                    "disabled": false,
+                    "filter": {
+                      "expression": ""
+                    },
+                    "groupBy": [
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "kind",
+                        "signal": ""
+                      },
+                      {
+                        "fieldContext": "attribute",
+                        "fieldDataType": "string",
+                        "name": "code",
+                        "signal": ""
+                      }
+                    ],
+                    "legend": "",
+                    "name": "A",
+                    "order": [
+                      {
+                        "direction": "desc",
+                        "key": {
+                          "fieldContext": "",
+                          "fieldDataType": "",
+                          "name": "__result",
+                          "signal": ""
+                        }
+                      }
+                    ],
+                    "signal": "metrics",
+                    "source": "",
+                    "stepInterval": 300
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-req-model-code": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute per model, split by HTTP status. A 429 line rising under a model means that upstream is throttling it.",
+            "name": "Requests by Model x Code"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}} {{code}}",
+                    "name": "A",
+                    "query": "sum by (model, code) (rate(ai_meter_requests_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-req-provider": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute per upstream.",
+            "name": "Requests by Provider"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{upstream}}",
+                    "name": "A",
+                    "query": "sum by (upstream) (rate(ai_meter_requests_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-reqmin": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Completed AI calls per minute over the last 5 minutes.",
+            "name": "Requests / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_requests_total[5m])) * 60 or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-restarts": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "How often the proxy process started in the last 24 hours. Every deploy restarts it and every start resets the counters; a count that climbs without a deploy is a crash loop.",
+            "name": "Starts (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(changes(ai_meter_start_time_seconds[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-span-fail": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls whose trace span never reached SigNoz (the OTLP endpoint rejected it or the export queue dropped it). Those calls are metered but invisible in the trace explorer.",
+            "name": "Span Export Failures (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 0
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_spans_exported_total{outcome!=\"ok\"}[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-span-outcome": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Spans per minute by how handing them to SigNoz went: ok, failed, dropped.",
+            "name": "Span Export by Outcome"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "cpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{outcome}}",
+                    "name": "A",
+                    "query": "sum by (outcome) (rate(ai_meter_spans_exported_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-speed-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Completion tokens per second of generation: output tokens divided by (wall time minus time to first byte). Generation speed of the model behind the provider, independent of queueing.",
+            "name": "Output Speed by Model"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens/s"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}}",
+                    "name": "A",
+                    "query": "sum by (model) (rate(ai_meter_tokens_total{kind=\"completion\"}[15m])) / (sum by (model) (rate(ai_meter_request_seconds_sum[15m])) - sum by (model) (rate(ai_meter_ttft_seconds_sum[15m]))) > 0",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Reference cost per hour: tokens x the price table in services.ai-meter.costs, computed at query time so a late price row restates the whole history. What the traffic WOULD cost pay-as-you-go, not what the coding plan bills.",
+            "name": "Spend Rate"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "4",
+                "unit": "suffix:USD/h"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "@@spendRate@@",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Reference cost per hour per priced model.",
+            "name": "Spend Rate by Model"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "4",
+                "unit": "suffix:USD/h"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}}",
+                    "name": "A",
+                    "query": "@@spendRateByModel@@",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendtotal": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Reference cost since the ledger began, at today's price table. The proxy replays the ledger at every start, so a price change reaches this number from the next start on; unpriced models count as 0.",
+            "name": "Spend (all-time)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "currencyUSD"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(ai_meter_cost_usd_total)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-success": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Share of routed AI calls returning 2xx. Dropped to ~7% during the 2026-10-17 Z.ai 1113 balance outage - this panel + the failure-rate rule exist to catch that class within minutes. Empty while no call is in the window.",
+            "name": "Success Rate (5m)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "percent"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "below",
+                  "unit": "",
+                  "value": 90
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "below",
+                  "unit": "",
+                  "value": 98
+                },
+                {
+                  "color": "#2BB673",
+                  "format": "text",
+                  "operator": "above_or_equal",
+                  "unit": "",
+                  "value": 98
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "100 * (sum(rate(ai_meter_requests_total{code=\"200\"}[5m])) or vector(0)) / sum(rate(ai_meter_requests_total[5m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-tok-kind": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Tokens per minute. cached is a subset of prompt (the part served from the provider's prompt cache).",
+            "name": "Tokens by Kind"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens/min"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{kind}}",
+                    "name": "A",
+                    "query": "sum by (kind) (rate(ai_meter_tokens_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-tokmin": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "All tokens per minute over the last 5 minutes: prompt, cached and completion.",
+            "name": "Tokens / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens/min"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_tokens_total[5m])) * 60 or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-trace-cover": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Share of completed calls whose span is in SigNoz.",
+            "name": "Traced Calls (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "percent"
+              },
+              "thresholds": [
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "below",
+                  "unit": "",
+                  "value": 99
+                },
+                {
+                  "color": "#2BB673",
+                  "format": "text",
+                  "operator": "above_or_equal",
+                  "unit": "",
+                  "value": 99
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "100 * (sum(increase(ai_meter_spans_exported_total{outcome=\"ok\"}[24h])) or vector(0)) / sum(increase(ai_meter_requests_total[24h]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-ttft-model": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean time to first streamed byte per model.",
+            "name": "Avg TTFT by Model"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "s"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{model}}",
+                    "name": "A",
+                    "query": "sum by (model) (rate(ai_meter_ttft_seconds_sum[5m])) / sum by (model) (rate(ai_meter_ttft_seconds_count[5m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-unauthorized": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls rejected before any upstream was contacted: unknown client key.",
+            "name": "Unauthorized (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "{count}"
+              },
+              "thresholds": [
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 0
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_unauthorized_total[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-up": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "True while SigNoz scrapes the proxy's metrics endpoint. False means the proxy is down or the scrape is broken, and every other panel is stale.",
+            "name": "Reachable"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "bool"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "below",
+                  "unit": "",
+                  "value": 1
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "count(ai_meter_start_time_seconds) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-uptime": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Time since the proxy last started. Every counter below restarts here, so a short uptime explains a small all-time spend.",
+            "name": "Process Uptime"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "s"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "time() - max(ai_meter_start_time_seconds)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "refreshInterval": "1m",
+    "variables": []
   }
 }
