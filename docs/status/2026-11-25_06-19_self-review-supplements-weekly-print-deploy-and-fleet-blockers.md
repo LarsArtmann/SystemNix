@@ -5,6 +5,8 @@
 **Outcome:** LIVE on evo-x2 as gen-1030; first fire Mon 2026-11-30 00:00 CET (verified via busctl epoch 1795993200).
 **HEAD at report time:** 07b83e5a1 (a sibling's plan landed after my last push dc4a8ee69; my push origin/master is current, 0 unpushed).
 
+> **[ANNOTATED 2026-11-25 18:10 (library-policy vendorHash fix session):]** the "LIVE as gen-1030" outcome below held only until 08:57, and item 8's boot half never landed. ESP state read with sudo at 11:13 on BOTH `/boot` and `/boot-mirror`: newest entry is still `Generation 1029` (`nixos-90cc59d1...a7fd.conf`), `loader.conf` `preferred` still names it, both mtimes 11-24 23:33:54, zero entries carrying gen-1030. The sudo journal shows the two `switch-to-configuration boot` runs for `hggzirywc8` at 05:27:16 and 05:27:36 closing their sessions within the same second, while the 04:59 deploy's own activation still ran (05:09 to 06:09); they wrote nothing. The profile half (05:27:16 `nix build --profile`) is real. The 08:57 watchdog reset booted gen-1029 and so did the 11:05 reset: this wave is INERT again until the re-deploy (TODO_LIST row "Re-deploy after the crash revert"). Evidence and the deploy.sh fix: docs/status/2026-11-25_11-20_library-policy-vendorhash-fixed-gen1030-never-bootable-crash-revert.md
+
 ---
 
 ## a) FULLY DONE

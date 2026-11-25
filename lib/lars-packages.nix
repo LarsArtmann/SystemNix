@@ -369,16 +369,18 @@ lib.filterAttrs (_: v: v != null) {
   # 2026-11-24 nixpkgs-root float — NEW shim, got /OE8Z7by (first-hand
   # keep-going, ~/.cache/gtd-pipeline/toplevel-build3.log). Drop when
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
-  invoices = flakePkgShim inputs.invoices "default"
-    "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8=";
+  invoices =
+    flakePkgShim inputs.invoices "default"
+      "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8=";
   # io-surface: the I/O surface manifest gate CLI (init/check/render/lint;
   # fleet I/O-BOM gate, InboxClean pilot consumer). NON-FOLLOWER input (own
   # nixpkgs lock, no follows): upstream-baked vendorHash staled under the
   # 2026-11-24 nixpkgs-root float — NEW shim, got fOoBboJ3 (first-hand
   # keep-going, toplevel-build3.log). Drop when upstream bakes the got
   # hash; re-add ONLY via nix-hash-fix evidence.
-  io-surface = flakePkgShim inputs.io-surface "default"
-    "sha256-fOoBboJ31UtDUrC8fGyURsIUfwR0wEoLLMtuL59Dork=";
+  io-surface =
+    flakePkgShim inputs.io-surface "default"
+      "sha256-fOoBboJ31UtDUrC8fGyURsIUfwR0wEoLLMtuL59Dork=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -633,8 +635,9 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-24 nixpkgs-root float wave — NEW shim: spec
   # +YuAxieZ, got kEd17MIY (first-hand keep-going, toplevel-build3.log).
   # Drop when upstream bakes the got hash.
-  project-discovery-daemon = flakePkgShim inputs.project-discovery-daemon "default"
-    "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY=";
+  project-discovery-daemon =
+    flakePkgShim inputs.project-discovery-daemon "default"
+      "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim

@@ -1455,11 +1455,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795479445,
-        "narHash": "sha256-JVUcHm4QQoP0T7e3ZpmUZB5VDfFg6pOLKFM03jrGtwI=",
+        "lastModified": 1795591562,
+        "narHash": "sha256-w8E+mQryepGyfPKb0eZb+aDePA4YJQryHeksikPlhxg=",
         "owner": "Artmann-Technologies",
         "repo": "docs-gates",
-        "rev": "7a2d69b63a3f70d0449bdeb4da3c9b138786a968",
+        "rev": "bfdefbaf73d668fd4b2aab787ddecee7dc046d56",
         "type": "github"
       },
       "original": {
@@ -8661,11 +8661,11 @@
         "templ-components": "templ-components_7"
       },
       "locked": {
-        "lastModified": 1795569036,
-        "narHash": "sha256-gfBCDrhcXQKZrnGkxTzZx09TiMQV+b7r9xyl8ceBuxA=",
+        "lastModified": 1795630644,
+        "narHash": "sha256-vKQwTzK/QVhYHGkixMeJyJDpLb1nwBrPC4UDbGh6h64=",
         "ref": "refs/heads/master",
-        "rev": "a60fda4b5fc3f952ffe7db833e3576bd64fa5ac9",
-        "revCount": 1532,
+        "rev": "bd43823cdcc1d2cc882aba69043fda0c126e0523",
+        "revCount": 1540,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -9525,11 +9525,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795564799,
-        "narHash": "sha256-COuTNw2mveV9TV1TUvjN3FT0X8fCCxUBQLFesF6RCuM=",
+        "lastModified": 1795630130,
+        "narHash": "sha256-AS7C8GO8EKTbqCU1ddhYtUGZRcHPiph3biX2Ah/rMHI=",
         "owner": "LarsArtmann",
         "repo": "nixos-modules",
-        "rev": "05b69174745545173ad7747b34a8761f57a751c9",
+        "rev": "79ea7f3ccfd8bae60fb2763072c74700b26b5443",
         "type": "github"
       },
       "original": {
