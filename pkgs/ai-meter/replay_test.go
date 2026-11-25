@@ -156,6 +156,22 @@ null
 	}
 }
 
+// The replay reads only what the ledger held when it began: a call recorded
+// after that moment is folded in live by the request path, and reading it a
+// second time here would count it twice.
+func TestReplayCostsReadsOnlyTheLedgerAsItStood(t *testing.T) {
+	call := `{"time":"t","client":"crush","upstream":"zai","model":"m","status":200,"prompt_tokens":100,"completion_tokens":50,"cached_tokens":20}` + "\n"
+	ledger := call + call + call
+	// The replay began once two calls were recorded; the third landed after.
+	summary, err := replayCosts(io.LimitReader(strings.NewReader(ledger), int64(len(call)*2)), &Config{}, NewRegistry())
+	if err != nil {
+		t.Fatalf("replay: %v", err)
+	}
+	if summary.Calls != 2 {
+		t.Fatalf("replayed %d calls, want the 2 the ledger held when the replay began", summary.Calls)
+	}
+}
+
 func TestOpenLedgerTerminatesATornTailLine(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "usage.jsonl")

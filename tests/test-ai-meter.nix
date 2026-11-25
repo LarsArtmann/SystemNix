@@ -310,6 +310,9 @@ in
         machine.systemctl("restart ai-meter.service")
         machine.wait_for_unit("ai-meter.service")
         machine.wait_for_open_port(8108)
+        # The replay runs alongside serving, so the cost series can land a
+        # moment after the port opens.
+        machine.succeed("timeout 20 sh -c 'until curl -sf http://127.0.0.1:8108/metrics | grep -q ai_meter_cost_usd_total.; do sleep 0.1; done'")
         metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
         # No call has been made since the restart, yet both earlier calls have
         # a cost series; the restart-reset families are still empty.
@@ -324,12 +327,14 @@ in
         )
         machine.wait_for_unit("ai-meter-priced.service")
         machine.wait_for_open_port(8108)
+        machine.succeed("timeout 20 sh -c 'until curl -sf http://127.0.0.1:8108/metrics | grep -q ai_meter_cost_usd_total.; do sleep 0.1; done'")
         metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
         assert abs(cost_of(metrics, "fake") - 0.00037) < 1e-12, metrics
 
         # A second start at the same price must not count the call twice...
         machine.systemctl("restart ai-meter-priced.service")
         machine.wait_for_open_port(8108)
+        machine.succeed("timeout 20 sh -c 'until curl -sf http://127.0.0.1:8108/metrics | grep -q ai_meter_cost_usd_total.; do sleep 0.1; done'")
         metrics = machine.succeed("curl -sf http://127.0.0.1:8108/metrics")
         assert abs(cost_of(metrics, "fake") - 0.00037) < 1e-12, metrics
 

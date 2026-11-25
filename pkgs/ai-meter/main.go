@@ -65,7 +65,9 @@ func run(configPath string, logger *slog.Logger) error {
 	}()
 
 	registry := NewRegistry()
-	seedCostCounter(cfg, ledger, registry, logger)
+	// Replayed alongside serving, never ahead of it: the ledger's size must
+	// not decide how long routed calls fail after a restart.
+	go seedCostCounter(cfg, ledger, registry, logger)
 
 	var proxyOpts []ProxyOption
 	if cfg.OTLPEndpoint != "" {

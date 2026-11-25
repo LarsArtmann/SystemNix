@@ -33,9 +33,19 @@ func (l *Ledger) ReplayCosts(cfg *Config, registry *Registry) (ReplaySummary, er
 		return ReplaySummary{}, err
 	}
 	defer func() { _ = file.Close() }()
+	info, err := file.Stat()
+	if err != nil {
+		return ReplaySummary{}, err
+	}
+	// Only what the ledger held when the replay began. Calls appended after
+	// that moment are folded in live by the request path; reading them here
+	// as well would count them twice.
+	return replayCosts(io.LimitReader(file, info.Size()), cfg, registry)
+}
 
+func replayCosts(input io.Reader, cfg *Config, registry *Registry) (ReplaySummary, error) {
 	var summary ReplaySummary
-	reader := bufio.NewReaderSize(file, 64*1024)
+	reader := bufio.NewReaderSize(input, 64*1024)
 	for {
 		line, err := reader.ReadBytes('\n')
 		if len(bytes.TrimSpace(line)) > 0 {
@@ -63,10 +73,12 @@ func (l *Ledger) ReplayCosts(cfg *Config, registry *Registry) (ReplaySummary, er
 	return summary, nil
 }
 
-// seedCostCounter primes the cost counter from the ledger before any traffic
-// is served. It must never keep the proxy from starting: every failure is
-// counted and logged, and the proxy then runs with a cost counter that
-// begins at zero for this process.
+// seedCostCounter primes the cost counter from the ledger while the proxy is
+// already serving: the ledger grows without bound, and its size must never
+// lengthen the window in which routed calls fail. Until the pass ends the
+// cost counter reads low by the replayed amount, which no rate panel or
+// alert consumes. It must never fail the proxy: every error is counted and
+// logged, and the proxy then runs with a cost counter that begins at zero.
 func seedCostCounter(cfg *Config, ledger *Ledger, registry *Registry, logger *slog.Logger) {
 	started := time.Now()
 	summary, err := ledger.ReplayCosts(cfg, registry)
