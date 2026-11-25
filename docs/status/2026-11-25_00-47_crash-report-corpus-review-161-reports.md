@@ -178,8 +178,8 @@ unidentified actor; 11 a forced deploy; 8 a lost evidence bundle.
 | ------------------------------------- | --------------------------- | ---- | -------- |
 | 2026-05-04 → 08-18 (before numbering) | 24                          | 106  | 0.23/day |
 | 08-22 → 09-30                         | 3 numbered + 4 un-numbered  | 40   | 0.18/day |
-| October                               | 29 numbered + 4 un-numbered | 31   | 1.06/day |
-| 11-01 → 11-24                         | 26 numbered                 | 24   | 1.08/day |
+| October                               | 30 numbered + 4 un-numbered | 31   | 1.10/day |
+| 11-01 → 11-24                         | 25 numbered                 | 24   | 1.04/day |
 
 The step is on 2026-10-01: the thermal ceiling appears in the record (the #8 bullet's
 supersession note dates it to 2026-09-27) and the rate goes from 0.18 to about 1.07 per day.

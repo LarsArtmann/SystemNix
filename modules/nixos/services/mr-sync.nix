@@ -30,8 +30,9 @@
 #     degrades gracefully (FetchError banner, data filled from .mrconfig +
 #     local scan only — verified in dashboard_data.go fillFromMrconfig).
 #   - Data collection is cached (60s TTL, 5s on fetch errors, single-flight)
-#     — the Gatus probe interval is sized so probes usually hit the cache
-#     instead of re-paying a full repo walk on the QLC NVMe.
+#     and rebuilt synchronously by any page or API route on a cache miss,
+#     so the Gatus check probes the one route that never touches the
+#     collector (/favicon.ico), see the check below.
 { inputs, ... }: {
   flake.nixosModules.mr-sync =
     {
@@ -149,25 +150,38 @@
             vHost.layer = "protected";
             checks = [
               {
-                # Liveness + functional pair: 200 AND the page actually
-                # renders HTML (a wedged/half-dead server fails the body pat).
+                # Liveness on the one route that never touches the data
+                # collector. `/` and every /api/* route rebuild the whole
+                # portfolio synchronously on a cache miss (60s TTL,
+                # single-flight; git subprocesses across ~/projects +
+                # ~/forks on the QLC): about 25s live (2026-11-17), 53s
+                # under io PSI ~44% (2026-11-25 01:03). Upstream's
+                # http.Server ReadTimeout (15s) cancels such a request's
+                # context, so the server answers a degraded page at 15.0x s
+                # or, past its 30s WriteTimeout, nothing at all. The former
+                # `/` probe ([RESPONSE_TIME] < 15000, 20s timeout) sat
+                # exactly on that cutoff and paged "down" 12x between
+                # 2026-11-17 and 2026-11-24 (mostly overnight and in IO
+                # storms) while the process was healthy. /favicon.ico
+                # serves the embedded SVG: 4ms under that same storm. The
+                # slow rebuild itself is upstream work (serve stale +
+                # background rebuild, docs/todo/services.md).
                 name = "mr-sync Dashboard";
                 group = "Development";
-                path = "/";
-                # 5m so probes usually ride the 60s data cache set by the
-                # user's own browsing instead of re-paying the full
-                # computeDirSize walk over ~/projects + ~/forks.
+                path = "/favicon.ico";
+                # 5m stays on purpose: a deploy can stop this unit for
+                # minutes (3m03s on 2026-11-24) and a faster cadence would
+                # read that gap as three consecutive failures.
                 interval = "5m";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*<html*)"
-                  # Cold collects du-walk every repo — generous bound, still
-                  # catches a wedged process. Must stay under the client
-                  # timeout below.
-                  "[RESPONSE_TIME] < 15000"
+                  "[BODY] == pat(*<svg*)"
+                  # No disk or network on this route, so the bound is tight.
+                  # Must stay under the client timeout below.
+                  "[RESPONSE_TIME] < 2000"
                 ];
                 client = {
-                  timeout = "20s";
+                  timeout = "5s";
                 };
                 alert = "mr-sync dashboard down — the repo portfolio at mr-sync.home.lan is unreachable. Check: systemctl status mr-sync-dashboard, journalctl -u mr-sync-dashboard -n 100.";
               }
