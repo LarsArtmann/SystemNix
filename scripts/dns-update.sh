@@ -535,6 +535,11 @@ in
       url = hagezi "dnsmasq/missing.txt";
       hash = "sha256-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=";
     }
+    {
+      name = "StevenBlack-everything";
+      url = "https://raw.githubusercontent.com/StevenBlack/hosts/${commit}/alternates/fakenews-gambling-porn-social/hosts";
+      hash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=";
+    }
   ];
 }
 NIX
@@ -589,6 +594,19 @@ NIX
     ok "the default mode advances the StevenBlack pin and re-hashes"
   else
     bad "the default mode did not land: $(tail -3 "$tmp/flow-advance.log" | tr '\n' ' ')"
+  fi
+
+  # The same mode with one unreachable list moves nothing: the pin advance
+  # used to be written to the tree before a single hash was checked.
+  cp "$tmp/pristine-gone.nix" "$fixture"
+  if run_flow advance >"$tmp/flow-advance-fail.log" 2>&1 \
+    || grep -q 'could not extract current StevenBlack' "$tmp/flow-advance-fail.log" \
+    || ! grep -q 'FAILED (nix-prefetch-url)' "$tmp/flow-advance-fail.log"; then
+    bad "the default mode succeeded with an unreachable list"
+  elif cmp -s "$tmp/pristine-gone.nix" "$fixture"; then
+    ok "the default mode with an unreachable list leaves the pin and the file untouched"
+  else
+    bad "a failed default-mode run changed the file"
   fi
 
   # The published file keeps the mode of the file it replaced.
