@@ -628,7 +628,7 @@ _: {
             done
           fi
           if [ -n "$churn_drift" ] && should_log_verbose "$DRIFT_LOG_EPOCH_FILE"; then
-            echo "GUARD CHURN-LIST DRIFT: ioChurnUnits entries that do not exist on the running system — their stop is a silent NO-OP:''${churn_drift}. The baked list has drifted from the system (rename, rename-away, or a stray attrname): fix the ioChurnUnits declaration or the unit names. (Distinct prefix on purpose: emergency-action greps must not match a standing drift warning.)" >&2
+            echo "GUARD CHURN-LIST DRIFT: ioChurnUnits entries that do not exist on the running system, their own stop is skipped (one call per unit since 2026-11-26; before that a single missing name made the combined stop a silent NO-OP for the WHOLE list):''${churn_drift}. The baked list has drifted from the system (rename, rename-away, or a stray attrname): fix the ioChurnUnits declaration or the unit names. (Distinct prefix on purpose: emergency-action greps must not match a standing drift warning.)" >&2
           fi
 
           # DESIGN — Zone-6 action split (plan 2026-10-28 SUPERB §M2/F6,
