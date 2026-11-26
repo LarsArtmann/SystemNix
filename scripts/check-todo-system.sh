@@ -68,7 +68,7 @@ TODO="$REPO_ROOT/TODO_LIST.md"
 SCAN_TARGET="$TODO"
 fail=0
 # Open-row cap of the queue (ratchet, note 7 above). Lower it with --ratchet-down only.
-BACKLOG_MAX_OPEN=3558
+BACKLOG_MAX_OPEN=3555
 
 check() {
   local desc="$1" pattern="$2"
