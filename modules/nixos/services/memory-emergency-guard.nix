@@ -252,21 +252,21 @@ _: {
           # churn units exist) every churn stop was a silent no-op; in
           # production one retired unit name would have disarmed the whole
           # list. A dead name must cost only itself.
-          stop_units() { # <unit>... — best effort, never fails
+          stop_units() { # <unit>..., best effort, never fails
             local u
             for u in "$@"; do
               systemctl stop "$u" 2>/dev/null || true
             done
           }
 
-          start_units() { # <unit>... — blocking start, best effort, never fails
+          start_units() { # <unit>..., blocking start, best effort, never fails
             local u
             for u in "$@"; do
               systemctl start "$u" 2>/dev/null || true
             done
           }
 
-          reset_failed_units() { # <unit>... — best effort, never fails
+          reset_failed_units() { # <unit>..., best effort, never fails
             local u
             for u in "$@"; do
               systemctl reset-failed "$u" 2>/dev/null || true
@@ -279,7 +279,7 @@ _: {
           # (measured: 300 s in the VM fixture; a btrbk send runs for hours),
           # parking this script and its IO-PAUSE / calm-resume code until
           # TimeoutStartSec kills it.
-          start_units_no_block() { # <unit>... — best effort, never fails
+          start_units_no_block() { # <unit>..., best effort, never fails
             local u
             for u in "$@"; do
               systemctl start --no-block "$u" 2>/dev/null || true
@@ -829,10 +829,17 @@ _: {
               io_movers=""
               io_top=""
               io_sample_status="unavailable"
+              # find exits 1 when a cgroup vanishes mid-walk (transient units
+              # and sessions end constantly on this box): the walk still
+              # completed. Same acceptance rule as the process scan below:
+              # rc <= 1 is a completed walk, only a timeout or a usage error
+              # leaves the evidence missing (the emptiness check follows).
               if [ -d "$CGROUP_IO_SRC" ]; then
                 cg_a=$(cgroup_io_walk) && cg_a_rc=0 || cg_a_rc=$?
                 sleep "$CGROUP_SAMPLE_SECONDS"
                 cg_b=$(cgroup_io_walk) && cg_b_rc=0 || cg_b_rc=$?
+                [ "$cg_a_rc" -le 1 ] || cg_a_rc=2
+                [ "$cg_b_rc" -le 1 ] || cg_b_rc=2
                 if [ "$cg_a_rc" -eq 0 ] && [ "$cg_b_rc" -eq 0 ] && [ -n "$cg_b" ] &&
                   printf '%s\n' "$cg_a" > "''${CGROUP_IO_SNAPSHOT}.a" 2>/dev/null &&
                   printf '%s\n' "$cg_b" > "''${CGROUP_IO_SNAPSHOT}.b" 2>/dev/null; then
@@ -854,6 +861,7 @@ _: {
                       awk '{ mb = int($1 / 1048576); if (mb < 1) mb = 1; printf "%s%s +%dMB", (NR > 1 ? ", " : ""), $2, mb }' || true
                   )
                 fi
+                # and its 1 is accepted above; later code keys on 0 (ok).
                 if [ "$cg_b_rc" -eq 0 ]; then
                   printf '%s\n' "$cg_b" > "''${CGROUP_IO_SNAPSHOT}.tmp" 2>/dev/null &&
                     mv "''${CGROUP_IO_SNAPSHOT}.tmp" "$CGROUP_IO_SNAPSHOT" || true
