@@ -287,7 +287,8 @@
       checks.ai-meter-alert-promql =
         let
           rule = (builtins.fromJSON (builtins.readFile inputs.self.nixosConfigurations.evo-x2.config.environment.etc."signoz/rules/ai-upstream-failure-rate.json".source)).condition;
-          fires = "(${(lib.head rule.compositeQuery.queries).spec.query}) >= ${toString rule.target}";
+          # The rule's own comparison as a boolean: 1 where it would fire.
+          fires = "(${(lib.head rule.compositeQuery.queries).spec.query}) >= bool ${toString rule.target}";
           zai = "client=\"crush\",model=\"m\",upstream=\"zai\"";
           embed = "client=\"paperless\",model=\"bge-m3\",upstream=\"llama-embeddings\"";
           # A counter that grows by perMinute every minute, sampled 41 times.
@@ -300,9 +301,9 @@
             series = "ai_meter_requests_total{${embed},code=\"502\"}";
             values = lib.concatMapStringsSep " " (minute: toString (minute / 5)) (lib.range 0 40);
           };
-          fired = upstream: {
+          outcome = upstream: doesFire: {
             labels = "{upstream=\"${upstream}\"}";
-            value = 1;
+            value = if doesFire then 1 else 0;
           };
           test = seriesList: expected: {
             interval = "1m";
@@ -324,19 +325,22 @@
                   (linear "ai_meter_requests_total" "${zai},code=\"200\"" 20)
                   (linear "ai_meter_requests_total" "${zai},code=\"429\"" 20)
                   (linear "ai_meter_admission_outcomes_total" "${zai},outcome=\"timeout\"" 19)
-                ] [ ])
+                ] [ (outcome "zai" false) ])
                 (test [
                   (linear "ai_meter_requests_total" "${zai},code=\"200\"" 10)
                   (linear "ai_meter_requests_total" "${zai},code=\"500\"" 30)
-                ] [ (fired "zai") ])
+                ] [ (outcome "zai" true) ])
                 (test [ (linear "ai_meter_requests_total" "${zai},code=\"429\"" 40) ] [
-                  (fired "zai")
+                  (outcome "zai" true)
                 ])
-                (test [ trickling ] [ ])
+                (test [ trickling ] [ (outcome "llama-embeddings" false) ])
                 (test [
                   (linear "ai_meter_requests_total" "${zai},code=\"200\"" 40)
                   (linear "ai_meter_requests_total" "${embed},code=\"502\"" 10)
-                ] [ (fired "llama-embeddings") ])
+                ] [
+                  (outcome "llama-embeddings" true)
+                  (outcome "zai" false)
+                ])
               ];
             }
           );
