@@ -98,13 +98,10 @@
           qmd-gpu = pkgs.callPackage (root + "/pkgs/qmd-gpu.nix") {
             qmd = inputs.qmd.packages.${system}.default;
           };
-          # ai-meter — in-tree Go source (pkgs/ai-meter/), stdlib only,
-          # vendorHash = null forever (no FOD, no toolchain-skew re-hash
-          # waves). Same callPackage + src on the module side → identical
-          # store path.
-          ai-meter = pkgs.callPackage (root + "/pkgs/ai-meter.nix") {
-            src = lib.sources.cleanSource (root + "/pkgs/ai-meter");
-          };
+          # ai-meter — its own repository (github:LarsArtmann/ai-meter),
+          # consumed as a flake input. The same store path serves
+          # `nix build .#ai-meter`, the NixOS module and the VM test.
+          ai-meter = inputs.ai-meter.packages.${system}.ai-meter;
           # gatus-alert-relay — in-tree Go source (pkgs/gatus-alert-relay/),
           # stdlib only, vendorHash = null forever (ai-meter doctrine).
           # Gates gatus' Discord webhook: boot grace, SEV1 parent-incident

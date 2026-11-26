@@ -524,7 +524,7 @@
                 "ai_meter_request_seconds_sum"
                 "ai_meter_request_seconds_count"
                 # ai-meter admission wait is a client-side sum/count pair
-                # exported by the proxy itself (pkgs/ai-meter/metrics.go,
+                # exported by the proxy itself (the ai-meter repository, internal/meter/metrics.go,
                 # `admissionWait` / `admissionWaited`), not a histogram
                 # family: live :8108/metrics 2026-11-25 carries
                 # `# TYPE ai_meter_admission_wait_seconds_sum counter`.

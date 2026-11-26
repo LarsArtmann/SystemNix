@@ -594,6 +594,14 @@ in
         # mirror on the next deploy. Consumed by the desktop as a HOME
         # module (flake input `quotaboard`, desktop/quickshell.nix).
         "quotaboard"
+        # Native-since-inception (2026-11-25): extracted from this repo's
+        # pkgs/ai-meter with its history. Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # No .github/workflows in the repo, so the repo-scoped sync PAT
+        # suffices (quotaboard precedent). Phase 5 attaches the push mirror
+        # on the next deploy. Consumed for its package (flake input
+        # `ai-meter`, modules/nixos/services/ai-meter.nix).
+        "ai-meter"
         # Native-since-inception (2026-11-04): the repo was local-only
         # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
         # push-to-create, GitHub twin created PRIVATE and pushed by hand.

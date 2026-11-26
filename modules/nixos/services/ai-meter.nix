@@ -21,7 +21,7 @@
 #                      SigNoz's native AI observability (Overview +
 #                      Explorer, signoz.<domain>/ai-observability) covers
 #                      every routed model. Metadata only: prompts and
-#                      completions never leave the proxy (pkgs/ai-meter/traces.go).
+#                      completions never leave the proxy (the ai-meter repository, internal/meter/traces.go).
 #
 # Secrets doctrine:
 #   - UPSTREAM provider keys: sops-declared COPIES owned by the ai-meter
@@ -47,7 +47,8 @@
 # for ALL AI calls; Agent Router's packaging cost (no nixpkgs package,
 # func-e Envoy downloads) buys governance features this single-user host
 # does not need. This proxy is the exact-scope replacement.
-_: {
+{ inputs, ... }:
+{
   flake.nixosModules.ai-meter =
     {
       config,
@@ -69,11 +70,9 @@ _: {
       stateDir = "/var/lib/ai-meter";
       keysDir = "/run/ai-meter-keys";
 
-      # Same derivation as `nix build .#ai-meter` (identical src + pkgs file on
-      # both call sites → identical store path — the paperless-gpt doctrine).
-      pkg = pkgs.callPackage ../../../pkgs/ai-meter.nix {
-        src = lib.sources.cleanSource ../../../pkgs/ai-meter;
-      };
+      # The proxy's own repository (github:LarsArtmann/ai-meter), locked as
+      # a flake input: the same store path as `nix build .#ai-meter`.
+      pkg = inputs.ai-meter.packages.${pkgs.system}.ai-meter;
 
       primaryUser = config.users.primaryUser;
       # VM tests (test-ai-meter) enable the module on a host without
@@ -153,7 +152,7 @@ _: {
           # admission block below is how the proxy lives with that.
           base_url = "https://api.z.ai/api/coding/paas/v4";
           api_key = "${config.sops.placeholder.ai-meter-zai-key}";
-          # Admission control (pkgs/ai-meter/admission.go). z.ai names no
+          # Admission control (the ai-meter repository, internal/meter/admission.go). z.ai names no
           # concurrency number and moves it, so the proxy learns it: at
           # most max_concurrency calls in flight, the rest wait in arrival
           # order, and a "too much at once" 429 is retried by the proxy
@@ -351,7 +350,7 @@ _: {
         package = lib.mkOption {
           type = lib.types.package;
           default = pkg;
-          description = "ai-meter package (in-tree Go source, pkgs/ai-meter).";
+          description = "ai-meter package (its own repository, flake input ai-meter).";
         };
 
         port = lib.mkOption {

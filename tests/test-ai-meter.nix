@@ -25,17 +25,16 @@
 #      same binary, user and ledger with only the price table changed.
 {
   pkgs,
+  inputs,
   ...
 }:
 let
   inherit (import ../lib/default.nix pkgs.lib) ports;
 
-  # The derivation the unit runs (identical src and file at both call
-  # sites), so the restatement leg starts the real binary by hand.
-  aiMeterExe = pkgs.lib.getExe (
-    pkgs.callPackage ../pkgs/ai-meter.nix { src = pkgs.lib.sources.cleanSource ../pkgs/ai-meter; }
-  );
-  aiMeterFlakeOutput = (import ../modules/nixos/services/ai-meter.nix) { };
+  # The derivation the unit runs (the ai-meter flake input's package), so
+  # the restatement leg starts the real binary by hand.
+  aiMeterExe = pkgs.lib.getExe inputs.ai-meter.packages.${pkgs.system}.ai-meter;
+  aiMeterFlakeOutput = import ../modules/nixos/services/ai-meter.nix { inherit inputs; };
   aiMeterModule = aiMeterFlakeOutput.flake.nixosModules.ai-meter;
 
   catalogModule = (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog;

@@ -107,6 +107,20 @@
                 pkgs.systemd
               ]
               (root + "/scripts/io-psi-forensics.sh");
+          guard-sim =
+            mkApp "guard-sim"
+              "Dry-run the REAL built memory-emergency-guard script against fixture cgroups and sleeper processes in a user namespace: [test|host|--live|--guard <binary>] [scenario...] (IO-PAUSE selection: scope bystanders, service listener, pause cap, vanishing /proc entries)"
+              [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.findutils
+                pkgs.gawk
+                pkgs.gnugrep
+                pkgs.nix
+                pkgs.procps
+                pkgs.util-linux # mount, script, setsid, unshare
+              ]
+              (root + "/scripts/guard-sim.sh");
           pre-deploy-check =
             let
               # mkApp single-files scripts, but pre-deploy-check.sh

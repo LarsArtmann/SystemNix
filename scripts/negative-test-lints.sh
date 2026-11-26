@@ -1135,17 +1135,15 @@ run_case aimeter window-scaled ai-meter-spend-promql fail \
 run_case aimeter client-panel-renamed ai-meter-spend-promql fail \
   'must keep exactly one panel each' \
   'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Spend Rate by Client"/"name": "Spend Rate per Client"/'
-run_case aimeter go-formula-drifted ai-meter-spend-promql fail \
-  'ai-meter-spend-promql: EstimateCost disagrees' \
-  'sed:pkgs/ai-meter/config.go:s|cachedTokens)[[:space:]]*\*[[:space:]]*price\.CachedInput|cachedTokens) * price.Input|'
+# The Go-side mutation legs (a drifted cost formula, a neutered cost replay)
+# were removed 2026-11-26 with the extraction: the Go source is the ai-meter
+# flake input, a locked store path this harness cannot edit. The formula
+# fixture is pinned in the repository's own suite (TestEstimateCost) and run
+# from the locked input by checks.ai-meter-spend-promql; the replay is
+# asserted positively by the ai-meter-vm leg.
 run_case aimeter placeholder-dropped ai-meter-spend-promql fail \
   'each spend placeholder must occur exactly once' \
   'sed:modules/nixos/services/dashboards/ai-meter.json:s|"query": "@@spendRate@@"|"query": "vector(0)"|'
-# The replay IS the backfill (docs/services/ai-meter.md): the VM leg must
-# go red the moment the cost counter stops being seeded from the ledger.
-run_case aimeter replay-neutered ai-meter-vm fail \
-  'no cost series for upstream' \
-  'sed:pkgs/ai-meter/replay.go:s|registry.RestoreCost(call)|_ = call|'
 # SigNoz's own PromQL parser rejects the "\." escape promtool accepts, so
 # the selector must stay escape-free; a dot spelled as an escape is dead.
 run_case aimeter dot-as-escape ai-meter-spend-promql fail \

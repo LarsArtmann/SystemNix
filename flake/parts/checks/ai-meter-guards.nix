@@ -1,7 +1,8 @@
 # Equivalence guard for the ai-meter spend formulas (2026-11-25).
 #
 # WHY: the reference cost of a routed AI call is computed in TWO places. The
-# Go formula (BreakdownCost in pkgs/ai-meter/config.go; EstimateCost is its
+# Go formula (BreakdownCost in internal/meter/config.go of the ai-meter
+# input; EstimateCost is its
 # total) prices the cumulative counter, and the dashboard's spend-rate
 # queries derive it in PromQL from the token counters, so that a price row
 # which lands late restates the chart's whole history
@@ -246,11 +247,11 @@
             grep -q '@@' ${fixtureDashboard} && fail "the rendered fixture dashboard still carries a template placeholder"
 
             promtool test rules ${promqlTest} \
-              || fail "the generated PromQL disagrees with the Go cost formula (pkgs/ai-meter/config.go BreakdownCost) on the 900/180/450 at 2/0.5/4 fixture"
+              || fail "the generated PromQL disagrees with the Go cost formula (internal/meter/config.go BreakdownCost of the ai-meter input) on the 900/180/450 at 2/0.5/4 fixture"
 
-            cp -r ${root + "/pkgs/ai-meter"} src
+            cp -r ${inputs.ai-meter} src
             (
-              cd src
+              cd src/internal/meter
               # Pure Go: the module is stdlib-only and the sandbox has no C compiler.
               export HOME=$TMP GOCACHE=$TMP/gocache GOPATH=$TMP/gopath GOTOOLCHAIN=local GOPROXY=off GOFLAGS= CGO_ENABLED=0
               AI_METER_PROMQL_SPEND_RATE_USD_PER_HOUR=${usdPerHour} \

@@ -127,7 +127,7 @@ in
   crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs inputs; });
   crush-daily = makeTest (import ./test-crush-daily.nix { inherit pkgs inputs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
-  ai-meter-vm = makeTest (import ./test-ai-meter.nix { inherit pkgs; });
+  ai-meter-vm = makeTest (import ./test-ai-meter.nix { inherit pkgs inputs; });
   restic-app-dumps = makeTest (import ./test-restic-app-dumps.nix { inherit pkgs; });
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
   nsfw-classifier = import ./test-nsfw-classifier.nix { inherit pkgs inputs system; };

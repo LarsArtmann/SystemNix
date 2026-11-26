@@ -1119,13 +1119,19 @@
 
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
-        # census counts, hex-boundary id8 citation for the pre-vacuum
-        # gate incl. a negative control, panic truncation, write-refusal,
-        # ClickHouse death-window states ok/dark/failed/skipped + section
-        # ordering + epoch-ns TZ math)
+        # census counts incl. the real-signature panic census (2026-11-26:
+        # command-line echoes and [drm] lines are not counted, `Oops:` is),
+        # hex-boundary id8 citation for the pre-vacuum gate incl. a
+        # negative control, panic truncation, write-refusal, ClickHouse
+        # death-window verdicts alive-fresher / alive-behind / dark /
+        # failed / skipped behind a positive-control window (stub
+        # clickhouse-client pins the query order and bounds), the pstore +
+        # kdump section through a stub journalctl (records, none, no next
+        # boot, unreadable journal), section ordering + epoch-ns TZ math)
         # plus static tripwires: the stability remedy doc must still point
-        # at the script (doc-drift guard) and the script must carry the
-        # no-overwrite guard (evidence files are append-only).
+        # at the script (doc-drift guard), the script must carry the
+        # no-overwrite guard (evidence files are append-only) and must read
+        # pstore through the shared library.
         boot-evidence-pull-selftest =
           pkgs.runCommand "boot-evidence-pull-selftest"
             {
@@ -1133,6 +1139,8 @@
                 bash
                 coreutils
                 gnugrep
+                gnused
+                gawk
               ];
             }
             ''
@@ -1140,11 +1148,37 @@
               cp ${root}/scripts/boot-evidence-pull.sh "$scratch/boot-evidence-pull.sh"
               # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
               sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/boot-evidence-pull.sh"
+              # The script resolves scripts/lib/pstore-records.sh relative to its own path.
+              mkdir -p "$scratch/lib"
+              cp ${root}/scripts/lib/pstore-records.sh "$scratch/lib/pstore-records.sh"
               # The real-dump cascade regression leg reads its fixture from the repo tree.
               BEP_FIXTURE_DIR=${root}/tests/fixtures/boot-evidence-pull ${pkgs.bash}/bin/bash "$scratch/boot-evidence-pull.sh" selftest
               test -f ${root}/tests/fixtures/boot-evidence-pull/b0d70d73-oom-cascade.dump
               grep -q 'boot-evidence-pull.sh' ${root}/docs/agents/stability.md
               grep -q 'REFUSING to overwrite existing evidence file' "$scratch/boot-evidence-pull.sh"
+              grep -q 'lib/pstore-records.sh' "$scratch/boot-evidence-pull.sh"
+              touch $out
+            '';
+
+        # pstore-records library selftest (2026-11-26): the library is
+        # SOURCED by boot-evidence-pull.sh (and crash-triage.sh), so its own
+        # contract needs its own check: records present, a missing part, no
+        # records (gaps stays empty, never gaps=0), no next boot, an
+        # unreadable journal (fetch=error), the main-kernel dump shape, the
+        # older-systemd MESSAGE fallback, JSON escapes.  Journal reads go
+        # through the PSTORE_JOURNALCTL seam (a stub here).
+        pstore-records-selftest =
+          pkgs.runCommand "pstore-records-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+                gnused
+              ];
+            }
+            ''
+              ${pkgs.bash}/bin/bash ${root}/scripts/lib/pstore-records.sh selftest
               touch $out
             '';
 
