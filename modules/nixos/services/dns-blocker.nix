@@ -240,6 +240,13 @@ _: {
       blocklistPaths =
         if cfg.tempAllowAll then [ ] else map (bl: toString "${bl.file}/${bl.name}") allBlocklists;
 
+      # The FETCHED lists only, for the freshness gauge. The in-repo
+      # systemnix-extra list changes only when someone edits this module, so
+      # its age says nothing about upstream freshness: a per-list gauge that
+      # included it would page every 30 days over a list nobody refreshes.
+      fetchedBlocklistPaths =
+        if cfg.tempAllowAll then [ ] else map (bl: toString "${bl.file}/${bl.name}") fetchedBlocklists;
+
       # Sops secret paths and generated YAML config — in outer scope so that
       # restartTriggers can reference the config file, forcing a service restart
       # whenever the binary, config, or blocklists change.
@@ -1949,7 +1956,7 @@ _: {
                         RETIRED_SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
                         STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
                         STALE_SECONDS=$((30 * 86400))
-                        blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
+                        fetched_blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") fetchedBlocklistPaths)})
 
                         observer_ok=0
                         errors_now=""
@@ -1988,20 +1995,21 @@ _: {
                         # reports the age of the stalest one. Per list, not per
                         # set: the weekly timer moves StevenBlack on its own and
                         # must not reset the age of a HaGeZi pin nobody bumps.
-                        # tempAllowAll loads no blocklist at all, so staleness
-                        # is not a failure mode there (age -1).
+                        # Only the FETCHED lists are aged (the in-repo extra list
+                        # has no refresh cadence). tempAllowAll loads none at
+                        # all, so staleness is not a failure mode there (-1).
                         rm -f "$RETIRED_HASH_FILE" "$RETIRED_SINCE_FILE" 2>/dev/null || true
                         now_epoch="$(date +%s)"
                         blocklist_age=-1
                         refresh_stale=0
-                        if [ "''${#blocklists[@]}" -gt 0 ]; then
+                        if [ "''${#fetched_blocklists[@]}" -gt 0 ]; then
                           # A helper failure is a blind sample: observer_ok 0
                           # fails closed (the freshness check itself stays 0).
                           if ! freshness="$(dnsblockd-blocklist-freshness \
                             --state-dir "$FRESHNESS_STATE_DIR" \
                             --stale-after "$STALE_SECONDS" \
                             --now "$now_epoch" \
-                            "''${blocklists[@]}")"; then
+                            "''${fetched_blocklists[@]}")"; then
                             observer_ok=0
                             freshness="-1 0"
                           fi

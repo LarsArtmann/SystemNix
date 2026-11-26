@@ -150,8 +150,8 @@ echo '● service-health-check.service loaded failed failed Check critical servi
            "--logs classifies the latest failure of each red workflow", out)
     expect(out.count("not read (use --logs)") == 0, "--logs leaves no unclassified red workflow", out)
     expect("1 of the 2 red workflows fail on auth/fetch" in out, "--logs counts the auth class", out)
-    result = run(base, path=env_path)
-    expect("not read (use --logs)" in out, "without --logs the class of a failure is not guessed", result.stdout)
+    out = run(base, path=env_path).stdout
+    expect("not read (use --logs)" in out, "without --logs the class of a failure is not guessed", out)
 
     write_stub(os.path.join(bin_dir, "gh"), "#!/usr/bin/env bash\n exit 1\n")
     result = run(base, path=env_path)
@@ -241,12 +241,11 @@ def ci_section(repo, logs, timeout):
         print(f"   WARN: gh is not usable or not authenticated ({'timed out' if status is None else 'exit ' + str(status.returncode)}) — CI section skipped; "
               "no workflow may be cited as green on this evidence")
         return
-    rows = []
-    for workflow in workflows:
+    def workflow_row(workflow):
+        """(name, last green date, runs, failures, verdict) for one workflow; gh calls run in parallel."""
         listing = gh(["run", "list", "--workflow", workflow, "--limit", "100", "--json", "conclusion,createdAt,databaseId"], timeout)
         if listing is None or listing.returncode != 0:
-            rows.append((workflow, None, 0, 0, "unclassified (gh run list failed)"))
-            continue
+            return (workflow, None, 0, 0, "unclassified (gh run list failed)")
         try:
             runs = json.loads(listing.stdout)
         except ValueError:
@@ -254,7 +253,9 @@ def ci_section(repo, logs, timeout):
         failures = [run for run in runs if run.get("conclusion") == "failure"]
         greens = [run for run in runs if run.get("conclusion") == "success"]
         last_green = greens[0]["createdAt"][:10] if greens else None
-        if runs and not greens:
+        if not runs:
+            return (workflow, None, 0, 0, "never ran")
+        if not greens:
             older = gh(["run", "list", "--workflow", workflow, "--status", "success", "--limit", "1", "--json", "createdAt"], timeout)
             if older is not None and older.returncode == 0:
                 try:
@@ -262,16 +263,17 @@ def ci_section(repo, logs, timeout):
                 except ValueError:
                     found = []
                 last_green = found[0]["createdAt"][:10] if found else None
-        if not runs:
-            verdict = "never ran"
-        elif failures and failures[0] is runs[0]:
-            verdict = "not read (use --logs)"
-            if logs:
-                log = gh(["run", "view", str(failures[0].get("databaseId")), "--log-failed"], max(timeout, 120))
-                verdict = classify(log.stdout + log.stderr) if log is not None else "unclassified (the log fetch failed)"
-        else:
-            verdict = "green"
-        rows.append((workflow, last_green, len(runs), len(failures), verdict))
+        if not failures or failures[0] is not runs[0]:
+            return (workflow, last_green, len(runs), len(failures), "green")
+        verdict = "not read (use --logs)"
+        if logs:
+            log = gh(["run", "view", str(failures[0].get("databaseId")), "--log-failed"], max(timeout, 120))
+            verdict = classify(log.stdout + log.stderr) if log is not None else "unclassified (the log fetch failed)"
+        return (workflow, last_green, len(runs), len(failures), verdict)
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        rows = list(pool.map(workflow_row, workflows))
     green = sum(1 for row in rows if row[4] == "green")
     red = sum(1 for row in rows if row[4] not in ("green", "never ran"))
     never = len(rows) - green - red

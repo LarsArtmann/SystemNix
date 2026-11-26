@@ -167,6 +167,10 @@ _: {
           IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-${lib.boolToString cfg.ioPause.enable}}"
           IO_PAUSE_PATTERNS="''${IO_PAUSE_PATTERNS:-${lib.concatStringsSep " " cfg.ioPause.cgroupPatterns}}"
           IO_PAUSE_MAX_GROUPS=${toString cfg.ioPause.maxPauseGroups}
+          IO_PAUSE_MIN_RATE_MB=${toString cfg.ioPause.minDriverRateMB}
+          IO_PAUSE_MIN_SHARE_PCT=${toString cfg.ioPause.minDriverTopSharePercent}
+          CGROUP_SAMPLE_SECONDS="''${CGROUP_SAMPLE_SECONDS:-${toString cfg.ioPause.sampleSeconds}}"
+          CGROUP_WALK_TIMEOUT="''${CGROUP_WALK_TIMEOUT:-5}"
           IO_PAUSE_CALM_SECONDS=${toString cfg.ioPause.calmSeconds}
           IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
           PAUSE_FILE="${stateDir}/io-paused"
@@ -186,6 +190,46 @@ _: {
           IO_PSI_SRC="''${IO_PSI_SRC:-/proc/pressure/io}"
           DISKSTATS_SRC="''${DISKSTATS_SRC:-/proc/diskstats}"
           CGROUP_IO_SRC="''${CGROUP_IO_SRC:-/sys/fs/cgroup}"
+          CGROUP_IO_SRC="''${CGROUP_IO_SRC%/}"
+          PROC_ROOT="''${PROC_ROOT:-/proc}"
+
+          # One cgroup I/O sample (2026-11-26): ONE find + ONE awk over every
+          # io.stat below $CGROUP_IO_SRC, any depth (session scopes and
+          # app.slice/run-*.scope sit 3-6 levels down), the root cgroup
+          # excluded. Prints "<rbytes+wbytes bytes> <cgroup path>" with the
+          # /io.stat suffix STRIPPED, so "<path>/cgroup.procs" resolves.
+          # Until 2026-11-26 the walk kept that suffix and the pause loop
+          # looked for cgroup.procs inside a file named io.stat: 13,311
+          # zone-6 trips, 0 pauses. It also forked one awk per cgroup inside
+          # a 10 s timeout (11.36 s wall under a storm; the truncated result
+          # read as "no match").
+          cgroup_io_walk() {
+            timeout "$CGROUP_WALK_TIMEOUT" find "$CGROUP_IO_SRC" -name io.stat -readable -exec awk -v root="$CGROUP_IO_SRC" '
+              FNR == 1 {
+                path = FILENAME
+                if (index(path, root "/") == 1) path = substr(path, length(root) + 2)
+                sub(/\/io\.stat$/, "", path)
+                cg = path
+              }
+              {
+                for (i = 2; i <= NF; i++) {
+                  split($i, kv, "=")
+                  if (kv[1] == "rbytes" || kv[1] == "wbytes") t[cg] += kv[2]
+                }
+              }
+              END { for (c in t) if (c != "" && c != "io.stat") print t[c], c }
+            ' {} + 2>/dev/null
+          }
+
+          # One /proc pass (2026-11-26): "<pid> <pgid> <tty_nr>" for every
+          # live process. Fields are counted from the RIGHT of the line: a
+          # comm may contain spaces and parentheses ("(mt76-tx",
+          # "([celeryd:"), which breaks every left-anchored split.
+          proc_pgid_tty_scan() {
+            timeout "$CGROUP_WALK_TIMEOUT" find "$PROC_ROOT"/[0-9]*/stat -maxdepth 0 -readable -exec awk '
+              { print $1, $(NF - 47), $(NF - 45) }
+            ' {} + 2>/dev/null
+          }
 
           now=$(date +%s)
           CHURN_UNITS="${lib.concatStringsSep " " cfg.ioChurnUnits}"
