@@ -1043,74 +1043,191 @@ in
           "1300+ trips said 'I/O stalled' without naming a culprit)"
       )
 
-      # --- 9d. ioPause cgroupPatterns: no-match -> match (2026-10-31) ---
-      #      The freeze-#38 census showed 373 whole-boot "NO eligible
-      #      headless tree matched" IO-PAUSE trips while the attribution
-      #      named monitor365-server and agent sessions live under
-      #      app.slice/run-*.scope (the old session- pattern never
-      #      matched them). Exercises the pause-selection loop end to end
-      #      through the CGROUP_IO_SRC fixture: a non-matching cgroup
-      #      must log the NO-eligible line; the extended patterns
-      #      (monitor365-server.service, app.slice/run-) must select a
-      #      real HEADLESS process group and SIGSTOP it. The never-PTY
-      #      invariant is unchanged (fixture asserts tty-less-ness first).
-      #      IO_PAUSE_ENABLE/PATTERNS ride unit-env override seams so the
-      #      earlier zone-6 scenarios keep covering the socket-stop path.
-      machine.succeed("rm -f /var/lib/memory-emergency-guard/io-paused")
-      sleeper = machine.succeed(
-          "setsid sleep 600 >/dev/null 2>&1 & echo $!"
-      ).strip()
-      # Headless sanity: the never-PTY invariant would skip a TTY-holding
-      # group, so the fixture process MUST be tty-less for the match leg
-      # to be meaningful.
-      tty = machine.succeed(f"ps -o tty= -p {sleeper}").strip()
-      assert tty == "?", f"fixture sleeper holds a tty ({tty!r}) - match leg invalid"
-      # No-match leg: a cgroup matching NO pattern -> the NO-eligible line.
+      # --- 9d. Zone-6 IO-PAUSE selection (2026-10-31; rewritten 2026-11-26) ---
+      #      The 2026-11-25 crash follow-up found the guard had NEVER paused
+      #      anything (13,311 zone-6 trips, 0 pauses): the walk kept the
+      #      /io.stat suffix on each cgroup path, so <path>/cgroup.procs never
+      #      resolved; it ranked by lifetime bytes and failed open on an empty
+      #      process scan. A fixture cgroup "moves data" through a background
+      #      loop that rewrites its io.stat with a growing rbytes, so the
+      #      guard's two-sample window sees a real delta.
+      #        a. driver outside every pattern  -> NO eligible, mover named
+      #        b. pattern driver, headless       -> process group SIGSTOPped
+      #        c. pause window past the hard cap -> SIGCONT, state file gone
+      #        d. the same driver behind a TTY   -> skipped, never paused
+      #        e. idle lifetime heavyweight      -> not a driver
+      #        f. bystander beside a 4x mover    -> not a driver
+      #        g. process scan unavailable       -> nobody paused (fail closed)
+      #        h. cgroup walk unavailable        -> nobody paused
+      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc")
+      machine.succeed("mkdir -p /tmp/cgt9d")
+      machine.succeed("${writeFakes "z6pause" (zone6mid // { diskTicks = 78000; })}")
+      pause_patterns = "nix-daemon.service tq-agent-pool.service session- monitor365-server.service app.slice/run-"
+      MB = 1048576
+      writers = []
+
+      def fake_io(cg, step_bytes):
+          # Simulates kernel I/O accounting for one fixture cgroup: rewrites
+          # its io.stat with a growing rbytes every 0.2 s until killed.
+          writers.append(
+              machine.succeed(
+                  f"mkdir -p /tmp/cgt9d/{cg}; "
+                  + "setsid bash -c '"
+                  + "b=1048576000; while :; do "
+                  + f'printf "8:0 rbytes=%s wbytes=0\\n" "$b" > /tmp/cgt9d/{cg}/io.stat; '
+                  + f"b=$((b + {step_bytes})); "
+                  + "sleep 0.2; done' >/dev/null 2>&1 & echo $!"
+              ).strip()
+          )
+
+      def stop_writers():
+          for pid in writers:
+              machine.succeed(f"kill {pid} 2>/dev/null || true")
+          writers.clear()
+
+      def start_sleeper(seconds):
+          return machine.succeed(f"setsid sleep {seconds} >/dev/null 2>&1 & echo $!").strip()
+
+      def start_tty_sleeper():
+          # A process WITH a controlling terminal: script(1) runs the sleep
+          # inside its own pty session (611 is unique in this VM).
+          machine.succeed("setsid script -qec 'sleep 611' /dev/null >/dev/null 2>&1 &")
+          pid = machine.succeed("sleep 0.5; pgrep -f '^sleep 611$' | head -1").strip()
+          tty = machine.succeed(f"ps -o tty= -p {pid}").strip()
+          assert tty != "?", f"fixture tty sleeper must hold a tty (got {tty!r})"
+          return pid
+
+      def state_of(pid):
+          return machine.succeed(f"ps -o stat= -p {pid}").strip()
+
+      def pause_trip(ticks, extra_env=""):
+          # One zone-6 trip action with IO-PAUSE armed: cooldown cleared,
+          # disk ticks raised so the busy corroboration holds.
+          machine.succeed(
+              "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+          )
+          machine.succeed(
+              f"printf '8 0 nvme0n1 1 2 3 4 5 6 7 8 9 {ticks} 11 12\\n'"
+              " > /tmp/gt/z6pause-diskstats"
+          )
+          return run_guard(
+              "z6pause",
+              extra_env="IO_PAUSE_ENABLE=true "
+              + f"IO_PAUSE_PATTERNS='{pause_patterns}' "
+              + "CGROUP_IO_SRC=/tmp/cgt9d "
+              + extra_env,
+          )
+
+      # a. A driver outside every pattern: nothing pausable, but NAMED.
+      fake_io("system.slice/offender.service", 250 * MB)
+      out = pause_trip(78000)
+      assert "MEMORY EMERGENCY IO-TOP (trip #" in out, (
+          "every zone-6 action must journal its movers (the IO-TOP line)"
+      )
+      assert "system.slice/offender.service @" in out and "[no pattern]" in out, (
+          "the IO-TOP line must name the mover and its pattern verdict"
+      )
+      assert "NO eligible headless tree matched" in out and "no pattern covers any driver" in out, (
+          "a no-match trip must say WHY: the mover sits outside every pattern"
+      )
+      assert "SIGSTOPped" not in out
+      stop_writers()
+
+      # b. A pattern driver with a headless process: the group is SIGSTOPped.
+      sleeper = start_sleeper(600)
+      machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
+      fake_io("system.slice/monitor365-server.service", 250 * MB)
       machine.succeed(
-          "rm -rf /tmp/cgt9d"
-          " && mkdir -p /tmp/cgt9d/system.slice/offender.service"
-          " && printf '8:0 rbytes=9000000 wbytes=0\\n'"
-          " > /tmp/cgt9d/system.slice/offender.service/io.stat"
+          f"echo {sleeper} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
       )
-      machine.succeed("echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip")
-      machine.succeed(
-          "${writeFakes "zone6midd" (zone6mid // { diskTicks = 65000; })}"
-      )
-      out = run_guard(
-          "zone6midd",
-          extra_env="CGROUP_IO_SRC=/tmp/cgt9d IO_PAUSE_ENABLE=true IO_PAUSE_PATTERNS='nix-daemon.service tq-agent-pool.service session-'",
-      )
-      assert "NO eligible headless tree matched" in out, (
-          "a zone-6 trip with a pattern-missing cgroup must log the "
-          "NO-eligible line (the freeze-#38 373-trip class)"
-      )
-      # Match leg: monitor365 + app.slice/run-*.scope cgroups now select.
-      machine.succeed(
-          "rm -rf /tmp/cgt9d"
-          " && mkdir -p /tmp/cgt9d/system.slice/monitor365-server.service"
-          " /tmp/cgt9d/app.slice/run-deadbeef.scope"
-          " && printf '8:0 rbytes=9000000 wbytes=0\\n'"
-          " > /tmp/cgt9d/system.slice/monitor365-server.service/io.stat"
-          " && printf '8:0 rbytes=8000000 wbytes=0\\n'"
-          " > /tmp/cgt9d/app.slice/run-deadbeef.scope/io.stat"
-          f" && echo {sleeper} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
-          f" && echo {sleeper} > /tmp/cgt9d/app.slice/run-deadbeef.scope/cgroup.procs"
-      )
-      machine.succeed("echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip")
-      machine.succeed(
-          "${writeFakes "zone6mide" (zone6mid // { diskTicks = 65000; })}"
-      )
-      out = run_guard(
-          "zone6mide",
-          extra_env="CGROUP_IO_SRC=/tmp/cgt9d IO_PAUSE_ENABLE=true IO_PAUSE_PATTERNS='nix-daemon.service tq-agent-pool.service session- monitor365-server.service app.slice/run-'",
-      )
+      out = pause_trip(91000)
       assert "SIGSTOPped 1 headless driver process group" in out, (
-          "the extended patterns must select the monitor365/run-*.scope "
-          "cgroups' headless group (freeze-#38 census coverage gap)"
+          "a pattern driver with a headless group must be paused (the "
+          "2026-10-28..2026-11-26 zero-pauses class)"
       )
-      state = machine.succeed(f"ps -o stat= -p {sleeper}").strip()
-      assert "T" in state, f"fixture sleeper must be SIGSTOPped, state={state!r}"
-      machine.succeed(f"kill -CONT {sleeper} 2>/dev/null; kill {sleeper} 2>/dev/null; true")
-      machine.succeed("rm -rf /tmp/cgt9d")
+      assert "drivers: system.slice/monitor365-server.service(pgid " in out, (
+          "the pause line must name the cgroup and pgid it stopped"
+      )
+      assert "T" in state_of(sleeper), f"paused sleeper must be in state T, got {state_of(sleeper)!r}"
+      paused_file = machine.succeed("cat /var/lib/memory-emergency-guard/io-paused")
+      assert f"{sleeper} system.slice/monitor365-server.service" in paused_file, (
+          "io-paused must record pgid AND cgroup (the resume path reads column 1)"
+      )
+
+      # c. Past the hard cap the next run SIGCONTs and drops the state file.
+      machine.succeed(
+          "{ echo $(( $(date +%s) - 4000 )); tail -n +2 /var/lib/memory-emergency-guard/io-paused; }"
+          " > /var/lib/memory-emergency-guard/io-paused.new"
+          " && mv /var/lib/memory-emergency-guard/io-paused.new /var/lib/memory-emergency-guard/io-paused"
+      )
+      out = run_guard("healthy", extra_env="IO_PAUSE_ENABLE=true")
+      assert "IO-RESUME: SIGCONTinued 1 paused driver process group" in out and "hard cap" in out, (
+          "a pause older than maxPausedSeconds must resume on the next run, calm or not"
+      )
+      assert "T" not in state_of(sleeper), "resumed sleeper must be running again"
+      machine.fail("test -e /var/lib/memory-emergency-guard/io-paused")
+
+      # d. The same driver behind a controlling TTY: skipped, never paused.
+      tty_pid = start_tty_sleeper()
+      machine.succeed(
+          f"echo {tty_pid} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
+      )
+      out = pause_trip(104000)
+      assert "IO-PAUSE skip: pgid" in out and "holds a controlling TTY" in out, (
+          "a TTY-holding group must be skipped with a log line (the 2026-10-07 SIGSTOP-license revocation)"
+      )
+      assert "1 matching process group(s) hold a controlling TTY" in out
+      assert "SIGSTOPped" not in out
+      assert "T" not in state_of(tty_pid), "owner-interactive work must never be paused"
+      machine.succeed(f"kill {tty_pid} 2>/dev/null || true")
+
+      # e. An idle lifetime heavyweight (50 GB since boot, silent now) is not
+      #    a driver.
+      stop_writers()
+      machine.succeed(
+          "printf '8:0 rbytes=52428800000 wbytes=0\\n'"
+          " > /tmp/cgt9d/system.slice/monitor365-server.service/io.stat"
+      )
+      idle = start_sleeper(601)
+      machine.succeed(
+          f"echo {idle} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
+      )
+      out = pause_trip(117000)
+      assert "no cgroup moved data in the trip sample" in out, (
+          "lifetime bytes must not select: an idle heavyweight is not a driver"
+      )
+      assert "SIGSTOPped" not in out
+      assert "T" not in state_of(idle)
+
+      # f. A pattern cgroup doing incidental I/O beside a 4x larger writer.
+      fake_io("system.slice/offender.service", 250 * MB)
+      fake_io("system.slice/monitor365-server.service", 2 * MB)
+      out = pause_trip(130000)
+      assert "1 pattern cgroup(s) move data but none is a driver" in out, (
+          "a bystander below the top-share bar must stay running"
+      )
+      assert "SIGSTOPped" not in out
+      assert "T" not in state_of(idle)
+
+      # g. The process scan is unavailable: the never-PTY invariant cannot be
+      #    proven, so even a real driver is left alone (fail closed).
+      stop_writers()
+      machine.succeed("mkdir -p /tmp/emptyproc")
+      fake_io("system.slice/monitor365-server.service", 250 * MB)
+      out = pause_trip(143000, extra_env="PROC_ROOT=/tmp/emptyproc")
+      assert "process scan unavailable" in out, (
+          "an empty /proc scan must refuse to pause anything (fail closed)"
+      )
+      assert "SIGSTOPped" not in out
+      assert "T" not in state_of(idle)
+      machine.succeed(f"kill {idle} 2>/dev/null || true")
+      stop_writers()
+
+      # h. The cgroup walk itself is unavailable: no evidence, no pause.
+      out = pause_trip(156000, extra_env="CGROUP_IO_SRC=/tmp/cgt9d-missing")
+      assert "cgroup walk unavailable" in out
+      assert "SIGSTOPped" not in out
+
+      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc")
     '';
 }
