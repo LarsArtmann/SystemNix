@@ -80,6 +80,8 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 | **ai-meter** | Loopback metering proxy every OpenAI-compatible AI call routes through. Records token counts (facts) in a JSONL ledger and derives reference cost at the current price table |
 | **Reference price** | The pay-as-you-go list price configured for a model in `services.ai-meter.costs`: what routed traffic WOULD cost, not what the coding plan bills (credits). Invented prices are banned; an unpriced model meters tokens exactly at $0 |
 | **Restatement** | Re-pricing of every recorded call when a reference price lands, is corrected or is withdrawn. Automatic: the cost counter replays the ledger at each ai-meter start and the spend-rate panels derive cost from the token counters at query time. Never a manual backfill |
+| **In flight** | A call inside ai-meter that is waiting on its provider, counted per client, provider and model by `ai_meter_active_requests`. It says that a client is waiting, not whether the provider is throttling |
+| **Priced query** | A dashboard query the renderer derives from the token counters and the price table (`_ai-meter-dashboard.nix`): the spend rate in total, per model and per client, and the spend of the last 24 hours. Never read off the cost counter, whose steps are restatements |
 
 ## Service Patterns
 

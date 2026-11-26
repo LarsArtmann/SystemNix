@@ -131,6 +131,7 @@ _: {
         runtimeInputs = [
           pkgs.coreutils
           pkgs.gawk
+          pkgs.findutils
           pkgs.systemd
         ];
         text = ''
@@ -171,6 +172,17 @@ _: {
           IO_PAUSE_MIN_SHARE_PCT=${toString cfg.ioPause.minDriverTopSharePercent}
           CGROUP_SAMPLE_SECONDS="''${CGROUP_SAMPLE_SECONDS:-${toString cfg.ioPause.sampleSeconds}}"
           CGROUP_WALK_TIMEOUT="''${CGROUP_WALK_TIMEOUT:-5}"
+          # the two seams above carry VM-test overrides only; a malformed value
+          # would make sleep/timeout exit non-zero and abort the trip action
+          # under set -e, so anything but an unsigned integer falls back
+          [ -n "$CGROUP_SAMPLE_SECONDS" ] || CGROUP_SAMPLE_SECONDS=${toString cfg.ioPause.sampleSeconds}
+          case "$CGROUP_SAMPLE_SECONDS" in
+            *[!0-9]*) CGROUP_SAMPLE_SECONDS=${toString cfg.ioPause.sampleSeconds} ;;
+          esac
+          [ -n "$CGROUP_WALK_TIMEOUT" ] || CGROUP_WALK_TIMEOUT=5
+          case "$CGROUP_WALK_TIMEOUT" in
+            *[!0-9]*) CGROUP_WALK_TIMEOUT=5 ;;
+          esac
           IO_PAUSE_CALM_SECONDS=${toString cfg.ioPause.calmSeconds}
           IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
           PAUSE_FILE="${stateDir}/io-paused"
@@ -204,6 +216,7 @@ _: {
           # a 10 s timeout (11.36 s wall under a storm; the truncated result
           # read as "no match").
           cgroup_io_walk() {
+            # shellcheck disable=SC2016 # awk program text, never a shell expansion
             timeout "$CGROUP_WALK_TIMEOUT" find "$CGROUP_IO_SRC" -name io.stat -readable -exec awk -v root="$CGROUP_IO_SRC" '
               FNR == 1 {
                 path = FILENAME
@@ -226,6 +239,7 @@ _: {
           # comm may contain spaces and parentheses ("(mt76-tx",
           # "([celeryd:"), which breaks every left-anchored split.
           proc_pgid_tty_scan() {
+            # shellcheck disable=SC2016 # awk program text, never a shell expansion
             timeout "$CGROUP_WALK_TIMEOUT" find "$PROC_ROOT"/[0-9]*/stat -maxdepth 0 -readable -exec awk '
               { print $1, $(NF - 47), $(NF - 45) }
             ' {} + 2>/dev/null
@@ -852,7 +866,7 @@ _: {
                   echo "MEMORY EMERGENCY IO-TOP (trip #''${tripped_total}, zone 6, ''${CGROUP_SAMPLE_SECONDS}s sample): ''${io_top}" >&2
                 fi
                 if [ "$io_sample_status" = "ok" ] && [ -n "$io_movers" ]; then
-                  top_delta=$(printf '%s\n' "$io_movers" | head -1 | cut -d' ' -f1)
+                  top_delta=$(printf '%s\n' "$io_movers" | head -1 | cut -d' ' -f1 || true)
                   cand_list=$(
                     printf '%s\n' "$io_movers" |
                       awk -v pats="$IO_PAUSE_PATTERNS" -v floor_bytes="$((IO_PAUSE_MIN_RATE_MB * 1048576 * CGROUP_SAMPLE_SECONDS))" -v top="$top_delta" -v share="$IO_PAUSE_MIN_SHARE_PCT" '
@@ -928,24 +942,22 @@ _: {
                 else
                   io_nomatch_reason=" (matching cgroups held no live headless process to signal; movers: ''${io_top:-unknown})"
                 fi
-              fi
-                done
                 if [ -n "$new_paused" ]; then
                   old_epoch=0
-                  old_pgids=""
+                  old_lines=""
                   if [ -f "$PAUSE_FILE" ]; then
                     old_epoch=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
-                    old_pgids=$(awk 'NR > 1 {print $1}' "$PAUSE_FILE" 2>/dev/null | tr '\n' ' ')
+                    old_lines=$(awk 'NR > 1 {print}' "$PAUSE_FILE" 2>/dev/null)
                   fi
                   [ "''${old_epoch:-0}" -gt 0 ] 2>/dev/null || old_epoch="$now"
                   {
                     echo "$old_epoch"
-                    # shellcheck disable=SC2086
-                    for pg in $old_pgids $new_paused; do echo "$pg"; done
+                    if [ -n "$old_lines" ]; then printf '%s\n' "$old_lines"; fi
+                    if [ -n "$new_paused_lines" ]; then printf '%s' "$new_paused_lines"; fi
                   } > "$PAUSE_FILE.tmp"
                   mv "$PAUSE_FILE.tmp" "$PAUSE_FILE"
                   sync -f "$PAUSE_FILE" 2>/dev/null || true
-                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} [drivers:''${new_paused_desc} ] — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
                   echo 0 > "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || true
                   rm -f "$IO_PAUSE_DISARMED_FILE" 2>/dev/null || true
                 elif [ ! -f "$PAUSE_FILE" ]; then
@@ -953,7 +965,7 @@ _: {
                   [ -r "$IO_PAUSE_NOMATCH_FILE" ] && nomatch_streak=$(cat "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || echo 0)
                   nomatch_streak=$((nomatch_streak + 1))
                   echo "$nomatch_streak" > "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || true
-                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO eligible headless tree matched the attribution (patterns: ''${IO_PAUSE_PATTERNS}) — pressure persists but nothing pausable" >&2
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO eligible headless tree matched the attribution (patterns: ''${IO_PAUSE_PATTERNS}) — pressure persists but nothing pausable''${io_nomatch_reason}" >&2
                   if [ "$nomatch_streak" -ge ${toString cfg.ioPause.disarmedEscalationThreshold} ] && [ ! -f "$IO_PAUSE_DISARMED_FILE" ]; then
                     # The distinct DISARMED condition (freeze #40 close-out):
                     # no-match trips are not silence, they are a structural
@@ -968,7 +980,7 @@ _: {
                   fi
                 elif [ -f "$PAUSE_FILE" ]; then
                   pause_epoch_note=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
-                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO new tree matched (patterns: ''${IO_PAUSE_PATTERNS}) — existing pause kept (epoch ''${pause_epoch_note:-0}), no action this cycle — pressure persists under an already-paused tree" >&2
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO new tree matched (patterns: ''${IO_PAUSE_PATTERNS}) — existing pause kept (epoch ''${pause_epoch_note:-0}), no action this cycle — pressure persists under an already-paused tree''${io_nomatch_reason}" >&2
                 fi
               fi
               if [ "$io_split_active" = "1" ]; then
@@ -1774,12 +1786,27 @@ _: {
               "system-health-metrics.service"
               "crm-server.service"
             ];
-            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top. monitor365-server + app.slice run-*.scope added 2026-10-31 from the freeze-#38 census: 373 whole-boot NO-eligible trips while the attribution named monitor365-server (+13.2 GB windows), and agent sessions live under app.slice/run-*.scope where the session- pattern never matched. llama-chat.service added 2026-11-03 from the freeze #39/#40/#43 chain: 5 consecutive storm boots printed NO eligible headless tree matched while llama-chat cold-loaded 23.4 GB off the QLC and held ~25 GB resident with a 41.7 GB VM — the exact driver the pause could not reach (llama-chat is config-disabled the same day; this pattern is the re-enable-day guard so a future enablement can never cold-load into a storm uncontested). llama-vlm-cap.service + system-health-metrics.service + crm-server.service added 2026-11-17 from the freeze-#56 census: the DISARMED condition stayed latched from Nov 7 21:22 through freezes #52-#56 (io-pause-nomatch.fired epoch; the 2307-streak was inherited 58 s into the Nov 15 boot because the count file survives reboots, and 2811 was live on the Nov 17 recovery boot) while the final-hour top readers — llama-vlm-cap 9 G x2, system-health-metrics 4.4-6.7 G per sweep x12, crm-server by-phone 2 rps — all sat outside every pattern (the third #38-class blind-list repeat)";
+            description = "Substring patterns selecting the cgroups whose process groups are eligible for the Zone-6 pause. Selection (rewritten 2026-11-26): at each trip the guard samples every cgroup's io.stat twice (sampleSeconds apart); a cgroup is a driver when its delta is at least minDriverRateMB and at least minDriverTopSharePercent of the largest mover in that sample, its path contains one of these patterns, and it is not a *.slice; the headless process groups of the drivers are SIGSTOPped. Until 2026-11-26 the selection ranked by lifetime bytes and never resolved a cgroup.procs file, so no trip ever paused anything. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top. monitor365-server + app.slice run-*.scope added 2026-10-31 from the freeze-#38 census: 373 whole-boot NO-eligible trips while the attribution named monitor365-server (+13.2 GB windows), and agent sessions live under app.slice/run-*.scope where the session- pattern never matched. llama-chat.service added 2026-11-03 from the freeze #39/#40/#43 chain: 5 consecutive storm boots printed NO eligible headless tree matched while llama-chat cold-loaded 23.4 GB off the QLC and held ~25 GB resident with a 41.7 GB VM — the exact driver the pause could not reach (llama-chat is config-disabled the same day; this pattern is the re-enable-day guard so a future enablement can never cold-load into a storm uncontested). llama-vlm-cap.service + system-health-metrics.service + crm-server.service added 2026-11-17 from the freeze-#56 census: the DISARMED condition stayed latched from Nov 7 21:22 through freezes #52-#56 (io-pause-nomatch.fired epoch; the 2307-streak was inherited 58 s into the Nov 15 boot because the count file survives reboots, and 2811 was live on the Nov 17 recovery boot) while the final-hour top readers — llama-vlm-cap 9 G x2, system-health-metrics 4.4-6.7 G per sweep x12, crm-server by-phone 2 rps — all sat outside every pattern (the third #38-class blind-list repeat)";
           };
           maxPauseGroups = lib.mkOption {
             type = lib.types.int;
             default = 8;
             description = "Hard cap on simultaneously paused process groups per storm";
+          };
+          sampleSeconds = lib.mkOption {
+            type = lib.types.ints.unsigned;
+            default = 3;
+            description = "Width of the two-sample cgroup io.stat window taken at each trip action. The delta between the two samples is the only basis for a pause (what moves data NOW); the delta against the previous action's snapshot can be hours old on the first trip of a storm and would freeze an idle lifetime heavyweight";
+          };
+          minDriverRateMB = lib.mkOption {
+            type = lib.types.ints.unsigned;
+            default = 8;
+            description = "Minimum read+write rate (MB/s across the trip sample) for a cgroup to count as a storm driver. Below it the pressure has no attributable writer (device-level wedging, fsync storms), which no pause sheds; the 2026-11-25 cuts wrote 12-37 MB/s of small synchronous writes";
+          };
+          minDriverTopSharePercent = lib.mkOption {
+            type = lib.types.ints.between 1 100;
+            default = 25;
+            description = "A driver must also move at least this share of the largest mover in the trip sample, so a pattern cgroup doing incidental I/O beside a 4x larger writer is a bystander, not a driver, and stays running";
           };
           calmSeconds = lib.mkOption {
             type = lib.types.int;

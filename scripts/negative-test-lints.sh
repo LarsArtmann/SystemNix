@@ -399,7 +399,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]] || [[ ",$FILTER," == *,usertmpguard,* ]] || [[ ",$FILTER," == *,tcpcheck,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,iconfile,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]] || [[ ",$FILTER," == *,usertmpguard,* ]] || [[ ",$FILTER," == *,tcpcheck,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -688,6 +688,23 @@ warn_case tilecoverage icon-stripped 'without an icon (rendering monogram fallba
 # instead of silently rendering the tile beside a "no tile" justification.
 eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homepage tile' \
   'sed:modules/nixos/services/miniflux.nix:s|^            monitored = true;$|            monitored = true;\n            noDashboardTile = true;|'
+
+# ── integration iconFile fan-out: the 2026-11-26 wiring ──
+# homepage.iconFile was documented from 2026-10 but consumed nowhere; the
+# registry now copies it into the icon pack under the tile's own icon name.
+# Control: a mark under its pack-style name stays green. The legs mutate
+# miniflux.nix (plus emeet-pixyd.nix for the collision) with a REAL repo
+# file as the mark (a missing path would trip an eval error, which the
+# harness rightly refuses to count as the audit firing).
+eval_case iconfile mark-under-own-name pass - \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
+eval_case iconfile mark-without-icon-name fail 'homepage.iconFile without a pack-style homepage.icon' \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              iconFile = ../../../assets/monitor365-logo.svg;|'
+eval_case iconfile mark-under-url-icon fail 'homepage.iconFile without a pack-style homepage.icon' \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "https://example.invalid/miniflux.svg";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
+eval_case iconfile two-marks-one-name fail 'share an icon name while shipping different iconFile marks' \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|' \
+  'sed:modules/nixos/services/emeet-pixyd.nix:s|^              icon = "camera-ui.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
 
 # ── integration tcp-check conditions: the 2026-11-15 Immich ML chronic-red class ──
 # tcp:// probes never see an HTTP status; the registry's [STATUS] == 200
@@ -1071,7 +1088,7 @@ run_case bootmetrics open-path-forced-closed bootmetrics-openpath-selftest fail 
 # the dashboard, before any unrendered query can be provisioned.
 run_case aimeter promql-scaling-dropped ai-meter-spend-promql fail \
   'ai-meter-spend-promql: the generated PromQL disagrees' \
-  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s/scale ? 3600;/scale ? 1;/'
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s/scale ? 3600,/scale ? 1,/'
 # The per-client query groups by client AND model before the union; with a
 # per-model grouping the outer sum by (client) finds no series at all.
 run_case aimeter client-grouping-dropped ai-meter-spend-promql fail \

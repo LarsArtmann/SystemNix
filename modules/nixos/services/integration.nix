@@ -150,6 +150,28 @@ _: {
       iconlessTiles = lib.filterAttrs (
         _: e: e.homepage != null && e.homepage.icon == null
       ) enabledEntries;
+
+      # Tiles that ship their own mark: homepage.iconFile (the file) is
+      # copied into the icon pack under homepage.icon (the name the tile
+      # references). Two assertions guard the pair below: the name must be a
+      # pack-style name (a null icon renders the monogram and an http(s) icon
+      # is fetched from that URL, so the file would be dead weight), and one
+      # name must not carry two files.
+      iconFileEntries = lib.filterAttrs (
+        _: e: e.homepage != null && e.homepage.iconFile != null
+      ) enabledEntries;
+
+      danglingIconFiles = lib.filterAttrs (
+        _: e:
+        e.homepage != null
+        && e.homepage.iconFile != null
+        && !(lib.isString e.homepage.icon && !lib.hasPrefix "http" e.homepage.icon)
+      ) enabledEntries;
+
+      iconFileNames = map (e: e.homepage.icon) (lib.attrValues iconFileEntries);
+      collidingIconFiles = lib.filterAttrs (
+        _: e: (lib.count (icon: icon == e.homepage.icon) iconFileNames) > 1
+      ) iconFileEntries;
     in
     {
       options.services.integration = lib.mkOption {
@@ -383,7 +405,11 @@ _: {
                           upstream flake's brand-asset passthru, e.g.
                           "''${cfg.package.brandAssets}/timesheets.svg", so
                           the logo provably rides the same rev as the
-                          deployed binary.
+                          deployed binary. The registry copies it into the
+                          icon pack for you (since 2026-11-26; before that
+                          this option was documented but consumed nowhere
+                          and every module wired services.papdashboard.extraIcons
+                          by hand).
                         '';
                       };
                       checkUrl = lib.mkOption {
@@ -615,6 +641,27 @@ _: {
                 opt-out (delete the homepage block).
               '';
             }
+            {
+              assertion = danglingIconFiles == { };
+              message = ''
+                integration: entries set homepage.iconFile without a pack-style homepage.icon:
+                ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: _: "  ${name}") danglingIconFiles)}
+                The file is copied into the dashboard's icon pack under the tile's icon
+                name, so it needs one: set icon = "<name>.svg" on the same homepage block
+                (not null and not an http(s) URL), or drop iconFile.
+              '';
+            }
+            {
+              assertion = collidingIconFiles == { };
+              message = ''
+                integration: entries share an icon name while shipping different iconFile marks:
+                ${lib.concatStringsSep "\n" (
+                  lib.mapAttrsToList (name: e: "  ${name} (icon ${e.homepage.icon})") collidingIconFiles
+                )}
+                One icon-pack name can hold one file, so all but one of these tiles would
+                show a foreign mark. Give each entry its own icon name.
+              '';
+            }
           ];
 
           # Icon-less registry tiles WARN (owner directive 2026-10-25: a
@@ -638,7 +685,12 @@ _: {
             _: e:
             lib.nameValuePair e.subdomain {
               inherit (e) port;
-              inherit (e.vHost) layer root hostOverride frameAncestors;
+              inherit (e.vHost)
+                layer
+                root
+                hostOverride
+                frameAncestors
+                ;
             }
           ) vhostEntries;
         })
@@ -666,6 +718,11 @@ _: {
         (lib.optionalAttrs (options ? services.papdashboard) {
           services.papdashboard.extraTiles = lib.mapAttrsToList dashboardTile (
             lib.filterAttrs (_: e: e.homepage != null) enabledEntries
+          );
+          # homepage.iconFile lands in the icon pack under the tile's own
+          # icon name (the option's documented contract, wired 2026-11-26).
+          services.papdashboard.extraIcons = lib.listToAttrs (
+            map (e: lib.nameValuePair e.homepage.icon e.homepage.iconFile) (lib.attrValues iconFileEntries)
           );
         })
         (lib.optionalAttrs (options ? services.backup-coordination) {
