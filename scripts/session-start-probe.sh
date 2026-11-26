@@ -230,15 +230,30 @@ def classify(log):
     return "content: " + match.group(1).strip() if match else "unclassified (read the run log)"
 
 
-def ci_section(repo, logs, timeout):
-    print("1. CI: last green per workflow (gh run list, the last 100 runs per workflow)")
+def section(title, work):
+    """Run a probe function in the pool and return its text; a probe that raises becomes a WARN line."""
+    return title, work
+
+
+class Lines:
+    """Collects the lines of one section while it runs in its own thread."""
+
+    def __init__(self):
+        self.items = []
+
+    def print(self, text=""):
+        self.items.append(text)
+
+
+def ci_section(out, repo, logs, timeout):
+    out.print("1. CI: last green per workflow (gh run list, the last 100 runs per workflow)")
     workflows = sorted(os.path.basename(path) for path in glob.glob(os.path.join(repo, ".github", "workflows", "*.yml")))
     if not workflows:
-        print("   no .github/workflows directory: nothing to read")
+        out.print("   no .github/workflows directory: nothing to read")
         return
     status = gh(["auth", "status"], timeout)
     if status is None or status.returncode != 0:
-        print(f"   WARN: gh is not usable or not authenticated ({'timed out' if status is None else 'exit ' + str(status.returncode)}) — CI section skipped; "
+        out.print(f"   WARN: gh is not usable or not authenticated ({'timed out' if status is None else 'exit ' + str(status.returncode)}) — CI section skipped; "
               "no workflow may be cited as green on this evidence")
         return
     def workflow_row(workflow):
@@ -285,32 +300,32 @@ def ci_section(repo, logs, timeout):
             stamp = f"{last_green} ({age} d ago)"
         else:
             stamp = "never"
-        print(f"   {workflow.ljust(width)}  green {stamp:<21}  runs {total:>3}, failures {failures:>3}  {verdict}")
-    print(f"   -> {green} of {len(rows)} workflows green, {red} red, {never} never ran. A red workflow is not a gate.")
+        out.print(f"   {workflow.ljust(width)}  green {stamp:<21}  runs {total:>3}, failures {failures:>3}  {verdict}")
+    out.print(f"   -> {green} of {len(rows)} workflows green, {red} red, {never} never ran. A red workflow is not a gate.")
     if logs:
         auth = sum(1 for row in rows if row[4].startswith("auth/fetch"))
         if auth:
-            print(f"      {auth} of the {red} red workflows fail on auth/fetch of a private input (owner step: read-only PAT and deploy keys); "
+            out.print(f"      {auth} of the {red} red workflows fail on auth/fetch of a private input (owner step: read-only PAT and deploy keys); "
                   "fixing that can uncover content failures underneath.")
     elif red:
-        print("      run with --logs to classify the failures (downloads each failed step's log)")
+        out.print("      run with --logs to classify the failures (downloads each failed step's log)")
 
 
-def backlog_section(repo, timeout):
-    print()
-    print("2. Backlog (scripts/backlog-flow.sh)")
+def backlog_section(out, repo, timeout):
+    out.print()
+    out.print("2. Backlog (scripts/backlog-flow.sh)")
     flow_script = os.path.join(repo, "scripts", "backlog-flow.sh")
     if not os.path.isfile(flow_script):
-        print("   WARN: scripts/backlog-flow.sh is missing — backlog section skipped")
+        out.print("   WARN: scripts/backlog-flow.sh is missing — backlog section skipped")
         return
     result = call(["bash", flow_script, repo, "--json"], timeout)
     if result is None or result.returncode != 0:
-        print("   WARN: scripts/backlog-flow.sh failed or timed out — backlog section skipped")
+        out.print("   WARN: scripts/backlog-flow.sh failed or timed out — backlog section skipped")
         return
     try:
         report = json.loads(result.stdout)
     except ValueError:
-        print("   WARN: scripts/backlog-flow.sh printed no JSON — backlog section skipped")
+        out.print("   WARN: scripts/backlog-flow.sh printed no JSON — backlog section skipped")
         return
     revisions = {entry["name"]: entry for entry in report["revisions"]}
     now = revisions.get("now") or {}
@@ -322,42 +337,42 @@ def backlog_section(repo, timeout):
     if week.get("open") is not None and flow:
         head += (f", 7 days ago {week['open']}, net {'+' if flow['net_open'] >= 0 else ''}{flow['net_open']} in 7 days"
                  f" (+{flow['added_open']} open added, +{flow['added_closed']} added and closed, -{flow['removed']} removed, {flow['ticked']} ticked)")
-    print("   " + head)
-    print(f"   block (rows added on {block.get('day', '?')}): {block.get('open_now', '?')} open = {block.get('share_pct', '?')} % of the open queue"
+    out.print("   " + head)
+    out.print(f"   block (rows added on {block.get('day', '?')}): {block.get('open_now', '?')} open = {block.get('share_pct', '?')} % of the open queue"
           + (f" ({block['pool_visible_now']} visible to the pool)" if "pool_visible_now" in block else ""))
     gate = report.get("gate") or {}
-    print(f"   gate WARNs: {gate.get('unharvested_reports', '?')} unharvested section-f reports, "
+    out.print(f"   gate WARNs: {gate.get('unharvested_reports', '?')} unharvested section-f reports, "
           f"{gate.get('queue_library_drifts', '?')} queue/library drifts"
           + (f" (gate exit {gate['exit']})" if gate.get("exit") not in (0, None) else " (gate exit 0)"))
     domain = (report.get("domains") or {}).get("now") or {}
     top = ", ".join(f"{os.path.basename(name)} {count}" for name, count in list(domain.items())[:4])
     if top:
-        print(f"   largest libraries: {top}")
+        out.print(f"   largest libraries: {top}")
 
 
-def pool_section(repo, tq_db, timeout):
-    print()
-    print("3. Pool and failed units")
+def pool_section(out, repo, tq_db, timeout):
+    out.print()
+    out.print("3. Pool and failed units")
     if not os.path.isfile(tq_db):
-        print(f"   WARN: no tq database at {tq_db} — pool lines skipped")
+        out.print(f"   WARN: no tq database at {tq_db} — pool lines skipped")
     else:
         project = os.path.basename(os.path.abspath(repo))
         stats = call(["tq", "stats", "--project", project, "--json", "--db", tq_db], timeout)
         if stats is None or stats.returncode != 0:
-            print("   WARN: tq stats failed or timed out — budget line skipped")
+            out.print("   WARN: tq stats failed or timed out — budget line skipped")
         else:
             try:
                 payload = json.loads(stats.stdout[stats.stdout.find("{"):])
             except ValueError:
                 payload = {}
             spent = (payload.get("budget") or {}).get("spent_today")
-            print(f"   pool budget spent today: {spent if spent is not None else 'unknown'} (project {project}; the pool's cap is 30 a day, shared by its repos)")
+            out.print(f"   pool budget spent today: {spent if spent is not None else 'unknown'} (project {project}; the pool's cap is 30 a day, shared by its repos)")
             lag = next((entry.get("lag") for entry in payload.get("consumer_lag", []) if entry.get("consumer") == "readmodel"), None)
             if lag:
                 print(f"   WARN: the tq read model trails the journal by {lag} facts — `tq stats` counters are empty until it catches up")
         tasks = call(["tq", "tasks", "--project", project, "--since", "168h", "--limit", "5000", "--json", "--db", tq_db], timeout)
         if tasks is None or tasks.returncode != 0:
-            print("   WARN: tq tasks failed or timed out — outcome line skipped")
+            out.print("   WARN: tq tasks failed or timed out — outcome line skipped")
         else:
             try:
                 items = json.loads(tasks.stdout[tasks.stdout.find("["):])
@@ -367,13 +382,13 @@ def pool_section(repo, tq_db, timeout):
             for item in items:
                 counts[item.get("status", "unknown")] = counts.get(item.get("status", "unknown"), 0) + 1
             line = ", ".join(f"{status} {count}" for status, count in sorted(counts.items()))
-            print(f"   {project} pool tasks, last 7 days: {len(items)} ({line})" if line else f"   {project} pool tasks, last 7 days: none")
+            out.print(f"   {project} pool tasks, last 7 days: {len(items)} ({line})" if line else f"   {project} pool tasks, last 7 days: none")
     failed = call(["systemctl", "--failed", "--no-legend", "--no-pager", "--plain"], timeout)
     if failed is None or failed.returncode != 0:
-        print("   WARN: systemctl --failed is unavailable or refused — failed-unit line skipped")
+        out.print("   WARN: systemctl --failed is unavailable or refused — failed-unit line skipped")
     else:
         units = [line.split()[1] for line in failed.stdout.split("\n") if line.strip().startswith("●")]
-        print(f"   failed units: {len(units)}" + (f" — {', '.join(units)}" if units else ""))
+        out.print(f"   failed units: {len(units)}" + (f" — {', '.join(units)}" if units else ""))
 
 
 def main():
@@ -392,9 +407,27 @@ def main():
     now = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
     print(f"SESSION START PROBE  repo {repo}  {now}  boot {boot or 'unknown'}")
     print("read-only; every WARN is a probe that could not run, not an empty result")
-    ci_section(repo, options["logs"], timeout)
-    backlog_section(repo, max(timeout, 60))
-    pool_section(repo, options["tq_db"], timeout)
+    # The three sections are independent: they run in parallel, the slow one
+    # (the TODO gate inside backlog-flow) does not add to the others.
+    from concurrent.futures import ThreadPoolExecutor
+
+    def guarded(work, out, fallback):
+        try:
+            work(out)
+        except Exception as error:
+            out.print(f"   WARN: this section hit an error and stopped early: {type(error).__name__}: {error}")
+
+    outputs = [Lines(), Lines(), Lines()]
+    jobs = [
+        (lambda out: guarded(lambda o: ci_section(o, repo, options["logs"], timeout), out, "CI"), outputs[0]),
+        (lambda out: guarded(lambda o: backlog_section(o, repo, max(timeout, 60)), out, "backlog"), outputs[1]),
+        (lambda out: guarded(lambda o: pool_section(o, repo, options["tq_db"], timeout), out, "pool"), outputs[2]),
+    ]
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        list(pool.map(lambda job: job[0](job[1]), jobs))
+    for out in outputs:
+        for line in out.items:
+            print(line)
 
 
 try:
