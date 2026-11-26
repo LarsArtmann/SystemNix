@@ -2,16 +2,23 @@
 set -euo pipefail
 
 BLOCKLIST_FILE="platforms/common/dns-blocklists.nix"
+HAGEZI_RAW_PREFIX="https://raw.githubusercontent.com/hagezi/dns-blocklists"
+HAGEZI_REPO="https://github.com/hagezi/dns-blocklists.git"
+SB_REPO="https://github.com/StevenBlack/hosts.git"
 
-if [[ ! -f $BLOCKLIST_FILE ]]; then
-  echo "ERROR: $BLOCKLIST_FILE not found. Run from repo root."
-  exit 1
-fi
+usage() {
+  cat <<'EOF'
+usage: scripts/dns-update.sh [--hashes-only | --bump-hagezi <latest | 40-hex commit> | --selftest]
 
-HASHES_ONLY=0
-if [[ ${1:-} == "--hashes-only" ]]; then
-  HASHES_ONLY=1
-fi
+  (no flag)               advance the StevenBlack pin to upstream HEAD, then re-hash every list
+  --hashes-only           re-hash against the pins the file already carries (repair pass)
+  --bump-hagezi TARGET    move the HaGeZi pin to TARGET, then re-hash (one list family per change)
+  --selftest              offline self-tests: no network, no repo file required
+
+Every mode edits a COPY and replaces the file in one rename, and only when
+every list hashed: a failed run leaves the tree exactly as it was.
+EOF
+}
 
 # Two list families, one update model each:
 #   - StevenBlack: commit-pinned raw.githubusercontent.com URLs. Advance the
@@ -30,19 +37,54 @@ fi
 # bytes and every deploy died at the HaGeZi FODs (c7fb34007, 05:36 CET, until
 # repaired the same evening). At a pinned commit a hash diff means the FILE
 # was wrong, never that upstream moved: moving the lists is a deliberate
-# commit bump plus re-hash in one change.
+# commit bump plus re-hash in one change (--bump-hagezi does exactly that).
 #
 # NEVER rewrite HaGeZi URLs. The pre-2026-09-29 version of this script
 # grep'd for raw.githubusercontent.com/hagezi (which matched nothing once the
 # GitLab migration landed), then blind-sed'd a foreign commit prefix into
 # every helper argument, breaking every HaGeZi fetch at build time.
 #
-# Flags:
-#   --hashes-only  skip the StevenBlack pin advance and only re-hash: repairs
-#                  HaGeZi hashes against the pinned commit and must not
-#                  bundle an unrelated StevenBlack list refresh with it.
-#   --selftest     run the offline extraction/hash-lookup self-tests.
-SB_REPO="https://github.com/StevenBlack/hosts.git"
+# ALL-OR-NOTHING (2026-11-25): the tree is auto-committed every few minutes,
+# so a half-updated file is a deploy bomb waiting for the next commit (the
+# StevenBlack pin advance used to be sed'd in BEFORE the hashing, and a run
+# that died on one fetch left the new pin under the old hash). Every mode now
+# works on a copy and publishes it in one rename, only when nothing failed.
+
+MODE="advance"
+BUMP_TARGET=""
+case "${1:-}" in
+"") ;;
+--hashes-only)
+  MODE="hashes"
+  ;;
+--bump-hagezi)
+  MODE="bump"
+  BUMP_TARGET="${2:-}"
+  ;;
+--selftest)
+  MODE="selftest"
+  ;;
+-h | --help)
+  usage
+  exit 0
+  ;;
+*)
+  echo "ERROR: unknown argument: $1" >&2
+  usage >&2
+  exit 2
+  ;;
+esac
+# An extra or misspelled argument must never widen the run: the script used
+# to start the StevenBlack pin advance on ANY argument it did not recognise.
+if [[ $MODE == bump && $# -gt 2 || $MODE != bump && $# -gt 1 ]]; then
+  echo "ERROR: unexpected argument: ${*: -1}" >&2
+  usage >&2
+  exit 2
+fi
+if [[ $MODE != selftest && ! -f $BLOCKLIST_FILE ]]; then
+  echo "ERROR: $BLOCKLIST_FILE not found. Run from repo root."
+  exit 1
+fi
 
 extract_sb_pin() {
   # The [a-f0-9]{40} anchor is load-bearing (2026-10-01 incident): the old
@@ -55,9 +97,43 @@ extract_sb_pin() {
 extract_hagezi_base() {
   # Full base INCLUDING the 40-hex commit, from the `hagezi` helper's code
   # line (comment lines are dropped first). Anything unpinned (a branch name,
-  # another host) extracts empty on purpose: the caller fails loud instead
-  # of silently hashing bytes the file never fetches.
+  # another host) extracts empty on purpose: the caller fails loud instead of
+  # silently hashing bytes the file never fetches.
   sed '/^[[:space:]]*#/d' "$1" | grep -oP 'https://raw\.githubusercontent\.com/hagezi/dns-blocklists/[a-f0-9]{40}' | head -1 || true
+}
+
+# Upstream HEAD of a PUBLIC repository, over plain HTTPS. The owner's global
+# git config rewrites https://github.com/ to SSH (url.<ssh>.insteadOf) and
+# the weekly blocklist-auto-update timer runs with no ssh on PATH: its
+# 2026-11-23 run died exit 128 on that rewrite ("cannot run ssh").
+# GIT_CONFIG_GLOBAL=/dev/null keeps personal rewrites out of this lookup.
+public_head() {
+  GIT_CONFIG_GLOBAL=/dev/null git ls-remote "$1" HEAD 2>/dev/null | awk '{print $1}' || true
+}
+
+# Prints the pinned base a --bump-hagezi TARGET resolves to, or explains the
+# refusal on stderr and returns 1. A branch or a short SHA is rejected on
+# purpose: raw.githubusercontent.com serves an immutable tree only at a FULL
+# commit SHA, which is the whole point of pinning.
+resolve_hagezi_bump() {
+  local target="${1:-}" sha
+  if [[ -z $target ]]; then
+    echo "ERROR: --bump-hagezi needs a target: 'latest' or a full 40-hex commit SHA" >&2
+    return 1
+  fi
+  if [[ $target == latest ]]; then
+    sha=$(public_head "$HAGEZI_REPO")
+    if [[ ! $sha =~ ^[a-f0-9]{40}$ ]]; then
+      echo "ERROR: could not resolve the HaGeZi upstream HEAD commit (got '${sha}')" >&2
+      return 1
+    fi
+  elif [[ $target =~ ^[a-f0-9]{40}$ ]]; then
+    sha=$target
+  else
+    echo "ERROR: --bump-hagezi target '${target}' is neither 'latest' nor a full 40-hex commit SHA" >&2
+    return 1
+  fi
+  printf '%s/%s' "$HAGEZI_RAW_PREFIX" "$sha"
 }
 
 # Entries may carry rationale comments between the url line and the hash line
@@ -82,9 +158,151 @@ find_hash_line() {
   return 0
 }
 
-if [[ ${1:-} == "--selftest" ]]; then
-  # Proves the SHIPPED extraction (the function above) against fixture
-  # blocklist files — no network, no repo-root requirement.
+FAILED=0
+
+# Replaces the blocklist file with the finished copy $work in ONE rename.
+# The staged file is created in the same directory (same filesystem, so mv is
+# an atomic rename): concurrent readers (nix evals in sibling sessions, the
+# auto-commit daemon) see either the old or the new file, never a torn one.
+publish_work() {
+  local staged
+  staged=$(mktemp "${BLOCKLIST_FILE}.XXXXXX") || return 1
+  if ! cat "$work" >"$staged"; then
+    rm -f "$staged"
+    return 1
+  fi
+  chmod --reference="$BLOCKLIST_FILE" "$staged" || true
+  mv -f "$staged" "$BLOCKLIST_FILE"
+}
+
+# One transaction over a COPY of the blocklist file. Sets FAILED to the number
+# of lists that did not hash and publishes only when it is zero.
+run_update() {
+  local work base new_base line entry fragment url b32 sri hline old new_sb current_sb
+  work=$(mktemp) || return 1
+  trap 'rm -f "$work"' EXIT
+  cp "$BLOCKLIST_FILE" "$work" || return 1
+
+  # The HaGeZi base is resolved BEFORE anything is decided: a file whose
+  # helper lost its pinned commit must fail here, not half-updated.
+  base=$(extract_hagezi_base "$work")
+  if [[ -z $base ]]; then
+    echo "ERROR: could not extract the pinned HaGeZi base from $BLOCKLIST_FILE"
+    echo "       (expected the hagezi helper to carry a raw.githubusercontent.com/hagezi/dns-blocklists/<40-hex>/ URL)"
+    echo "       Refusing to hash a URL the file does not fetch."
+    return 1
+  fi
+
+  if [[ $MODE == bump ]]; then
+    new_base=$(resolve_hagezi_bump "$BUMP_TARGET") || return 1
+    if [[ $new_base == "$base" ]]; then
+      echo "=== HaGeZi pin unchanged ($new_base) ==="
+    else
+      # Only the helper's CODE line is rewritten; a comment that quotes the
+      # old URL keeps quoting it.
+      line=$(grep -n -F "$base" "$work" | grep -v -E '^[0-9]+:[[:space:]]*#' | head -1 | cut -d: -f1 || true)
+      if [[ -z $line ]]; then
+        echo "ERROR: the pinned base $base appears only in comments; there is no helper line to bump"
+        return 1
+      fi
+      sed -i "${line}s|${base}|${new_base}|" "$work" || return 1
+      if [[ $(extract_hagezi_base "$work") != "$new_base" ]]; then
+        echo "ERROR: the pin rewrite did not take (the helper still extracts another base)"
+        return 1
+      fi
+      echo "=== HaGeZi pin: ${base##*/} -> ${new_base##*/} ==="
+    fi
+    base=$new_base
+    echo "=== Skipping the StevenBlack commit-pin advance (--bump-hagezi moves one list family) ==="
+  else
+    echo "=== HaGeZi base (pinned, read from the file): $base ==="
+    if [[ $MODE == hashes ]]; then
+      echo "=== Skipping the StevenBlack commit-pin advance (--hashes-only) ==="
+    else
+      echo "=== Advancing the StevenBlack commit pin ==="
+      new_sb=$(public_head "$SB_REPO")
+      if [[ -z $new_sb ]]; then
+        echo "ERROR: could not fetch StevenBlack HEAD"
+        return 1
+      fi
+      current_sb=$(extract_sb_pin "$work")
+      if [[ -z $current_sb ]]; then
+        echo "ERROR: could not extract current StevenBlack commit pin (expected hosts/<40-hex>/ URL shape)"
+        return 1
+      fi
+      if [[ $current_sb != "$new_sb" ]]; then
+        sed -i "s/${current_sb}/${new_sb}/g" "$work" || return 1
+        echo "  StevenBlack: $current_sb -> $new_sb"
+      else
+        echo "  StevenBlack: pin unchanged ($new_sb)"
+      fi
+    fi
+  fi
+
+  echo ""
+  echo "=== Refreshing SRI hashes ==="
+  # Each entry: <grep-able file fragment>|<fetchable URL>. The hash is always
+  # the `hash = "..."` line directly BELOW the fragment's line.
+  local entries=()
+  while IFS= read -r sub; do
+    entries+=("hagezi \"${sub}\"|${base}/${sub}")
+  done < <(grep -oP 'hagezi "\K[^"]+' "$work")
+  while IFS= read -r url; do
+    entries+=("${url}|${url}")
+  done < <(grep -oP 'url = "\K[^"]+(?=")' "$work" | grep -v '^hagezi' || true)
+
+  for entry in "${entries[@]}"; do
+    fragment="${entry%%|*}"
+    url="${entry#*|}"
+    printf "  %-46s " "${fragment:0:46}"
+    b32=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1 || true)
+    if [[ -z $b32 ]]; then
+      echo "FAILED (nix-prefetch-url)"
+      FAILED=$((FAILED + 1))
+      continue
+    fi
+    sri=$(nix hash convert --hash-algo sha256 --to sri "$b32" 2>/dev/null || true)
+    if [[ -z $sri ]]; then
+      echo "FAILED (nix hash convert)"
+      FAILED=$((FAILED + 1))
+      continue
+    fi
+    line=$(grep -nF "$fragment" "$work" | head -1 | cut -d: -f1)
+    hline=""
+    [[ -n $line ]] && hline=$(find_hash_line "$work" "$line")
+    if [[ -z $hline ]]; then
+      echo "FAILED (no hash line below fragment)"
+      FAILED=$((FAILED + 1))
+      continue
+    fi
+    old=$(sed -n "${hline}p" "$work" | sed 's/.*hash = "//;s/".*//')
+    if [[ $old == "$sri" ]]; then
+      echo "unchanged"
+    else
+      sed -i "${hline}s|.*|      hash = \"$sri\";|" "$work" || return 1
+      echo "updated"
+    fi
+  done
+
+  echo ""
+  if [[ $FAILED -gt 0 ]]; then
+    echo "Done with $FAILED FAILED entries; $BLOCKLIST_FILE is UNCHANGED (the partial copy was discarded)."
+    echo "Review network/mirror state, then re-run."
+    return 1
+  fi
+  publish_work || {
+    echo "ERROR: could not publish the refreshed $BLOCKLIST_FILE (left unchanged)"
+    return 1
+  }
+  echo "Done. $BLOCKLIST_FILE replaced in one piece."
+  echo "Review changes: git diff $BLOCKLIST_FILE"
+  echo "Prove the fetches: nix build .#checks.x86_64-linux.blocklist-fetches --no-link"
+  echo "Apply:            nix run .#deploy"
+}
+
+if [[ $MODE == selftest ]]; then
+  # Proves the SHIPPED logic (the functions above) against fixture blocklist
+  # files — no network, no repo-root requirement.
   tmp=$(mktemp -d)
   trap 'rm -rf "$tmp"' EXIT
   pass=0
@@ -169,7 +387,7 @@ NIX
       hash = "sha256-ReEh7Mum9YsCeQJLCymUXErvpVlyRsG6EA92cjpKCWQ=";
 NIX
   got=$(find_hash_line "$tmp/decoy-comment.nix" 1)
-  if [[ $got == 3 ]]; then ok "a comment mentioning a hash is never picked up"; else bad "decoy comment returned '$got' (want 3)"; fi
+  if [[ $got == 3 ]]; then ok "a comment mentioning a hash is never picked up"; else bad "decoy-comment returned '$got' (want 3)"; fi
 
   cat >"$tmp/missing-hash.nix" <<'NIX'
       url = hagezi "dnsmasq/gambling.txt";
@@ -178,6 +396,190 @@ NIX
   got=$(find_hash_line "$tmp/missing-hash.nix" 1)
   if [[ -z $got ]]; then ok "entry without a hash line returns empty"; else bad "missing-hash returned '$got' (want empty)"; fi
 
+  # resolve_hagezi_bump: the target is 'latest' or a FULL commit SHA.
+  new_commit=1111111111111111111111111111111111111111
+  got=$(resolve_hagezi_bump "$new_commit") || got=""
+  if [[ $got == "$HAGEZI_RAW_PREFIX/$new_commit" ]]; then
+    ok "a full commit SHA resolves to the pinned base"
+  else
+    bad "full SHA returned '$got'"
+  fi
+  for bad_target in "" main abc "${hagezi_commit}1"; do
+    if resolve_hagezi_bump "$bad_target" >/dev/null 2>&1; then
+      bad "bump target '${bad_target:-<empty>}' was accepted"
+    else
+      ok "bump target '${bad_target:-<empty>}' rejected"
+    fi
+  done
+
+  # Stubbed network tools for the flow tests below. Every stub is POSIX sh so
+  # the selftest also runs inside a bare nix build sandbox.
+  mkdir -p "$tmp/bin"
+  cat >"$tmp/bin/git" <<'GIT'
+#!/bin/sh
+# git ls-remote <repo> HEAD: one line shaped like the real one. StevenBlack
+# answers a new HEAD; the HaGeZi answer is chosen by the test (repo argument).
+case "$1" in
+*StevenBlack*) printf '%s\tHEAD\n' "2222222222222222222222222222222222222222" ;;
+*) printf '%s\tHEAD\n' "$HAGEZI_STUB_HEAD" ;;
+esac
+GIT
+  cat >"$tmp/bin/nix-prefetch-url" <<'PREFETCH'
+#!/bin/sh
+# nix-prefetch-url --type sha256 <url>: store path, then a hash derived from
+# the arguments. Fails for a URL under the "removed" commit or naming a list
+# that upstream no longer ships (the 404 cases).
+case "$*" in
+*3333333333333333333333333333333333333333* | *missing*) exit 1 ;;
+esac
+printf '/nix/store/fake\n%052d\n' "$(printf '%s' "$*" | cksum | cut -d' ' -f1)"
+PREFETCH
+  cat >"$tmp/bin/nix" <<'NIX'
+#!/bin/sh
+# nix hash convert --hash-algo sha256 --to sri <b32>
+for last; do :; done
+printf 'sha256-%s=\n' "$last"
+NIX
+  chmod +x "$tmp/bin/git" "$tmp/bin/nix-prefetch-url" "$tmp/bin/nix"
+  export HAGEZI_STUB_HEAD=2222222222222222222222222222222222222222
+  got=$(PATH="$tmp/bin:$PATH" resolve_hagezi_bump latest)
+  if [[ $got == "$HAGEZI_RAW_PREFIX/2222222222222222222222222222222222222222" ]]; then
+    ok "'latest' resolves through git ls-remote"
+  else
+    bad "'latest' returned '$got'"
+  fi
+  export HAGEZI_STUB_HEAD=""
+  if PATH="$tmp/bin:$PATH" resolve_hagezi_bump latest >/dev/null 2>&1; then
+    bad "'latest' was accepted although HEAD could not be resolved"
+  else
+    ok "'latest' refuses when HEAD does not resolve to a commit"
+  fi
+  export HAGEZI_STUB_HEAD=2222222222222222222222222222222222222222
+
+  # run_update end to end against a fixture blocklist file.
+  repo=$tmp/repo
+  mkdir -p "$repo/platforms/common"
+  fixture=$repo/platforms/common/dns-blocklists.nix
+  cat >"$fixture" <<NIX
+let
+  hagezi =
+    subpath:
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/${hagezi_commit}/\${subpath}";
+  # a comment quoting the old pin must survive a bump untouched:
+  # https://raw.githubusercontent.com/hagezi/dns-blocklists/${hagezi_commit}/dnsmasq/tif.txt
+in
+{
+  blocklists = [
+    {
+      name = "HaGeZi-tif";
+      url = hagezi "dnsmasq/tif.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    }
+    {
+      name = "StevenBlack-everything";
+      url = "https://raw.githubusercontent.com/StevenBlack/hosts/${commit}/alternates/fakenews-gambling-porn-social/hosts";
+      hash = "sha256-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=";
+    }
+  ];
+}
+NIX
+  cp "$fixture" "$tmp/pristine.nix"
+
+  # Runs one update against the fixture: $1 = MODE, $2 = BUMP_TARGET. The
+  # relative BLOCKLIST_FILE is what the real run uses, so it needs cwd = repo.
+  run_flow() {
+    (
+      cd "$repo" || exit 1
+      BLOCKLIST_FILE="platforms/common/dns-blocklists.nix"
+      MODE="$1"
+      BUMP_TARGET="${2:-}"
+      FAILED=0
+      PATH="$tmp/bin:$PATH"
+      run_update
+    )
+  }
+  count_of() {
+    grep -c -F "$1" "$fixture" || true
+  }
+
+  if run_flow hashes >"$tmp/flow.log" 2>&1 \
+    && [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] \
+    && [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] \
+    && [[ $(count_of "$commit") == 1 ]]; then
+    ok "--hashes-only rewrites stale hashes and leaves the pins alone"
+  else
+    bad "--hashes-only did not repair the fixture: $(tail -3 "$tmp/flow.log" | tr '\n' ' ')"
+  fi
+
+  # The all-or-nothing contract: one unreachable list must leave the file
+  # byte-identical, including the lists that DID hash.
+  cp "$tmp/pristine.nix" "$fixture"
+  sed -i 's|      url = hagezi "dnsmasq/tif.txt";|      url = hagezi "dnsmasq/tif.txt";\n    }\n    {\n      name = "HaGeZi-gone";\n      url = hagezi "dnsmasq/missing.txt";\n      hash = "sha256-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=";|' "$fixture"
+  if run_flow hashes >"$tmp/flow-fail.log" 2>&1; then
+    bad "a run with an unreachable list still succeeded"
+  elif cmp -s "$tmp/pristine.nix-with-gone" "$fixture"; then
+    ok "an unreachable list leaves the file byte-identical"
+  else
+    bad "a failed run changed the file"
+  fi
+  if grep -q 'UNCHANGED' "$tmp/flow-fail.log"; then
+    ok "the failure report says the file is unchanged"
+  else
+    bad "the failure report does not mention UNCHANGED"
+  fi
+
+  cp "$tmp/pristine.nix" "$fixture"
+  if run_flow bump "$new_commit" >"$tmp/flow-bump.log" 2>&1 \
+    && [[ $(count_of "$new_commit") == 1 ]] \
+    && [[ $(count_of "$hagezi_commit") == 1 ]] \
+    && grep -q "\"$HAGEZI_RAW_PREFIX/$new_commit/" "$fixture" \
+    && [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] \
+    && [[ $(count_of "$commit") == 1 ]]; then
+    ok "--bump-hagezi rewrites the helper line, re-hashes, and leaves StevenBlack alone"
+  else
+    bad "--bump-hagezi did not land: $(tail -3 "$tmp/flow-bump.log" | tr '\n' ' ')"
+  fi
+
+  # A bump onto a commit that serves nothing must not move the pin.
+  cp "$tmp/pristine.nix" "$fixture"
+  gone_commit=3333333333333333333333333333333333333333
+  if run_flow bump "$gone_commit" >"$tmp/flow-bump-fail.log" 2>&1; then
+    bad "a bump onto an empty commit still succeeded"
+  elif cmp -s "$tmp/pristine.nix" "$fixture"; then
+    ok "a bump onto a commit that serves nothing leaves the pin and the file untouched"
+  else
+    bad "a failed bump changed the file"
+  fi
+
+  # The default mode advances the StevenBlack pin and hashes in one piece.
+  cp "$tmp/pristine.nix" "$fixture"
+  if run_flow advance >"$tmp/flow-advance.log" 2>&1 \
+    && [[ $(count_of 2222222222222222222222222222222222222222) == 1 ]] \
+    && [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] \
+    && [[ $(count_of "$hagezi_commit") == 2 ]]; then
+    ok "the default mode advances the StevenBlack pin and re-hashes"
+  else
+    bad "the default mode did not land: $(tail -3 "$tmp/flow-advance.log" | tr '\n' ' ')"
+  fi
+
+  # The published file keeps the mode of the file it replaced.
+  if [[ $(stat -c %a "$fixture") == "$(stat -c %a "$tmp/pristine.nix")" ]]; then
+    ok "the published file keeps the original mode"
+  else
+    bad "published mode $(stat -c %a "$fixture") differs from $(stat -c %a "$tmp/pristine.nix")"
+  fi
+
+  # A helper that lost its pin fails loud before anything is fetched.
+  cp "$tmp/pristine.nix" "$fixture"
+  sed -i "s|dns-blocklists/${hagezi_commit}/|dns-blocklists/main/|" "$fixture"
+  if run_flow hashes >"$tmp/flow-nopin.log" 2>&1; then
+    bad "an unpinned helper was accepted"
+  elif grep -q 'could not extract the pinned HaGeZi base' "$tmp/flow-nopin.log"; then
+    ok "an unpinned helper fails loud before fetching"
+  else
+    bad "the unpinned-helper run failed for another reason: $(tail -3 "$tmp/flow-nopin.log" | tr '\n' ' ')"
+  fi
+
   echo "dns-update offline selftest: $pass passed, $fail failed"
   if [[ $fail -gt 0 ]]; then
     exit 1
@@ -185,91 +587,4 @@ NIX
   exit 0
 fi
 
-# The HaGeZi base is resolved BEFORE anything edits the file: a file whose
-# helper lost its pinned commit must fail here, not half-updated.
-HAGEZI_BASE=$(extract_hagezi_base "$BLOCKLIST_FILE")
-if [[ -z $HAGEZI_BASE ]]; then
-  echo "ERROR: could not extract the pinned HaGeZi base from $BLOCKLIST_FILE"
-  echo "       (expected the hagezi helper to carry a raw.githubusercontent.com/hagezi/dns-blocklists/<40-hex>/ URL)"
-  echo "       Refusing to hash a URL the file does not fetch."
-  exit 1
-fi
-echo "=== HaGeZi base (pinned, read from the file): $HAGEZI_BASE ==="
-
-if [[ $HASHES_ONLY == 1 ]]; then
-  echo "=== Skipping the StevenBlack commit-pin advance (--hashes-only) ==="
-else
-  echo "=== Advancing the StevenBlack commit pin ==="
-  new_sb=$(git ls-remote "$SB_REPO" HEAD | awk '{print $1}')
-  if [[ -z $new_sb ]]; then
-    echo "ERROR: could not fetch StevenBlack HEAD"
-    exit 1
-  fi
-  current_sb=$(extract_sb_pin "$BLOCKLIST_FILE")
-  if [[ -z $current_sb ]]; then
-    echo "ERROR: could not extract current StevenBlack commit pin (expected hosts/<40-hex>/ URL shape)"
-    exit 1
-  fi
-  if [[ $current_sb != "$new_sb" ]]; then
-    sed -i "s/${current_sb}/${new_sb}/g" "$BLOCKLIST_FILE"
-    echo "  StevenBlack: $current_sb -> $new_sb"
-  else
-    echo "  StevenBlack: pin unchanged ($new_sb)"
-  fi
-fi
-
-echo ""
-echo "=== Refreshing SRI hashes ==="
-# Each entry: <grep-able file fragment>|<fetchable URL>. The hash is always
-# the `hash = "..."` line directly BELOW the fragment's line.
-entries=()
-while IFS= read -r sub; do
-  entries+=("hagezi \"${sub}\"|${HAGEZI_BASE}/${sub}")
-done < <(grep -oP 'hagezi "\K[^"]+' "$BLOCKLIST_FILE")
-while IFS= read -r url; do
-  entries+=("${url}|${url}")
-done < <(grep -oP 'url = "\K[^"]+(?=")' "$BLOCKLIST_FILE" | grep -v '^hagezi' || true)
-
-failed=0
-for entry in "${entries[@]}"; do
-  fragment="${entry%%|*}"
-  url="${entry#*|}"
-  printf "  %-46s " "${fragment:0:46}"
-  b32=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1 || true)
-  if [[ -z $b32 ]]; then
-    echo "FAILED (nix-prefetch-url)"
-    failed=$((failed + 1))
-    continue
-  fi
-  sri=$(nix hash convert --hash-algo sha256 --to sri "$b32" 2>/dev/null || true)
-  if [[ -z $sri ]]; then
-    echo "FAILED (nix hash convert)"
-    failed=$((failed + 1))
-    continue
-  fi
-  line=$(grep -nF "$fragment" "$BLOCKLIST_FILE" | head -1 | cut -d: -f1)
-  hline=""
-  [[ -n $line ]] && hline=$(find_hash_line "$BLOCKLIST_FILE" "$line")
-  if [[ -z $hline ]]; then
-    echo "FAILED (no hash line below fragment)"
-    failed=$((failed + 1))
-    continue
-  fi
-  old=$(sed -n "${hline}p" "$BLOCKLIST_FILE" | sed 's/.*hash = "//;s/".*//')
-  if [[ $old == "$sri" ]]; then
-    echo "unchanged"
-  else
-    sed -i "${hline}s|.*|      hash = \"$sri\";|" "$BLOCKLIST_FILE"
-    echo "updated"
-  fi
-done
-
-echo ""
-if [[ $failed -gt 0 ]]; then
-  echo "Done with $failed FAILED entries — review network/mirror state before deploying."
-  exit 1
-fi
-echo "Done."
-echo "Review changes: git diff $BLOCKLIST_FILE"
-echo "Validate:       nix flake check --no-build"
-echo "Apply:          nix run .#deploy"
+run_update
