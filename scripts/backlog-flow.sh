@@ -81,6 +81,8 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
         "b4": "- [ ] [ready] **B4 title-only block row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_10-00_x.md §f.6)\n",
         "b4done": "- [x] [ready] **B4 title-only block row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_10-00_x.md §f.6)\n",
         "r5": "- [ ] [blocked:user] **R5 new row** — body\n",
+        "r6": "- [ ] [ready] **R6 title-only row** → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n",
+        "r7": "- [ ] [ready] **R7 full-body row** — this row carries a body long enough to count as a full row because the class boundary sits at one hundred twenty characters of ask text → [docs/todo/storage.md](docs/todo/storage.md)\n",
     }
 
     def commit(date, *keys):
@@ -92,9 +94,9 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
         expect(done.returncode == 0, "fixture commit failed", done.stderr)
         return run(["git", "-C", root, "rev-parse", "HEAD"]).stdout.strip()
 
-    pre = commit("2026-11-01T10:00:00 +0100", "old", "r1", "r2", "r3", "r4")
-    post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "b1", "b2", "b3", "b4")
-    head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "b4done", "r5")
+    pre = commit("2026-11-01T10:00:00 +0100", "old", "r1", "r2", "r3", "r4", "r6", "r7")
+    post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "r6", "r7", "b1", "b2", "b3", "b4")
+    head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "b4done", "r5", "r6", "r7")
     os.makedirs(os.path.join(root, "docs", "todo"))
     with open(os.path.join(root, "docs", "todo", "services.md"), "w", encoding="utf-8") as handle:
         handle.write("# Lib\n\n" + rows["b2"].replace(" — body → [docs/todo/services.md](docs/todo/services.md)", ""))
@@ -110,15 +112,15 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     revisions = {entry["name"]: entry for entry in report["revisions"]}
     expect(list(revisions) == ["now", "7d", "30d", "pre-block", "post-block"],
            "five revisions in the default order", result.stdout)
-    expect(revisions["now"]["open"] == 5 and revisions["now"]["ticked"] == 4, "open and ticked rows at HEAD", result.stdout)
+    expect(revisions["now"]["open"] == 7 and revisions["now"]["ticked"] == 4, "open and ticked rows at HEAD", result.stdout)
     expect(revisions["7d"]["sha"] == post[:7], "the 7-day revision is the last commit before HEAD minus 7 days", result.stdout)
     expect(revisions["30d"]["sha"] is None and revisions["30d"]["open"] is None, "a date older than the history yields an empty revision", result.stdout)
     expect([entry["name"] for entry in report["windows"]] == ["7d", "pre-block"], "a window whose start predates the history is skipped", result.stdout)
     expect(revisions["pre-block"]["sha"] == pre[:7] and revisions["post-block"]["sha"] == post[:7], "block edges resolve by date", result.stdout)
-    expect(revisions["pre-block"]["open"] == 4 and revisions["pre-block"]["ticked"] == 1, "census at the pre-block revision", result.stdout)
-    expect(revisions["post-block"]["open"] == 7 and revisions["post-block"]["ticked"] == 2, "census at the post-block revision", result.stdout)
+    expect(revisions["pre-block"]["open"] == 6 and revisions["pre-block"]["ticked"] == 1, "census at the pre-block revision", result.stdout)
+    expect(revisions["post-block"]["open"] == 9 and revisions["post-block"]["ticked"] == 2, "census at the post-block revision", result.stdout)
     now_tags = revisions["now"]["tags"]
-    expect(now_tags.get("ready") == 2 and now_tags.get("decision") == 1 and now_tags.get("watch") == 1
+    expect(now_tags.get("ready") == 4 and now_tags.get("decision") == 1 and now_tags.get("watch") == 1
            and now_tags.get("blocked:user") == 1 and now_tags.get("blocked:deploy") == 0, "per-tag census at HEAD", result.stdout)
 
     windows = {entry["name"]: entry for entry in report["windows"]}
@@ -139,7 +141,7 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     expect(pinned["pre-block"]["added_open"] == 3, "a pinned window leaves the other windows on their dates", json.dumps(pinned["pre-block"]))
 
     block = report["block"]
-    for field, value in {"day": "2026-11-07", "added": 4, "open_now": 2, "share_pct": 40.0, "closed_or_removed": 2,
+    for field, value in {"day": "2026-11-07", "added": 4, "open_now": 2, "share_pct": 28.6, "closed_or_removed": 2,
                          "pool_visible_now": 1, "paired_in_library": 1, "without_library_row": 1, "unlinked": 0}.items():
         expect(block[field] == value, f"block field {field}: want {value}", result.stdout)
     expect(block["by_tag"] == {"ready": 1, "watch": 1}, "open block rows by tag", result.stdout)
@@ -152,7 +154,8 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     expect(block["by_source_month"] == {"2026-09": 1, "2026-10": 1}, "open block rows by source month", result.stdout)
     domains = report["domains"]["now"]
     expect(domains.get("docs/todo/services.md") == 1 and domains.get("docs/todo/monitoring.md") == 1
-           and domains.get("docs/todo/pipeline.md") == 1 and domains.get("(unlinked)") == 2, "open rows per linked library", result.stdout)
+           and domains.get("docs/todo/pipeline.md") == 2 and domains.get("docs/todo/storage.md") == 1
+           and domains.get("(unlinked)") == 2, "open rows per linked library", result.stdout)
     expect(report["gate"] is not None and report["gate"]["unharvested_reports"] == 0, "a repository without the gate script reports an empty gate", result.stdout)
 
     stub = os.path.join(root, "scripts", "check-todo-system.sh")
@@ -165,15 +168,17 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     moved = run(["bash", script, root, "--json", "--no-gate", "--block-day", "2026-11-01"])
     report = json.loads(moved.stdout)
     expect(report["gate"] is None, "--no-gate leaves the gate empty", moved.stdout)
-    expect(report["block"]["added"] == 4 and report["block"]["open_now"] == 2, "--block-day moves the block", moved.stdout)
-    expect(report["block"]["by_body"] == {"title only": 0, "short body (under 120 chars)": 2, "full body": 2},
-           "body classes: R2's and R3's bodies are title-only or short, R1's and R4's count as they are written", json.dumps(report["block"]["by_body"]))
-    expect(report["block"]["without_library_row"] == 2, "--block-day pairing is recomputed for the moved block", moved.stdout)
+    expect(report["block"]["added"] == 6 and report["block"]["open_now"] == 4 and report["block"]["share_pct"] == 57.1,
+           "--block-day moves the block", moved.stdout)
+    expect(report["block"]["by_body"] == {"title only": 1, "short body (under 120 chars)": 2, "full body": 1},
+           "body classes: one title-only, two short, one full among the open rows of the moved block", json.dumps(report["block"]["by_body"]))
+    expect(report["block"]["without_library_row"] == 3 and report["block"]["unlinked"] == 1 and report["block"]["paired_in_library"] == 0,
+           "pairing is recomputed for the moved block", moved.stdout)
 
     text = run(["bash", script, root, "--no-gate", "--window", "7d=" + pre, "--sample", "2", "--seed", "7"])
     expect(text.returncode == 0, "text mode exits 0", text.stdout + text.stderr)
     for needle in ("Open queue rows per revision", "Flow since each window start",
-                   "Block (rows added on 2026-11-07): 4 added, 2 still open (40.0% of the open queue), 2 closed or removed",
+                   "Block (rows added on 2026-11-07): 4 added, 2 still open (28.6% of the open queue), 2 closed or removed",
                    "pool-visible now (ready or blocked:deploy): 1", "sample (seed 7):", "    L"):
         expect(needle in text.stdout, f"text mode must print: {needle}", text.stdout + text.stderr)
 
