@@ -692,10 +692,13 @@ eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homep
 # ── integration iconFile fan-out: the 2026-11-26 wiring ──
 # homepage.iconFile was documented from 2026-10 but consumed nowhere; the
 # registry now copies it into the icon pack under the tile's own icon name.
-# Control: a mark under its pack-style name stays green. The legs mutate
-# miniflux.nix (plus emeet-pixyd.nix for the collision) with a REAL repo
-# file as the mark (a missing path would trip an eval error, which the
-# harness rightly refuses to count as the audit firing).
+# Controls: a mark under its pack-style name stays green, and so do two
+# tiles shipping the SAME file under one name. The legs mutate miniflux.nix
+# (plus emeet-pixyd.nix for the shared name) with REAL repo files as the
+# marks (a missing path would trip an eval error, which the harness rightly
+# refuses to count as the audit firing). The null-icon leg pins the fan-out
+# filter: copying the mark before the assertion runs aborted eval with a
+# bare "expected a string but found null" that named no entry (2026-11-26).
 eval_case iconfile mark-under-own-name pass - \
   'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
 eval_case iconfile mark-without-icon-name fail 'homepage.iconFile without a pack-style homepage.icon' \
@@ -703,6 +706,9 @@ eval_case iconfile mark-without-icon-name fail 'homepage.iconFile without a pack
 eval_case iconfile mark-under-url-icon fail 'homepage.iconFile without a pack-style homepage.icon' \
   'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "https://example.invalid/miniflux.svg";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
 eval_case iconfile two-marks-one-name fail 'share an icon name while shipping different iconFile marks' \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|' \
+  'sed:modules/nixos/services/emeet-pixyd.nix:s|^              icon = "camera-ui.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/immich-logo.svg;|'
+eval_case iconfile same-mark-shared pass - \
   'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|' \
   'sed:modules/nixos/services/emeet-pixyd.nix:s|^              icon = "camera-ui.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
 

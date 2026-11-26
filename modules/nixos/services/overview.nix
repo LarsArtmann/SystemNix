@@ -207,15 +207,14 @@
             ];
             # go-hotspot shells out to `git` for the churn collection.
             path = lib.mkIf hotspotEnabled [ pkgs.git ];
-            environment =
-              {
-                OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
-              }
-              // lib.optionalAttrs hotspotEnabled {
-                # The home is a tmpfs — keep the XDG fallbacks writable.
-                HOME = "/var/lib/overview";
-                GIT_CONFIG_GLOBAL = gitSafeConfig;
-              };
+            environment = {
+              OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+            }
+            // lib.optionalAttrs hotspotEnabled {
+              # The home is a tmpfs — keep the XDG fallbacks writable.
+              HOME = "/var/lib/overview";
+              GIT_CONFIG_GLOBAL = gitSafeConfig;
+            };
           };
 
           services.overview-discovery-watchdog = {
