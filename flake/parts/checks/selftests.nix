@@ -971,7 +971,8 @@
           # keeps the check name set stable across systems.
           if pkgs.stdenv.hostPlatform.isLinux then
             let
-              guardModule = ((import (root + "/modules/nixos/services/memory-emergency-guard.nix") { }).flake.nixosModules.memory-emergency-guard);
+              guardSource = import (root + "/modules/nixos/services/memory-emergency-guard.nix") { };
+              guardModule = guardSource.flake.nixosModules.memory-emergency-guard;
               hostShape = lib.modules.evalModules {
                 modules = [
                   # NixOS declares `systemd` itself (a freeform submodule tree);
@@ -998,14 +999,13 @@
               };
               guardExe = hostShape.config.systemd.services.memory-emergency-guard.serviceConfig.ExecStart;
             in
-            pkgs.runCommand "memory-emergency-guard-host-shape-build" { }
-              ''
-                test -x ${guardExe}
-                grep -q -x -F 'SACRIFICE_UNITS=""' ${guardExe} || { echo "FAIL: sacrifice list is not the empty host shape"; exit 1; }
-                grep -q -x -F 'SOCKET_UNITS=""' ${guardExe} || { echo "FAIL: socket list is not the empty host shape"; exit 1; }
-                grep -q -x -F 'IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-true}"' ${guardExe} || { echo "FAIL: ioPause is not baked on"; exit 1; }
-                touch $out
-              '';
+            pkgs.runCommand "memory-emergency-guard-host-shape-build" { } ''
+              test -x ${guardExe}
+              grep -q -x -F 'SACRIFICE_UNITS=""' ${guardExe} || { echo "FAIL: sacrifice list is not the empty host shape"; exit 1; }
+              grep -q -x -F 'SOCKET_UNITS=""' ${guardExe} || { echo "FAIL: socket list is not the empty host shape"; exit 1; }
+              grep -q -x -F 'IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-true}"' ${guardExe} || { echo "FAIL: ioPause is not baked on"; exit 1; }
+              touch $out
+            ''
           else
             pkgs.runCommand "memory-emergency-guard-host-shape-build-linux-only-noop" { } ''
               echo "skipped: builds the systemd guard script, linux-only" > $out
