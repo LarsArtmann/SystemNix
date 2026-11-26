@@ -365,6 +365,29 @@ deployment are GitHub-sourced). Domains redone cleanly: 1 issue + 1 PR, parity
 with GitHub both sides. **Lesson: `open_issues_count` on the GitHub repo API
 includes PRs — verify the issue/PR SPLIT, not just the count.**
 
+### `audiblesync` flip — EXECUTED 2026-11-26 07:24 (owner call on the 05:37 question)
+
+`audiblesync` had sat in `canonicalRepos` since 2026-11-15 under a comment that
+claimed a flip which never ran: the repo stayed a pull mirror and
+`forgejo-push-mirror` (phase 5) refused it on every hourly sync — invisible until
+the 2026-11-25 re-interval fix stopped aborting the run before phase 5. Flip
+sequence as run: `forgejo-flip-check@audiblesync` dry-run (all preconditions
+green) → `forgejo-flip@audiblesync` (12 s): `mirror: false`, `master` + the
+dependabot branch at GitHub's SHAs, 4 PRs imported (1 open, 3 closed; the bot
+author lands as Ghost), push mirror attached (8h + `sync_on_commit`) → one
+hand-triggered `push_mirrors-sync` (no-op push, no error) → local
+`~/projects/audiblesync` origin switched to
+`forgejo@evo-x2.home.lan:lars/audiblesync.git` in the same command (GitHub kept
+as `github`). A sibling session was mid-wave in that clone (unpushed local
+commits): the flip imports GitHub, and those commits were descendants of the
+imported `master`, so the next push to the new origin fast-forwards Forgejo
+and the mirror carries them to GitHub — no split state at any point. Pre-flip
+only-on-Forgejo inventory: 0 stars, 1 watcher (the owner), no issues, releases,
+topics or Actions state — nothing lost. GitHub Dependabot keeps opening PRs on
+the GitHub twin and the mirror keeps closing them (the domains/gogenfilter
+post-flip pattern since 2026-10-16; the "Renovate dual-run posture" decision
+row owns that question).
+
 ### ⚠ GitHub-side push freeze (active for flipped repos)
 
 Once a repo is forgejo-primary, the 8h push-mirror interval makes ANY
