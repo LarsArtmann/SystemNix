@@ -953,6 +953,44 @@
               touch $out
             '';
 
+        # Guard script in the evo-x2 SHAPE must build (2026-11-26). The host
+        # configures socketUnits and sacrificeUnits EMPTY (observe-only) and
+        # ioPause on; the VM node does not. A per-unit helper called with an
+        # empty list renders as a zero-argument call, a shellcheck
+        # SC2119/SC2120 finding, and writeShellApplication fails the build:
+        # the evo-x2 toplevel was unbuildable for hours while the VM-node
+        # variant of the same script built clean. This check evaluates ONLY
+        # the guard module with the host's option values and realises its
+        # script (shellcheck runs at build time), then pins the three baked
+        # host-shape lines so a copy of the VM node's config cannot pass.
+        memory-emergency-guard-host-shape-build =
+          let
+            guardModule = ((import (root + "/modules/nixos/services/memory-emergency-guard.nix") { }).flake.nixosModules.memory-emergency-guard);
+            hostShape = lib.modules.evalModules {
+              modules = [
+                guardModule
+                {
+                  services.memory-emergency-guard = {
+                    enable = true;
+                    socketUnits = [ ];
+                    sacrificeUnits = [ ];
+                    ioPause.enable = true;
+                  };
+                }
+              ];
+              specialArgs = { inherit pkgs; };
+            };
+            guardExe = hostShape.config.systemd.services.memory-emergency-guard.serviceConfig.ExecStart;
+          in
+          pkgs.runCommand "memory-emergency-guard-host-shape-build" { }
+            ''
+              test -x ${guardExe}
+              grep -q -x -F 'SACRIFICE_UNITS=""' ${guardExe} || { echo "FAIL: sacrifice list is not the empty host shape"; exit 1; }
+              grep -q -x -F 'SOCKET_UNITS=""' ${guardExe} || { echo "FAIL: socket list is not the empty host shape"; exit 1; }
+              grep -q -x -F 'IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-true}"' ${guardExe} || { echo "FAIL: ioPause is not baked on"; exit 1; }
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum
