@@ -4,7 +4,7 @@ Working session after `docs/status/2026-11-26_07-12_crash-followup-2-iopause-sel
 
 ## Scope line
 
-Tree at report time: `bf439dd6e` (`git rev-parse --short HEAD`, 2026-11-26 17:14 CET), working tree clean. I committed nothing; every commit that carries my edits is a heuristic auto-commit of the daemon. Running generation: `/nix/store/zm83sr9716xb1372iw2135p85nszfbl6-nixos-system-evo-x2-26.11.20261121.2786a2a` = `system-1032-link`, live since 06:50:06 today.
+Tree at report time: `bf439dd6e` (`git rev-parse --short HEAD`, 2026-11-26 17:14 CET), working tree clean at that minute. At about 17:20 `flake/parts/checks/selftests.nix` showed as modified for one look; `git diff` printed nothing on the next, so another session or the daemon touched it between my commands. Not reviewed. I committed nothing; every commit that carries my edits is a heuristic auto-commit of the daemon. Running generation: `/nix/store/zm83sr9716xb1372iw2135p85nszfbl6-nixos-system-evo-x2-26.11.20261121.2786a2a` = `system-1032-link`, live since 06:50:06 today.
 
 **Verified here (command and artifact, all under `~/.cache/freeze-triage-20261125/`):**
 
@@ -53,7 +53,7 @@ Tree at report time: `bf439dd6e` (`git rev-parse --short HEAD`, 2026-11-26 17:14
 | Fact | Value |
 | ---- | ----- |
 | Generation | `zm83sr9716xb1372iw2135p85nszfbl6` = `system-1032-link`, profile link created 06:50:06 |
-| Guard script | `/nix/store/8pyscx087qqdlzhf4s8akj9sc32rfj5a-memory-emergency-guard-check/bin/memory-emergency-guard-check` |
+| Guard script | `/nix/store/8pyscx087qqdlzhf4s8akj9sc32rfj5a-memory-emergency-guard-check/bin/memory-emergency-guard-check`; the 06:16 toplevel `d5qzj0h2…` and generation 1032 carry the same path, so this exact script went live at 06:16:50 |
 | Guard source version | My IO-PAUSE rewrite as of commit `4682eed32` (05:52:43): 324 changed lines against the previous generation, 117 lines behind the current shared tree (no per-unit helpers, blocking starts, old trip wording) |
 | First activation | 06:16:50, raw `nh os switch` by an agent session (sudo, no TTY, `PWD=/home/lars/projects/SystemNix`); `deploy.sh` had refused the same tree at 06:12:18 |
 | Second activation | 06:50:06, `nh os switch` from `pts/1` |
