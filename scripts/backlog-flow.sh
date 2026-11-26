@@ -95,9 +95,9 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     pre = commit("2026-11-01T10:00:00 +0100", "old", "r1", "r2", "r3", "r4")
     post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "b1", "b2", "b3", "b4")
     head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "b4done", "r5")
+    os.makedirs(os.path.join(root, "docs", "todo"))
     with open(os.path.join(root, "docs", "todo", "services.md"), "w", encoding="utf-8") as handle:
-        os.makedirs(os.path.dirname(handle.name), exist_ok=True)
-        handle.write("# Lib\n\n" + rows["b2"].replace(" — body → [docs/todo/services.md](docs/todo/services.md)", "") )
+        handle.write("# Lib\n\n" + rows["b2"].replace(" — body → [docs/todo/services.md](docs/todo/services.md)", ""))
 
     command = ["bash", script, root, "--json"]
     result = run(command)
@@ -123,18 +123,18 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
 
     windows = {entry["name"]: entry for entry in report["windows"]}
     flow = windows["7d"]
-    for field, value in {"added_open": 1, "added_closed": 0, "removed": 1, "ticked": 1, "reopened": 0, "net_open": -1}.items():
+    for field, value in {"added_open": 1, "added_closed": 0, "removed": 1, "ticked": 2, "reopened": 0, "net_open": -2}.items():
         expect(flow[field] == value, f"window 7d field {field}: want {value}", result.stdout)
     expect(flow["added_open_by_tag"] == {"blocked:user": 1}, "added rows by tag", result.stdout)
-    expect(flow["ticked_by_tag"] == {"ready": 1}, "ticked rows by tag", result.stdout)
+    expect(flow["ticked_by_tag"] == {"ready": 2}, "ticked rows by tag", result.stdout)
     expect(flow["removed_by_tag"] == {"blocked:deploy": 1}, "removed rows by tag", result.stdout)
     since = windows["pre-block"]
-    for field, value in {"added_open": 3, "added_closed": 1, "removed": 1, "ticked": 1, "reopened": 0, "net_open": 1}.items():
+    for field, value in {"added_open": 3, "added_closed": 2, "removed": 1, "ticked": 1, "reopened": 0, "net_open": 1}.items():
         expect(since[field] == value, f"window pre-block field {field}: want {value}", result.stdout)
     expect(since["added_open_by_tag"] == {"blocked:user": 1, "ready": 1, "watch": 1}, "a longer window counts the rows it saw being added", result.stdout)
 
     pinned = {entry["name"]: entry for entry in json.loads(run(["bash", script, root, "--json", "--no-gate", "--window", "7d=" + pre]).stdout)["windows"]}
-    expect(pinned["7d"]["added_open"] == 3 and pinned["7d"]["added_closed"] == 1 and pinned["7d"]["net_open"] == 1,
+    expect(pinned["7d"]["added_open"] == 3 and pinned["7d"]["added_closed"] == 2 and pinned["7d"]["net_open"] == 1,
            "--window NAME=REV pins a window start", json.dumps(pinned["7d"]))
     expect(pinned["pre-block"]["added_open"] == 3, "a pinned window leaves the other windows on their dates", json.dumps(pinned["pre-block"]))
 
