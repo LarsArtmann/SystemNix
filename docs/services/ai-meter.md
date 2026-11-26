@@ -1,6 +1,6 @@
 # ai-meter — transparent metering proxy for all OpenAI-compatible AI calls
 
-> Layer: `modules/nixos/services/ai-meter.nix` · Binary: `pkgs/ai-meter/` (in-tree Go, stdlib only, vendorHash = null) · Enabled: evo-x2 (`configuration.nix`)
+> Layer: `modules/nixos/services/ai-meter.nix` · Binary: its own repository, `github:LarsArtmann/ai-meter`, consumed as flake input `ai-meter` (Go, standard library only; it was in-tree at `pkgs/ai-meter/` until 2026-11-26) · Enabled: evo-x2 (`configuration.nix`)
 
 ## What it is
 
@@ -124,22 +124,56 @@ Read Health before any other number: Metrics Freshness past two minutes means ev
 3. Render with the host's price table, round-trip the document through the API (create a copy under another slug, read it back, delete it: the server adds keys, and the file must carry them), run every panel query against the live engine, **then look at a kept copy of the page in a headless browser before the live dashboard is touched**. The 2026-11-26 render came before the update and caught three cut titles, a clipped text panel and a chart without its unit. Recipes: [monitoring.md](../agents/monitoring.md), "SigNoz dashboard authoring rules".
 4. Go live with `PUT /api/v2/dashboards/<dashboardId>` and the rendered document, then read it back and compare `spec`. The provisioner makes the same PUT on the next deploy and skips the dashboard as unchanged from then on (2026-11-26: ai-meter was skipped on the first run after a hand-made update; caddy and gcp were updated once at 06:17 and skipped at 06:48). Until that deploy the RUNNING generation still carries the previous file, so a signoz restart or a reboot puts that one back: the change is durable only after its deploy.
 
+## Admission control
+
+For z.ai the upstream names no concurrency limit and answers whatever
+exceeds it with HTTP 429, so the module gives that upstream an
+`admission` block: calls queue, the proxy retries "too much at once"
+answers itself, the allowance follows the rejections, and a spent usage
+window opens a circuit. The rules, the measurements behind them and the
+traps are written where the code is: `docs/ADMISSION.md` in the ai-meter
+repository.
+
+- **Wait budget: `max_wait_seconds = 270`** (module default 30). One call
+  may queue and retry for 270 s in total; then it gets `429` with
+  `Retry-After: 1` and a message that names the limit and says how many
+  calls are still waiting. Why 270: at 30 s, 42% of 10,535 z.ai ledger
+  lines in the first 11 live hours (2026-11-25 18:36Z to 2026-11-26 05:54Z)
+  were that answer; Crush abandons a stream without a first part after
+  5 minutes and cvagent gives a call 300 s, so 270 s leaves 30 s for time
+  to first token (p99 20 s). Change it only after measuring.
+- **A re-sent call keeps its place** in the queue for as long as the client
+  keeps sending it: the memory lasts five minutes from the call's latest
+  arrival and ends when the call is answered with a status no client
+  retries. The in-tree copy kept only the first arrival for a fixed five
+  minutes; the live rule is the repository's from the first deploy that
+  carries it.
+- The ledger's `admission` field says how a gated call left:
+  `admitted`, `absorbed`, `gave_up`, `timeout`, `circuit`, `cancelled`.
+  A `gave_up` or `timeout` answer is the proxy's own 429 and counts as a
+  delay, not a provider failure (the failure-rate rule ignores it).
+
 ## Traps
 
 - **gemini rides the NATIVE genai protocol** (probe 2026-10-17: crush v0.98.1's gemini provider = google-genai-sdk transport, `v1beta/models/<model>:streamGenerateContent?alt=sse`, `X-Goog-Api-Key` auth — even with a custom `--base-url`). The genai.go adapter handles all of it: client auth via the X-Goog-Api-Key channel, upstream auth via `auth_style = "x-goog-api-key"`, model-from-URL metering, `usageMetadata` extraction (thoughtsTokenCount folds into completion tokens), query-string preservation (`?alt=sse` is REQUIRED — dropping it silently changes the response format). No gemini models are declared in crushrc yet, so nothing routes there until one is `model add`-ed; gemini tokens meter exactly, cost $0 until a cost entry exists (no invented prices).
 - **Key rotation**: delete `/run/ai-meter-keys/*` + restart `ai-meter-keys` + restart consumers — or just reboot (fresh mint at boot).
 - **Metering must never break a call**: parse failures degrade to request-counting (`model="none"`, `usage_missing`) and increment `ai_meter_metering_errors_total` — check it before trusting dashboards.
+- **The source is the `ai-meter` flake input.** A change to the proxy is
+  made in its repository, pushed to both remotes, then floated here with
+  `nix flake update ai-meter` (never a pin: owner inputs float on
+  `master`). The input's rev must be on both remotes, or a fresh clone
+  cannot evaluate.
 - **hermes** calls GLM/MiniMax from its own app config — wiring it needs a hermes-repo change (open row in docs/todo/ai-stack.md).
 
 ## Checks
 
 SigNoz rules reading these metrics (`_signoz-alerts.nix`): "AI Upstream Failure Rate High (>30%)", "AI Quota Window Spent", "Local AI TTFT High / Critical" (llama-chat), "AI Trace Export Failing", "AI Trace Export Silent" and "AI Traces Not Landing In SigNoz". The failure-rate rule is per provider, counts only the calls a provider had to answer (the 429s ai-meter makes itself while a call waits for room are not failures) and needs 5 calls a minute before a ratio means anything. On the gate's first night its old HTTP-level form sat firing for 85 % of 30 hours; under the repaired form the same 30 hours hold 8 hours of firing for the z.ai 429 storm before the gate existed and nothing since. A spent usage window pages once, as a warning, from the quota rule. Gatus: "ai-meter" (:8107/health, 200 + <500ms), "ai-meter metrics" (:8108/metrics, 200 + `pat(*ai_meter_requests_total*)`), "ai-meter viewer" and "ai-meter dashboard" (the pinned id still resolves). Eval gates: ports registered, port-registry audit (no literals), gatus coverage (both ports probed), deploy-restart-audit (ai-meter-keys in the deploy.sh provisioner loop), and the dashboard template must carry each of its four spend placeholders exactly once (`_ai-meter-dashboard.nix` throws at eval otherwise). `checks.signoz-query-lint` validates every dashboard file against the dashboard API's rules (`lib/signoz-dashboard-lint.nix`).
 
-`checks.x86_64-linux.ai-meter-spend-promql` (`flake/parts/checks/ai-meter-guards.nix`): the dashboard's spend-rate PromQL and the Go cost formula are two implementations of one formula, so the check evaluates what the generator REALLY emits with promtool's engine on a fixture, then holds the Go side (`TestEstimateCostMatchesDashboardPromQL`) to the same number. Either formula moving alone fails it. A second fixture (two priced models, two clients) pins the per-client sum and the 24-hour window. promtool is more permissive than SigNoz: it accepted a `\.` escape that SigNoz's own parser rejects, so the check also refuses a lone backslash in any spend query, and a generated query should still be cross-checked against the live engine (`POST /api/v5/query_range`) before it ships. It also asserts that the dashboard evo-x2 provisions keeps the four priced panels, that each of their queries mentions every priced model, and that the rendered file carries no placeholder. Negative legs: `CASES=aimeter bash scripts/negative-test-lints.sh` (either formula drifting, the per-client grouping or the 24-hour scaling dropped, a renamed or dropped priced panel, a neutered ledger replay); the dashboard rules: `CASES=signozdash`.
+`checks.x86_64-linux.ai-meter-spend-promql` (`flake/parts/checks/ai-meter-guards.nix`): the dashboard's spend-rate PromQL and the Go cost formula are two implementations of one formula, so the check evaluates what the generator REALLY emits with promtool's engine on a fixture, then holds the Go side (`TestEstimateCost` in the input's `internal/meter`) to the same number. Either formula moving alone fails it. A second fixture (two priced models, two clients) pins the per-client sum and the 24-hour window. promtool is more permissive than SigNoz: it accepted a `\.` escape that SigNoz's own parser rejects, so the check also refuses a lone backslash in any spend query, and a generated query should still be cross-checked against the live engine (`POST /api/v5/query_range`) before it ships. It also asserts that the dashboard evo-x2 provisions keeps the four priced panels, that each of their queries mentions every priced model, and that the rendered file carries no placeholder. Negative legs: `CASES=aimeter bash scripts/negative-test-lints.sh` (either formula drifting, the per-client grouping or the 24-hour scaling dropped, a renamed or dropped priced panel, a neutered ledger replay); the dashboard rules: `CASES=signozdash`.
 
 `checks.x86_64-linux.ai-meter-alert-promql` (same file): promtool evaluates the query the failure-rate rule file REALLY carries on five fixtures: z.ai sending back 19 of 40 calls is silent, a provider failing 30 of 40 fires, 40 plain 429s with no admission outcome fire (a provider refusing is still a failure), one failed call per 5 minutes is silent, and of two providers only the failing one fires. Negative legs: the same group `aimeter` (the gate exclusion, the volume floor, the 429 class and the per-provider grouping each removed once).
 
 ## Tests
 
-- Go: `buildflow -s test-race` (auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream; genai.go adapter: native path/auth/usage/query-preservation e2e vs a fake gemini upstream; ledger replay: a price that lands, is withdrawn or stays across restarts, old-format lines that still carry a cost, unparseable lines, a torn tail line)
+- Go: in the ai-meter repository (`go test -race ./...`, its flake check and CI; 104 test functions on 2026-11-26): auth, routing, streaming usage capture, injection, cost math, ledger, label escaping, e2e vs a fake upstream; genai.go adapter: native path/auth/usage/query-preservation e2e vs a fake gemini upstream; ledger replay: a price that lands, is withdrawn or stays across restarts, old-format lines that still carry a cost, unparseable lines, a torn tail line)
 - VM: `nix build .#checks.x86_64-linux.ai-meter-vm` — unit boot, key mint ownership/perms (consumer copies + ai-meter mirrors + non-root chown path), health, unauthorized 401, unknown-upstream 404, metrics exposition, the hardened unit replaying the ledger at start (cost family only), and a price row that lands after a call restating it on the same ledger
