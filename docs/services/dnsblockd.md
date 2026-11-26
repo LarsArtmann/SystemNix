@@ -204,6 +204,10 @@ printf '' | openssl s_client -alpn h2 -connect 192.168.1.200:443 \
   -servername doubleclick.net 2>&1 | rg 'ALPN protocol'
 ```
 
+### Blocked-domain triage ("why is X blocked?")
+
+**First probe is the daemon's own decision log, not `dig`:** `journalctl -u dnsblockd --since '<window>' | grep 'domain blocked' | grep <name>` prints `domain=… source=<blocklist> client=<ip>` for every blocked query. `dig` misleads in both directions: a temp allow answers real addresses while the name is still on a list (the block page's "Continue to site" grants minutes, not a removal: on 2026-11-25 `www.baidu.com` resolved for exactly the 5-minute grant and read as "not blocked"), and the block IP answers for a parent-label hit (the matcher walks up the dot hierarchy, so a `baidu.com` row blocks `www.baidu.com`). For a name nobody queried yet, read the deployed mapping: `blocklist_mapping_file` in the running unit's YAML points at `<store>/mapping.json` (`domain -> list`). Count by suffix (`key == "baidu.com" or key.endswith(".baidu.com")`), never by substring: `"baidu" in key` returned 845 rows, of which 181 were under `baidu.com` and 664 were unrelated domain names. Durable fix: `whitelist` in `platforms/common/dns-blocklists.nix` strips the row and every subdomain row from all lists at build time and needs a deploy (bump the entry-count pin in `tests/test-dns-blocker-render.nix` and the count in this runbook). Immediate fix: the block page's temp allow or the dashboard's permanent allowlist.
+
 ## Startup hang — 5-phase discriminator + playbook (2026-10-12 13:06 incident)
 
 dnsblockd init logs `startup phase complete` after each of FIVE phases. A
