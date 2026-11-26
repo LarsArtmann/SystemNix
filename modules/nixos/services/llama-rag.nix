@@ -172,6 +172,15 @@ _: {
       # chunks reach ~800; RAG sat dark ~30d on this, 2026-10-29). 2048
       # covers llama-index's 1024-token chunks with headroom; bge-m3 is
       # small enough that the larger compute buffer is negligible.
+      #
+      # --parallel 1: llama.cpp's default (4 slots) wedged this unit on
+      # 2026-11-25. Four concurrent embedding tasks launched at 19:37:07 and
+      # none ever processed a token; the server sat 11 h with /health 200, GPU
+      # 1% busy and the main thread spinning in
+      # amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu, serving 182 upstream 502s to
+      # paperless. The hermes-spawned duplicate of the same pinned build, run
+      # with -np 1, stayed healthy through that whole window. One slot
+      # serializes inference and removes the concurrent-GPUVM-alloc path.
       embeddingsExecStart =
         "${llamaServer} --embedding"
         + " -m ${cfg.modelDir}/${cfg.embeddingsModel}"
@@ -179,7 +188,8 @@ _: {
         + " --host ${cfg.host}"
         + " --port ${toString cfg.embeddingsPort}"
         + " --ctx-size ${toString cfg.ctxSize}"
-        + " --ubatch-size 2048";
+        + " --ubatch-size 2048"
+        + " --parallel 1";
 
       rerankerExecStart =
         "${llamaServer} --reranking --pooling rank"
@@ -187,7 +197,8 @@ _: {
         + " --alias ${cfg.rerankerAlias}"
         + " --host ${cfg.host}"
         + " --port ${toString cfg.rerankerPort}"
-        + " --ctx-size ${toString cfg.ctxSize}";
+        + " --ctx-size ${toString cfg.ctxSize}"
+        + " --parallel 1";
 
       # Orphan-port guard: kill any llama-server holding this unit's port
       # that is NOT managed by this module's units. The 2026-09-18 deploy hit
@@ -623,6 +634,28 @@ _: {
                     "[RESPONSE_TIME] < 1000"
                   ];
                   alert = "llama.cpp embeddings server down - RAG indexing and semantic search unavailable";
+                }
+                {
+                  # Functional probe: /health reports 200 while the server is
+                  # wedged (2026-11-25: 4 tasks hung in the amdkfd GPUVM alloc
+                  # for 11 h, /health green, 182 upstream 502s). A real
+                  # embedding request is the only condition that fails on that
+                  # class, so it must be part of the check.
+                  name = "llama.cpp Embeddings Inference";
+                  group = "AI";
+                  url = "http://localhost:${toString cfg.embeddingsPort}/v1/embeddings";
+                  method = "POST";
+                  headers = {
+                    Content-Type = "application/json";
+                  };
+                  body = ''{"model":"${cfg.embeddingsAlias}","input":"gatus probe"}'';
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 5000"
+                    ''[BODY] == pat(*"embedding":*)''
+                  ];
+                  alert = "llama.cpp embeddings inference hung - server accepts requests but never completes an embedding (wedge class: check /slots n_prompt_tokens_processed, then restart llama-embeddings)";
                 }
               ]
               ++ lib.optionals cfg.reranker.enable [

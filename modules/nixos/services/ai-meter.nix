@@ -165,11 +165,21 @@ _: {
           # already in flight at start: 1 to 4: 1-2%; 5: 3%; 6: 31%;
           # 7-8: 6-8%; 9: 65%; 10: 78%; 11 and more: 82% and up. So 8
           # starts under the cliff, and 2 keeps a probing call alive while
-          # the upstream throttles hard. max_wait_seconds stays inside a
-          # 60 s client header timeout; a call that outlives it gets
-          # 429 + Retry-After: 1 and re-enters with a new budget and its
-          # old place in the queue, about 2 min over crush's 4 attempts
-          # (crush gives up after 35 s on its own).
+          # the upstream throttles hard.
+          # max_wait_seconds: 270 (owner direction 2026-11-26: "like 5
+          # minutes"; was 30). The budget has to end before the client's
+          # own clock does: crush v0.102.0 abandons a stream that sends no
+          # first part within 5 min (internal/agent/request_guard.go,
+          # defaultFirstPartTimeout) and cvagent gives one extraction
+          # 300 s, so a longer hold cancels calls that still hold their
+          # place. The 30 s margin covers the upstream's time to first
+          # token (p99 20 s over 5,836 streamed calls, ledger 2026-11-25
+          # 19:36 to 2026-11-26 06:54 CET). A call that outlives the
+          # budget gets 429 + Retry-After: 1 and re-enters with a new
+          # budget and its old place in the queue: about 18 min over
+          # crush's 4 attempts, against 2 min before. At 30 s, 42% of the
+          # ledger lines of the first 11 live hours were that answer
+          # (4,454 of 10,535).
           # 1302/1305: retry and count against the allowance. 1308, 1310,
           # 1316-1321: a usage window is spent; the proxy sends nothing
           # until the reset the answer names, printed in UTC+8.
@@ -177,7 +187,7 @@ _: {
           admission = {
             max_concurrency = 8;
             min_concurrency = 2;
-            max_wait_seconds = 30;
+            max_wait_seconds = 270;
             max_retries = 6;
             grow_after_seconds = 30;
             retryable_codes = [
