@@ -56,14 +56,15 @@ expect() {
   ok "$leg"
 }
 
-# expect-arg-error <leg> <args...>: exit 2 and no state file appears
+# expect-arg-error <leg> <args...>: exit 2. The state before these legs is
+# snapshotted below and must be byte-identical afterwards (an invalid run
+# never writes).
 expect_arg_error() {
   local leg="$1"
   shift
   local rc=0
   bash "$subject" "$@" >/dev/null 2>&1 || rc=$?
   [[ $rc -eq 2 ]] || fail "$leg: exit $rc, want 2"
-  [[ ! -e $state/blocklist-since ]] || fail "$leg: an invalid run wrote state"
   ok "$leg"
 }
 
@@ -104,8 +105,8 @@ printf 'garbage without any newline' >"$state/blocklist-since"
 expect "a corrupted state file is a first sight" "0 0" "$t0" "$hagezi_a" "$sb_a"
 
 expect "the clean state survives the next run" "7 0" "$((t0 + 7))" "$hagezi_a" "$sb_a"
-hkey="$(md5sum <<<"$hagezi_a" | cut -d' ' -f1)"
-skey="$(md5sum <<<"$sb_a" | cut -d' ' -f1)"
+hkey="$(printf '%s' "$hagezi_a" | md5sum | cut -d' ' -f1)"
+skey="$(printf '%s' "$sb_a" | md5sum | cut -d' ' -f1)"
 printf '%s %s HaGeZi-ultimate\n%s not-a-number StevenBlack-everything\n' "$hkey" "$t0" "$skey" >"$state/blocklist-since"
 expect "a bad epoch restarts only its own list" "9 0" "$((t0 + 9))" "$hagezi_a" "$sb_a"
 
@@ -113,8 +114,12 @@ grep -q "^$skey $((t0 + 9)) StevenBlack-everything$" "$state/blocklist-since" \
   || fail "the restarted list did not get the injected now ($((t0 + 9))) as its first-seen moment"
 ok "the restarted list is recorded with the current now"
 
+state_before="$(cat "$state/blocklist-since")"
 expect_arg_error "a missing value is an argument error" --state-dir "$state" --stale-after 2592000 --now
 expect_arg_error "a non-integer stale-after is an argument error" --state-dir "$state" --stale-after soon --now "$t0" "$hagezi_a"
 expect_arg_error "an unknown option is an argument error" --state-dir "$state" --stale-after 2592000 --now "$t0" --turbo "$hagezi_a"
+
+[[ "$(cat "$state/blocklist-since")" == "$state_before" ]] || fail "an invalid run changed the state file"
+ok "invalid runs leave the state file byte-identical"
 
 echo "dnsblockd blocklist freshness: $passed legs passed"

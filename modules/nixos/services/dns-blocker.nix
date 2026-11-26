@@ -1890,16 +1890,20 @@ _: {
             # exporter's own error counter from it — into the node_exporter
             # textfile dir, which Gatus reads out-of-band — makes the breakage
             # visible without SigNoz.
-            # Same unit also ages the loaded blocklists: they are SRI-pinned to a
-            # mutable branch, so they only refresh when someone runs
-            # scripts/dns-update.sh. Nothing else in the system knows how old the
-            # blocking data is.
+            # Same unit also ages the loaded blocklists. Every list is SRI-pinned
+            # to a commit, so it moves only when its pin moves: the weekly
+            # blocklist-auto-update timer advances StevenBlack, and the HaGeZi
+            # pin is moved by hand (scripts/dns-update.sh --bump-hagezi). Nothing
+            # else in the system knows how old the blocking data is.
             # Fail-CLOSED: any sampling failure writes observer_ok 0 rather than
             # leaving the last good file in place (a frozen gauge is the
             # phantom-green class this repo keeps re-learning).
-            # Threshold: 30 days. Refresh cadence stays MANUAL (the script edits
-            # hashes in the tree and needs a commit + deploy); the metric is the
-            # alarm, not a timer that would auto-commit on its own.
+            # Threshold: 30 days, PER LIST (2026-11-26). The first version hashed
+            # the whole loaded set, which any single refresh reset, so with the
+            # timer moving StevenBlack every week a HaGeZi pin nobody bumped
+            # would never have aged out. The gauge is the age of the STALEST
+            # list, computed by scripts/lib/blocklist-freshness.sh (fixture-
+            # tested in checks.dnsblockd-blocklist-freshness-selftest).
             services.dnsblockd-otel-observer = {
               description = "dnsblockd OTel-export + blocklist-freshness gauges for node_exporter";
               inherit onFailure;
@@ -1912,6 +1916,19 @@ _: {
                 TimeoutStartSec = "45s";
                 ExecStart =
                   let
+                    # The per-list staleness input, a script of its own so the
+                    # fixture selftest can drive it with an injected clock. The
+                    # SAME file checks.dnsblockd-blocklist-freshness-selftest
+                    # runs is what the observer executes here.
+                    freshness = pkgs.writeShellApplication {
+                      name = "dnsblockd-blocklist-freshness";
+                      runtimeInputs = [
+                        pkgs.coreutils
+                        pkgs.gnugrep
+                        pkgs.gnused
+                      ];
+                      text = builtins.readFile ../../../scripts/lib/blocklist-freshness.sh;
+                    };
                     observer = pkgs.writeShellApplication {
                       name = "dnsblockd-otel-observer";
                       runtimeInputs = [
@@ -1919,13 +1936,17 @@ _: {
                         pkgs.curl
                         pkgs.gnugrep
                         pkgs.gawk
+                        freshness
                       ];
                       text = ''
                         OUT_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
                         OUT="$OUT_DIR/dnsblockd-freshness.prom"
                         STATE="/var/lib/dnsblockd-otel/last-errors"
-                        HASH_FILE="/var/lib/dnsblockd-otel/blocklist-set-hash"
-                        SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
+                        FRESHNESS_STATE_DIR="/var/lib/dnsblockd-otel"
+                        # State of the retired whole-set gauge (2026-11-26):
+                        # removed on sight so nothing reads a frozen leftover.
+                        RETIRED_HASH_FILE="/var/lib/dnsblockd-otel/blocklist-set-hash"
+                        RETIRED_SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
                         STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
                         STALE_SECONDS=$((30 * 86400))
                         blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
@@ -1961,30 +1982,30 @@ _: {
                         fi
 
                         # Nix store files carry mtime = 1 (reproducibility), so
-                        # the FILE age says nothing. What is measurable is when
-                        # the LOADED SET last changed: this observer hashes the
-                        # list and remembers the first moment it saw that hash,
-                        # which is exactly "how long since anyone refreshed".
+                        # the FILE age says nothing. What is measurable is the
+                        # first moment this observer saw each list's CURRENT
+                        # path: the freshness helper remembers that PER LIST and
+                        # reports the age of the stalest one. Per list, not per
+                        # set: the weekly timer moves StevenBlack on its own and
+                        # must not reset the age of a HaGeZi pin nobody bumps.
+                        # tempAllowAll loads no blocklist at all, so staleness
+                        # is not a failure mode there (age -1).
+                        rm -f "$RETIRED_HASH_FILE" "$RETIRED_SINCE_FILE" 2>/dev/null || true
                         now_epoch="$(date +%s)"
-                        if [ "''${#blocklists[@]}" -eq 0 ]; then
-                          # tempAllowAll: blocking is deliberately off, so
-                          # staleness is not a failure mode here.
-                          blocklist_age=-1
-                          refresh_stale=0
-                        else
-                          set_hash="$(printf '%s\n' "''${blocklists[@]}" | md5sum | cut -d' ' -f1)"
-                          prev_hash=""
-                          since=""
-                          if [ -r "$HASH_FILE" ]; then prev_hash="$(cat "$HASH_FILE" 2>/dev/null || true)"; fi
-                          if [ -r "$SINCE_FILE" ]; then since="$(cat "$SINCE_FILE" 2>/dev/null || true)"; fi
-                          if [ "$set_hash" != "$prev_hash" ] || ! printf '%s' "$since" | grep -Eq '^[0-9]+$'; then
-                            since="$now_epoch"
-                            printf '%s\n' "$set_hash" > "$HASH_FILE"
-                            printf '%s\n' "$since" > "$SINCE_FILE"
+                        blocklist_age=-1
+                        refresh_stale=0
+                        if [ "''${#blocklists[@]}" -gt 0 ]; then
+                          # A helper failure is a blind sample: observer_ok 0
+                          # fails closed (the freshness check itself stays 0).
+                          if ! freshness="$(dnsblockd-blocklist-freshness \
+                            --state-dir "$FRESHNESS_STATE_DIR" \
+                            --stale-after "$STALE_SECONDS" \
+                            --now "$now_epoch" \
+                            "''${blocklists[@]}")"; then
+                            observer_ok=0
+                            freshness="-1 0"
                           fi
-                          blocklist_age=$((now_epoch - since))
-                          refresh_stale=0
-                          if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
+                          read -r blocklist_age refresh_stale <<<"''${freshness}"
                         fi
 
                         # Pool-copy freshness (2026-11-08 queue item): the
@@ -2018,10 +2039,10 @@ _: {
                           echo "# HELP dnsblockd_otel_observer_ok 0 when this observer could not read the stats API (gauges are blind)"
                           echo "# TYPE dnsblockd_otel_observer_ok gauge"
                           echo "dnsblockd_otel_observer_ok $observer_ok"
-                          echo "# HELP dnsblockd_blocklist_age_seconds Seconds since the loaded blocklist SET last changed (store mtimes are always 1)"
+                          echo "# HELP dnsblockd_blocklist_age_seconds Age in seconds of the STALEST loaded blocklist, i.e. since the list that moved least recently last changed (store mtimes are always 1; -1 = no blocklist loaded)"
                           echo "# TYPE dnsblockd_blocklist_age_seconds gauge"
                           echo "dnsblockd_blocklist_age_seconds $blocklist_age"
-                          echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the loaded set has not changed in 30 days"
+                          echo "# HELP dnsblockd_blocklist_refresh_stale 1 when any loaded blocklist has not changed in 30 days (per list: one refreshed list no longer hides a frozen one)"
                           echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
                           echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
                           ${lib.optionalString cfg.allowlistBackup.enable ''
@@ -2215,15 +2236,16 @@ _: {
               }
               {
                 # The blocking data is the only artifact in this service with
-                # no age signal: the lists are SRI-pinned to a mutable branch
-                # and refresh only when someone runs scripts/dns-update.sh
-                # (manual by design — it edits hashes that need a commit).
+                # no age signal of its own: the gauge is the age of the STALEST
+                # loaded list (per list since 2026-11-26, so the weekly
+                # StevenBlack advance cannot hide a frozen HaGeZi pin). The
+                # drill below is the one scripts/dns-update.sh really offers.
                 name = "DNS Blocker Blocklist Freshness";
                 group = "Infrastructure";
                 url = "http://127.0.0.1:${toString ports.signoz-node-exporter}/metrics";
                 interval = "5m";
                 conditions = [ "[BODY] == pat(*\ndnsblockd_blocklist_refresh_stale 0\n*)" ];
-                alert = "dnsblockd blocklists have not changed in 30+ days — run scripts/dns-update.sh, commit the hash bump, deploy (stale lists mean new ad/malware domains resolve)";
+                alert = "a dnsblockd blocklist has not changed in 30+ days (stale lists mean new ad/malware domains resolve). Refresh: scripts/dns-update.sh --bump-hagezi latest moves the HaGeZi pin and its hashes in one transaction, and scripts/dns-update.sh with no flag does the same for StevenBlack; review git diff, then nix run .#deploy. dnsblockd_blocklist_age_seconds on this page names the stalest age";
               }
             ]
             # Pool-copy freshness threshold (2026-11-08 queue item): the
