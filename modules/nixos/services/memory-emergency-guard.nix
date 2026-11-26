@@ -885,7 +885,11 @@ _: {
                   )
                 fi
                 proc_map=$(proc_pgid_tty_scan) && proc_scan_rc=0 || proc_scan_rc=$?
-                if [ "$proc_scan_rc" -eq 0 ] && [ -n "$proc_map" ]; then
+                # find exits 1 when a pid listed by the glob vanishes before
+                # its stat file is read (constant on a box with 1,400 pids):
+                # the scan still completed. Only a timeout, a usage error or
+                # an empty map (pid 1 missing) leaves the invariant unproven.
+                if [ "$proc_scan_rc" -le 1 ] && [ -n "$proc_map" ]; then
                   proc_scan_status="ok"
                   while IFS= read -r p_pid p_pgrp p_tty; do
                     [ -n "''${p_pgrp:-}" ] || continue
