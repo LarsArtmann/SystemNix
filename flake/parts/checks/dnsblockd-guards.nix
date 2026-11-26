@@ -130,7 +130,8 @@
       # helper call would leave the gauge at its "not stale" default forever.
       checks.dnsblockd-blocklist-freshness-selftest =
         let
-          observer = inputs.self.nixosConfigurations.evo-x2.config.systemd.services.dnsblockd-otel-observer.serviceConfig.ExecStart;
+          observer =
+            inputs.self.nixosConfigurations.evo-x2.config.systemd.services.dnsblockd-otel-observer.serviceConfig.ExecStart;
         in
         pkgs.runCommand "dnsblockd-blocklist-freshness-selftest" { } ''
           scratch=$(mktemp -d)
@@ -154,6 +155,8 @@
       # scripts/dns-update.sh names it in its closing advice and the
       # dns-blocklist-drift workflow builds the same function before its
       # commit step.
-      checks.blocklist-fetches = import (root + "/platforms/common/blocklist-fetches.nix") { inherit pkgs; };
+      checks.blocklist-fetches = import (root + "/platforms/common/blocklist-fetches.nix") {
+        inherit pkgs;
+      };
     };
 }
