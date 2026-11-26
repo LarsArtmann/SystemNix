@@ -9,6 +9,8 @@
 - waits on a deploy or a time window → library only, `[blocked:deploy]` / `[watch]`
 - owner question → library only, `[decision]`
 - vague / long-term → `ROADMAP.md`
+- intake control (plan v6 T05, 2026-11-26): read the NOW block first. A session closes at least as many rows as it mints and mints at most 3 new queue rows; an incident or a live failure is the only exception. Before minting a row for a report's follow-up, check whether a row for it already exists (`scripts/tick-todo-rows.sh` dry-run by title); when it does, write `HARVESTED` with the row pointer on the report instead of a new row
+- two guards hold that line: the open-row ratchet in `scripts/check-todo-system.sh` (`BACKLOG_MAX_OPEN`, WARN by default, `CHECK_TODO_RATCHET=strict` fails, `--ratchet-down` lowers it, the cap never goes up) and the bulk guard `scripts/check-todo-bulk.sh` (a staged queue diff adding more than 50 open rows fails the commit; the override `TODO_BULK_HARVEST_OK=1` belongs to the owner)
 - re-fire stamp hygiene: a watch row carries at most ~3 dispatch-stamp clauses; a 4th collapses the row to "N dispatches through <date>, last verdict <verdict>, full history in the task reports + library row" (2026-10-25 /data-watch collapse precedent — 16 embedded stamps collapsed to the cap shape with task-report IDs preserved)
   Done items are pruned to `CHANGELOG.md` at every pass — a `[x]` row must never persist here. Verification narratives go to the status report, never the item. Full contract: `AGENTS.md` → "TODO System".
 

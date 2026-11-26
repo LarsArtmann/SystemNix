@@ -45,6 +45,14 @@
 #      extracted titles: a titled open row compares by title, an untitled
 #      one by its full line. Gate mode also sweeps the docs/todo/ libraries
 #      (same row shape there); --scan-file stays hermetic to its target.
+#   7. Open-row ratchet (2026-11-26, masterplan v6 T05): the queue may not
+#      grow past BACKLOG_MAX_OPEN open rows. One bulk harvest added 1,538
+#      rows on 2026-11-07; the ratchet turns "the queue grew" from a census
+#      into a gate line. Default WARN (a strict default reads the working
+#      tree and freezes every session's commit, the 2026-11-10 class);
+#      CHECK_TODO_RATCHET=strict fails. --ratchet-down rewrites the constant
+#      to the current count once the queue and the libraries are committed
+#      and below the cap; the cap never goes up.
 #
 # Scope v1: grep-judgeable shapes only. Semantic dedup/priority are
 # review work, not a grep gate.
@@ -52,12 +60,15 @@
 # Usage:
 #   bash scripts/check-todo-system.sh            # gate
 #   bash scripts/check-todo-system.sh --selftest # prove the scanner detects
+#   bash scripts/check-todo-system.sh --ratchet-down # lower the cap to the current count
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TODO="$REPO_ROOT/TODO_LIST.md"
 SCAN_TARGET="$TODO"
 fail=0
+# Open-row cap of the queue (ratchet, note 7 above). Lower it with --ratchet-down only.
+BACKLOG_MAX_OPEN=3558
 
 check() {
   local desc="$1" pattern="$2"
@@ -200,7 +211,42 @@ selftest() {
     echo "SELFTEST FAIL: single-instance row must not be flagged as duplicate"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt, possessive-exempt) + duplicate open rows"
+  # ratchet leg (note 7): a synthetic queue above the cap WARNS with exit 0
+  # by default and FAILS in strict mode; exactly at the cap it stays silent.
+  local capfile n
+  capfile=$(mktemp)
+  printf '# Queue\n\n' >"$capfile"
+  n=1
+  while [ "$n" -le "$((BACKLOG_MAX_OPEN + 1))" ]; do
+    printf -- '- [ ] [ready] **Selftest ratchet row %s** — body → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' "$n" >>"$capfile"
+    n=$((n + 1))
+  done
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$capfile" 2>&1) && rc=0 || rc=$?
+  if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -q "WARN: open queue rows $((BACKLOG_MAX_OPEN + 1)) exceed the ratchet cap $BACKLOG_MAX_OPEN"; then
+    rm -f "$capfile"
+    echo "SELFTEST FAIL: default ratchet mode must warn-with-exit-0 one row above the cap"
+    exit 1
+  fi
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent CHECK_TODO_RATCHET=strict "$0" --scan-file "$capfile" 2>&1) && rc=0 || rc=$?
+  rm -f "$capfile"
+  if [ "$rc" -eq 0 ] || ! printf '%s\n' "$out" | grep -q 'FAIL: open queue rows .* exceed the ratchet cap'; then
+    echo "SELFTEST FAIL: strict ratchet mode must fail one row above the cap"
+    exit 1
+  fi
+  capfile=$(mktemp)
+  printf '# Queue\n\n' >"$capfile"
+  n=1
+  while [ "$n" -le "$BACKLOG_MAX_OPEN" ]; do
+    printf -- '- [ ] [ready] **Selftest ratchet row %s** — body → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' "$n" >>"$capfile"
+    n=$((n + 1))
+  done
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent CHECK_TODO_RATCHET=strict "$0" --scan-file "$capfile" 2>&1) && rc=0 || rc=$?
+  rm -f "$capfile"
+  if printf '%s\n' "$out" | grep -q 'ratchet cap'; then
+    echo "SELFTEST FAIL: a queue exactly at the cap must not print a ratchet line"
+    exit 1
+  fi
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt, possessive-exempt) + duplicate open rows + open-row ratchet (warn, strict, silent at the cap)"
   exit 0
 }
 
@@ -244,6 +290,39 @@ duplicate_check() {
   done
 }
 
+ratchet_check() {
+  # note 7: open rows of $1 against BACKLOG_MAX_OPEN
+  local f="$1" open
+  open=$(grep -cE '^- \[ \] ' "$f" 2>/dev/null) || open=0
+  [ "$open" -gt "$BACKLOG_MAX_OPEN" ] || return 0
+  local detail="open queue rows $open exceed the ratchet cap $BACKLOG_MAX_OPEN (+$((open - BACKLOG_MAX_OPEN))) — close rows before adding new ones"
+  if [ "${CHECK_TODO_RATCHET:-}" = "strict" ]; then
+    echo "FAIL: $detail"
+    fail=1
+  else
+    echo "WARN: $detail (CHECK_TODO_RATCHET=strict fails)"
+  fi
+}
+
+ratchet_down() {
+  local open
+  open=$(grep -cE '^- \[ \] ' "$TODO") || open=0
+  if [ "$open" -gt "$BACKLOG_MAX_OPEN" ]; then
+    echo "ratchet: open rows ($open) are ABOVE the cap ($BACKLOG_MAX_OPEN) — close $((open - BACKLOG_MAX_OPEN)) rows first; the cap does not go up"
+    exit 1
+  fi
+  if [ "$open" -eq "$BACKLOG_MAX_OPEN" ]; then
+    echo "ratchet: nothing to lower — open rows ($open) equal the cap"
+    exit 1
+  fi
+  if [ -n "$(git -C "$REPO_ROOT" status --porcelain -- TODO_LIST.md docs/todo 2>/dev/null)" ]; then
+    echo "ratchet: TODO_LIST.md or a library has uncommitted changes — commit them first, the cap must describe a committed state"
+    exit 1
+  fi
+  sed -i -E "s/^BACKLOG_MAX_OPEN=[0-9]+$/BACKLOG_MAX_OPEN=$open/" "${BASH_SOURCE[0]}"
+  echo "ratchet lowered: $BACKLOG_MAX_OPEN -> $open (edit scripts/check-todo-system.sh; commit it)"
+}
+
 scan_file() {
   local f="$1"
   SCAN_TARGET="$f"
@@ -270,6 +349,7 @@ scan_file() {
     fail=1
   fi
   duplicate_check "$f"
+  ratchet_check "$f"
   # verify every referenced library file exists
   local lib
   while IFS= read -r lib; do
@@ -379,6 +459,7 @@ pairing_check() {
 
 case "${1:-}" in
 --selftest) selftest ;;
+--ratchet-down) ratchet_down ;;
 --scan-file) scan_file "$2" ;;
 --pairing-strict) CHECK_TODO_PAIRING=strict scan_file "$TODO" ;;
 *)

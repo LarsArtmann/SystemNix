@@ -142,6 +142,17 @@ if ! todosys_out=$(scripts/check-todo-system.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: a staged queue diff may not add more than 50 open rows in one
+# commit (2026-11-26, masterplan v6 T05). One bulk harvest added 1,538 rows
+# on 2026-11-07 and 42 % of the queue was still that day's three weeks
+# later. The selftest runs first so a broken guard fails loudly. The
+# override (TODO_BULK_HARVEST_OK=1) is the owner's; agents do not set it.
+if ! bulk_out=$(scripts/check-todo-bulk.sh --selftest 2>&1 && scripts/check-todo-bulk.sh 2>&1); then
+    echo "$bulk_out" >&2
+    log_error "TODO bulk guard refused the commit — see the lines above (scripts/check-todo-bulk.sh)."
+    exit 1
+fi
+
 # Fast guard: hooks and scripts must never gain unbounded scans of the
 # AI-model blob trees. Incident class (2026-09-19 12:23–13:41): a recursive
 # content sweep over 60 GB-class model blobs ran 1h07 under chronic IO

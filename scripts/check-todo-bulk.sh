@@ -45,11 +45,12 @@ selftest() {
   done
   git -C "$scratch/repo" add "$QUEUE"
   git -C "$scratch/repo" -c user.name=selftest -c user.email=selftest@example.invalid commit -q -m "base queue"
-  local guard="$scratch/repo/scripts/$(basename "${BASH_SOURCE[0]}")"
+  local guard
+  guard="$scratch/repo/scripts/$(basename "${BASH_SOURCE[0]}")"
 
   add_rows() {
     # $1 = count, $2 = state (space or x), $3 = first index
-    local i line
+    local i
     for i in $(seq "$3" $((("$3" + "$1") - 1))); do
       printf -- '- [%s] [ready] **Staged row %s** — body → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' "$2" "$i" >>"$scratch/repo/$QUEUE"
     done
