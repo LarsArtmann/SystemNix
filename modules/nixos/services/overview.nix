@@ -29,6 +29,7 @@
       options,
       pkgs,
       lib,
+      larsPackages,
       ...
     }:
     let
@@ -52,14 +53,17 @@
       evidenceDir = "/var/lib/overview-evidence";
       complianceEvidenceFile = "${evidenceDir}/compliance.json";
       complianceEvidenceEnabled = cfg.complianceSource == "file:${complianceEvidenceFile}";
-      buildflow = inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # Single source of truth for Lars tool packages (lib/lars-packages.nix)
+      # — the same derivations the fleet installs on PATH, shims included, so
+      # the units can never drift from the CLI the owner has.
+      inherit (larsPackages) buildflow;
+      goHotspot = larsPackages.go-hotspot;
 
       # ── Code-risk hotspots (go-hotspot) ───────────────────────────────────
       # go-hotspot analyzes ONE repository per invocation, and the upstream
       # consumer feeds it the ABSOLUTE paths the discovery daemon reports
       # (~/projects), so the analysis must run against those paths.
       hotspotEnabled = cfg.hotspotSource == "auto";
-      goHotspot = inputs.go-hotspot.packages.${pkgs.stdenv.hostPlatform.system}.default;
       waitDaemonReady = pkgs.writeShellApplication {
         name = "overview-wait-daemon";
         runtimeInputs = [ pkgs.curl ];
@@ -140,6 +144,13 @@
         # sha256-NQ0ICMtk+bY9fQDcLR8AkVEVaOv6/jmXv3kQHjS5dMM=. The old
         # NXdLbWt+ shim belonged to the rolled-back 4b48040 rev.
 
+        # The upstream module renders OVERVIEW_HOTSPOT_COMMAND from this
+        # option (default: a PATH lookup for "go-hotspot", which the unit's
+        # sandboxed PATH never carries). Pin it to the store path.
+        services.overview.hotspotCommand = lib.mkIf hotspotEnabled (
+          lib.mkDefault "${goHotspot}/bin/go-hotspot"
+        );
+
         assertions = lib.optional daemonMode {
           assertion =
             (config.services.project-discovery-daemon.enable or false)
@@ -204,7 +215,6 @@
                 # The home is a tmpfs — keep the XDG fallbacks writable.
                 HOME = "/var/lib/overview";
                 GIT_CONFIG_GLOBAL = gitSafeConfig;
-                OVERVIEW_HOTSPOT_COMMAND = "${goHotspot}/bin/go-hotspot";
               };
           };
 

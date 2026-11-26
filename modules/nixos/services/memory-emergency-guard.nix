@@ -245,6 +245,47 @@ _: {
             ' {} + 2>/dev/null
           }
 
+          # Unit calls go ONE CALL PER UNIT (2026-11-26, systemd 262 verified
+          # live): a single `systemctl stop A B C` that names ONE not-loaded
+          # unit stops NOTHING and exits 5 (order-independent, --no-block
+          # too), and the old `|| true` hid it. In the VM fixture (3 of 13
+          # churn units exist) every churn stop was a silent no-op; in
+          # production one retired unit name would have disarmed the whole
+          # list. A dead name must cost only itself.
+          stop_units() { # <unit>... — best effort, never fails
+            local u
+            for u in "$@"; do
+              systemctl stop "$u" 2>/dev/null || true
+            done
+          }
+
+          start_units() { # <unit>... — blocking start, best effort, never fails
+            local u
+            for u in "$@"; do
+              systemctl start "$u" 2>/dev/null || true
+            done
+          }
+
+          reset_failed_units() { # <unit>... — best effort, never fails
+            local u
+            for u in "$@"; do
+              systemctl reset-failed "$u" 2>/dev/null || true
+            done
+          }
+
+          # Start oneshot units WITHOUT waiting (2026-11-26): a blocking
+          # `systemctl start` on a unit whose start job is still running
+          # merges into that job and returns only when the oneshot finishes
+          # (measured: 300 s in the VM fixture; a btrbk send runs for hours),
+          # parking this script and its IO-PAUSE / calm-resume code until
+          # TimeoutStartSec kills it.
+          start_units_no_block() { # <unit>... — best effort, never fails
+            local u
+            for u in "$@"; do
+              systemctl start --no-block "$u" 2>/dev/null || true
+            done
+          }
+
           now=$(date +%s)
           CHURN_UNITS="${lib.concatStringsSep " " cfg.ioChurnUnits}"
           BACKUP_UNITS="${lib.concatStringsSep " " cfg.backupUnits}"
@@ -1044,11 +1085,9 @@ _: {
                 echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory AND I/O pressure are healthy: systemctl start $SOCKET_UNITS" >&2
               fi
             else
-              systemctl reset-failed ${
-                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-              } 2>/dev/null || true
+              reset_failed_units ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits}
               # shellcheck disable=SC2086 # deliberate field split: unit list
-              stop_units $SOCKET_UNITS 2>/dev/null || true
+              start_units $SOCKET_UNITS
               restored_total=$((restored_total + 1))
               echo "$restored_total" > "$RESTORED_COUNT_FILE"
               echo "$((restores_today + 1))" > "$RESTORE_TODAY_FILE"
