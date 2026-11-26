@@ -9,10 +9,10 @@
   ],
   "spec": {
     "display": {
-      "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, whether the metering itself is healthy, and how admission control is doing against z.ai's rate limit. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
+      "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, whether the metering itself is healthy, and how admission control is doing against z.ai's rate limit. Success Rate and Failures count only the calls a provider had to answer; the calls ai-meter sends back with a 429 are in Not Admitted. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
       "name": "AI Meter \u2014 Routed AI Calls"
     },
-    "duration": "",
+    "duration": "3h",
     "layouts": [
       {
         "kind": "Grid",
@@ -32,8 +32,17 @@
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight-table"
               },
               "height": 5,
-              "width": 10,
+              "width": 8,
               "x": 2,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-calls24h"
+              },
+              "height": 5,
+              "width": 2,
+              "x": 10,
               "y": 0
             },
             {
@@ -102,7 +111,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-calls24h"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted"
               },
               "height": 4,
               "width": 2,
@@ -411,11 +420,20 @@
             },
             {
               "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-metering-rate"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-span-outcome"
               },
               "height": 6,
-              "width": 12,
-              "x": 0,
+              "width": 6,
+              "x": 6,
               "y": 4
             }
           ]
@@ -457,7 +475,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-ratelimit"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted-share"
               },
               "height": 4,
               "width": 2,
@@ -466,7 +484,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-quota"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-ratelimit"
               },
               "height": 4,
               "width": 2,
@@ -475,7 +493,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-quota"
               },
               "height": 4,
               "width": 2,
@@ -505,7 +523,7 @@
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-wait"
               },
               "height": 6,
-              "width": 6,
+              "width": 4,
               "x": 0,
               "y": 10
             },
@@ -514,9 +532,37 @@
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-code"
               },
               "height": 6,
-              "width": 6,
-              "x": 6,
+              "width": 4,
+              "x": 4,
               "y": 10
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted-outcome"
+              },
+              "height": 6,
+              "width": 4,
+              "x": 8,
+              "y": 10
+            }
+          ]
+        }
+      },
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Notes & links"
+          },
+          "items": [
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-notes"
+              },
+              "height": 4,
+              "width": 12,
+              "x": 0,
+              "y": 0
             }
           ]
         }
@@ -570,7 +616,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls queued inside the proxy for provider room, in arrival order. Each one is a client waiting on ai-meter; a call that outlives the wait budget is answered 429.",
+            "description": "Calls queued inside the proxy for provider room, in arrival order. Each one is a client waiting on ai-meter; a call that outlives the wait budget is sent back with a 429 (Not Admitted).",
             "name": "Waiting (now)"
           },
           "links": [],
@@ -623,61 +669,11 @@
           ]
         }
       },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost": {
-        "kind": "Panel",
-        "spec": {
-          "display": {
-            "description": "Calls to the gated provider that ended without an upstream answer: the wait budget ran out, the proxy gave up, the quota was spent, or the client went away. The client received a 429, or its own cancellation.",
-            "name": "Calls Lost (24h)"
-          },
-          "links": [],
-          "plugin": {
-            "kind": "signoz/NumberPanel",
-            "spec": {
-              "formatting": {
-                "decimalPrecision": "0",
-                "unit": "locale"
-              },
-              "thresholds": [
-                {
-                  "color": "#F1575F",
-                  "format": "background",
-                  "operator": "above",
-                  "unit": "",
-                  "value": 0
-                }
-              ],
-              "visualization": {
-                "timePreference": "global_time"
-              }
-            }
-          },
-          "queries": [
-            {
-              "kind": "scalar",
-              "spec": {
-                "name": "A",
-                "plugin": {
-                  "kind": "signoz/PromQLQuery",
-                  "spec": {
-                    "disabled": false,
-                    "legend": "",
-                    "name": "A",
-                    "query": "sum(increase(ai_meter_admission_outcomes_total{outcome=~\"gave_up|timeout|circuit\"}[24h])) or vector(0)",
-                    "stats": false,
-                    "step": 0
-                  }
-                }
-              }
-            }
-          ]
-        }
-      },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-outcomes": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "How calls to the gated provider left the proxy: admitted (sent once and answered), absorbed (a \"too much at once\" answer was retried and the call succeeded), timeout (the wait budget ran out), circuit (quota spent), gave_up, cancelled (the client went away).",
+            "description": "How calls to the gated provider ended in the last 24 hours: admitted (sent and answered), absorbed (a \"too much at once\" answer was retried and the call succeeded), timeout (no slot within the wait budget: the client got a 429 and sends the call again), circuit (a usage window is spent: 429 until its reset), gave_up, cancelled (the client went away).",
             "name": "Admission Outcomes (24h)"
           },
           "links": [],
@@ -806,7 +802,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Mean seconds a call spent queued for provider room.",
+            "description": "Mean seconds a call to the gated provider waited in the proxy's queue before it was sent. The wait is part of the time to first byte the user sees.",
             "name": "Avg Admission Wait"
           },
           "links": [],
@@ -953,7 +949,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Mean time to the first streamed byte over the last 15 minutes (streaming calls only). This is the wait a user feels before text appears.",
+            "description": "Mean time to the first streamed byte over the last 15 minutes (streaming calls only). This is the wait a user feels before text appears, and it includes the time the call queued in the proxy for provider room (see Avg Admission Wait), not only the provider's own first-token time.",
             "name": "Avg TTFT"
           },
           "links": [],
@@ -1052,7 +1048,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Routed AI calls over the last 24 hours, every status code.",
+            "description": "Requests through the proxy over the last 24 hours, every outcome. A call the client sends again after a retry answer counts again.",
             "name": "Calls (24h)"
           },
           "links": [],
@@ -1157,8 +1153,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute that did not return 200: 429s from providers or from admission control, 5xx, timeouts and client cancellations. Orange past 2/min, red past 10/min.",
-            "name": "Non-2xx / min"
+            "description": "Calls per minute that failed for real: the provider's own 4xx or 5xx, a call the proxy gave up retrying, a client that went away (499). The proxy's own retry answers are not in here (see Not Admitted). Orange past 2/min, red past 10/min.",
+            "name": "Failures / min"
           },
           "links": [],
           "plugin": {
@@ -1200,7 +1196,7 @@
                     "disabled": false,
                     "legend": "",
                     "name": "A",
-                    "query": "sum(rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60 or vector(0)",
+                    "query": "((sum(rate(ai_meter_requests_total{code=~\"4..|5..\"}[5m])) - (sum(rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or vector(0))) or vector(0)) * 60 or vector(0)",
                     "stats": false,
                     "step": 0
                   }
@@ -1214,7 +1210,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Share of a provider's calls that did not return 200. This is the panel that names which provider is failing while the overall success rate drops.",
+            "description": "Share of a provider's calls that failed, not counting the calls ai-meter sent back. This is the panel that names which provider is failing while the overall success rate drops.",
             "name": "Error Rate by Provider"
           },
           "links": [],
@@ -1270,7 +1266,7 @@
                     "disabled": false,
                     "legend": "{{upstream}}",
                     "name": "A",
-                    "query": "100 * (sum by (upstream) (rate(ai_meter_requests_total{code!=\"200\"}[5m])) or (sum by (upstream) (rate(ai_meter_requests_total[5m])) * 0)) / sum by (upstream) (rate(ai_meter_requests_total[5m]))",
+                    "query": "100 * ((sum by (upstream) (rate(ai_meter_requests_total{code=~\"4..|5..\"}[5m])) - (sum by (upstream) (rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or (sum by (upstream) (rate(ai_meter_requests_total[5m])) * 0))) or (sum by (upstream) (rate(ai_meter_requests_total[5m])) * 0)) / (sum by (upstream) (rate(ai_meter_requests_total[5m])) - (sum by (upstream) (rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or (sum by (upstream) (rate(ai_meter_requests_total[5m])) * 0)))",
                     "stats": false,
                     "step": 0
                   }
@@ -1284,7 +1280,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Non-200 calls per minute by HTTP status.",
+            "description": "Failed calls per minute by HTTP status, without the proxy's own 429 answers (those are in Not Admitted). 499 is a client that went away before the answer.",
             "name": "Failures by Code"
           },
           "links": [],
@@ -1333,7 +1329,7 @@
                     "disabled": false,
                     "legend": "{{code}}",
                     "name": "A",
-                    "query": "sum by (code) (rate(ai_meter_requests_total{code!=\"200\"}[5m])) * 60",
+                    "query": "sum by (code) (rate(ai_meter_requests_total{code=~\"4..|5..\", code!=\"429\"}[5m])) * 60 or label_replace(clamp_min((sum(rate(ai_meter_requests_total{code=\"429\"}[5m])) - (sum(rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or vector(0))) * 60, 0), \"code\", \"429\", \"\", \"\") or label_replace(vector(0), \"code\", \"429\", \"\", \"\")",
                     "stats": false,
                     "step": 0
                   }
@@ -1725,24 +1721,31 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls whose token usage could not be read from the response or written to the ledger. The call itself still succeeded, but its tokens and cost are missing.",
-            "name": "Metering Errors (24h)"
+            "description": "Share of the last 24 hours' calls whose tokens could not be read from a 2xx answer or written to the ledger. The call itself succeeded; only its tokens and cost are missing. A few single calls are normal (7 of 13,700 on 2026-11-26); a jump means a provider changed its usage format.",
+            "name": "Not Metered (24h)"
           },
           "links": [],
           "plugin": {
             "kind": "signoz/NumberPanel",
             "spec": {
               "formatting": {
-                "decimalPrecision": "0",
-                "unit": "locale"
+                "decimalPrecision": "2",
+                "unit": "percent"
               },
               "thresholds": [
                 {
                   "color": "#F1575F",
                   "format": "background",
-                  "operator": "above",
+                  "operator": "above_or_equal",
                   "unit": "",
-                  "value": 0
+                  "value": 2
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above_or_equal",
+                  "unit": "",
+                  "value": 0.5
                 }
               ],
               "visualization": {
@@ -1761,7 +1764,70 @@
                     "disabled": false,
                     "legend": "",
                     "name": "A",
-                    "query": "sum(increase(ai_meter_metering_errors_total[24h])) or vector(0)",
+                    "query": "100 * (sum(increase(ai_meter_metering_errors_total[24h])) or vector(0)) / sum(increase(ai_meter_requests_total[24h])) > 0",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-metering-rate": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute whose tokens could not be read or written. A spike under one provider is a changed usage format; one under one client is a request shape the meter does not parse.",
+            "name": "Metering Errors / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "1"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "cpm",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_metering_errors_total[5m])) * 60 or vector(0)",
                     "stats": false,
                     "step": 0
                   }
@@ -1775,7 +1841,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls, tokens and success per model over the last 24 hours, one row per model. Spend is not a column on purpose: tables cannot run the priced queries, and a 24-hour increase of the cost counter would report a restatement as spend (see the spend panels above).",
+            "description": "Calls, tokens and outcome per model over the last 24 hours, one row per model. calls = not admitted + failed + served: not admitted were answered 429 by ai-meter (the client sends them again), failed got the provider's own error or the client went away, success is served over served plus failed. Spend is not a column on purpose: tables cannot run the priced queries, and a 24-hour increase of the cost counter would report a restatement as spend (see the spend panels above).",
             "name": "Models: Last 24 Hours"
           },
           "links": [],
@@ -1788,7 +1854,9 @@
                   "B": "count:tokens",
                   "C": "count:tokens",
                   "D": "count:tokens",
-                  "F": "percent"
+                  "F": "percent",
+                  "G": "locale",
+                  "J": "locale"
                 },
                 "decimalPrecision": "0"
               },
@@ -1951,6 +2019,41 @@
                         "spec": {
                           "aggregations": [
                             {
+                              "metricName": "ai_meter_admission_outcomes_total",
+                              "reduceTo": "sum",
+                              "spaceAggregation": "sum",
+                              "temporality": "",
+                              "timeAggregation": "increase"
+                            }
+                          ],
+                          "disabled": false,
+                          "filter": {
+                            "expression": "outcome in [\"timeout\",\"circuit\"]"
+                          },
+                          "functions": null,
+                          "groupBy": [
+                            {
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string",
+                              "name": "model",
+                              "signal": ""
+                            }
+                          ],
+                          "legend": "not admitted",
+                          "name": "G",
+                          "order": null,
+                          "secondaryAggregations": null,
+                          "selectFields": null,
+                          "signal": "metrics",
+                          "source": "",
+                          "stepInterval": 60
+                        },
+                        "type": "builder_query"
+                      },
+                      {
+                        "spec": {
+                          "aggregations": [
+                            {
                               "metricName": "ai_meter_requests_total",
                               "reduceTo": "sum",
                               "spaceAggregation": "sum",
@@ -1960,7 +2063,7 @@
                           ],
                           "disabled": true,
                           "filter": {
-                            "expression": "code = \"200\""
+                            "expression": "code REGEXP \"2..\""
                           },
                           "functions": null,
                           "groupBy": [
@@ -1985,7 +2088,18 @@
                       {
                         "spec": {
                           "disabled": false,
-                          "expression": "(E / A) * 100",
+                          "expression": "A - E - G",
+                          "functions": null,
+                          "legend": "failed",
+                          "name": "J",
+                          "order": null
+                        },
+                        "type": "builder_formula"
+                      },
+                      {
+                        "spec": {
+                          "disabled": false,
+                          "expression": "(E / (A - G)) * 100",
                           "functions": null,
                           "legend": "success",
                           "name": "F",
@@ -1999,6 +2113,208 @@
               }
             }
           ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute that ai-meter answered 429 itself: the call waited out its budget (30 s) without a slot at the gated provider, or a usage window is spent. Each costs its client the wait and a re-sent request; a client that honors Retry-After sends the call again and it keeps its place. Orange or red for long means more sessions are running than the gate's allowance serves (see Admission).",
+            "name": "Not Admitted / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 10
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 3
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "(sum(rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or vector(0)) * 60 or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted-outcome": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Retry answers the proxy gave clients per minute, by outcome: timeout (no slot within the wait budget, retry at once) and circuit (a usage window is spent, retry at its reset).",
+            "name": "429 Answers From ai-meter / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{outcome}}",
+                    "name": "A",
+                    "query": "sum by (outcome) (rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-notadmitted-share": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Share of the gated provider's requests in the last 5 minutes that ai-meter answered 429 itself: the gate's contention in one number, demand against the allowance. Orange from 15 %, red from 30 %: start fewer parallel sessions, wait, or change the gate's limits (docs/services/ai-meter.md).",
+            "name": "Not Admitted: Share (5m)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "percent"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above_or_equal",
+                  "unit": "",
+                  "value": 30
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above_or_equal",
+                  "unit": "",
+                  "value": 15
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "100 * (sum(rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or vector(0)) / sum(rate(ai_meter_requests_total[5m]) * on(upstream) group_left() (ai_meter_admission_limit * 0 + 1))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-notes": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "The three outcomes of a request, what the colors mean, where the traces are.",
+            "name": "How to read this dashboard"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TextPanel",
+            "spec": {
+              "headerOptions": {
+                "hide": false
+              },
+              "mode": "markdown",
+              "presentation": {
+                "textAlign": "left",
+                "verticalAlign": "top"
+              },
+              "text": "**How to read this page.** Every request through ai-meter ends one of three ways. **Served**: the provider answered 2xx. **Not admitted**: ai-meter itself answered 429, because the call waited out its 30 s budget without a slot at the gated provider, or a usage window was spent; the answer says when to send the call again and the call keeps its place, so it is a delay, not a failure. **Failed**: everything else, including the provider's own 4xx and 5xx and clients that went away. Success Rate, Failures and the table below count not-admitted calls as neither success nor failure.\n\n**Red means act now.** Failures, missing metering, a spent usage window or a stale proxy are red the moment they happen. Not Admitted turns orange and red by its size: more sessions are running than the gate's allowance serves. Start fewer, wait, or change the gate's limits (docs/services/ai-meter.md).\n\n**Every call is also a trace.** SigNoz's own AI views show the same calls by model, tokens, time to first token and errors: [AI observability overview](/ai-observability/overview) and [AI explorer](/ai-observability/explorer). Spans carry metadata only, never a prompt.\n\n**The page loads once.** To keep it live, pick an interval in the top-right menu."
+            }
+          },
+          "queries": []
         }
       },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-prompt-per-call": {
@@ -2097,7 +2413,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "HTTP 429 answers from z.ai meaning a usage window is spent. The proxy sends nothing until the reset time the answer names.",
+            "description": "HTTP 429 answers from z.ai meaning a usage window is spent. The calls that met one were answered 429 until the reset; Quota Exhausted above is red while it lasts.",
             "name": "Quota Answers (24h)"
           },
           "links": [],
@@ -2108,15 +2424,7 @@
                 "decimalPrecision": "0",
                 "unit": "locale"
               },
-              "thresholds": [
-                {
-                  "color": "#F1575F",
-                  "format": "background",
-                  "operator": "above",
-                  "unit": "",
-                  "value": 0
-                }
-              ],
+              "thresholds": null,
               "visualization": {
                 "timePreference": "global_time"
               }
@@ -2189,8 +2497,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Rate-limit and quota answers per minute, by business code: 1302 is \"too much at once\", 1308 a spent usage window.",
-            "name": "Provider 429 Answers / min"
+            "description": "Rate-limit and quota answers z.ai gave the proxy, per minute, by business code: 1302 is \"too much at once\", 1308 a spent usage window.",
+            "name": "429 Answers From z.ai / min"
           },
           "links": [],
           "plugin": {
@@ -2252,7 +2560,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute per client (the service holding the key).",
+            "description": "Requests per minute per client (the service holding the key), every outcome.",
             "name": "Requests by Client"
           },
           "links": [],
@@ -2315,7 +2623,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute per model, split by HTTP status. A 429 line rising under a model means its provider is throttling it.",
+            "description": "Requests per minute per model, split by HTTP status. A 429 line under a model is mostly ai-meter sending calls back (Not Admitted); a 5xx or 499 line is a real failure.",
             "name": "Requests by Model x Code"
           },
           "links": [],
@@ -2378,7 +2686,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute per provider.",
+            "description": "Requests per minute per provider, every outcome.",
             "name": "Requests by Provider"
           },
           "links": [],
@@ -2441,7 +2749,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Completed AI calls per minute over the last 5 minutes.",
+            "description": "Completed requests per minute over the last 5 minutes, all providers and every outcome: served, not admitted (sent back by ai-meter with a 429) or failed.",
             "name": "Requests / min"
           },
           "links": [],
@@ -2525,7 +2833,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls whose trace span never reached SigNoz (the OTLP endpoint rejected it or the export queue dropped it). Those calls are metered but invisible in the trace explorer.",
+            "description": "Calls whose trace span never reached SigNoz (the OTLP endpoint rejected it or the export queue dropped it). Those calls are metered but invisible in the AI observability views.",
             "name": "Span Export Failures (24h)"
           },
           "links": [],
@@ -2953,7 +3261,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Share of routed AI calls returning 200 over the last 5 minutes. Dropped to ~7% during the 2026-10-17 Z.ai 1113 balance outage - this panel + the failure-rate rule exist to catch that class within minutes. Empty while no call is in the window.",
+            "description": "Share of the last 5 minutes' calls that the provider answered 2xx. Calls ai-meter sent back with its own 429 (see Not Admitted) count as neither success nor failure: the client sends them again and they keep their place. Red under 90 %, orange under 98 %. Empty while no call is in the window.",
             "name": "Success Rate (5m)"
           },
           "links": [],
@@ -3003,7 +3311,7 @@
                     "disabled": false,
                     "legend": "",
                     "name": "A",
-                    "query": "100 * (sum(rate(ai_meter_requests_total{code=\"200\"}[5m])) or vector(0)) / sum(rate(ai_meter_requests_total[5m]))",
+                    "query": "100 * (sum(rate(ai_meter_requests_total{code=~\"2..\"}[5m])) or vector(0)) / (sum(rate(ai_meter_requests_total[5m])) - (sum(rate(ai_meter_admission_outcomes_total{outcome=~\"timeout|circuit\"}[5m])) or vector(0)))",
                     "stats": false,
                     "step": 0
                   }
@@ -3185,8 +3493,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Share of completed calls whose span is in SigNoz.",
-            "name": "Traced Calls (24h)"
+            "description": "Share of the last hour's calls whose span reached SigNoz. One hour, like the AI Trace Export Silent rule, so a broken export shows within the hour.",
+            "name": "Traced Calls (1h)"
           },
           "links": [],
           "plugin": {
@@ -3228,7 +3536,7 @@
                     "disabled": false,
                     "legend": "",
                     "name": "A",
-                    "query": "100 * (sum(increase(ai_meter_spans_exported_total{outcome=\"ok\"}[24h])) or vector(0)) / sum(increase(ai_meter_requests_total[24h]))",
+                    "query": "100 * (sum(increase(ai_meter_spans_exported_total{outcome=\"ok\"}[1h])) or vector(0)) / sum(increase(ai_meter_requests_total[1h]))",
                     "stats": false,
                     "step": 0
                   }
@@ -3242,7 +3550,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Mean time to first streamed byte per model.",
+            "description": "Mean time to first streamed byte per model, queue time in the proxy included.",
             "name": "Avg TTFT by Model"
           },
           "links": [],
@@ -3444,7 +3752,7 @@
         }
       }
     },
-    "refreshInterval": "1m",
+    "refreshInterval": "",
     "variables": []
   }
 }

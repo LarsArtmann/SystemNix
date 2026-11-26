@@ -54,6 +54,12 @@
 #      to the current count once the queue and the libraries are committed
 #      and below the cap; the cap never goes up.
 #
+#   8. NOW block (2026-11-26): every bullet of `### NOW (max 10)` names an
+#      OPEN row by exact title in the library it names. A bullet whose row
+#      closed or was reworded, a bullet in the row shape, a title cited
+#      twice, more than ten bullets, or a bullet citing neither a row nor a
+#      document WARN. The block is a reading aid, so it never fails.
+#
 # Scope v1: grep-judgeable shapes only. Semantic dedup/priority are
 # review work, not a grep gate.
 #
@@ -246,7 +252,46 @@ selftest() {
     echo "SELFTEST FAIL: a queue exactly at the cap must not print a ratchet line"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt, possessive-exempt) + duplicate open rows + open-row ratchet (warn, strict, silent at the cap)"
+  # NOW-block leg (note 8): a stale title, a row-shaped bullet, a double
+  # cite and eleven bullets each WARN with exit 0; a clean block is silent.
+  local nowfile open_title
+  open_title=$(awk 'match($0, /^- \[ \] (\[[^]]*\] )?\*\*[^*]+\*\*/) { t = substr($0, RSTART, RLENGTH); sub(/^- \[ \] */, "", t); sub(/^\[[^]]*\] */, "", t); sub(/^\*\*/, "", t); sub(/\*\*$/, "", t); print t; exit }' "$REPO_ROOT/docs/todo/pipeline.md")
+  nowfile=$(mktemp)
+  {
+    printf '# Queue\n\n## Queue\n\n### NOW (max 10)\n\n'
+    printf -- '- **Stale:** `docs/todo/pipeline.md` → "%s (reworded away)"\n' "$open_title"
+    printf -- '- [ ] [ready] **Row-shaped bullet** — body → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n'
+  } >"$nowfile"
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$nowfile" 2>&1) && rc=0 || rc=$?
+  if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -q 'WARN: NOW bullet points at a row that is not open in docs/todo/pipeline.md' ||
+    ! printf '%s\n' "$out" | grep -q 'WARN: NOW bullet in the row shape'; then
+    rm -f "$nowfile"
+    echo "SELFTEST FAIL: a stale NOW title and a row-shaped bullet must WARN with exit 0"
+    exit 1
+  fi
+  {
+    printf '# Queue\n\n## Queue\n\n### NOW (max 10)\n\n'
+    n=1
+    while [ "$n" -le 11 ]; do
+      printf -- '- **Cap %s:** `docs/todo/pipeline.md` → "%s"\n' "$n" "$open_title"
+      n=$((n + 1))
+    done
+  } >"$nowfile"
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$nowfile" 2>&1) && rc=0 || rc=$?
+  if [ "$rc" -ne 0 ] || ! printf '%s\n' "$out" | grep -q 'WARN: NOW block has 11 bullets, the cap is 10' ||
+    ! printf '%s\n' "$out" | grep -q 'WARN: NOW block cites a row twice'; then
+    rm -f "$nowfile"
+    echo "SELFTEST FAIL: eleven NOW bullets and a double cite must WARN with exit 0"
+    exit 1
+  fi
+  printf '# Queue\n\n## Queue\n\n### NOW (max 10)\n\n- **Clean:** `docs/todo/pipeline.md` → "%s"\n' "$open_title" >"$nowfile"
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$nowfile" 2>&1) && rc=0 || rc=$?
+  rm -f "$nowfile"
+  if [ "$rc" -ne 0 ] || printf '%s\n' "$out" | grep -q 'NOW'; then
+    echo "SELFTEST FAIL: a clean NOW block must print no NOW line"
+    exit 1
+  fi
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt, possessive-exempt) + duplicate open rows + open-row ratchet (warn, strict, silent at the cap) + NOW-block pointers (stale title, row shape, double cite, cap, clean)"
   exit 0
 }
 
@@ -350,6 +395,7 @@ scan_file() {
   fi
   duplicate_check "$f"
   ratchet_check "$f"
+  now_block_check "$f"
   # verify every referenced library file exists
   local lib
   while IFS= read -r lib; do
@@ -361,6 +407,56 @@ scan_file() {
   pairing_check "$f"
   harvest_check
   return $fail
+}
+
+# NOW block (note 8): the queue's pointers must lead somewhere. Library
+# titles are collected once (same extraction as duplicate_check), then the
+# block's bullets are read against them. WARN only.
+now_block_check() {
+  local f="$1" map out target
+  map=$(mktemp)
+  for target in "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md; do
+    [ -f "$target" ] || continue
+    awk -v lib="docs/todo/$(basename "$target")" '
+      /^- \[ \] / && match($0, /^- \[ \] (\[[^]]*\] )?\*\*[^*]+\*\*/) {
+        title = substr($0, RSTART, RLENGTH)
+        sub(/^- \[ \] */, "", title)
+        sub(/^\[[^]]*\] */, "", title)
+        sub(/^\*\*/, "", title)
+        sub(/\*\*$/, "", title)
+        print lib "\t" title
+      }' "$target"
+  done >"$map"
+  out=$(awk '
+    NR == FNR { open[$0] = 1; next }
+    /^### NOW \(max 10\)/ { inblock = 1; next }
+    inblock && /^#{2,3} / { inblock = 0 }
+    inblock && /^- / {
+      bullets++
+      if ($0 ~ /^- \[[ x]\] /) {
+        print "WARN: NOW bullet in the row shape (the duplicate-title leg reads rows): " substr($0, 1, 90)
+        next
+      }
+      rest = $0
+      cited = 0
+      while (match(rest, /`docs\/todo\/[a-z0-9-]+\.md` → "[^"]+"/)) {
+        cited = 1
+        ref = substr(rest, RSTART, RLENGTH)
+        if (ref in seen) print "WARN: NOW block cites a row twice: " ref
+        seen[ref] = 1
+        lib = substr(ref, 2, index(substr(ref, 2), "`") - 1)
+        title = ref
+        sub(/^`[^`]+` → "/, "", title)
+        sub(/"$/, "", title)
+        if (!((lib "\t" title) in open)) print "WARN: NOW bullet points at a row that is not open in " lib ": " title
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+      if (!cited && $0 !~ /\]\([^)]+\.md\)/) print "WARN: NOW bullet cites neither a row title nor a document link: " substr($0, 1, 90)
+    }
+    END { if (bullets > 10) print "WARN: NOW block has " bullets " bullets, the cap is 10" }
+  ' "$map" "$f")
+  rm -f "$map"
+  [ -z "$out" ] || printf '%s\n' "$out"
 }
 
 # Harvest coverage: recent status reports with §f follow-up sections must be
