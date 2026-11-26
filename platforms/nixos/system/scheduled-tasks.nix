@@ -385,12 +385,19 @@ in
       blocklist-auto-update = {
         description = "Download blocklists and update hashes in config";
         inherit onFailure;
+        # The script is only git, nix and text tools, and a system unit gets
+        # NO coreutils/gnugrep from systemd's default PATH: the 2026-11-23 run
+        # died before the first hash (its `git ls-remote` was rewritten to
+        # SSH by the owner's global insteadOf rule and the unit has no ssh;
+        # the script now makes that lookup ignore the global git config, and
+        # its grep/sed/head/mktemp calls need the packages listed here).
         path = [
+          pkgs.coreutils
           pkgs.git
+          pkgs.gnugrep
           pkgs.nix
           pkgs.gawk
           pkgs.gnused
-          pkgs.python3
         ];
         serviceConfig = {
           Type = "oneshot";
@@ -407,7 +414,9 @@ in
               dnsUpdate = pkgs.writeShellApplication {
                 name = "dns-update";
                 runtimeInputs = [
+                  pkgs.coreutils
                   pkgs.git
+                  pkgs.gnugrep
                   pkgs.nix
                   pkgs.gawk
                   pkgs.gnused

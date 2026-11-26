@@ -121,5 +121,16 @@
             ${pkgs.bash}/bin/bash "$scratch/scripts/test-ca-parity-smoke.sh"
             touch $out
           '';
+
+      # Every blocklist fetch, built for real (2026-11-25 deploy bomb). A
+      # wrong SRI hash in platforms/common/dns-blocklists.nix only ever
+      # surfaced when a deploy's toplevel build reached the fetchurl
+      # derivations: the nightly repair pass had committed six bad hashes
+      # and nothing built them, so every deploy died for a day. Building
+      # this proves the hashes BEFORE anything is committed:
+      # scripts/dns-update.sh names it in its closing advice and the
+      # dns-blocklist-drift workflow builds the same function before its
+      # commit step.
+      checks.blocklist-fetches = import (root + "/platforms/common/blocklist-fetches.nix") { inherit pkgs; };
     };
 }

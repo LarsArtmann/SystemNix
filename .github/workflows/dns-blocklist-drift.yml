@@ -22,14 +22,17 @@ name: DNS blocklist hash drift
 # Loop semantics: run `scripts/dns-update.sh --hashes-only` nightly
 # (--hashes-only so an auto-commit never bundles the unrelated
 # StevenBlack commit-pin advance). A hash diff auto-commits and pushes
-# directly; a green tree is a no-op. Moving the lists to a newer upstream
-# release is NOT this job's work: bump the helper's commit and the hashes
-# together in one deliberate change.
+# directly; a green tree is a no-op. Moving the HaGeZi lists to a newer
+# upstream release is NOT this job's work: `scripts/dns-update.sh
+# --bump-hagezi latest` moves the pin and the hashes together in one
+# transaction; review the diff, then deploy.
 #
-# The auto-commit does NOT build the toplevel (the refreshed hashes ARE
-# the build fix — validation happens in nix-check.yml on the push, which
-# runs the full `nix flake check`; a bad hash there opens a normal CI
-# failure).
+# The auto-commit does NOT build the toplevel, and it no longer commits
+# hashes nobody built: the "Prove the repair" step builds every blocklist
+# fetchurl derivation BEFORE the commit step, so a wrong hash fails the job
+# instead of landing on master. That gate was missing on 2026-11-25, when
+# this job's own output killed every deploy for a day while the push's
+# nix-check.yml (eval-only) never saw it.
 
 on:
   schedule:
@@ -56,6 +59,22 @@ jobs:
 
       - name: Refresh blocklist SRI hashes
         run: bash scripts/dns-update.sh --hashes-only
+
+      # A repair is only real when the fetches build. The script is
+      # all-or-nothing (a failed run leaves the file untouched); this step
+      # catches what remains: hashes that were produced but do not match
+      # what fetchurl downloads. Evaluated OUTSIDE the flake on purpose: the
+      # flake's private inputs need the deploy-key bundle that only
+      # nix-check.yml installs, so the nixpkgs rev is read from flake.lock
+      # and the fetch set is imported directly.
+      - name: Prove the repair (build every blocklist fetch)
+        run: |
+          rev="$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)"
+          nix build --no-link --impure --expr "
+            import ./platforms/common/blocklist-fetches.nix {
+              pkgs = import (builtins.fetchTarball \"https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz\") { };
+            }
+          "
 
       - name: Auto-commit hash drift
         run: |
