@@ -891,7 +891,7 @@ _: {
                 # an empty map (pid 1 missing) leaves the invariant unproven.
                 if [ "$proc_scan_rc" -le 1 ] && [ -n "$proc_map" ]; then
                   proc_scan_status="ok"
-                  while IFS= read -r p_pid p_pgrp p_tty; do
+                  while read -r p_pid p_pgrp p_tty; do
                     [ -n "''${p_pgrp:-}" ] || continue
                     pgid_of["$p_pid"]="$p_pgrp"
                     [ "$p_tty" = "0" ] || tty_pgid["$p_pgrp"]=1

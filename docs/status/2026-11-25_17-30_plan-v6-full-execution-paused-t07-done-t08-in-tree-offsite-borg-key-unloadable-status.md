@@ -235,3 +235,6 @@ Subagent findings from the same sweeps that need rows or annotations (not rowed)
 ## Harvest log
 
 **NOT HARVESTED at authoring.** The owner asked for this report and a stop. Owed on the next instruction: section f items 2, 3, 9 and the four subagent findings as rows (queue plus library), item 8 as ticks, and the CHANGELOG line for `53592ed92` and `1c6ee49ea`. The plan marker stays EXECUTING because the plan is not finished.
+
+
+**Harvested 2026-11-26 (next instruction came at 17:5x; appendix to the NOT HARVESTED marker above):** section f items 2, 3, 9, 10 and 11 are rows, ticks and annotations now — Borg key row `[blocked:user]`, Borg marker row and watch row, the audiblesync-backup-dir and re-interval rows ticked with live evidence, the new rows for the audiblesync pull mirror, the health hub remotes, the rust-cache-projects-links boot race, the cvagent upstream scan; item 8 is applied (commit `ab44700cc`, 18 verdicts); the four subagent findings of the appendix are NOT rowed yet (guard per-boot trip counter, GOOS trap, three fastflowlm rows — the crash session's 00:36 report owns the first). Item 5's deploy was done by a sibling (gen-1031, 19:33). The full state: `docs/status/2026-11-26_05-37_plan-v6-second-leg-t07-t08-live-t05-t06-t10-t11-landed-13-tasks-open-status.md`.
