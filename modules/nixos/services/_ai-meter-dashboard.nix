@@ -1,5 +1,6 @@
-# Renders the ai-meter SigNoz dashboard with its two spend-rate queries
-# derived from the reference price table (services.ai-meter.costs).
+# Renders the ai-meter SigNoz dashboard with its four spend queries derived
+# from the reference price table (services.ai-meter.costs): the spend rate in
+# total, per model and per client, and the spend of the last 24 hours.
 #
 # WHY spend is derived in the query instead of read off
 # ai_meter_cost_usd_total: a counter records what was true when it was
@@ -38,40 +39,69 @@ let
         char
     ) (lib.strings.stringToCharacters name);
 
-  # Tokens per second of one kind for one priced model. The label carries
+  # The token series of one kind for one priced model. The model label carries
   # whatever the client asked for; the proxy's price lookup strips one
-  # provider prefix ("zai/glm-5.3"), so the selector matches both spellings
-  # and the sum collapses client and upstream.
-  tokensPerSecond =
-    model: kind:
-    ''sum by (model) (rate(ai_meter_tokens_total{model=~"(.*/)?${escapeRegex model}",kind="${kind}"}[15m]))'';
+  # provider prefix ("zai/glm-5.3"), so the selector matches both spellings.
+  #   by     grouping keys. A priced model never shares a series with another
+  #          one, so terms stay distinguishable under `or`.
+  #   over   rate (tokens per second) or increase (tokens inside the window).
+  #   window the range `over` looks at.
+  tokenSeries =
+    {
+      by ? "model",
+      over ? "rate",
+      window ? "15m",
+      model,
+      kind,
+    }:
+    ''sum by (${by}) (${over}(ai_meter_tokens_total{model=~"(.*/)?${escapeRegex model}",kind="${kind}"}[${window}]))'';
 
-  # USD per HOUR for one priced model: the cached subset of the prompt at
-  # its own rate, the rest of the prompt at the input rate, completions at
-  # the output rate. Prices are USD per 1M tokens, hence the divisor.
-  spendPerHour =
-    model: price:
+  # USD for one priced model: the cached subset of the prompt at its own
+  # rate, the rest of the prompt at the input rate, completions at the output
+  # rate. Prices are USD per 1M tokens, hence the divisor. `scale` turns a
+  # per-second figure into an hourly one; a window total needs no scaling.
+  usdOfTokens =
+    {
+      by ? "model",
+      over ? "rate",
+      window ? "15m",
+      scale ? 3600,
+      model,
+      price,
+    }:
     let
-      prompt = tokensPerSecond model "prompt";
-      cached = tokensPerSecond model "cached";
-      completion = tokensPerSecond model "completion";
+      series =
+        kind:
+        tokenSeries {
+          inherit
+            by
+            over
+            window
+            model
+            kind
+            ;
+        };
     in
-    "(((${prompt} - ${cached}) * ${toString price.input}"
-    + " + ${cached} * ${toString price.cachedInput}"
-    + " + ${completion} * ${toString price.output})"
-    + " * 3600) / 1000000";
+    "(((${series "prompt"} - ${series "cached"}) * ${toString price.input}"
+    + " + ${series "cached"} * ${toString price.cachedInput}"
+    + " + ${series "completion"} * ${toString price.output})"
+    + lib.optionalString (scale != 1) " * ${toString scale}"
+    + ") / 1000000";
 
-  # The models are unioned with `or` because they carry different model
-  # labels: adding them would match nothing, and a priced model without
-  # traffic yields no samples at all.
-  spendTerms = costs: lib.mapAttrsToList (model: price: spendPerHour model price) costs;
+  # One term per priced model.
+  spendTerms =
+    options: costs:
+    lib.mapAttrsToList (model: price: usdOfTokens (options // { inherit model price; })) costs;
 
-  # USD per hour across every priced model. The trailing vector(0) keeps a
-  # number on the panel while no priced model has traffic.
+  # USD per hour across every priced model. The terms are unioned with `or`
+  # because they carry different model labels: adding them would match
+  # nothing, and a priced model without traffic yields no samples at all. The
+  # trailing vector(0) keeps a number on the panel while no priced model has
+  # traffic.
   spendRate =
     costs:
     let
-      terms = spendTerms costs;
+      terms = spendTerms { } costs;
     in
     if terms == [ ] then "vector(0)" else "sum(${lib.concatStringsSep " or " terms} or vector(0))";
 
@@ -79,20 +109,53 @@ let
   spendRateByModel =
     costs:
     let
-      terms = spendTerms costs;
+      terms = spendTerms { } costs;
     in
     if terms == [ ] then
       "sum by (model) (rate(ai_meter_tokens_total[15m])) * 0"
     else
       lib.concatStringsSep " or " terms;
+
+  # USD per hour per client (the service holding the key). Every term keeps
+  # the client AND the model, so a client that calls two priced models
+  # contributes two series to the union, and the outer sum adds them. A plain
+  # `or` of per-client totals would keep only the first model's series.
+  spendRateByClient =
+    costs:
+    let
+      terms = spendTerms { by = "client, model"; } costs;
+    in
+    if terms == [ ] then
+      "sum by (client) (rate(ai_meter_tokens_total[15m])) * 0"
+    else
+      "sum by (client) (${lib.concatStringsSep " or " terms})";
+
+  # USD spent in the last 24 hours across every priced model. increase() over
+  # the token counters survives the proxy's restarts; the same expression on
+  # the cost counter would report a price restatement as spend.
+  spendLast24h =
+    costs:
+    let
+      terms = spendTerms {
+        over = "increase";
+        window = "24h";
+        scale = 1;
+      } costs;
+    in
+    if terms == [ ] then "vector(0)" else "sum(${lib.concatStringsSep " or " terms} or vector(0))";
 in
 {
-  inherit spendRate spendRateByModel;
+  inherit
+    spendRate
+    spendRateByModel
+    spendRateByClient
+    spendLast24h
+    ;
 
   # How a model name is spelled inside the generated `model=~` selectors.
   escapeRegex = escapeRegex;
 
-  # Substitutes the spend-rate queries into the dashboard template. Throws
+  # Substitutes the spend queries into the dashboard template. Throws
   # when a placeholder is missing or occurs more than once, so a renamed or
   # duplicated panel can never ship an unrendered or ambiguous query.
   render =
@@ -104,6 +167,8 @@ in
       queries = {
         "@@spendRate@@" = spendRate costs;
         "@@spendRateByModel@@" = spendRateByModel costs;
+        "@@spendRateByClient@@" = spendRateByClient costs;
+        "@@spendLast24h@@" = spendLast24h costs;
       };
       occurrences =
         placeholder:

@@ -456,6 +456,42 @@ run_case signoz dotted-phantom-dead signoz-query-lint fail "dead metric '" \
 run_case signoz dashboard-overlap signoz-query-lint fail 'dashboard layout overlap' \
   'sed:modules/nixos/services/dashboards/overview.json:s/"y": 24,/"y": 19,/'
 
+# ── signoz-query-lint, dashboard rules (lib/signoz-dashboard-lint.nix) ──
+# Each rule below was learned the hard way on 2026-11-25: a unit id the
+# frontend prints literally behind the number, an overlap in the SECOND
+# section that the old layouts[0]-only check could not see, a PromQL query on
+# a table that the API rejects at deploy time, and a file without the keys
+# SigNoz adds on store (caddy and gcp were re-PUT on every deploy for it).
+# The mutations are jq surgery: the files are pretty-printed JSON.
+run_case signozdash unit-unknown signoz-query-lint fail "unit id '\\{percent\\}' is unknown" \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.display.name == "Spend (all-time)") | .spec.plugin.spec.formatting.unit) = "{percent}"'
+# Controls: a unit SigNoz renders itself and one built at run time both pass.
+run_case signozdash unit-universal-ok signoz-query-lint pass '' \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.display.name == "Spend (all-time)") | .spec.plugin.spec.formatting.unit) = "{count}"'
+run_case signozdash unit-runtime-ok signoz-query-lint pass '' \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.display.name == "Spend (all-time)") | .spec.plugin.spec.formatting.unit) = "currency:USD"'
+# The Success Rate tile moves onto Requests / min, in the second section.
+run_case signozdash second-section-overlap signoz-query-lint fail 'dashboard layout overlap' \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.layouts[1].spec.items[1].x) = 0'
+# The Spend (24h) tile starts at column 11 and is two wide.
+run_case signozdash grid-overflow signoz-query-lint fail 'exceeds grid width 12' \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.layouts[2].spec.items[4].x) = 11'
+run_case signozdash table-promql signoz-query-lint fail "query kind 'signoz/PromQLQuery' is not supported by panel kind 'signoz/TablePanel'" \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.plugin.kind == "signoz/TablePanel" and .spec.queries[0].spec.plugin.kind == "signoz/CompositeQuery") | .spec.queries) = [{"kind":"scalar","spec":{"name":"A","plugin":{"kind":"signoz/PromQLQuery","spec":{"name":"A","query":"up","disabled":false,"step":0,"stats":false,"legend":""}}}}]'
+run_case signozdash pie-composite-promql signoz-query-lint fail "composite sub-query type 'promql' is not supported by panel kind 'signoz/PieChartPanel'" \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.plugin.kind == "signoz/PieChartPanel") | .spec.queries[0].spec.plugin) = {"kind":"signoz/CompositeQuery","spec":{"queries":[{"type":"promql","spec":{"name":"A","query":"up"}}]}}'
+run_case signozdash dangling-reference signoz-query-lint fail "references unknown panel 'nope'" \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.layouts[3].spec.items[0].content["$ref"]) = "#/spec/panels/nope"'
+# The Avg Duration tile is removed from its row; its panel is never rendered.
+run_case signozdash orphan-panel signoz-query-lint fail "is placed in no layout" \
+  'jq:modules/nixos/services/dashboards/ai-meter.json:del(.spec.layouts[3].spec.items[1])'
+run_case signozdash missing-server-defaults signoz-query-lint fail 're-PUTs the dashboard on every deploy' \
+  'jq:modules/nixos/services/dashboards/caddy.json:del(.spec.duration)'
+# The selftest must fail when a rule leaves the validator: the overlap rule
+# is replaced by a constant false, and its own leg goes red.
+run_case signozdash selftest-overlap-rule-dropped signoz-dashboard-lint-selftest fail 'leg secondSectionOverlap is false' \
+  'sed:lib/signoz-dashboard-lint.nix:s/(rectanglesOverlap (elemAt sound i).item (elemAt sound j).item)/false/'
+
 # ── with-pkgs-lint: the shadow trap + exemption/comment immunity ──
 # The 2026-10-14 sweep removed all module/platform sites; the mutation
 # re-introduces the exact shape the convention bans. Anchored on a module
@@ -1035,7 +1071,21 @@ run_case bootmetrics open-path-forced-closed bootmetrics-openpath-selftest fail 
 # the dashboard, before any unrendered query can be provisioned.
 run_case aimeter promql-scaling-dropped ai-meter-spend-promql fail \
   'ai-meter-spend-promql: the generated PromQL disagrees' \
-  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s| \* 3600) / 1000000";|)";|'
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s/scale ? 3600;/scale ? 1;/'
+# The per-client query groups by client AND model before the union; with a
+# per-model grouping the outer sum by (client) finds no series at all.
+run_case aimeter client-grouping-dropped ai-meter-spend-promql fail \
+  'ai-meter-spend-promql: the generated PromQL disagrees' \
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s/by = "client, model";/by = "model";/'
+# The 24-hour window is a token total, not a rate: scaling it must fail.
+run_case aimeter window-scaled ai-meter-spend-promql fail \
+  'ai-meter-spend-promql: the generated PromQL disagrees' \
+  'sed:modules/nixos/services/_ai-meter-dashboard.nix:s/scale = 1;/scale = 3600;/'
+# A renamed spend panel leaves the dashboard without one of its priced
+# queries; the wiring assertion must catch it before a deploy could.
+run_case aimeter client-panel-renamed ai-meter-spend-promql fail \
+  'must keep exactly one panel each' \
+  'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Spend Rate by Client"/"name": "Spend Rate per Client"/'
 run_case aimeter go-formula-drifted ai-meter-spend-promql fail \
   'ai-meter-spend-promql: EstimateCost disagrees' \
   'sed:pkgs/ai-meter/config.go:s|cachedTokens)[[:space:]]*\*[[:space:]]*price\.CachedInput|cachedTokens) * price.Input|'

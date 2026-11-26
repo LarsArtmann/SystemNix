@@ -28,7 +28,7 @@
                 "fillSpans": false
               },
               "formatting": {
-                "unit": "req",
+                "unit": "short",
                 "decimalPrecision": "0"
               },
               "chartAppearance": {
@@ -311,6 +311,9 @@
         }
       }
     ],
-    "variables": []
+    "variables": [],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
   }
 }

@@ -450,6 +450,25 @@
                 "ai_meter_admission_wait_seconds_count"
                 "system_forgejo_mirror_sync_stale_count"
               ];
+              # The dashboard rules (lib/signoz-dashboard-lint.nix) are pure
+              # functions of the JSON files, so they are evaluated once here
+              # and the script below prints what they found.
+              dashboardFindings =
+                (import (root + "/lib/signoz-dashboard-lint.nix") {
+                  inherit (pkgs) lib;
+                }).findings
+                  dashboards;
+              reportDashboards =
+                if dashboardFindings == [ ] then
+                  ""
+                else
+                  lib.concatStringsSep "\n" (
+                    [
+                      ''echo "FAIL: ${toString (lib.length dashboardFindings)} dashboard finding(s); the SigNoz v2 API or the provisioner rejects each of them (rules: lib/signoz-dashboard-lint.nix):"''
+                    ]
+                    ++ map (finding: ''printf '%s\n' ${lib.escapeShellArg "FAIL: ${finding}"}'') dashboardFindings
+                    ++ [ "fail=1" ]
+                  );
             in
             pkgs.runCommand "signoz-query-lint"
               {
@@ -460,151 +479,360 @@
                 allowNames = toString underscoreLive;
               }
               ''
-                                    fail=0
-                                    # An empty blocklist makes trap 4's `for m in $metrics`
-                                    # silently skip (empty-var for-list = zero iterations, even
-                                    # without nullglob) — an emptied deadMetrics list must fail
-                                    # LOUD, not phantom-green.
-                                    if [ -z "$metrics" ]; then
-                                    echo "FAIL: dead-metrics blocklist is empty — trap 4 would be a phantom green."
-                                    exit 1
-                                    fi
-                                    # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
-                                      # unquoted `$strip` command-string variable would have its
-                                      # glob-bearing words (the quoted grep pattern) silently
-                                      # DELETED, turning every trap below phantom-green. Command
-                                      # indirection MUST use function definitions (quotes parse
-                                      # at definition time), never variable expansion.
-                                      scan() { # scan <label> <files...>
-                                        label="$1"; shift
-                                        for f in "$@"; do
-                                          case "$f" in
-                                            *.nix)
-                                              stream() { grep -v '^[[:space:]]*#' "$1"; }
-                                              ;;
-                                            *)
-                                              stream() { cat "$1"; }
-                                              ;;
-                                          esac
+                fail=0
+                # An empty blocklist makes trap 4's `for m in $metrics`
+                # silently skip (empty-var for-list = zero iterations, even
+                # without nullglob) — an emptied deadMetrics list must fail
+                # LOUD, not phantom-green.
+                if [ -z "$metrics" ]; then
+                echo "FAIL: dead-metrics blocklist is empty — trap 4 would be a phantom green."
+                exit 1
+                fi
+                # NOTE: stdenv setup.sh enables `shopt -s nullglob` — an
+                  # unquoted `$strip` command-string variable would have its
+                  # glob-bearing words (the quoted grep pattern) silently
+                  # DELETED, turning every trap below phantom-green. Command
+                  # indirection MUST use function definitions (quotes parse
+                  # at definition time), never variable expansion.
+                  scan() { # scan <label> <files...>
+                    label="$1"; shift
+                    for f in "$@"; do
+                      case "$f" in
+                        *.nix)
+                          stream() { grep -v '^[[:space:]]*#' "$1"; }
+                          ;;
+                        *)
+                          stream() { cat "$1"; }
+                          ;;
+                      esac
 
-                                          # 1. job= label matchers never match anything
-                                          if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
-                                            echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
-                                            echo "  The OTel prometheus receiver stores the scrape job as resource attr"
-                                            echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
-                                            echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
-                                            sed 's/^/    /' lint_hits
-                                            fail=1
-                                          fi
+                      # 1. job= label matchers never match anything
+                      if stream "$f" | grep -nE '\bjob[[:space:]]*=[[:space:]]*["~]' >lint_hits; then
+                        echo "FAIL [$label] $f: job= label matcher — no series carries a job label."
+                        echo "  The OTel prometheus receiver stores the scrape job as resource attr"
+                        echo "  service.name. Use node_systemd_unit_state{name=\"X.service\",state=\"active\"}"
+                        echo "  for liveness, or count(up{service_name=\"X\"}) or vector(0) for scrape health."
+                        sed 's/^/    /' lint_hits
+                        fail=1
+                      fi
 
-                                          # 2. underscore histogram/summary suffixes are stored DOTTED
-                                          # (googleapis exemption: GCP-native metric names like
-                                          # storage.googleapis.com/storage/v2/total_count END in
-                                          # _count by GCP convention — not Prometheus histogram
-                                          # components; the [._] form covers the dotted store
-                                          # spelling (2026-11-12 gcp.json rewrite) and the legacy
-                                          # underscore spelling; underscoreLive exemption:
-                                          # store-verified standalone counters/gauges stored
-                                          # verbatim — dotting them is the 2026-10-17 regression
-                                          # class).
-                                          strip_allow() {
-                                            if [ -n "$allowNames" ]; then
-                                              grep -vE "\b$(echo "$allowNames" | tr ' ' '|')\b"
-                                            else
-                                              cat
-                                            fi
-                                          }
-                                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -vE 'googleapis[._]com' | strip_allow >lint_hits; then
-                                            echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
-                                            echo "  SigNoz stores suffixes DOTTED for histogram FAMILIES: metric.sum,"
-                                            echo "  metric.count, metric.bucket. A STANDALONE counter/gauge ending in"
-                                            echo "  _sum/_count is stored verbatim — verify against the store before"
-                                            echo "  dotting (clickhouse probe; see docs/agents/monitoring.md)."
-                                            echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
-                                            echo "  Query as {__name__=\"metric.suffix\"} instead."
-                                            sed 's/^/    /' lint_hits
-                                            fail=1
-                                          fi
+                      # 2. underscore histogram/summary suffixes are stored DOTTED
+                      # (googleapis exemption: GCP-native metric names like
+                      # storage.googleapis.com/storage/v2/total_count END in
+                      # _count by GCP convention — not Prometheus histogram
+                      # components; the [._] form covers the dotted store
+                      # spelling (2026-11-12 gcp.json rewrite) and the legacy
+                      # underscore spelling; underscoreLive exemption:
+                      # store-verified standalone counters/gauges stored
+                      # verbatim — dotting them is the 2026-10-17 regression
+                      # class).
+                      strip_allow() {
+                        if [ -n "$allowNames" ]; then
+                          grep -vE "\b$(echo "$allowNames" | tr ' ' '|')\b"
+                        else
+                          cat
+                        fi
+                      }
+                      if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -vE 'googleapis[._]com' | strip_allow >lint_hits; then
+                        echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
+                        echo "  SigNoz stores suffixes DOTTED for histogram FAMILIES: metric.sum,"
+                        echo "  metric.count, metric.bucket. A STANDALONE counter/gauge ending in"
+                        echo "  _sum/_count is stored verbatim — verify against the store before"
+                        echo "  dotting (clickhouse probe; see docs/agents/monitoring.md)."
+                        echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
+                        echo "  Query as {__name__=\"metric.suffix\"} instead."
+                        sed 's/^/    /' lint_hits
+                        fail=1
+                      fi
 
-                                          # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
-                                          if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
-                                            echo "FAIL [$label] $f: bare up{service_name=...} selector."
-                                            echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
-                                            echo "  labeled series goes stale — the selector returns nothing exactly when"
-                                            echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
-                                            echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
-                                            sed 's/^/    /' lint_hits
-                                            fail=1
-                                          fi
+                      # 3. up{service_name=...} goes STALE mid-outage without a vector(0) fallback
+                      if stream "$f" | grep -nE 'up\{[^}]*service_name' | grep -vE '(or vector\(0\)|absent\()' >lint_hits; then
+                        echo "FAIL [$label] $f: bare up{service_name=...} selector."
+                        echo "  On scrape FAILURE the receiver emits a bare-label up=0 series and the"
+                        echo "  labeled series goes stale — the selector returns nothing exactly when"
+                        echo "  it should fire (dnsblockd :9090 wedge, 2026-08-27)."
+                        echo "  Use: count(up{service_name=\"X\"}) or vector(0)"
+                        sed 's/^/    /' lint_hits
+                        fail=1
+                      fi
 
-                                          # 4. known-dead metric names (dots escaped: a dotted dead
-                                          # name must not silently match lookalike tokens)
-                                          for m in $metrics; do
-                                            esc_m=$(printf '%s' "$m" | sed 's/\./\\./g')
-                                            if stream "$f" | grep -nE "\b$esc_m\b" >lint_hits; then
-                                              echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
-                                              sed 's/^/    /' lint_hits
-                                              fail=1
-                                            fi
-                                          done
-                                        done
-                                        rm -f lint_hits
-                                        return 0
-                                      }
+                      # 4. known-dead metric names (dots escaped: a dotted dead
+                      # name must not silently match lookalike tokens)
+                      for m in $metrics; do
+                        esc_m=$(printf '%s' "$m" | sed 's/\./\\./g')
+                        if stream "$f" | grep -nE "\b$esc_m\b" >lint_hits; then
+                          echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
+                          sed 's/^/    /' lint_hits
+                          fail=1
+                        fi
+                      done
+                    done
+                    rm -f lint_hits
+                    return 0
+                  }
 
-                                      scan alerts ${alerts}
-                                      scan dashboards ${dashboards}/*.json
+                  scan alerts ${alerts}
+                  scan dashboards ${dashboards}/*.json
 
-                                      # 5. dashboard layout overlaps: the SigNoz v2 validator
-                                      # rejects the WHOLE dashboard with HTTP 400
-                                      # ("spec.layouts[0].spec.items[N] and items[M] overlap")
-                                      # and the provisioner HARD-fails the deploy by design
-                                      # (2026-09-16: systemnix-overview Zone 6 panel). Panels
-                                      # are rectangles x..x+width, y..y+height on a 12-col
-                                      # grid; any pairwise intersection is fatal.
-                                      # NOTE: the heredoc body below is written at this
-                                      # block's minimal nix-indent level so the terminator
-                                      # lands at column 0 after nix strips the common indent
-                                      # (an indented terminator never matches and the heredoc
-                                      # eats the rest of the script, bash "unexpected EOF").
-                                      if ! overlap_out=$(${pkgs.python3}/bin/python3 - <<'PYOVERLAP'
-                import glob, itertools, json, sys
-                bad = 0
-                for f in sorted(glob.glob("${dashboards}/*.json")):
-                    doc = json.load(open(f))
-                    items = doc["spec"]["layouts"][0]["spec"]["items"]
-                    for a, b in itertools.combinations(items, 2):
-                        if (a["x"] < b["x"] + b["width"] and b["x"] < a["x"] + a["width"]
-                                and a["y"] < b["y"] + b["height"] and b["y"] < a["y"] + a["height"]):
-                            print("%s: panels (x=%d,y=%d,w=%d,h=%d) and (x=%d,y=%d,w=%d,h=%d) intersect" %
-                                  (f, a["x"], a["y"], a["width"], a["height"], b["x"], b["y"], b["width"], b["height"]))
-                            bad = 1
-                    # 6. one query per panel: the SigNoz v2 API rejects the
-                    # WHOLE dashboard with HTTP 400 ("panel must have one
-                    # query, found N") and the provisioner hard-fails the
-                    # deploy (2026-09-16 class; relitigated 2026-10-15 when
-                    # a two-query panel shipped green past this lint).
-                    # Multi-series panels use ONE query with
-                    # {__name__=~"a|b"} selector form, never two queries.
-                    for pid, panel in doc["spec"]["panels"].items():
-                        n = len(panel["spec"]["queries"])
-                        if n != 1:
-                            print("%s: panel %s (%s) has %d queries — the v2 API requires exactly 1 (multi-series via {__name__=~\"a|b\"})" %
-                                  (f, pid, panel["spec"]["display"]["name"], n))
-                            bad = 1
-                sys.exit(bad)
-                PYOVERLAP
-                ); then
-                                        echo "FAIL: dashboard layout overlap(s):"
-                                        echo "$overlap_out"
-                                        echo "SigNoz v2 rejects the whole dashboard (HTTP 400) and the provisioner unit"
-                                        echo "fails the deploy. Give every panel a disjoint grid rectangle."
-                                        exit 1
-                                      fi
+                  # 5. Dashboard rules, evaluated above and printed
+                  # here: layout geometry and overlap in
+                  # EVERY layout, resolvable and unique panel
+                  # references, no orphan panels, one query
+                  # per panel, the query kinds each panel
+                  # kind accepts, known unit ids, and the
+                  # server-default keys the provisioner's
+                  # unchanged-check needs. Each rule was
+                  # learned from a deploy-time 400 or a
+                  # live render (2026-09-16 overview overlap;
+                  # the 2026-11-25 ai-meter rewrite).
+                  ${reportDashboards}
 
-                                      [ "$fail" -eq 0 ] || exit 1
-                                      touch $out
+                  [ "$fail" -eq 0 ] || exit 1
+                  touch $out
               '';
+
+          # signoz-dashboard-lint selftest (2026-11-25): proves each rule of
+          # lib/signoz-dashboard-lint.nix fails on its incident shape and
+          # stays quiet on valid dashboards. Mirrors the lock-audit-selftest
+          # pattern: pure-Nix fixtures evaluated at CHECK EVAL time, bash only
+          # asserts the precomputed verdicts.
+          signoz-dashboard-lint-selftest =
+            let
+              lint = import (root + "/lib/signoz-dashboard-lint.nix") { inherit (pkgs) lib; };
+              ref = key: "#/spec/panels/" + key;
+              item = x: y: width: height: key: {
+                inherit
+                  x
+                  y
+                  width
+                  height
+                  ;
+                content."$ref" = ref key;
+              };
+              grid = items: {
+                kind = "Grid";
+                spec.items = items;
+              };
+              panel = plugin: queries: {
+                display.name = "P";
+                inherit plugin queries;
+              };
+              promqlQuery = {
+                kind = "time_series";
+                spec = {
+                  name = "A";
+                  plugin = {
+                    kind = "signoz/PromQLQuery";
+                    spec = {
+                      name = "A";
+                      query = "up";
+                    };
+                  };
+                };
+              };
+              compositeOf = subs: {
+                kind = "scalar";
+                spec = {
+                  name = "Q";
+                  plugin = {
+                    kind = "signoz/CompositeQuery";
+                    spec.queries = subs;
+                  };
+                };
+              };
+              chart =
+                unit:
+                panel {
+                  kind = "signoz/TimeSeriesPanel";
+                  spec.formatting.unit = unit;
+                } [ promqlQuery ];
+              # A dashboard of one section. `panels` maps a key to a panel
+              # spec; the file wraps each as { kind = "Panel"; spec = ... }.
+              doc = panels: items: {
+                name = "systemnix-fixture";
+                spec = {
+                  display.name = "Fixture";
+                  variables = [ ];
+                  panels = lib.mapAttrs (_: spec: {
+                    kind = "Panel";
+                    inherit spec;
+                  }) panels;
+                  layouts = [ (grid items) ];
+                  duration = "";
+                  refreshInterval = "";
+                  links = [ ];
+                };
+              };
+              one = unit: doc { p = chart unit; } [ (item 0 0 12 4 "p") ];
+              sections =
+                panels: layouts:
+                (doc panels [ ])
+                // {
+                  spec = (doc panels [ ]).spec // {
+                    inherit layouts;
+                  };
+                };
+              findings = dashboard: lint.validateDashboard "fixture.json" dashboard;
+              clean = dashboard: findings dashboard == [ ];
+              flagged = dashboard: marker: lib.any (lib.hasInfix marker) (findings dashboard);
+              without =
+                dashboard: names:
+                dashboard
+                // {
+                  spec = removeAttrs dashboard.spec names;
+                };
+              legs = {
+                clean = clean (one "percent");
+                universalUnit = clean (one "{count}");
+                runtimeUnit = clean (one "suffix:USD/h");
+                unknownUnit = flagged (one "{percent}") "unit id '{percent}' is unknown";
+                unknownColumnUnit = flagged (doc {
+                  p = panel {
+                    kind = "signoz/TablePanel";
+                    spec.formatting.columnUnits.A = "req";
+                  } [ ];
+                } [ (item 0 0 12 4 "p") ]) "unit id 'req' of column 'A' is unknown";
+                numberWithoutUnit = flagged (doc {
+                  p = panel {
+                    kind = "signoz/NumberPanel";
+                    spec = { };
+                  } [ promqlQuery ];
+                } [ (item 0 0 12 4 "p") ]) "unit id '' is unknown";
+                # the first section is sound; the overlap sits in the second
+                secondSectionOverlap = flagged (sections
+                  {
+                    p = chart "percent";
+                    q = chart "percent";
+                    r = chart "percent";
+                  }
+                  [
+                    (grid [ (item 0 0 12 4 "p") ])
+                    (grid [
+                      (item 0 0 6 4 "q")
+                      (item 3 0 6 4 "r")
+                    ])
+                  ]
+                ) "dashboard layout overlap";
+                overflow = flagged (doc { p = chart "percent"; } [ (item 11 0 2 4 "p") ]) "exceeds grid width 12";
+                negativeY = flagged (doc { p = chart "percent"; } [
+                  (item 0 (-1) 12 4 "p")
+                ]) "y must not be negative";
+                danglingReference = flagged (doc { p = chart "percent"; } [
+                  (item 0 0 12 4 "nope")
+                ]) "references unknown panel 'nope'";
+                placedTwice = flagged (sections { p = chart "percent"; } [
+                  (grid [ (item 0 0 12 4 "p") ])
+                  (grid [ (item 0 4 12 4 "p") ])
+                ]) "panel 'p' is placed 2 times";
+                orphanPanel = flagged (doc {
+                  p = chart "percent";
+                  q = chart "percent";
+                } [ (item 0 0 12 4 "p") ]) "panel 'q' is placed in no layout";
+                twoQueries = flagged (doc {
+                  p =
+                    panel
+                      {
+                        kind = "signoz/TimeSeriesPanel";
+                        spec.formatting.unit = "percent";
+                      }
+                      [
+                        promqlQuery
+                        promqlQuery
+                      ];
+                } [ (item 0 0 12 4 "p") ]) "must have one query, found 2";
+                tableWithPromql = flagged (doc
+                  {
+                    p = panel {
+                      kind = "signoz/TablePanel";
+                      spec = { };
+                    } [ promqlQuery ];
+                  }
+                  [ (item 0 0 12 4 "p") ]
+                ) "query kind 'signoz/PromQLQuery' is not supported by panel kind 'signoz/TablePanel'";
+                pieWithCompositePromql = flagged (doc
+                  {
+                    p =
+                      panel
+                        {
+                          kind = "signoz/PieChartPanel";
+                          spec.formatting.unit = "{count}";
+                        }
+                        [
+                          (compositeOf [
+                            {
+                              type = "promql";
+                              spec.query = "up";
+                            }
+                          ])
+                        ];
+                  }
+                  [ (item 0 0 12 4 "p") ]
+                ) "composite sub-query type 'promql' is not supported by panel kind 'signoz/PieChartPanel'";
+                tableWithCompositeBuilder = clean (
+                  doc {
+                    p =
+                      panel
+                        {
+                          kind = "signoz/TablePanel";
+                          spec = { };
+                        }
+                        [
+                          (compositeOf [
+                            {
+                              type = "builder_query";
+                              spec.name = "A";
+                            }
+                            {
+                              type = "builder_formula";
+                              spec.name = "F";
+                            }
+                          ])
+                        ];
+                  } [ (item 0 0 12 4 "p") ]
+                );
+                textPanelWithQuery = flagged (doc {
+                  p = panel {
+                    kind = "signoz/TextPanel";
+                    spec = { };
+                  } [ promqlQuery ];
+                } [ (item 0 0 12 4 "p") ]) "renders without a query";
+                textPanelWithoutQuery = clean (
+                  doc {
+                    p = panel {
+                      kind = "signoz/TextPanel";
+                      spec = { };
+                    } [ ];
+                  } [ (item 0 0 12 4 "p") ]
+                );
+                unknownPanelKind = flagged (doc {
+                  p = panel {
+                    kind = "signoz/PanelFromTheFuture";
+                    spec = { };
+                  } [ promqlQuery ];
+                } [ (item 0 0 12 4 "p") ]) "unknown panel kind";
+                missingServerDefaults = flagged (without (one "percent") [
+                  "duration"
+                  "links"
+                ]) "spec is missing duration links";
+                missingVariables = flagged (
+                  (one "percent")
+                  // {
+                    spec = (one "percent").spec // {
+                      variables = null;
+                    };
+                  }
+                ) "spec.variables is required";
+                malformedFile = flagged 42 "not a JSON object";
+              };
+            in
+            pkgs.runCommand "signoz-dashboard-lint-selftest" (lib.mapAttrs (_: builtins.toJSON) legs) ''
+              fail() { echo "SELFTEST FAIL: signoz-dashboard-lint: $*" >&2; exit 1; }
+              for leg in ${toString (builtins.attrNames legs)}; do
+                [ "''${!leg}" = "true" ] || fail "leg $leg is ''${!leg}: lib/signoz-dashboard-lint.nix lost a rule or its fixture"
+              done
+              echo "signoz-dashboard-lint: ${toString (builtins.length (builtins.attrNames legs))} legs green"
+              touch $out
+            '';
 
           binary-coverage-lint = pkgs.runCommand "binary-coverage-lint" { } ''
             ${binaryCoverageScanner} ${root}/modules ${root}/platforms ${root}/lib

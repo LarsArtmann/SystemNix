@@ -515,6 +515,9 @@
           ]
         }
       }
-    ]
+    ],
+    "duration": "",
+    "refreshInterval": "",
+    "links": []
   }
 }

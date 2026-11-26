@@ -1,0 +1,47 @@
+# Unit ids a SigNoz dashboard may carry in `formatting.unit`, `formatting.columnUnits.*`
+# and `thresholds[].unit` (consumed by lib/signoz-dashboard-lint.nix).
+#
+# Pinned SigNoz rev da35d997, two sources unioned:
+#   - the 272 ids of the getValueFormats() catalog of @grafana/data 11.6.15.
+#     An id missing from the catalog falls back to a plain suffix, so the
+#     frontend prints the id itself behind the number: `{percent}` showed as
+#     "96.5 {percent}" (the 2026-11-25 ai-meter dashboard).
+#   - the 273 values of UniversalYAxisUnit
+#     (frontend/src/components/YAxisUnitSelector/types.ts), the units SigNoz
+#     renders itself (`{count}`, `{req}/min`, `us`, ...).
+#
+# Ids built at run time need no row here and pass the lint by their prefix:
+# prefix:<text> suffix:<text> time:<format> si:<unit> count:<unit>
+# currency:<code> bool:<yes>/<no>.
+#
+# Re-derive after a SigNoz upgrade: both lists are read from the pinned
+# source tree (docs/agents/monitoring.md, "Dashboard unit ids").
+% 1 Bps By By/s EBy EBy/s EHs Ebit Ebit/s EiBy EiBy/s Eibit/s GBs GBy GBy/s GHs Gbit Gbit/s
+Gbits GiBs GiBy GiBy/s Gibit/s Gibits Hs KBs KHs Kbits KiBs KiBy KiBy/s Kibit/s Kibits MBs MBy
+MBy/s MHs Mbit Mbit/s Mbits MiBs MiBy MiBy/s Mibit/s Mibits Mohm Nm3 PBs PBy PBy/s PHs Pbit
+Pbit/s Pbits PiBs PiBy PiBy/s Pibit/s Pibits TBs TBy TBy/s THs Tbit Tbit/s Tbits TiBs TiBy
+TiBy/s Tibit/s Tibits Wm2 YBy YBy/s Ybit Ybit/s YiBy YiBy/s Yibit/s ZBy ZBy/s Zbit Zbit/s ZiBy
+ZiBy/s Zibit/s accFS2 accG accMS2 acres amp amph arcmin arcsec areaF2 areaM2 areaMI2 binBps
+binbps bit bit/s bits bool bool_on_off bool_yes_no bps bytes candela celsius clockms clocks
+congNm3 congm3 conmgNm3 conmgdL conmgm3 conmmolL conngNm3 conngm3 conppb conμgNm3 conμgm3 cpm
+cps currencyBGN currencyBRL currencyBTC currencyCHF currencyCZK currencyDKK currencyEUR
+currencyGBP currencyIDR currencyILS currencyINR currencyISK currencyJPY currencyKRW currencyMYR
+currencyNOK currencyPHP currencyPLN currencyPYG currencyRUB currencySEK currencyTRY currencyUAH
+currencyUSD currencyUYU currencyVND currencyXPF currencyZAR currencymBTC currencyμBTC d dB dBm
+dateTimeAsIso dateTimeAsIsoNoDateIfToday dateTimeAsLocal dateTimeAsLocalNoDateIfToday
+dateTimeAsSystem dateTimeAsUS dateTimeAsUSNoDateIfToday dateTimeFromNow decbits decbytes
+decgbytes deckbytes decmbytes decpbytes dectbytes degree dm3 dtdhms dtdurationms dtdurations
+dthms eflops epm eps ev fahrenheit farad ffarad flops flowcfm flowcfs flowcms flowgpm flowlpm
+flowmlpm forceN forceNm forcekN forcekNm gallons gbytes gflops grad gwatt h hectares henry hertz
+hex hex0x humidity iops joule kBy kBy/s kamp kamph kbit kbit/s kbytes kelvin kohm kvolt kvoltamp
+kvoltampreact kwatt kwatth kwattm lengthft lengthin lengthkm lengthm lengthmi lengthmm litre
+litreh locale lumens lux m m3 mamp mamph massg masskg masslb massmg masst mbytes megwatt mflops
+mhenry min mlitre mohm mpm mps ms mvolt mwatt mwatth nfarad none ns ohm opm ops pbytes percent
+percentunit pfarad pflops pixel ppm pps pressurebar pressurehg pressurehpa pressurekbar
+pressurekpa pressurembar pressurepa pressurepsi radbq radci radexpckg radgy radian radmsv
+radmsvh radr radrad radrem radsv radsvh radusv radusvh recpm recps reqpm reqps rotdegs rotghz
+rothz rotkhz rotmhz rotrads rotrpm rowspm rowsps rpm rps s sci short sishort string tbytes
+tflops timeticks us velocitykmh velocityknot velocitymph velocityms volt voltamp voltampreact
+watt watth watthperkg wpm wps yflops zflops {bool_yn} {bool} {count} {count}/min {count}/s
+{iops}/s {ops}/min {ops}/s {read}/min {read}/s {req}/min {req}/s {write}/min {write}/s µfarad
+µhenry µs

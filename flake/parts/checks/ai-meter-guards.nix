@@ -14,7 +14,10 @@
 #   1. promtool's PromQL engine evaluates what the generator REALLY emits,
 #      on the fixture TestEstimateCostMatchesDashboardPromQL pins: each
 #      minute adds 900 prompt tokens (180 cached) and 450 completions at
-#      2/0.5/4 USD per 1M, which is 0.1998 USD per hour.
+#      2/0.5/4 USD per 1M, which is 0.1998 USD per hour. The same figure
+#      must come out of all four generated queries, and a second fixture
+#      (two priced models, two clients) pins the per-client sum and the
+#      24-hour window, which the Go side does not compute.
 #   2. The Go side is held to the very same number, by running that test
 #      with the value in its environment. Either formula moving alone
 #      fails this check.
@@ -70,42 +73,75 @@
           usdPerHour = "0.1998";
           usdPerHourRounded = 1998;
 
-          series = kind: perMinute: {
-            series = ''ai_meter_tokens_total{client="crush",upstream="fake",model="m",kind="${kind}"}'';
+          series = model: client: kind: perMinute: {
+            series = ''ai_meter_tokens_total{client="${client}",upstream="fake",model="${model}",kind="${kind}"}'';
             values = "0+${toString perMinute}x40";
           };
           inputSeries = [
-            (series "prompt" 900)
-            (series "cached" 180)
-            (series "completion" 450)
+            (series "m" "crush" "prompt" 900)
+            (series "m" "crush" "cached" 180)
+            (series "m" "crush" "completion" 450)
           ];
-          # One promtool unit test per price table: the total is a label-less
-          # sample, the by-model chart one sample for the called model. The
-          # keys are promtool's own (it accepts JSON as YAML).
+          # The same fixture one client wider: crush also calls "n", and
+          # paperless calls "n" only. "n" costs (100 * 1 + 50 * 2) / 1e6 =
+          # 0.0002 USD per minute for crush and a tenth of that for paperless.
+          fixtureWide = fixture // {
+            n = {
+              input = 1;
+              output = 2;
+              cachedInput = 0.1;
+            };
+          };
+          wideSeries = inputSeries ++ [
+            (series "n" "crush" "prompt" 100)
+            (series "n" "crush" "cached" 0)
+            (series "n" "crush" "completion" 50)
+            (series "n" "paperless" "prompt" 10)
+            (series "n" "paperless" "cached" 0)
+            (series "n" "paperless" "completion" 5)
+          ];
+          # USD per hour, scaled by 10000 for promtool's exact comparison:
+          # "n" alone is 0.012 for crush and 0.0012 for paperless.
+          wideModelN = 132;
+          wideCrush = 2118;
+          widePaperless = 12;
+          wideTotal = 2130;
+          # increase() over 24h on a 41-minute fixture, read at minute 30:
+          # promtool (Prometheus 3) does not extend an integer counter past
+          # its samples, so the window holds exactly the 30 minutes between
+          # the first and the last sample. 0.00333 USD per minute then make
+          # 0.0999 USD, and 0.00355 with both models 0.1065.
+          usd24hRounded = 999;
+          wide24hRounded = 1065;
+
+          # One promtool unit test per fixture, each running all four
+          # generated queries. The keys are promtool's own (it accepts JSON
+          # as YAML).
           rounded = promql: "round((${promql}) * 10000, 1)";
-          testCase = costs: total: {
+          sample = labels: value: { inherit labels value; };
+          testCase = costs: seriesList: expected: {
             interval = "1m";
-            input_series = inputSeries;
+            input_series = seriesList;
             promql_expr_test = [
               {
                 expr = rounded (renderer.spendRate costs);
                 eval_time = "30m";
-                exp_samples = [
-                  {
-                    labels = "{}";
-                    value = total;
-                  }
-                ];
+                exp_samples = expected.total;
               }
               {
                 expr = rounded (renderer.spendRateByModel costs);
                 eval_time = "30m";
-                exp_samples = [
-                  {
-                    labels = ''{model="m"}'';
-                    value = total;
-                  }
-                ];
+                exp_samples = expected.byModel;
+              }
+              {
+                expr = rounded (renderer.spendRateByClient costs);
+                eval_time = "30m";
+                exp_samples = expected.byClient;
+              }
+              {
+                expr = rounded (renderer.spendLast24h costs);
+                eval_time = "30m";
+                exp_samples = expected.last24h;
               }
             ];
           };
@@ -114,8 +150,36 @@
               rule_files = [ ];
               evaluation_interval = "1m";
               tests = [
-                (testCase fixture usdPerHourRounded)
-                (testCase { } 0)
+                # One priced and called model: the figure the Go formula is
+                # held to.
+                (testCase fixture inputSeries {
+                  total = [ (sample "{}" usdPerHourRounded) ];
+                  byModel = [ (sample ''{model="m"}'' usdPerHourRounded) ];
+                  byClient = [ (sample ''{client="crush"}'' usdPerHourRounded) ];
+                  last24h = [ (sample "{}" usd24hRounded) ];
+                })
+                # Two clients on two priced models: a client's spend is the
+                # sum over every model it calls.
+                (testCase fixtureWide wideSeries {
+                  total = [ (sample "{}" wideTotal) ];
+                  byModel = [
+                    (sample ''{model="m"}'' usdPerHourRounded)
+                    (sample ''{model="n"}'' wideModelN)
+                  ];
+                  byClient = [
+                    (sample ''{client="crush"}'' wideCrush)
+                    (sample ''{client="paperless"}'' widePaperless)
+                  ];
+                  last24h = [ (sample "{}" wide24hRounded) ];
+                })
+                # No priced model: every figure is an honest zero, never an
+                # empty panel.
+                (testCase { } inputSeries {
+                  total = [ (sample "{}" 0) ];
+                  byModel = [ (sample ''{model="m"}'' 0) ];
+                  byClient = [ (sample ''{client="crush"}'' 0) ];
+                  last24h = [ (sample "{}" 0) ];
+                })
               ];
             }
           );
@@ -125,6 +189,8 @@
           spendPanelNames = [
             "Spend Rate"
             "Spend Rate by Model"
+            "Spend Rate by Client"
+            "Spend (24h)"
           ];
           spendPanels = lib.filterAttrs (
             _: panel: builtins.elem panel.spec.display.name spendPanelNames
@@ -144,11 +210,13 @@
             [
               (renderer.spendRate fixture)
               (renderer.spendRateByModel fixture)
+              (renderer.spendRateByClient fixture)
+              (renderer.spendLast24h fixture)
             ]
             ++ spendQueries
           );
           wiringHolds =
-            assert lib.assertMsg (lib.length spendPanelList == 2)
+            assert lib.assertMsg (lib.length spendPanelList == 4)
               "ai-meter-spend-promql: the dashboard must keep exactly one panel each for ${toString spendPanelNames}, found ${toString (lib.length spendPanelList)}";
             assert lib.assertMsg (uncovered == [ ])
               "ai-meter-spend-promql: priced models missing from the dashboard's spend-rate queries: ${toString uncovered}";

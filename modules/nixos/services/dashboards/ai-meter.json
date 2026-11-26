@@ -9,7 +9,7 @@
   ],
   "spec": {
     "display": {
-      "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, and whether the metering itself is healthy. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
+      "description": "Every AI call routed through ai-meter (:8107): who is calling, which provider and model, what it costs at the reference price table, how slow it is, whether the metering itself is healthy, and how admission control is doing against z.ai's rate limit. Feeds the AI Upstream Failure Rate rule; built after the 2026-10-17 Z.ai 1113 outage (coding-plan key on the general endpoint) went unobserved for hours.",
       "name": "AI Meter \u2014 Routed AI Calls"
     },
     "duration": "",
@@ -22,7 +22,7 @@
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight"
               },
-              "height": 4,
+              "height": 5,
               "width": 2,
               "x": 0,
               "y": 0
@@ -102,7 +102,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-up"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-calls24h"
               },
               "height": 4,
               "width": 2,
@@ -111,7 +111,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-uptime"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-up"
               },
               "height": 4,
               "width": 2,
@@ -120,39 +120,57 @@
             },
             {
               "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-uptime"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 10,
+              "y": 0
+            },
+            {
+              "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-req-provider"
               },
-              "height": 5,
+              "height": 6,
               "width": 6,
               "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-req-client"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 6,
               "y": 4
             },
             {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-req-model-code"
               },
-              "height": 5,
-              "width": 6,
-              "x": 6,
-              "y": 4
+              "height": 6,
+              "width": 12,
+              "x": 0,
+              "y": 10
             },
             {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-fail-code"
               },
-              "height": 5,
+              "height": 6,
               "width": 6,
               "x": 0,
-              "y": 9
+              "y": 16
             },
             {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-errrate-provider"
               },
-              "height": 5,
+              "height": 6,
               "width": 6,
               "x": 6,
-              "y": 9
+              "y": 16
             }
           ]
         }
@@ -184,7 +202,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-prompt-per-call"
               },
               "height": 4,
               "width": 2,
@@ -193,7 +211,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendtotal"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate"
               },
               "height": 4,
               "width": 2,
@@ -202,21 +220,57 @@
             },
             {
               "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spend24h"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 8,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendtotal"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 10,
+              "y": 0
+            },
+            {
+              "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate-model"
               },
-              "height": 5,
-              "width": 8,
+              "height": 6,
+              "width": 6,
               "x": 0,
+              "y": 4
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate-client"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 6,
               "y": 4
             },
             {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-tok-kind"
               },
-              "height": 5,
-              "width": 4,
-              "x": 8,
-              "y": 4
+              "height": 6,
+              "width": 6,
+              "x": 0,
+              "y": 10
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-tok-client"
+              },
+              "height": 6,
+              "width": 6,
+              "x": 6,
+              "y": 10
             },
             {
               "content": {
@@ -225,7 +279,7 @@
               "height": 7,
               "width": 12,
               "x": 0,
-              "y": 9
+              "y": 16
             }
           ]
         }
@@ -242,7 +296,7 @@
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-ttft"
               },
               "height": 4,
-              "width": 2,
+              "width": 4,
               "x": 0,
               "y": 0
             },
@@ -251,15 +305,24 @@
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-duration"
               },
               "height": 4,
-              "width": 2,
-              "x": 2,
+              "width": 4,
+              "x": 4,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-speed"
+              },
+              "height": 4,
+              "width": 4,
+              "x": 8,
               "y": 0
             },
             {
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-ttft-model"
               },
-              "height": 5,
+              "height": 6,
               "width": 6,
               "x": 0,
               "y": 4
@@ -268,7 +331,7 @@
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-duration-model"
               },
-              "height": 5,
+              "height": 6,
               "width": 6,
               "x": 6,
               "y": 4
@@ -277,10 +340,10 @@
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-speed-model"
               },
-              "height": 5,
+              "height": 6,
               "width": 12,
               "x": 0,
-              "y": 9
+              "y": 10
             }
           ]
         }
@@ -339,9 +402,18 @@
             },
             {
               "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-freshness"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 10,
+              "y": 0
+            },
+            {
+              "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-span-outcome"
               },
-              "height": 5,
+              "height": 6,
               "width": 12,
               "x": 0,
               "y": 4
@@ -367,7 +439,7 @@
             },
             {
               "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost"
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-adm-limit"
               },
               "height": 4,
               "width": 2,
@@ -376,9 +448,45 @@
             },
             {
               "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-adm-waiting"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 4,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-ratelimit"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 6,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-quota"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 8,
+              "y": 0
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost"
+              },
+              "height": 4,
+              "width": 2,
+              "x": 10,
+              "y": 0
+            },
+            {
+              "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-state"
               },
-              "height": 5,
+              "height": 6,
               "width": 8,
               "x": 0,
               "y": 4
@@ -387,19 +495,10 @@
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-outcomes"
               },
-              "height": 5,
+              "height": 6,
               "width": 4,
               "x": 8,
               "y": 4
-            },
-            {
-              "content": {
-                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-table"
-              },
-              "height": 6,
-              "width": 6,
-              "x": 0,
-              "y": 9
             },
             {
               "content": {
@@ -407,8 +506,17 @@
               },
               "height": 6,
               "width": 6,
+              "x": 0,
+              "y": 10
+            },
+            {
+              "content": {
+                "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-code"
+              },
+              "height": 6,
+              "width": 6,
               "x": 6,
-              "y": 9
+              "y": 10
             }
           ]
         }
@@ -416,12 +524,12 @@
     ],
     "links": [],
     "panels": {
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost": {
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-adm-limit": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls the proxy could not get through: the retry budget ran out, the wait timed out, or the quota was spent. The client received an error.",
-            "name": "Calls Lost to Admission (24h)"
+            "description": "Calls the proxy keeps in flight at z.ai right now. The allowance starts at the configured ceiling, drops by one per \"too much at once\" answer and grows back by one after 30 quiet seconds.",
+            "name": "Limit (now)"
           },
           "links": [],
           "plugin": {
@@ -429,7 +537,106 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "max(ai_meter_admission_limit) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-adm-waiting": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls queued inside the proxy for provider room, in arrival order. Each one is a client waiting on ai-meter; a call that outlives the wait budget is answered 429.",
+            "name": "Waiting (now)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "locale"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 25
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 10
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "max(ai_meter_admission_waiting) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-admission-lost": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls to the gated provider that ended without an upstream answer: the wait budget ran out, the proxy gave up, the quota was spent, or the client went away. The client received a 429, or its own cancellation.",
+            "name": "Calls Lost (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "locale"
               },
               "thresholds": [
                 {
@@ -470,7 +677,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "How calls to a throttled upstream left the proxy: admitted (sent once), absorbed (a rate-limit rejection was retried and answered), gave_up, timeout, circuit, cancelled.",
+            "description": "How calls to the gated provider left the proxy: admitted (sent once and answered), absorbed (a \"too much at once\" answer was retried and the call succeeded), timeout (the wait budget ran out), circuit (quota spent), gave_up, cancelled (the client went away).",
             "name": "Admission Outcomes (24h)"
           },
           "links": [],
@@ -478,7 +685,7 @@
             "kind": "signoz/PieChartPanel",
             "spec": {
               "formatting": {
-                "decimalPrecision": "0",
+                "decimalPrecision": "1",
                 "unit": "{count}"
               },
               "legend": {
@@ -524,7 +731,7 @@
                     "name": "A",
                     "signal": "metrics",
                     "source": "",
-                    "stepInterval": 300
+                    "stepInterval": 60
                   }
                 }
               }
@@ -536,7 +743,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Per throttled upstream: calls sent (in flight), calls queued for room (waiting), and the concurrency the proxy currently allows (limit). The limit drops by one per rate-limit rejection and grows back after a quiet half minute.",
+            "description": "Per gated provider: calls sent (in flight), calls queued for room (waiting), and the allowance the proxy currently keeps (limit). The limit drops by one per \"too much at once\" answer and grows back after a quiet half minute.",
             "name": "Admission: In Flight, Waiting, Limit"
           },
           "links": [],
@@ -560,7 +767,7 @@
               },
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "legend": {
                 "customColors": null,
@@ -599,7 +806,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Mean seconds a call spent queued for upstream room.",
+            "description": "Mean seconds a call spent queued for provider room.",
             "name": "Avg Admission Wait"
           },
           "links": [],
@@ -691,6 +898,48 @@
                     "legend": "",
                     "name": "A",
                     "query": "sum(rate(ai_meter_request_seconds_sum[15m])) / sum(rate(ai_meter_request_seconds_count[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-avg-speed": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Completion tokens per second of generation over the last 15 minutes, all models: output tokens divided by wall time minus time to first byte.",
+            "name": "Avg Output Speed"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens/s"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_tokens_total{kind=\"completion\"}[15m])) / (sum(rate(ai_meter_request_seconds_sum[15m])) - sum(rate(ai_meter_ttft_seconds_sum[15m]))) > 0",
                     "stats": false,
                     "step": 0
                   }
@@ -799,6 +1048,48 @@
           ]
         }
       },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-calls24h": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Routed AI calls over the last 24 hours, every status code.",
+            "name": "Calls (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "{count}"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_requests_total[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-duration-model": {
         "kind": "Panel",
         "spec": {
@@ -866,7 +1157,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute that did not return 200: upstream 429s, 5xx, timeouts and client cancellations. Orange past 2/min, red past 10/min.",
+            "description": "Calls per minute that did not return 200: 429s from providers or from admission control, 5xx, timeouts and client cancellations. Orange past 2/min, red past 10/min.",
             "name": "Non-2xx / min"
           },
           "links": [],
@@ -923,7 +1214,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Share of a provider's calls that did not return 200. This is the panel that names which upstream is failing while the overall success rate drops.",
+            "description": "Share of a provider's calls that did not return 200. This is the panel that names which provider is failing while the overall success rate drops.",
             "name": "Error Rate by Provider"
           },
           "links": [],
@@ -1052,11 +1343,68 @@
           ]
         }
       },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-freshness": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Seconds since SigNoz last scraped the proxy's metrics endpoint. Past 2 minutes every panel on this dashboard is stale, whatever it shows.",
+            "name": "Metrics Freshness"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "s"
+              },
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 300
+                },
+                {
+                  "color": "#F5B225",
+                  "format": "text",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 120
+                }
+              ],
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "time() - max(timestamp(ai_meter_start_time_seconds))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-inflight": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls inside the proxy right now, all providers. In flight means the client is waiting on ai-meter; it says nothing about whether the upstream is throttling (see Admission).",
+            "description": "Calls inside the proxy right now, all providers. In flight means the client is waiting on ai-meter; it says nothing about whether the provider is throttling (see Admission).",
             "name": "In Flight"
           },
           "links": [],
@@ -1065,7 +1413,7 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "thresholds": null,
               "visualization": {
@@ -1098,7 +1446,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Concurrent calls per client (the service holding the key) over time. One client hogging the upstream is visible here first.",
+            "description": "Concurrent calls per client (the service holding the key) over time. One client hogging the provider is visible here first.",
             "name": "In Flight by Client"
           },
           "links": [],
@@ -1122,7 +1470,7 @@
               },
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "legend": {
                 "customColors": null,
@@ -1185,7 +1533,7 @@
               },
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "legend": {
                 "customColors": null,
@@ -1224,7 +1572,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Concurrent calls per upstream over time. A line that sits pinned at z.ai's cliff (about 6 to 9 before admission control) is the shape that produced the 429 storms.",
+            "description": "Concurrent calls per provider over time. A line that sits pinned at z.ai's cliff (about 6 to 9 before admission control) is the shape that produced the 429 storms.",
             "name": "In Flight by Provider"
           },
           "links": [],
@@ -1248,7 +1596,7 @@
               },
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "legend": {
                 "customColors": null,
@@ -1296,7 +1644,7 @@
             "spec": {
               "formatting": {
                 "columnUnits": {
-                  "A": "{count}"
+                  "A": "locale"
                 },
                 "decimalPrecision": "0"
               },
@@ -1386,7 +1734,7 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "thresholds": [
                 {
@@ -1427,7 +1775,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls, tokens and success per model over the last 24 hours, one row per model. Spend is not a column on purpose: the cost counter restates when a price row lands, so a 24-hour increase of it would report the restatement as spend (see the spend panels above).",
+            "description": "Calls, tokens and success per model over the last 24 hours, one row per model. Spend is not a column on purpose: tables cannot run the priced queries, and a 24-hour increase of the cost counter would report a restatement as spend (see the spend panels above).",
             "name": "Models: Last 24 Hours"
           },
           "links": [],
@@ -1436,13 +1784,13 @@
             "spec": {
               "formatting": {
                 "columnUnits": {
-                  "A": "short",
+                  "A": "locale",
                   "B": "count:tokens",
                   "C": "count:tokens",
                   "D": "count:tokens",
                   "F": "percent"
                 },
-                "decimalPrecision": "1"
+                "decimalPrecision": "0"
               },
               "thresholds": null,
               "visualization": {
@@ -1490,7 +1838,7 @@
                           "selectFields": null,
                           "signal": "metrics",
                           "source": "",
-                          "stepInterval": 300
+                          "stepInterval": 60
                         },
                         "type": "builder_query"
                       },
@@ -1525,7 +1873,7 @@
                           "selectFields": null,
                           "signal": "metrics",
                           "source": "",
-                          "stepInterval": 300
+                          "stepInterval": 60
                         },
                         "type": "builder_query"
                       },
@@ -1560,7 +1908,7 @@
                           "selectFields": null,
                           "signal": "metrics",
                           "source": "",
-                          "stepInterval": 300
+                          "stepInterval": 60
                         },
                         "type": "builder_query"
                       },
@@ -1595,7 +1943,7 @@
                           "selectFields": null,
                           "signal": "metrics",
                           "source": "",
-                          "stepInterval": 300
+                          "stepInterval": 60
                         },
                         "type": "builder_query"
                       },
@@ -1630,7 +1978,7 @@
                           "selectFields": null,
                           "signal": "metrics",
                           "source": "",
-                          "stepInterval": 300
+                          "stepInterval": 60
                         },
                         "type": "builder_query"
                       },
@@ -1653,11 +2001,53 @@
           ]
         }
       },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-prompt-per-call": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Mean prompt tokens per routed call over the last 15 minutes, cached or not: the size of the context each call carries. It drives both cost and time to first byte.",
+            "name": "Prompt / Call"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(rate(ai_meter_tokens_total{kind=\"prompt\"}[15m])) / sum(rate(ai_meter_requests_total[15m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-quota": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "True while z.ai reports a spent usage window: the proxy sends nothing until the reset time the answer named.",
+            "description": "True while z.ai reports a spent usage window: the proxy sends nothing until the reset time the answer named and answers every call 429.",
             "name": "Quota Exhausted"
           },
           "links": [],
@@ -1674,7 +2064,7 @@
                   "format": "background",
                   "operator": "above",
                   "unit": "",
-                  "value": 1
+                  "value": 0
                 }
               ],
               "visualization": {
@@ -1703,26 +2093,32 @@
           ]
         }
       },
-      "7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-table": {
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-quota": {
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "HTTP 429 answers from throttled upstreams by business code: rate_limit (too much at once; retried within the budget) or quota (a usage window is spent).",
-            "name": "Upstream Rejections: Last 24 Hours"
+            "description": "HTTP 429 answers from z.ai meaning a usage window is spent. The proxy sends nothing until the reset time the answer names.",
+            "name": "Quota Answers (24h)"
           },
           "links": [],
           "plugin": {
-            "kind": "signoz/TablePanel",
+            "kind": "signoz/NumberPanel",
             "spec": {
               "formatting": {
-                "columnUnits": {
-                  "A": "{count}"
-                },
-                "decimalPrecision": "0"
+                "decimalPrecision": "0",
+                "unit": "locale"
               },
-              "thresholds": null,
+              "thresholds": [
+                {
+                  "color": "#F1575F",
+                  "format": "background",
+                  "operator": "above",
+                  "unit": "",
+                  "value": 0
+                }
+              ],
               "visualization": {
-                "timePreference": "last_1_day"
+                "timePreference": "global_time"
               }
             }
           },
@@ -1730,53 +2126,184 @@
             {
               "kind": "scalar",
               "spec": {
-                "name": "Q",
+                "name": "A",
                 "plugin": {
-                  "kind": "signoz/BuilderQuery",
+                  "kind": "signoz/PromQLQuery",
                   "spec": {
-                    "aggregations": [
-                      {
-                        "metricName": "ai_meter_upstream_rejections_total",
-                        "reduceTo": "sum",
-                        "spaceAggregation": "sum",
-                        "temporality": "",
-                        "timeAggregation": "increase"
-                      }
-                    ],
                     "disabled": false,
-                    "filter": {
-                      "expression": ""
-                    },
-                    "groupBy": [
-                      {
-                        "fieldContext": "attribute",
-                        "fieldDataType": "string",
-                        "name": "kind",
-                        "signal": ""
-                      },
-                      {
-                        "fieldContext": "attribute",
-                        "fieldDataType": "string",
-                        "name": "code",
-                        "signal": ""
-                      }
-                    ],
                     "legend": "",
                     "name": "A",
-                    "order": [
-                      {
-                        "direction": "desc",
-                        "key": {
-                          "fieldContext": "",
-                          "fieldDataType": "",
-                          "name": "__result",
-                          "signal": ""
-                        }
-                      }
-                    ],
-                    "signal": "metrics",
-                    "source": "",
-                    "stepInterval": 300
+                    "query": "sum(increase(ai_meter_upstream_rejections_total{kind=\"quota\"}[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-rej-ratelimit": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "HTTP 429 answers from z.ai meaning \"too much at once\". Each one lowers the allowance by one and is retried by the proxy, so a call behind one is not lost by itself.",
+            "name": "Rate-Limit Answers (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "0",
+                "unit": "locale"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "sum(increase(ai_meter_upstream_rejections_total{kind=\"rate_limit\"}[24h])) or vector(0)",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-rejections-code": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Rate-limit and quota answers per minute, by business code: 1302 is \"too much at once\", 1308 a spent usage window.",
+            "name": "Provider 429 Answers / min"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{kind}} {{code}}",
+                    "name": "A",
+                    "query": "sum by (kind, code) (rate(ai_meter_upstream_rejections_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-req-client": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Calls per minute per client (the service holding the key).",
+            "name": "Requests by Client"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "reqpm"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{client}}",
+                    "name": "A",
+                    "query": "sum by (client) (rate(ai_meter_requests_total[5m])) * 60",
+                    "stats": false,
+                    "step": 0
                   }
                 }
               }
@@ -1788,7 +2315,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute per model, split by HTTP status. A 429 line rising under a model means that upstream is throttling it.",
+            "description": "Calls per minute per model, split by HTTP status. A 429 line rising under a model means its provider is throttling it.",
             "name": "Requests by Model x Code"
           },
           "links": [],
@@ -1851,7 +2378,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute per upstream.",
+            "description": "Calls per minute per provider.",
             "name": "Requests by Provider"
           },
           "links": [],
@@ -1965,7 +2492,7 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "thresholds": null,
               "visualization": {
@@ -2007,7 +2534,7 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "thresholds": [
                 {
@@ -2170,6 +2697,48 @@
           ]
         }
       },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spend24h": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Reference cost of the last 24 hours: the tokens of every priced model at today's price table. It is not read off the cost counter, whose steps are price restatements, not spend.",
+            "name": "Spend (24h)"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/NumberPanel",
+            "spec": {
+              "formatting": {
+                "decimalPrecision": "2",
+                "unit": "currencyUSD"
+              },
+              "thresholds": null,
+              "visualization": {
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "scalar",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "",
+                    "name": "A",
+                    "query": "@@spendLast24h@@",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
       "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate": {
         "kind": "Panel",
         "spec": {
@@ -2203,6 +2772,69 @@
                     "legend": "",
                     "name": "A",
                     "query": "@@spendRate@@",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-spendrate-client": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Reference cost per hour per client, summed over the priced models it calls.",
+            "name": "Spend Rate by Client"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "4",
+                "unit": "suffix:USD/h"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{client}}",
+                    "name": "A",
+                    "query": "@@spendRateByClient@@",
                     "stats": false,
                     "step": 0
                   }
@@ -2321,7 +2953,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Share of routed AI calls returning 2xx. Dropped to ~7% during the 2026-10-17 Z.ai 1113 balance outage - this panel + the failure-rate rule exist to catch that class within minutes. Empty while no call is in the window.",
+            "description": "Share of routed AI calls returning 200 over the last 5 minutes. Dropped to ~7% during the 2026-10-17 Z.ai 1113 balance outage - this panel + the failure-rate rule exist to catch that class within minutes. Empty while no call is in the window.",
             "name": "Success Rate (5m)"
           },
           "links": [],
@@ -2372,6 +3004,69 @@
                     "legend": "",
                     "name": "A",
                     "query": "100 * (sum(rate(ai_meter_requests_total{code=\"200\"}[5m])) or vector(0)) / sum(rate(ai_meter_requests_total[5m]))",
+                    "stats": false,
+                    "step": 0
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "7493eb6b-ef64-51c5-a91c-4856ec90008f-tok-client": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "description": "Tokens per minute per client, all kinds.",
+            "name": "Tokens by Client"
+          },
+          "links": [],
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "axes": {
+                "isLogScale": false,
+                "softMax": null,
+                "softMin": 0
+              },
+              "chartAppearance": {
+                "fillMode": "none",
+                "lineInterpolation": "spline",
+                "lineStyle": "solid",
+                "showPoints": false,
+                "spanGaps": {
+                  "fillLessThan": "",
+                  "fillOnlyBelow": false
+                }
+              },
+              "formatting": {
+                "decimalPrecision": "1",
+                "unit": "count:tokens/min"
+              },
+              "legend": {
+                "customColors": null,
+                "mode": "list",
+                "position": "bottom"
+              },
+              "thresholds": null,
+              "visualization": {
+                "fillSpans": false,
+                "timePreference": "global_time"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "A",
+                "plugin": {
+                  "kind": "signoz/PromQLQuery",
+                  "spec": {
+                    "disabled": false,
+                    "legend": "{{client}}",
+                    "name": "A",
+                    "query": "sum by (client) (rate(ai_meter_tokens_total[5m])) * 60",
                     "stats": false,
                     "step": 0
                   }
@@ -2610,7 +3305,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls rejected before any upstream was contacted: unknown client key.",
+            "description": "Calls rejected before any provider was contacted: unknown client key.",
             "name": "Unauthorized (24h)"
           },
           "links": [],
@@ -2619,7 +3314,7 @@
             "spec": {
               "formatting": {
                 "decimalPrecision": "0",
-                "unit": "{count}"
+                "unit": "locale"
               },
               "thresholds": [
                 {
@@ -2710,7 +3405,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Time since the proxy last started. Every counter below restarts here, so a short uptime explains a small all-time spend.",
+            "description": "Time since the proxy last started. Every cumulative counter restarts here, so a short uptime explains a small all-time spend.",
             "name": "Process Uptime"
           },
           "links": [],

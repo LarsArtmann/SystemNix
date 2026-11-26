@@ -122,6 +122,29 @@
             touch $out
           '';
 
+      # Blocklist freshness gauge fixture selftest (2026-11-26): the per-list
+      # staleness logic behind dnsblockd_blocklist_refresh_stale, driven
+      # through the SAME script file the dnsblockd-otel-observer unit runs
+      # (injected clock, so 30-day boundaries cost nothing). The last leg
+      # builds the RENDERED observer and reads it: a refactor that drops the
+      # helper call would leave the gauge at its "not stale" default forever.
+      checks.dnsblockd-blocklist-freshness-selftest =
+        let
+          observer = inputs.self.nixosConfigurations.evo-x2.config.systemd.services.dnsblockd-otel-observer.serviceConfig.ExecStart;
+        in
+        pkgs.runCommand "dnsblockd-blocklist-freshness-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts/lib"
+          cp ${root}/scripts/lib/blocklist-freshness.sh "$scratch/scripts/lib/blocklist-freshness.sh"
+          cp ${root}/scripts/test-blocklist-freshness.sh "$scratch/scripts/test-blocklist-freshness.sh"
+          ${pkgs.bash}/bin/bash "$scratch/scripts/test-blocklist-freshness.sh"
+          grep -q 'dnsblockd-blocklist-freshness' ${observer} || {
+            echo "the rendered dnsblockd-otel-observer no longer calls dnsblockd-blocklist-freshness" >&2
+            exit 1
+          }
+          touch $out
+        '';
+
       # Every blocklist fetch, built for real (2026-11-25 deploy bomb). A
       # wrong SRI hash in platforms/common/dns-blocklists.nix only ever
       # surfaced when a deploy's toplevel build reached the fetchurl
