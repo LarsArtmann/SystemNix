@@ -277,6 +277,34 @@ else
 fi
 assert_contains "journal-timeout branch stays =1 territory" "$(grep -c 'DEPLOY_FORCE_PRESSURE=1 nix run' "$DEPLOY_SH")" "2"
 
+# The trip count must see BOTH action-line shapes (2026-11-26): with ioPause
+# on, a zone-6 trip logs "IO-PAUSE (trip" and no "action taken" line, so the
+# sockets-only pattern read "no guard trips" through every IO storm (0 of
+# 2,679 trips counted in 9 days of guard journal). The real count command,
+# extracted verbatim, runs over fixture journal lines.
+trip_count_cmd=$(grep -m1 -o 'zone6_recent=.*' "$DEPLOY_SH")
+if [ -n "$trip_count_cmd" ]; then ok "trip-count command extractable verbatim"; else bad "trip-count command not found"; fi
+count_trips() { journal_out="$1" bash -c "$trip_count_cmd"' ; echo "${zone6_recent:-unset}"'; }
+prefix='Nov 26 17:16:23 evo-x2 memory-emergency-guard-check[1]: '
+trip_io="${prefix}MEMORY EMERGENCY IO-PAUSE (trip #13531, zone 6): SIGSTOPped 9 headless driver process group(s)"
+trip_kept="${prefix}MEMORY EMERGENCY IO-PAUSE (trip #13535, zone 6): NO new tree matched (patterns: x) — existing pause kept (epoch 1), no action this cycle"
+trip_sockets="${prefix}MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #4490, zone 6)"
+trip_observe="${prefix}MEMORY EMERGENCY action taken: I/O churn units only (no socket or sacrifice unit is configured: observe-only mode) (trip #1, zone 1)"
+trip_top="${prefix}MEMORY EMERGENCY IO-TOP (trip #13534, zone 6, 3s sample): user.slice @38MB/s [slice]"
+trip_beat="${prefix}MEMORY EMERGENCY still active (I/O PSI some avg60=65.85% sustained) but action cooldown active (30s < 150s, 120s remaining; last trip zone=6) — persistent pressure, NOT a new action: the trip already acted"
+assert_eq "an IO-PAUSE trip counts 1" "$(count_trips "$trip_io")" "1"
+assert_eq "an existing-pause cycle counts 1" "$(count_trips "$trip_kept")" "1"
+assert_eq "a socket-era trip counts 1" "$(count_trips "$trip_sockets")" "1"
+assert_eq "an observe-only memory trip counts 1" "$(count_trips "$trip_observe")" "1"
+assert_eq "the IO-TOP line is not a trip" "$(count_trips "$trip_top")" "0"
+assert_eq "the cooldown heartbeat is not a trip" "$(count_trips "$trip_beat")" "0"
+assert_eq "five trips among seven lines count 5" \
+  "$(count_trips "$(printf '%s\n' "$trip_io" "$trip_top" "$trip_kept" "$trip_sockets" "$trip_beat" "$trip_observe" "$trip_io")")" "5"
+# Control: the sockets-only pattern this leg replaced misses the IO-PAUSE
+# fixture (the fixture is a real zone-6 trip line, not a look-alike).
+count_trips_old() { journal_out="$1" bash -c 'zone6_recent=$(grep -c "MEMORY EMERGENCY action taken" <<<"$journal_out" || true); echo "${zone6_recent:-unset}"'; }
+assert_eq "control: the sockets-only pattern misses the IO-PAUSE trip" "$(count_trips_old "$trip_io")" "0"
+
 # ---------------------------------------------------------------------------
 echo "F. media-atlas provisioner batch (one transaction; extracted live)"
 

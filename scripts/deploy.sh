@@ -382,7 +382,15 @@ deploy_trip_recency_gate() {
     echo "  DEPLOY_FORCE_PRESSURE=$(force_level) set — proceeding anyway"
     return 0
   fi
-  zone6_recent=$(grep -c 'MEMORY EMERGENCY action taken' <<<"$journal_out" || true)
+  # Both action-line shapes (2026-11-26): with ioPause on (evo-x2 since the
+  # 2026-10-28 split) a zone-6 trip logs "IO-PAUSE (trip #N, zone 6)" and NO
+  # "action taken" line, so the sockets-only count saw memory-zone trips
+  # alone and read "no guard trips" through every IO storm: 0 "action taken"
+  # lines against 2,679 IO-PAUSE trip lines in 9 days of guard journal.
+  # One trip is one line: the pause, no-eligible and existing-pause shapes
+  # all carry "IO-PAUSE (trip"; the IO-TOP line and the cooldown heartbeat
+  # do not match.
+  zone6_recent=$(grep -cE 'MEMORY EMERGENCY (action taken|IO-PAUSE \(trip)' <<<"$journal_out" || true)
   if [ "${zone6_recent:-0}" -ge 1 ]; then
     echo "✗ memory-emergency-guard tripped ${zone6_recent}× in the last 60 min — episodic IO-storm window (freeze #5 class)"
     echo "  Current PSI may be a dip between trips; deploying now races the storm."
