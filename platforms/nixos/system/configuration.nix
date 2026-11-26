@@ -658,13 +658,11 @@ in
         # Native-since-inception (2026-11-26): the repo was local-only
         # before (auto-commit daemon, no remotes). Created PUBLIC on
         # Forgejo via the API (push-to-create defaults private), GitHub
-        # twin created PUBLIC and pushed by hand. Has .github/workflows —
-        # the sync PAT is missing the `workflow` scope (domains freeze
-        # precedent), so the mirror flows only commits that do not touch
-        # workflow files until the PAT is regenerated with repo+workflow.
-        # Push mirror attached by hand at creation (phase-5-identical API
-        # call, 8h + sync_on_commit) and verified flowing; phase 5 stays
-        # idempotent.
+        # twin created PUBLIC and pushed by hand. Only .github/dependabot.yml
+        # (the workflows dir is empty), so the repo-scoped sync PAT
+        # suffices (pim-sync precedent). Push mirror attached by hand at
+        # creation (phase-5-identical API call, 8h + sync_on_commit) and
+        # verified flowing; phase 5 stays idempotent.
         "modloc"
         # Native-since-inception (2026-11-26): the repo was local-only
         # before (auto-commit daemon, no remotes). Created PRIVATE via the
