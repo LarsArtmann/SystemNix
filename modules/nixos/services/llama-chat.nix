@@ -165,6 +165,13 @@ _: {
           pkgs.systemd
         ];
         text = ''
+          # A bridge whose backend never came up gives up at its deadline and
+          # exits 1, which parks the instance FAILED. The backend unit owns
+          # that failure; a pile of per-connection corpses only buries real
+          # entries in `systemctl --failed` (88 of 96 on 2026-11-26, every
+          # one a "backend not reachable" deadline), so each sweep clears the
+          # template's failed state. Active bridges are untouched.
+          systemctl reset-failed 'llama-chat@*.service' 2>/dev/null || true
           if ! systemctl is-active --quiet llama-chat.service; then
             exit 0
           fi
