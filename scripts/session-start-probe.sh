@@ -107,9 +107,13 @@ case "$*" in
   *) echo "stub tq: unexpected arguments: $*" >&2; exit 3 ;;
 esac
 ''')
+    # The stub mirrors `systemctl --failed --plain --no-legend`: no state glyph.
     write_stub(os.path.join(bin_dir, "systemctl"), '''#!/usr/bin/env bash
-echo '● inboxclean-sync.service loaded failed failed InboxClean - incremental Gmail sync'
-echo '● service-health-check.service loaded failed failed Check critical services and notify on failure'
+echo 'llama-chat@1008-51065-abcd.service loaded failed failed llama-chat per-connection proxy'
+echo 'llama-chat@1009-51066-ef01.service loaded failed failed llama-chat per-connection proxy'
+echo 'llama-vlm-cap@1008-51067-2345.service loaded failed failed llama-vlm-cap per-connection proxy'
+echo 'inboxclean-sync.service loaded failed failed InboxClean - incremental Gmail sync'
+echo 'service-health-check.service loaded failed failed Check critical services and notify on failure'
 ''')
     flow = {"head": "abc1234", "head_date": "2026-11-26T01:00:00+01:00",
             "domains": {"now": {"docs/todo/pipeline.md": 900, "docs/todo/services.md": 800}},
@@ -140,8 +144,7 @@ echo '● service-health-check.service loaded failed failed Check critical servi
         "budget spent today: 3",
         "cancelled 1, completed 2, dead 1, pending 1",
         "read model trails the journal by 14654 facts",
-        "failed units: 2",
-        "inboxclean-sync.service",
+        "failed units: 5 — llama-chat@… 2, llama-vlm-cap@… 1, inboxclean-sync.service, service-health-check.service",
         "2. Backlog",
         "open rows now 3558 (ready 2428)",
         "7 days ago 3420, net +138 in 7 days",
@@ -417,8 +420,24 @@ def pool_section(out, repo, tq_db, timeout):
     if failed is None or failed.returncode != 0:
         out.print("   WARN: systemctl --failed is unavailable or refused — failed-unit line skipped")
     else:
-        units = [line.split()[1] for line in failed.stdout.split("\n") if line.strip().startswith("●")]
-        out.print(f"   failed units: {len(units)}" + (f" — {', '.join(units)}" if units else ""))
+        # `--plain` prints no state glyph: the unit name is the first field
+        # and a failed unit reads "loaded failed failed" after it. The first
+        # version of this probe filtered on a glyph and reported 0 failed
+        # units on a host with 37 (2026-11-26).
+        units = [fields[0] for fields in (line.split() for line in failed.stdout.split("\n"))
+                 if len(fields) >= 4 and fields[1:4] == ["loaded", "failed", "failed"]]
+        # One line per template: a hundred instances of one template read as one entry.
+        groups = {}
+        plain = []
+        for unit in units:
+            at = unit.find("@")
+            if at > 0 and "." in unit[at + 1:]:
+                groups[unit[:at + 1]] = groups.get(unit[:at + 1], 0) + 1
+            else:
+                plain.append(unit)
+        collapsed = [f"{template}… {count}" for template, count in sorted(groups.items(), key=lambda item: (-item[1], item[0]))]
+        collapsed += sorted(plain)
+        out.print(f"   failed units: {len(units)}" + (f" — {', '.join(collapsed)}" if collapsed else ""))
 
 
 def main():

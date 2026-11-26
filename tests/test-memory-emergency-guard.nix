@@ -995,6 +995,13 @@ in
       )
       assert "memory_emergency_guard_last_run_timestamp_seconds " in prom
 
+      poll_backup_activating = (
+          "for i in $(seq 50); do"
+          " s=$(systemctl show -p ActiveState --value btrbk-root.service);"
+          " [ \"$s\" = activating ] && exit 0; sleep 0.1; done;"
+          " echo \"btrbk-root state=$s (expected activating)\"; exit 1"
+      )
+
       # --- 9. Backup starvation + bounded catch-up slot (2026-09-26..28) --
       # A Zone-6 trip stops the backup unit like any churn unit and starts
       # the starvation clock. Backdate that clock past the 6h budget, then
@@ -1030,13 +1037,11 @@ in
       # the grant (re)started the oneshot mid-run — "running" here means
       # state activating, which is-active --quiet does NOT accept (that is
       # the exact blind spot the 2026-10-11 fixture flip reproduces)
-      machine.succeed(
-        "test \"$(systemctl show -p ActiveState --value btrbk-root.service)\" = activating"
-      )
+      machine.succeed(poll_backup_activating)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
-      assert "memory_emergency_guard_backup_starved 1" in prom
-      assert "memory_emergency_guard_backup_catchup_protected 1" in prom
-      assert "memory_emergency_guard_backup_catchup_slots_total 1" in prom
+      assert "memory_emergency_guard_backup_starved 1" in prom, f"prom=\n{prom}"
+      assert "memory_emergency_guard_backup_catchup_protected 1" in prom, f"prom=\n{prom}"
+      assert "memory_emergency_guard_backup_catchup_slots_total 1" in prom, f"prom=\n{prom}"
       assert (
           "memory_emergency_guard_churn_units_stopped{unit=\"btrbk-root.service\"} 1" not in prom
       ), "the granted backup unit must leave the churn-stopped window (it is running again)"
@@ -1056,9 +1061,7 @@ in
           "a trip action inside the protection window must SKIP the backup "
           "unit in the churn stop"
       )
-      machine.succeed(
-          "test \"$(systemctl show -p ActiveState --value btrbk-root.service)\" = activating"
-      )
+      machine.succeed(poll_backup_activating)
       machine.succeed("${writeFakes "zone6midb" (zone6mid // { diskTicks = 52000; })}")
       out = run_guard("zone6midb")
       assert "cooldown active" not in out, (
