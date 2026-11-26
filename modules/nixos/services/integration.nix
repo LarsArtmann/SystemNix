@@ -168,10 +168,14 @@ _: {
         _: e: e.homepage != null && e.homepage.iconFile != null && !hasPackIconName e
       ) enabledEntries;
 
-      # Icon name -> the distinct mark files shipped under it.
-      marksByIconName = lib.groupBy' (lib.attrValues packNamedIconFiles) (e: e.homepage.icon) (
-        e: toString e.homepage.iconFile
-      );
+      # Icon name -> the mark files shipped under it.
+      marksByIconName = lib.foldl' (
+        acc: e:
+        acc
+        // {
+          ${e.homepage.icon} = (acc.${e.homepage.icon} or [ ]) ++ [ (toString e.homepage.iconFile) ];
+        }
+      ) { } (lib.attrValues packNamedIconFiles);
 
       # One icon-pack name holds one file. Entries that ship the SAME file
       # under one name are fine (two tiles of one product); a second, different
