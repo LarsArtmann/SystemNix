@@ -17,7 +17,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Cloud Run — Active Containers",
+            "name": "Cloud Run Containers",
             "description": "active container instances per service (gauge, last value per step). The former Requests panel consumed run.googleapis.com/request_count, a DELTA-temporality family: the PromQL engine returns ZERO series for every Delta family (engine-verified 2026-11-12 via v3 query_range), and the receiver is DELTA-only (runbook) — the request-volume/latency/network/billable/execution panels cannot render and were removed (docs/todo/monitoring.md GCP row)."
           },
           "plugin": {
@@ -80,7 +80,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Functions — Active Instances",
+            "name": "Functions Instances",
             "description": "active function instances (gauge). Execution-count panels are Delta-temporality and PromQL-blind (engine-verified 2026-11-12) — removed."
           },
           "plugin": {
@@ -143,7 +143,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Cloud Storage — Bucket Bytes",
+            "name": "Storage Bucket Bytes",
             "description": "total bytes per bucket (gauge). Dotted metric names MUST ride the {__name__=...} selector form: bare dotted identifiers fail PromQL parsing outright and the old underscore names match zero series (both live-verified 2026-11-12)."
           },
           "plugin": {
@@ -206,7 +206,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Cloud Storage — Object Count",
+            "name": "Storage Object Count",
             "description": "total object count per bucket (gauge). Same {__name__=...} selector requirement as the bytes panel."
           },
           "plugin": {
@@ -274,34 +274,34 @@
             {
               "x": 0,
               "y": 0,
-              "width": 2,
+              "width": 3,
               "height": 4,
               "content": {
                 "$ref": "#/spec/panels/5254ff30-0691-5493-b3f2-fc78091435ab"
               }
             },
             {
-              "x": 2,
+              "x": 3,
               "y": 0,
-              "width": 2,
+              "width": 3,
               "height": 4,
               "content": {
                 "$ref": "#/spec/panels/12e6461f-5e39-5d0f-91b2-c72a6b63e7ad"
               }
             },
             {
-              "x": 4,
+              "x": 6,
               "y": 0,
-              "width": 2,
+              "width": 3,
               "height": 4,
               "content": {
                 "$ref": "#/spec/panels/3c711ee0-83e8-5b72-abe2-8e3c456088e3"
               }
             },
             {
-              "x": 6,
+              "x": 9,
               "y": 0,
-              "width": 2,
+              "width": 3,
               "height": 4,
               "content": {
                 "$ref": "#/spec/panels/e970cb1a-819d-55c2-9b57-10b7f26e9df6"

@@ -7,9 +7,10 @@
 # a table passes every other gate and surfaces at deploy time (2026-09-16
 # overview; the first ai-meter rewrite, 2026-11-25, spent a deploy on it).
 # This validator encodes the API's rules, read from its source
-# (pkg/types/dashboardtypes, pinned rev da35d997), plus three rules of our
-# own that the API does not enforce: no orphan panels, known unit ids, and
-# the server-default keys the provisioner's unchanged-check needs.
+# (pkg/types/dashboardtypes, pinned rev da35d997), plus four rules of our
+# own that the API does not enforce: no orphan panels, known unit ids, the
+# server-default keys the provisioner's unchanged-check needs, and titles that
+# fit their tile.
 #
 # It is a pure function: the signoz-query-lint check feeds it the real files,
 # signoz-dashboard-lint-selftest feeds it fixtures.
@@ -57,6 +58,12 @@ let
   gridColumns = 12;
   maxItemsPerLayout = 100;
   maxTitleLength = 256;
+  # A tile two columns wide shows 22 characters of its title at a 1500 px
+  # viewport and cuts the rest with an ellipsis (headless render 2026-11-26:
+  # 22 fit, 23 and more were cut; a panel's info icon takes its share). The
+  # cut always lands on the end: the window or the unit the title names.
+  narrowTileWidth = 2;
+  maxNarrowTileTitle = 22;
   refPrefix = "#/spec/panels/";
 
   # ── units ──────────────────────────────────────────────────────────────────
@@ -163,7 +170,7 @@ let
     builder_ai_query = aiBuilder;
     builder_formula = formula;
     builder_trace_operator = traceOperator;
-    promql = promql;
+    inherit promql;
     clickhouse_sql = clickhouse;
   };
   # Panel kinds whose values carry exactly one unit.
@@ -384,8 +391,23 @@ let
           ) (range (i + 1) (length sound - 1))
         ) (range 0 (length sound - 1))
       ) indexed;
+      narrowTileTitleFindings = concatMap (
+        placement:
+        let
+          width = key placement.item "width";
+          panel =
+            if placement.panelKey != null && panels ? ${placement.panelKey} then
+              panels.${placement.panelKey}
+            else
+              { };
+          title = text (key (sub (sub panel "spec") "display") "name");
+          cut =
+            isInt width && width <= narrowTileWidth && title != "" && stringLength title > maxNarrowTileTitle;
+        in
+        optional cut "${at placement}: panel '${title}' has a ${toString (stringLength title)}-character title on a tile ${toString width} columns wide; the header cuts it with an ellipsis past ${toString maxNarrowTileTitle}, keep a narrow tile's title short"
+      ) keyed;
     in
-    referenceFindings ++ layoutFindings;
+    referenceFindings ++ layoutFindings ++ narrowTileTitleFindings;
 
   validateDashboard =
     file: doc:

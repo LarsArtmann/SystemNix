@@ -365,6 +365,88 @@
               touch $out
             '';
 
+          # Unit-glob journal queries (2026-11-26): `journalctl -u 'x@*.service'`
+          # adds no index match, so journalctl reads for a minute or more on
+          # every call whatever its window, and it returned no line at all in
+          # the units that used it. The two llama idle checks ran one every 5
+          # minutes (one run read 72 GB of journal). Lifecycle lines are
+          # indexed by message id:
+          # modules/nixos/services/_llama-idle-activity.nix is the helper.
+          # Detection: a `-u`/`--unit` argument of a journalctl call that
+          # carries a glob character. A string opened by a message helper
+          # (`report_fail "… (journalctl -u 'x*' …)"`, `echo`, `warn`) is
+          # text for a human and is skipped; any other quoted command counts.
+          # Exempt a deliberate shape with `# journal-glob-ok` on the line.
+          # Heuristic (line-based, fields split on whitespace, not a shell
+          # parser). The negative-test harness is not scanned: it carries the
+          # shape as fixture words by design.
+          journal-glob-lint =
+            let
+              lintFiles =
+                builtins.filter
+                  (f: (lib.hasSuffix ".nix" f || lib.hasSuffix ".sh" f) && baseNameOf f != "negative-test-lints.sh")
+                  (
+                    lib.filesystem.listFilesRecursive (root + "/modules")
+                    ++ lib.filesystem.listFilesRecursive (root + "/platforms")
+                    ++ lib.filesystem.listFilesRecursive (root + "/lib")
+                    ++ lib.filesystem.listFilesRecursive (root + "/scripts")
+                  );
+            in
+            pkgs.runCommand "journal-glob-lint" { } ''
+              fail=0
+              for f in ${lib.concatStringsSep " " lintFiles}; do
+                awk '
+                  index($0, "# journal-glob-ok") { next }
+                  index($0, "journalctl") == 0 { next }
+                  {
+                    line = $0
+                    dq = sprintf("%c", 34)
+                    len = length(line)
+                    i = 1
+                    needNext = 0
+                    while (i <= len) {
+                      while (i <= len && substr(line, i, 1) ~ /[[:space:]]/) i++
+                      if (i > len) break
+                      start = i
+                      while (i <= len && substr(line, i, 1) !~ /[[:space:]]/) i++
+                      field = substr(line, start, i - start)
+                      quotes = 0
+                      for (k = 1; k < start; k++) if (substr(line, k, 1) == dq) quotes++
+                      if (quotes % 2 != 0) {
+                        # inside a double-quoted string: text when a message
+                        # helper opened it, a quoted command otherwise
+                        q = start - 1
+                        while (q > 0 && substr(line, q, 1) != dq) q--
+                        before = substr(line, 1, q - 1)
+                        if (before ~ /(^|[;&|({[:space:]])(echo|printf|say|warn|die|log_error|report_fail|report_pass|report_warn|report_skip)[[:space:]]*$/) continue
+                      }
+                      pat = ""
+                      if (needNext) {
+                        if (substr(field, 1, 1) != "-") pat = field
+                        needNext = 0
+                      } else if (field == "-u" || field == "--unit") {
+                        needNext = 1
+                      } else if (substr(field, 1, 2) == "-u") {
+                        pat = substr(field, 3)
+                      } else if (index(field, "--unit=") == 1) {
+                        pat = substr(field, 8)
+                      }
+                      if (pat != "" && (index(pat, "*") > 0 || index(pat, "?") > 0 || index(pat, "[") > 0)) {
+                        print FILENAME ":" FNR ": JOURNAL GLOB: unit pattern " pat " in a journalctl -u call reads the whole journal on every run and matches nothing inside a sandboxed unit. Match indexed fields instead (modules/nixos/services/_llama-idle-activity.nix), or mark the line # journal-glob-ok."
+                        bad = 1
+                      }
+                    }
+                  }
+                  END { if (bad) exit 1 }
+                ' "$f" || fail=1
+              done
+              if [ "$fail" -ne 0 ]; then
+                echo "FAIL: journal-glob-lint found unit-glob journal queries — fix the lines above"
+                exit 1
+              fi
+              touch $out
+            '';
+
           # Textfile-emission guard: a metric echo line without a VALUE
           # makes the node exporter reject the WHOLE .prom file — one
           # value-less line darked all 38 system_* metrics and blocked
@@ -822,6 +904,26 @@
                     };
                   }
                 ) "spec.variables is required";
+                # A tile two columns wide shows 22 characters of its title.
+                narrowTileTitleFits = clean (
+                  doc {
+                    p = (chart "percent") // {
+                      display.name = "abcdefghijklmnopqrstuv";
+                    };
+                  } [ (item 0 0 2 4 "p") ]
+                );
+                narrowTileTitleCut = flagged (doc {
+                  p = (chart "percent") // {
+                    display.name = "abcdefghijklmnopqrstuvwx";
+                  };
+                } [ (item 0 0 2 4 "p") ]) "the header cuts it with an ellipsis past 22";
+                wideTileTitleLong = clean (
+                  doc {
+                    p = (chart "percent") // {
+                      display.name = "a title that is far longer than twenty-two characters";
+                    };
+                  } [ (item 0 0 6 4 "p") ]
+                );
                 malformedFile = flagged 42 "not a JSON object";
               };
             in

@@ -42,7 +42,14 @@
 #   9d. Zone-6 IO-PAUSE selection (2026-10-31; rewritten 2026-11-26): the
 #      two-sample driver selection over MOVING fixture cgroups: pause of a
 #      headless pattern driver, hard-cap resume, never-PTY skip, idle
-#      heavyweight, bystander, process-scan-unavailable, walk-unavailable.
+#      heavyweight, bystander, process-scan-unavailable, walk-unavailable,
+#      a login-session scope bystander that is not I/O-stalled (never
+#      paused: live 2026-11-26 the guard froze sshd-session monitors), the
+#      same scope with an I/O-stalled member (paused), a service cgroup
+#      with a bystander and a stalled group (only the stalled one is
+#      paused: the nix-daemon shape), the pause cap counting groups, and
+#      the pause leg runs under process churn (the readers must not
+#      truncate).
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
@@ -383,20 +390,17 @@ in
           "grep -oP '^ExecStart=\\K.*' /etc/systemd/system/memory-emergency-guard.service"
       ).strip()
 
-      def run_guard(case, extra_env="", fix_epoch=False):
-          # fix_epoch: keep the boot epoch (now - uptime) STABLE across runs
-          # via the /tmp/gt/fixepoch anchor — the guard re-snapshots the
-          # per-boot baseline whenever the epoch moves, so a static uptime
-          # fixture combined with a live clock made every run look like a
-          # fresh boot (the 6a-lb "two real trips" leg could never read 2).
-          refresh = (
-              "echo $(($(date +%s) - $(cat /tmp/gt/fixepoch))) > /tmp/gt/uptime; "
-              "UPTIME_SRC=/tmp/gt/uptime "
-              if fix_epoch
-              else ""
-          )
+      def run_guard(case, extra_env="", boot_id=False):
+          # boot_id: pin the guard's boot identity to a fixture file so the
+          # per-boot baseline stays put across runs; a "reboot" is a new id
+          # in that file. The guard keys its baseline on the kernel's boot
+          # id (BOOT_ID_SRC, 2026-11-26). The earlier anchor derived a boot
+          # epoch from two separate `date` calls; under host load they
+          # crossed a second boundary and the baseline re-snapshotted at
+          # random (the 6a-lb "two real trips" leg failed 1 of 4 runs).
+          pin = "BOOT_ID_SRC=/tmp/gt/bootid " if boot_id else ""
           return machine.succeed(
-              refresh
+              pin
               + f"MEMINFO_SRC=/tmp/gt/{case}-meminfo"
               f" ZRAM_MM_STAT_SRC=/tmp/gt/{case}-mmstat"
               f" ZRAM_DISKSIZE_SRC=/tmp/gt/disksize"
@@ -693,16 +697,16 @@ in
       #      memory_emergency_guard_load_bearing 1 — the "guard is
       #      load-bearing, root-cause the storm" notify. The freeze-#7 boot
       #      ran 432 trips: nothing else in the metric set answers "how many
-      #      times has the guard rescued THIS boot". UPTIME_SRC points at a
-      #      fixture so the epoch change is simulated without a reboot.
+      #      times has the guard rescued THIS boot". BOOT_ID_SRC points at
+      #      a fixture so the boot change is simulated without a reboot.
       machine.succeed(
-          "echo $(($(date +%s) - 1000)) > /tmp/gt/fixepoch"
-          " ; rm -f /var/lib/memory-emergency-guard/boot-epoch"
+          "echo 11111111-1111-4111-8111-111111111111 > /tmp/gt/bootid"
+          " ; rm -f /var/lib/memory-emergency-guard/boot-id"
           " /var/lib/memory-emergency-guard/boot-baseline.count"
           " /var/lib/memory-emergency-guard/tripped.count"
           " /var/lib/memory-emergency-guard/last-trip"
       )
-      out = run_guard("healthy", fix_epoch=True)
+      out = run_guard("healthy", boot_id=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 0" in prom, (
           "a fresh boot baseline must zero trips_this_boot regardless of "
@@ -711,15 +715,15 @@ in
       assert "memory_emergency_guard_load_bearing 0" in prom, (
           "0 trips this boot must NOT arm the load-bearing notify"
       )
-      run_guard("zone1", fix_epoch=True)
+      run_guard("zone1", boot_id=True)
       machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip")
-      run_guard("zone1", fix_epoch=True)
+      run_guard("zone1", boot_id=True)
       # last-trip = now blocks the restore gate on the healthy runs below
       # (700 s freshness bar) — the 6b-cap budget accounting stays at #1.
       machine.succeed(
           "echo $(date +%s) > /var/lib/memory-emergency-guard/last-trip"
       )
-      out = run_guard("healthy", fix_epoch=True)
+      out = run_guard("healthy", boot_id=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 2" in prom, (
           "two real trips since the boot baseline must read 2"
@@ -728,14 +732,14 @@ in
           "trips_this_boot >= loadBearingTripsPerBoot must flip the "
           "load-bearing gauge — the per-boot structural-defect notify"
       )
-      # Fresh boot: the epoch change re-snapshots the baseline, so the
+      # Fresh boot: a changed boot id re-snapshots the baseline, so the
       # per-boot count resets without touching the lifetime counter — the
       # 432-trips alarm is per-BOOT, never lifetime drift.
-      machine.succeed("echo $(($(date +%s) - 90000)) > /tmp/gt/fixepoch")
-      out = run_guard("healthy", fix_epoch=True)
+      machine.succeed("echo 22222222-2222-4222-8222-222222222222 > /tmp/gt/bootid")
+      out = run_guard("healthy", boot_id=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 0" in prom, (
-          "a changed boot epoch must re-snapshot the baseline — the count "
+          "a changed boot id must re-snapshot the baseline — the count "
           "resets on reboot without touching the lifetime counter"
       )
       assert "memory_emergency_guard_load_bearing 0" in prom
@@ -749,15 +753,21 @@ in
       # `restored_total 2` assert since 2026-10-26 (commit 2a3932939), on an
       # unmodified tree. Only the units come back up here.
       machine.succeed(
-          "rm -f /tmp/gt/uptime"
-          " /tmp/gt/fixepoch"
-          " /var/lib/memory-emergency-guard/boot-epoch"
+          "rm -f /tmp/gt/bootid"
+          " /var/lib/memory-emergency-guard/boot-id"
           " /var/lib/memory-emergency-guard/boot-baseline.count"
           " /var/lib/memory-emergency-guard/last-trip"
           " ; truncate -s 0 /var/lib/memory-emergency-guard/trip-history"
       )
       bring_units_up()
       run_guard("healthy")
+      # The real path (no fixture): the guard reads the kernel's boot id and
+      # records it on the first run.
+      machine.succeed(
+          "test -s /var/lib/memory-emergency-guard/boot-id"
+          " && test \"$(cat /var/lib/memory-emergency-guard/boot-id)\""
+          " = \"$(cat /proc/sys/kernel/random/boot_id)\""
+      )
       pre = machine.succeed("cat /var/lib/memory-emergency-guard/restored.count").strip()
       assert pre == "1", (
           f"6b-cap premise: one lifetime restore so far (6a's), got {pre!r}"
@@ -943,10 +953,28 @@ in
       # btrbk send would slip a full +24h) and clears the churn-stopped
       # state — the churn metrics VANISH. The cooldown (trip was just
       # written) keeps the sacrifice-restore path out of the way.
+      # The stop HOLDS for one IO action cooldown first (2026-11-26): the
+      # io PSI value is read before a run's trip action, so a memory trip
+      # on a box with calm io used to re-arm the units it had just stopped
+      # in the same run, and a PSI hovering at the bar re-armed on the
+      # first run under it. churn-stopped was written seconds ago: held.
+      out = run_guard("healthy")
+      assert "churn units re-armed" not in out, (
+          "a fresh churn stop must not be re-armed inside the IO action "
+          "cooldown"
+      )
+      assert "CHURN-REARM HELD" in out, "a held re-arm must say so in the journal"
+      machine.fail("systemctl is-active --quiet btrfs-balance-data.service")
+      machine.succeed(
+          "awk -v e=\"$(( $(date +%s) - 700 ))\" 'NR==1{$0=e}1'"
+          " /var/lib/memory-emergency-guard/churn-stopped > /tmp/cs"
+          " && mv /tmp/cs /var/lib/memory-emergency-guard/churn-stopped"
+      )
       out = run_guard("healthy")
       assert "churn units re-armed" in out, (
-          "once io PSI drains under the trip threshold the guard must "
-          "re-arm the stopped churn units (2026-09-16 trip #299 class)"
+          "once io PSI drains under the trip threshold and the stop has "
+          "held for one IO action cooldown the guard must re-arm the "
+          "stopped churn units (2026-09-16 trip #299 class)"
       )
       # the re-arm must have actually started the stopped churn unit. The
       # guard queues the start (--no-block since 2026-11-26), so poll.
@@ -1109,7 +1137,9 @@ in
       #        f. bystander beside a 4x mover    -> not a driver
       #        g. process scan unavailable       -> nobody paused (fail closed)
       #        h. cgroup walk unavailable        -> nobody paused
-      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc")
+      #        (then b2 to b5: scope bystander, stalled scope member,
+      #        service bystander beside a stalled group, the pause cap)
+      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc /tmp/fakeproc9d /tmp/churn.pid")
       machine.succeed("mkdir -p /tmp/cgt9d")
       machine.succeed("${writeFakes "z6pause" (zone6mid // { diskTicks = 78000; })}")
       pause_patterns = "nix-daemon.service tq-agent-pool.service session- monitor365-server.service app.slice/run-"
@@ -1124,7 +1154,10 @@ in
                   f"mkdir -p /tmp/cgt9d/{cg}; "
                   + "setsid bash -c '"
                   + "b=1048576000; while :; do "
-                  + f'printf "8:0 rbytes=%s wbytes=0\\n" "$b" > /tmp/cgt9d/{cg}/io.stat; '
+                  # By rename (2026-11-26): a reader must never see the
+                  # truncated file, which drops the cgroup from a sample.
+                  + f'printf "8:0 rbytes=%s wbytes=0\\n" "$b" > /tmp/cgt9d/{cg}/io.stat.tmp'
+                  + f" && mv -f /tmp/cgt9d/{cg}/io.stat.tmp /tmp/cgt9d/{cg}/io.stat; "
                   + f"b=$((b + {step_bytes})); "
                   + "sleep 0.2; done' >/dev/null 2>&1 & echo $!"
               ).strip()
@@ -1156,6 +1189,36 @@ in
 
       def state_of(pid):
           return machine.succeed(f"ps -o stat= -p {pid}").strip()
+
+      def fake_dstate(stalled, plain=()):
+          # A /proc stand-in (PROC_ROOT) holding the given processes: the
+          # "stalled" ones report state D in the leader and the thread
+          # path, the others keep their real state. The guard's thread-state
+          # passes read only these files.
+          cmd = "rm -rf /tmp/fakeproc9d"
+          for pid in stalled:
+              cmd += f"; mkdir -p /tmp/fakeproc9d/{pid}/task/{pid}"
+              cmd += (
+                  f"; sed -E 's/\\) [RSDZTtXx+] /) D /' /proc/{pid}/stat"
+                  f" > /tmp/fakeproc9d/{pid}/stat"
+              )
+              cmd += f"; cp /tmp/fakeproc9d/{pid}/stat /tmp/fakeproc9d/{pid}/task/{pid}/stat"
+              cmd += f"; grep -qE '^[0-9]+ \\(.*\\) D ' /tmp/fakeproc9d/{pid}/stat"
+          for pid in plain:
+              cmd += f"; mkdir -p /tmp/fakeproc9d/{pid}/task/{pid}"
+              cmd += f"; cp /proc/{pid}/stat /tmp/fakeproc9d/{pid}/stat"
+              cmd += f"; cp /proc/{pid}/stat /tmp/fakeproc9d/{pid}/task/{pid}/stat"
+          machine.succeed(cmd)
+
+      def resume_at_hard_cap():
+          # Age the pause state past maxPausedSeconds and run the guard
+          # healthy: every paused group is SIGCONTinued.
+          machine.succeed(
+              "{ echo $(( $(date +%s) - 4000 )); tail -n +2 /var/lib/memory-emergency-guard/io-paused; }"
+              " > /var/lib/memory-emergency-guard/io-paused.new"
+              " && mv /var/lib/memory-emergency-guard/io-paused.new /var/lib/memory-emergency-guard/io-paused"
+          )
+          return run_guard("healthy", extra_env="IO_PAUSE_ENABLE=true")
 
       def pause_trip(ticks, extra_env=""):
           # One zone-6 trip action with IO-PAUSE armed: cooldown cleared,
@@ -1191,6 +1254,12 @@ in
       stop_writers()
 
       # b. A pattern driver with a headless process: the group is SIGSTOPped.
+      #    Under process CHURN (2026-11-26): short-lived processes dying
+      #    between the glob and the read aborted the old reader's awk batch
+      #    ("cannot open file" is fatal to gawk) and dropped every later
+      #    entry of the process map; the readers now open with getline.
+      machine.succeed("( while :; do sleep 0.005; done ) >/dev/null 2>&1 & echo $! > /tmp/churn.pid")
+      machine.succeed("sleep 0.5")
       sleeper = start_sleeper(600)
       machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
       fake_io("system.slice/monitor365-server.service", 250 * MB)
@@ -1210,6 +1279,7 @@ in
       assert f"{sleeper} system.slice/monitor365-server.service" in paused_file, (
           "io-paused must record pgid AND cgroup (the resume path reads column 1)"
       )
+      machine.succeed("kill $(cat /tmp/churn.pid) 2>/dev/null || true")
 
       # c. Past the hard cap the next run SIGCONTs and drops the state file.
       machine.succeed(
@@ -1224,12 +1294,88 @@ in
       assert "T" not in state_of(sleeper), "resumed sleeper must be running again"
       machine.fail("test -e /var/lib/memory-emergency-guard/io-paused")
 
+      # b2. A login-session SCOPE that moves data, holding one headless
+      #     member that is NOT I/O-stalled (real /proc, a sleeper in S): the
+      #     cgroup's I/O is not evidence against a bystander inside a scope.
+      #     Live 2026-11-26: the guard froze the sshd-session monitor of
+      #     seven logins for an hour each while the TTY-holding build tree
+      #     beside it was (rightly) skipped.
+      scope_sleeper = start_sleeper(599)
+      machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
+      fake_io("user.slice/user-1000.slice/session-9.scope", 250 * MB)
+      machine.succeed(
+          f"echo {scope_sleeper} > /tmp/cgt9d/user.slice/user-1000.slice/session-9.scope/cgroup.procs"
+      )
+      out = pause_trip(101000)
+      assert "IO-TOP (trip #" in out and "session-9.scope @" in out and "[pattern]" in out, (
+          f"the scope must be a driver candidate: out=\n{out[-1500:]}"
+      )
+      assert "was not I/O-stalled in the trip sample" in out, (
+          "a scope bystander that is not I/O-stalled must be skipped with a log line"
+      )
+      assert "1 headless process group(s) beside other groups were not I/O-stalled" in out, (
+          "the no-match line must name the scope-bystander reason"
+      )
+      assert "SIGSTOPped" not in out
+      assert "T" not in state_of(scope_sleeper), "a scope bystander must never be paused"
+
+      # b3. The same scope when that member IS I/O-stalled: a /proc
+      #     stand-in reports it in D state (leader and thread paths). The
+      #     per-group evidence now exists, so it is paused.
+      fake_dstate([scope_sleeper])
+      out = pause_trip(111000, extra_env="PROC_ROOT=/tmp/fakeproc9d")
+      assert "SIGSTOPped 1 headless driver process group" in out, (
+          f"a stalled headless member of a driver scope must be paused: out=\n{out[-1500:]}"
+      )
+      pause_line = [ln for ln in out.splitlines() if "SIGSTOPped 1 headless" in ln][0]
+      marker = f"session-9.scope(pgid {scope_sleeper}, D "
+      assert marker in pause_line, f"the pause line must carry the stall evidence: {pause_line!r}"
+      hits = pause_line.split(marker)[1].split("/")[0]
+      assert hits.isdigit() and int(hits) > 0, f"stall hits must be counted: {pause_line!r}"
+      assert "T" in state_of(scope_sleeper)
+      out = resume_at_hard_cap()
+      assert "IO-RESUME: SIGCONTinued 1 paused driver process group" in out, (
+          "the scope driver must resume at the hard cap like any other"
+      )
+      assert "T" not in state_of(scope_sleeper)
+
+      # b4. A SERVICE cgroup with two process groups (2026-11-26, the
+      #     nix-daemon shape: one listener, one worker per connection and
+      #     every build share the cgroup; the live guard froze the listener
+      #     twice on the I/O of the builds beside it, and every nix build
+      #     on the box hung for an hour). The cgroup's I/O is evidence only
+      #     against the group that is itself I/O-stalled.
+      svc_bystander = start_sleeper(597)
+      svc_stalled = start_sleeper(596)
+      machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
+      fake_io("system.slice/monitor365-server.service", 250 * MB)
+      machine.succeed(
+          f"printf '%s\\n' {svc_bystander} {svc_stalled}"
+          " > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
+      )
+      fake_dstate([svc_stalled], [svc_bystander])
+      out = pause_trip(116000, extra_env="PROC_ROOT=/tmp/fakeproc9d")
+      assert "SIGSTOPped 1 headless driver process group" in out, (
+          f"only the I/O-stalled group of a multi-group service may be paused: out=\n{out[-1500:]}"
+      )
+      assert f"pgid {svc_stalled}, D " in out, "the paused group must carry its stall evidence"
+      assert f"pgid {svc_bystander} in system.slice/monitor365-server.service was not I/O-stalled" in out, (
+          "the bystander beside it must be skipped with a log line"
+      )
+      assert "T" in state_of(svc_stalled)
+      assert "T" not in state_of(svc_bystander), "a service bystander must never be paused"
+      out = resume_at_hard_cap()
+      assert "T" not in state_of(svc_stalled)
+
       # d. The same driver behind a controlling TTY: skipped, never paused.
+      stop_writers()
+      machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
+      fake_io("system.slice/monitor365-server.service", 250 * MB)
       tty_pid = start_tty_sleeper()
       machine.succeed(
           f"echo {tty_pid} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
       )
-      out = pause_trip(104000)
+      out = pause_trip(121000)
       assert "IO-PAUSE skip: pgid" in out and "holds a controlling TTY" in out, (
           "a TTY-holding group must be skipped with a log line (the 2026-10-07 SIGSTOP-license revocation)"
       )
@@ -1249,7 +1395,7 @@ in
       machine.succeed(
           f"echo {idle} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
       )
-      out = pause_trip(117000)
+      out = pause_trip(131000)
       assert "no cgroup moved data in the trip sample" in out, (
           "lifetime bytes must not select: an idle heavyweight is not a driver"
       )
@@ -1259,7 +1405,7 @@ in
       # f. A pattern cgroup doing incidental I/O beside a 4x larger writer.
       fake_io("system.slice/offender.service", 250 * MB)
       fake_io("system.slice/monitor365-server.service", 2 * MB)
-      out = pause_trip(130000)
+      out = pause_trip(141000)
       assert "1 pattern cgroup(s) move data but none is a driver" in out, (
           "a bystander below the top-share bar must stay running"
       )
@@ -1271,7 +1417,7 @@ in
       stop_writers()
       machine.succeed("mkdir -p /tmp/emptyproc")
       fake_io("system.slice/monitor365-server.service", 250 * MB)
-      out = pause_trip(143000, extra_env="PROC_ROOT=/tmp/emptyproc")
+      out = pause_trip(151000, extra_env="PROC_ROOT=/tmp/emptyproc")
       assert "process scan unavailable" in out, (
           "an empty /proc scan must refuse to pause anything (fail closed)"
       )
@@ -1281,10 +1427,33 @@ in
       stop_writers()
 
       # h. The cgroup walk itself is unavailable: no evidence, no pause.
-      out = pause_trip(156000, extra_env="CGROUP_IO_SRC=/tmp/cgt9d-missing")
+      out = pause_trip(161000, extra_env="CGROUP_IO_SRC=/tmp/cgt9d-missing")
       assert "cgroup walk unavailable" in out
       assert "SIGSTOPped" not in out
 
-      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc")
+      # b5. The pause cap (ioPause.maxPauseGroups, 8) counts PROCESS GROUPS:
+      #     on 2026-11-26 the live guard SIGSTOPped 10 groups in one trip,
+      #     9 of them in nix-daemon.service, because the cap was checked
+      #     once per cgroup. Nine stalled groups in one cgroup: 8 paused,
+      #     the ninth still running, and the line says so.
+      cap_pids = [start_sleeper(595 - i) for i in range(9)]
+      machine.succeed("rm -rf /tmp/cgt9d && mkdir -p /tmp/cgt9d")
+      fake_io("system.slice/monitor365-server.service", 250 * MB)
+      machine.succeed(
+          "printf '%s\\n' " + " ".join(cap_pids)
+          + " > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
+      )
+      fake_dstate(cap_pids)
+      out = pause_trip(171000, extra_env="PROC_ROOT=/tmp/fakeproc9d")
+      assert "SIGSTOPped 8 headless driver process group" in out, (
+          f"the pause cap must stop at 8 groups: out=\n{out[-1500:]}"
+      )
+      assert "the pause cap (8 groups) is reached" in out, "a capped pause must say so"
+      paused_now = [p for p in cap_pids if "T" in state_of(p)]
+      assert len(paused_now) == 8, f"exactly 8 groups must be paused, got {len(paused_now)}"
+      resume_at_hard_cap()
+      assert not [p for p in cap_pids if "T" in state_of(p)], "the hard-cap resume must release all 8"
+
+      machine.succeed("rm -rf /tmp/cgt9d /tmp/cgt9d-missing /tmp/emptyproc /tmp/fakeproc9d /tmp/churn.pid")
     '';
 }

@@ -191,8 +191,8 @@ _: {
             # 35->75% IO-PSI step). Upstream leg (probe counts as keep-alive
             # natively) stays owned by docs/todo/stability.md [blocked:push].
             # Indexed by message id (see _llama-idle-activity.nix): a unit
-            # glob here read up to 72 GB of journal in one run and was the
-            # io storm of 2026-11-25/26.
+            # glob here read up to 72 GB of journal in one run and returned
+            # no line at all.
             if ${templateActivity} 'llama-vlm-${name}@' "${s.keepAlive}"; then
               exit 0
             fi

@@ -559,7 +559,7 @@
               "content": {
                 "$ref": "#/spec/panels/7493eb6b-ef64-51c5-a91c-4856ec90008f-notes"
               },
-              "height": 4,
+              "height": 5,
               "width": 12,
               "x": 0,
               "y": 0
@@ -1802,7 +1802,7 @@
               },
               "formatting": {
                 "decimalPrecision": "1",
-                "unit": "1"
+                "unit": "cpm"
               },
               "legend": {
                 "customColors": null,
@@ -1825,7 +1825,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "disabled": false,
-                    "legend": "cpm",
+                    "legend": "calls / min",
                     "name": "A",
                     "query": "sum(rate(ai_meter_metering_errors_total[5m])) * 60 or vector(0)",
                     "stats": false,
@@ -1841,7 +1841,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls, tokens and outcome per model over the last 24 hours, one row per model. calls = not admitted + failed + served: not admitted were answered 429 by ai-meter (the client sends them again), failed got the provider's own error or the client went away, success is served over served plus failed. Spend is not a column on purpose: tables cannot run the priced queries, and a 24-hour increase of the cost counter would report a restatement as spend (see the spend panels above).",
+            "description": "Calls, tokens and outcome per model over the last 24 hours, one row per model. calls = not admitted + failed + served: not admitted were answered 429 by ai-meter (the client sends them again), failed got the provider's own error or the client went away, success is served over served plus failed; `n/a` in not admitted is a model no gate handles. Spend is not a column on purpose: tables cannot run the priced queries, and a 24-hour increase of the cost counter would report a restatement as spend (see the spend panels above).",
             "name": "Models: Last 24 Hours"
           },
           "links": [],
@@ -2119,7 +2119,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls per minute that ai-meter answered 429 itself: the call waited out its budget (30 s) without a slot at the gated provider, or a usage window is spent. Each costs its client the wait and a re-sent request; a client that honors Retry-After sends the call again and it keeps its place. Orange or red for long means more sessions are running than the gate's allowance serves (see Admission).",
+            "description": "Calls per minute that ai-meter answered 429 itself: the call waited out the proxy's wait budget (max_wait_seconds in services.ai-meter) without a slot at the gated provider, or a usage window is spent. Each costs its client the wait and a re-sent request; a client that honors Retry-After sends the call again and it keeps its place. Orange or red for long means more sessions are running than the gate's allowance serves (see Admission).",
             "name": "Not Admitted / min"
           },
           "links": [],
@@ -2240,7 +2240,7 @@
         "spec": {
           "display": {
             "description": "Share of the gated provider's requests in the last 5 minutes that ai-meter answered 429 itself: the gate's contention in one number, demand against the allowance. Orange from 15 %, red from 30 %: start fewer parallel sessions, wait, or change the gate's limits (docs/services/ai-meter.md).",
-            "name": "Not Admitted: Share (5m)"
+            "name": "Not Admitted (5m)"
           },
           "links": [],
           "plugin": {
@@ -2311,7 +2311,7 @@
                 "textAlign": "left",
                 "verticalAlign": "top"
               },
-              "text": "**How to read this page.** Every request through ai-meter ends one of three ways. **Served**: the provider answered 2xx. **Not admitted**: ai-meter itself answered 429, because the call waited out its 30 s budget without a slot at the gated provider, or a usage window was spent; the answer says when to send the call again and the call keeps its place, so it is a delay, not a failure. **Failed**: everything else, including the provider's own 4xx and 5xx and clients that went away. Success Rate, Failures and the table below count not-admitted calls as neither success nor failure.\n\n**Red means act now.** Failures, missing metering, a spent usage window or a stale proxy are red the moment they happen. Not Admitted turns orange and red by its size: more sessions are running than the gate's allowance serves. Start fewer, wait, or change the gate's limits (docs/services/ai-meter.md).\n\n**Every call is also a trace.** SigNoz's own AI views show the same calls by model, tokens, time to first token and errors: [AI observability overview](/ai-observability/overview) and [AI explorer](/ai-observability/explorer). Spans carry metadata only, never a prompt.\n\n**The page loads once.** To keep it live, pick an interval in the top-right menu."
+              "text": "**How to read this page.** Every request through ai-meter ends one of three ways. **Served**: the provider answered 2xx. **Not admitted**: ai-meter itself answered 429, because the call waited out the proxy's wait budget without a slot at the gated provider, or a usage window was spent; the answer says when to send the call again and the call keeps its place, so it is a delay, not a failure. **Failed**: everything else, including the provider's own 4xx and 5xx and clients that went away. Success Rate, Failures and the table below count not-admitted calls as neither success nor failure.\n\n**Red means act now.** Failures, missing metering, a spent usage window or a stale proxy are red the moment they happen. Not Admitted turns orange and red by its size: more sessions are running than the gate's allowance serves. Start fewer, wait, or change the gate's limits (docs/services/ai-meter.md).\n\n**Every call is also a trace.** SigNoz's own AI views show the same calls by model, tokens, time to first token and errors: [AI observability overview](/ai-observability/overview) and [AI explorer](/ai-observability/explorer). Spans carry metadata only, never a prompt.\n\n**The page loads once.** To keep it live, pick an interval in the top-right menu."
             }
           },
           "queries": []
@@ -2456,7 +2456,7 @@
         "spec": {
           "display": {
             "description": "HTTP 429 answers from z.ai meaning \"too much at once\". Each one lowers the allowance by one and is retried by the proxy, so a call behind one is not lost by itself.",
-            "name": "Rate-Limit Answers (24h)"
+            "name": "Rate-Limited (24h)"
           },
           "links": [],
           "plugin": {
@@ -2833,8 +2833,8 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "description": "Calls whose trace span never reached SigNoz (the OTLP endpoint rejected it or the export queue dropped it). Those calls are metered but invisible in the AI observability views.",
-            "name": "Span Export Failures (24h)"
+            "description": "Calls of the last 24 hours whose trace span never reached SigNoz (the OTLP endpoint rejected it or the export queue dropped it). Those calls are metered but invisible in the AI observability views.",
+            "name": "Export Failures (24h)"
           },
           "links": [],
           "plugin": {

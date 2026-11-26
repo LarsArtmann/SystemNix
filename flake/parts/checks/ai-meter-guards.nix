@@ -283,10 +283,14 @@
       #
       # Negative legs: scripts/negative-test-lints.sh, group `aimeter`
       # (alert-gate-blind-dropped, alert-floor-lowered, alert-floor-raised,
-      # alert-429-ignored, alert-mixed-providers).
+      # alert-429-ignored, alert-providers-mixed).
       checks.ai-meter-alert-promql =
         let
-          rule = (builtins.fromJSON (builtins.readFile inputs.self.nixosConfigurations.evo-x2.config.environment.etc."signoz/rules/ai-upstream-failure-rate.json".source)).condition;
+          rule =
+            (builtins.fromJSON (
+              builtins.readFile
+                inputs.self.nixosConfigurations.evo-x2.config.environment.etc."signoz/rules/ai-upstream-failure-rate.json".source
+            )).condition;
           # The rule's own comparison as a boolean: 1 where it would fire.
           fires = "(${(lib.head rule.compositeQuery.queries).spec.query}) >= bool ${toString rule.target}";
           zai = "client=\"crush\",model=\"m\",upstream=\"zai\"";
@@ -321,37 +325,48 @@
               rule_files = [ ];
               evaluation_interval = "1m";
               tests = [
-                (test [
-                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 20)
-                  (linear "ai_meter_requests_total" "${zai},code=\"429\"" 20)
-                  (linear "ai_meter_admission_outcomes_total" "${zai},outcome=\"timeout\"" 19)
-                ] [ (outcome "zai" false) ])
-                (test [
-                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 10)
-                  (linear "ai_meter_requests_total" "${zai},code=\"500\"" 30)
-                ] [ (outcome "zai" true) ])
-                (test [ (linear "ai_meter_requests_total" "${zai},code=\"429\"" 40) ] [
-                  (outcome "zai" true)
-                ])
+                (test
+                  [
+                    (linear "ai_meter_requests_total" "${zai},code=\"200\"" 20)
+                    (linear "ai_meter_requests_total" "${zai},code=\"429\"" 20)
+                    (linear "ai_meter_admission_outcomes_total" "${zai},outcome=\"timeout\"" 19)
+                  ]
+                  [ (outcome "zai" false) ]
+                )
+                (test
+                  [
+                    (linear "ai_meter_requests_total" "${zai},code=\"200\"" 10)
+                    (linear "ai_meter_requests_total" "${zai},code=\"500\"" 30)
+                  ]
+                  [ (outcome "zai" true) ]
+                )
+                (test
+                  [ (linear "ai_meter_requests_total" "${zai},code=\"429\"" 40) ]
+                  [
+                    (outcome "zai" true)
+                  ]
+                )
                 (test [ trickling ] [ (outcome "llama-embeddings" false) ])
-                (test [
-                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 40)
-                  (linear "ai_meter_requests_total" "${embed},code=\"502\"" 10)
-                ] [
-                  (outcome "llama-embeddings" true)
-                  (outcome "zai" false)
-                ])
+                (test
+                  [
+                    (linear "ai_meter_requests_total" "${zai},code=\"200\"" 40)
+                    (linear "ai_meter_requests_total" "${embed},code=\"502\"" 10)
+                  ]
+                  [
+                    (outcome "llama-embeddings" true)
+                    (outcome "zai" false)
+                  ]
+                )
               ];
             }
           );
         in
-        pkgs.runCommand "ai-meter-alert-promql" { nativeBuildInputs = [ pkgs.prometheus.cli ]; }
-          ''
-            promtool test rules ${alertTest} > test.log 2>&1 \
-              || { cat test.log; echo "FAIL: ai-meter-alert-promql: the failure-rate rule no longer tells the proxy's own 429 answers, a quiet provider and a failing provider apart" >&2; exit 1; }
-            grep -q SUCCESS test.log || { cat test.log; echo "FAIL: ai-meter-alert-promql: promtool reported no SUCCESS" >&2; exit 1; }
-            echo "ok: the failure-rate rule is silent on gate answers and on a quiet provider, and fires per failing provider"
-            touch $out
-          '';
+        pkgs.runCommand "ai-meter-alert-promql" { nativeBuildInputs = [ pkgs.prometheus.cli ]; } ''
+          promtool test rules ${alertTest} > test.log 2>&1 \
+            || { cat test.log; echo "FAIL: ai-meter-alert-promql: the failure-rate rule no longer tells the proxy's own 429 answers, a quiet provider and a failing provider apart" >&2; exit 1; }
+          grep -q SUCCESS test.log || { cat test.log; echo "FAIL: ai-meter-alert-promql: promtool reported no SUCCESS" >&2; exit 1; }
+          echo "ok: the failure-rate rule is silent on gate answers and on a quiet provider, and fires per failing provider"
+          touch $out
+        '';
     };
 }

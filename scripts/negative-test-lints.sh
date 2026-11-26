@@ -491,6 +491,13 @@ run_case signozdash missing-server-defaults signoz-query-lint fail 're-PUTs the 
 # is replaced by a constant false, and its own leg goes red.
 run_case signozdash selftest-overlap-rule-dropped signoz-dashboard-lint-selftest fail 'leg secondSectionOverlap is false' \
   'sed:lib/signoz-dashboard-lint.nix:s/(rectanglesOverlap (elemAt sound i).item (elemAt sound j).item)/false/'
+# A tile two columns wide cuts its title past 22 characters (measured in a
+# headless render, 2026-11-26); the four tiles of gcp.json had been cut since
+# September. The Failures / min tile is renamed past the limit.
+run_case signozdash tile-title-cut signoz-query-lint fail 'the header cuts it with an ellipsis past 22' \
+  'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Failures \/ min"/"name": "Failures per minute today"/'
+run_case signozdash selftest-tile-title-rule-dropped signoz-dashboard-lint-selftest fail 'leg narrowTileTitleCut is false' \
+  'sed:lib/signoz-dashboard-lint.nix:s/maxNarrowTileTitle = 22;/maxNarrowTileTitle = 400;/'
 
 # ── with-pkgs-lint: the shadow trap + exemption/comment immunity ──
 # The 2026-10-14 sweep removed all module/platform sites; the mutation
@@ -698,6 +705,25 @@ eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homep
 # marks (a missing path would trip an eval error, which the harness rightly
 # refuses to count as the audit firing). The null-icon leg pins the fan-out
 # filter: copying the mark before the assertion runs aborted eval with a
+
+# journal-glob-lint: a journalctl unit glob reads the journal for a minute or
+# more on every call and returns nothing inside a sandboxed unit (both llama
+# idle checks, 2026-11-26).
+run_case journalglob glob-separated journal-glob-lint fail 'JOURNAL GLOB' \
+  "append:modules/nixos/services/_evil-journal-glob.nix:  x=\$(journalctl -u 'llama-chat@*.service' --since \"1h ago\" -n 1)"
+run_case journalglob glob-attached journal-glob-lint fail 'JOURNAL GLOB' \
+  "append:scripts/lib/_evil-journal-glob.sh:lines=\$(journalctl --unit='llama-vlm-cap@*' -n 1)"
+run_case journalglob glob-attached-short journal-glob-lint fail 'JOURNAL GLOB' \
+  "append:scripts/lib/_evil-journal-glob.sh:lines=\$(journalctl -u'llama-vlm-cap@?service' -n 1)"
+run_case journalglob hint-in-message journal-glob-lint pass 'JOURNAL GLOB' \
+  "append:scripts/lib/_evil-journal-glob.sh:report_fail \"probe unreachable (journalctl -u 'x*' -n 50)\""
+run_case journalglob exempt-line journal-glob-lint pass 'JOURNAL GLOB' \
+  "append:scripts/lib/_evil-journal-glob.sh:journalctl -u 'x*' -n 1 # journal-glob-ok"
+run_case journalglob exact-unit journal-glob-lint pass 'JOURNAL GLOB' \
+  "append:scripts/lib/_evil-journal-glob.sh:journalctl -u llama-chat.service -n 1"
+run_case journalglob quoted-command journal-glob-lint fail 'JOURNAL GLOB' \
+  'append:scripts/lib/_evil-journal-glob.sh:out=$(bash -c "journalctl -u '"'"'x*'"'"' -n 1")'
+
 # bare "expected a string but found null" that named no entry (2026-11-26).
 eval_case iconfile mark-under-own-name pass - \
   'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              icon = "miniflux.png";\n              iconFile = ../../../assets/monitor365-logo.svg;|'
@@ -1135,7 +1161,7 @@ run_case aimeter comment-control ai-meter-spend-promql pass '' \
 # checks.ai-meter-alert-promql must go red.
 run_case aimeter alert-gate-blind-dropped ai-meter-alert-promql fail \
   'the failure-rate rule no longer tells' \
-  'sed:modules/nixos/services/_signoz-alerts.nix:s/outcome=~"timeout|circuit"}\[10m\]))/outcome=~"timeout|circuitX"}[10m]))/'
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/outcome=~"timeout|circuit"}\[10m\]))/outcome=~"none"}[10m]))/'
 run_case aimeter alert-floor-lowered ai-meter-alert-promql fail \
   'the failure-rate rule no longer tells' \
   'sed:modules/nixos/services/_signoz-alerts.nix:s/floorCallsPerSecond = "0.0833333";/floorCallsPerSecond = "0.000001";/'

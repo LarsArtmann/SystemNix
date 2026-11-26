@@ -837,10 +837,20 @@
             ''
               mod=${root}/modules/nixos/services/memory-emergency-guard.nix
               count_l=$(grep -n 'echo "\$tripped_total" > "\$COUNT_FILE"' "$mod" | head -1 | cut -d: -f1)
-              sync_l=$(grep -n 'sync -f "\$LAST_TRIP_FILE" "\$COUNT_FILE"' "$mod" | head -1 | cut -d: -f1)
-              log_l=$(grep -n 'MEMORY EMERGENCY action taken' "$mod" | head -1 | cut -d: -f1)
-              zsync_l=$(grep -n 'sync -f "\$ZONE_FILE" "\$HISTORY_FILE"' "$mod" | head -1 | cut -d: -f1)
+              # fsync of the state files ONLY (2026-11-26): `sync -f` is a
+              # syncfs of the whole root filesystem, booked to the guard's
+              # cgroup (median 29.7 MB written per trip run, max 543 MB).
+              sync_l=$(grep -n 'sync "\$LAST_TRIP_FILE" "\$COUNT_FILE"' "$mod" | head -1 | cut -d: -f1)
+              # The command, not the comment that quotes it (2026-11-26: a
+              # prose mention above the trip block put the anchor at a
+              # comment line and this check read "order broken" for a day).
+              log_l=$(grep -n 'echo "MEMORY EMERGENCY action taken' "$mod" | head -1 | cut -d: -f1)
+              zsync_l=$(grep -n 'sync "\$ZONE_FILE" "\$HISTORY_FILE"' "$mod" | head -1 | cut -d: -f1)
               hist_l=$(grep -n 'echo "\$now \$zone" >> "\$HISTORY_FILE"' "$mod" | head -1 | cut -d: -f1)
+              if grep -Eq '^[[:space:]]+sync -f ' "$mod"; then
+                echo "FAIL: a whole-filesystem flush (sync -f) is back on the trip path"
+                exit 1
+              fi
               if [ -z "$count_l" ] || [ -z "$sync_l" ] || [ -z "$log_l" ]; then
                 echo "FAIL: trip-persist anchors missing (count@$count_l sync@$sync_l log@$log_l)"
                 exit 1
@@ -948,6 +958,96 @@
               fi
               if [ -z "$rm_l" ]; then
                 echo "FAIL: matching-pause reset does not clear the fired-gate — a second streak could never fire again"
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # Guard reader shape (2026-11-26): the guard reads /proc and cgroupfs
+        # with `find -print0` and ONE awk that opens each file by getline.
+        # The earlier `find -exec awk {} +` handed awk the paths as
+        # ARGUMENTS, and gawk treats an unopenable argument as fatal: one
+        # process or cgroup vanishing between the listing and the read
+        # aborted the whole batch and dropped every later entry (find still
+        # exits 0). Measured on the live box: 919 of 1,686 lines in one of
+        # four passes, a fresh process missed in 34 of 40 passes under churn.
+        guard-reader-shape-selftest =
+          pkgs.runCommand "guard-reader-shape-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              if grep -Eq '^[[:space:]]*timeout .*find .*-exec awk' "$mod"; then
+                echo "FAIL: find -exec awk is back: an unopenable file argument aborts the whole awk batch (truncated process map, wrong top mover)"
+                exit 1
+              fi
+              readers=$(grep -c 'getline line < ' "$mod") || true
+              if [ "''${readers:-0}" -lt 3 ]; then
+                echo "FAIL: expected the three getline readers (cgroup walk, process scan, thread-state pass), found ''${readers:-0}"
+                exit 1
+              fi
+              touch $out
+            '';
+
+        # Guard pause selection rules (2026-11-26, from the first live day of
+        # the IO-PAUSE rewrite): inside a *.scope, and inside any cgroup that
+        # holds several process groups, a group is pausable only with its own
+        # I/O-stall evidence (the guard froze the sshd-session monitor of
+        # seven logins and twice the nix-daemon listener on the I/O of the
+        # tree beside them). The pause cap counts process GROUPS (one trip
+        # SIGSTOPped 10 against a cap of 8).
+        guard-stall-evidence-selftest =
+          pkgs.runCommand "guard-stall-evidence-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              grep -qF 'case "$cand_cg" in *.scope) needs_stall=1 ;; esac' "$mod" ||
+                { echo "FAIL: a *.scope no longer needs per-group stall evidence (frozen sshd monitors class)"; exit 1; }
+              grep -qF '[ "$cand_group_count" -le 1 ] || needs_stall=1' "$mod" ||
+                { echo "FAIL: a cgroup with several process groups no longer needs per-group stall evidence (frozen nix-daemon listener class)"; exit 1; }
+              grep -qF 'if [ "$pause_count" -ge "$IO_PAUSE_MAX_GROUPS" ]; then' "$mod" ||
+                { echo "FAIL: the pause cap is no longer checked per process group"; exit 1; }
+              touch $out
+            '';
+
+        # Guard boot identity (2026-11-26): the per-boot trip baseline keys on
+        # the kernel's boot id. The earlier identity, "now minus uptime" with
+        # both sides truncated to whole seconds, flips between two adjacent
+        # values inside one boot (22 of 40 live samples differed from the
+        # stored one), so the baseline re-snapshotted on most runs and
+        # trips_this_boot read 0 in a boot with about 300 trips: load_bearing
+        # and the per-boot leg of the storm latch never fired.
+        guard-boot-id-selftest =
+          pkgs.runCommand "guard-boot-id-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              # The source carries the Nix escape, so the pattern says two quotes.
+              # A regex, not -F: the source line carries the Nix escape
+              # before the brace, and this string must not spell it out.
+              grep -Eq 'BOOT_ID_SRC="..[$][{]BOOT_ID_SRC:-/proc/sys/kernel/random/boot_id[}]"' "$mod" ||
+                { echo "FAIL: boot identity no longer reads the kernel boot id"; exit 1; }
+              grep -qF 'if [ -z "$boot_id" ] || [ "$boot_id" != "$stored_boot_id" ]; then' "$mod" ||
+                { echo "FAIL: the per-boot baseline no longer re-snapshots on a changed boot id"; exit 1; }
+              if grep -Eq 'boot_epoch|UPTIME_SRC' "$mod"; then
+                echo "FAIL: the truncated boot epoch is back (unstable inside one boot)"
                 exit 1
               fi
               touch $out

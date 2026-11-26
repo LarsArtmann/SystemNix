@@ -60,7 +60,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Collector Scrape Errors",
+            "name": "Collector Errors",
             "description": "Coverage collector ClickHouse query failures. Healthy: 0"
           },
           "plugin": {

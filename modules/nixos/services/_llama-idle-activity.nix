@@ -5,10 +5,12 @@
 # glob (`-u 'llama-chat@*.service'`). A glob adds no index match, so journalctl
 # reads every journal entry of the window and filters in the client. Measured
 # 2026-11-26, on every 5-minute run: the 60-minute llama-chat window cost
-# 1.5-4.1 GB of memory and 1.9-2.4 GB of disk reads (1-2 minutes of CPU), one
-# 2-hour llama-vlm-cap run read 72 GB in 4 minutes 15 seconds, and the two
-# kept io PSI some avg10 at 36-58 % for 17 hours, which gates deploys (20 %)
-# and both backends (30 %).
+# 1.5-4.1 GB of memory and 1.9-2.4 GB of disk reads (1-2 minutes of CPU), and
+# one 2-hour llama-vlm-cap run read 72 GB in 4 minutes 15 seconds. The same
+# glob returned no line even in windows that held bridge lines (18 and 60 in
+# three compared windows), so the keep-alive window was never honored: both
+# backends unloaded at the first check after 10 minutes without a live
+# bridge.
 #
 # The lines are indexed by message id: every bridge instance logs "Starting"
 # when the socket spawns it and "Consumed" when systemd unloads it. Matching

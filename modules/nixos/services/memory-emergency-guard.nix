@@ -222,23 +222,42 @@ _: {
           # zone-6 trips, 0 pauses. It also forked one awk per cgroup inside
           # a 10 s timeout (11.36 s wall under a storm; the truncated result
           # read as "no match").
+          #
+          # READER SHAPE (2026-11-26, measured): find prints the PATHS and
+          # one awk opens each with getline. The earlier `find -exec awk {} +`
+          # handed awk the files as ARGUMENTS, and gawk treats an unopenable
+          # argument as FATAL ("cannot open file ... No such file or
+          # directory"): one cgroup or process vanishing between the glob
+          # and the read aborted the whole batch and silently dropped every
+          # entry after it (find exits 0 for that). On this box that is the
+          # normal case, not the exception: with a short-lived process
+          # dying during the scan the old /proc form returned 919 of 1,686
+          # lines in one of four passes and missed a fresh process in 34 of
+          # 40 passes. A truncated process map pauses nobody (fail closed)
+          # but also cannot prove the never-PTY invariant for the missing
+          # tail, and a truncated cgroup walk names the wrong top mover.
+          # getline returns -1 on a failed open and the walk goes on.
           cgroup_io_walk() {
             # shellcheck disable=SC2016 # awk program text, never a shell expansion
-            timeout "$CGROUP_WALK_TIMEOUT" find "$CGROUP_IO_SRC" -name io.stat -readable -exec awk -v root="$CGROUP_IO_SRC" '
-              FNR == 1 {
-                path = FILENAME
-                if (index(path, root "/") == 1) path = substr(path, length(root) + 2)
-                sub(/\/io\.stat$/, "", path)
-                cg = path
-              }
-              {
-                for (i = 2; i <= NF; i++) {
-                  split($i, kv, "=")
-                  if (kv[1] == "rbytes" || kv[1] == "wbytes") t[cg] += kv[2]
+            timeout "$CGROUP_WALK_TIMEOUT" find "$CGROUP_IO_SRC" -name io.stat -readable -print0 2>/dev/null |
+              awk -v root="$CGROUP_IO_SRC" '
+                BEGIN { RS = "\0" }
+                {
+                  path = $0
+                  if (index(path, root "/") == 1) path = substr(path, length(root) + 2)
+                  sub(/\/io\.stat$/, "", path)
+                  cg = path
+                  while ((getline line < $0) > 0) {
+                    n = split(line, kv, " ")
+                    for (i = 2; i <= n; i++) {
+                      split(kv[i], p, "=")
+                      if (p[1] == "rbytes" || p[1] == "wbytes") t[cg] += p[2]
+                    }
+                  }
+                  close($0)
                 }
-              }
-              END { for (c in t) if (c != "" && c != "io.stat") print t[c], c }
-            ' {} + 2>/dev/null
+                END { for (c in t) if (c != "" && c != "io.stat") print t[c], c }
+              ' 2>/dev/null
           }
 
           # One /proc pass (2026-11-26): "<pid> <pgid> <tty_nr>" for every
@@ -247,9 +266,39 @@ _: {
           # "([celeryd:"), which breaks every left-anchored split.
           proc_pgid_tty_scan() {
             # shellcheck disable=SC2016 # awk program text, never a shell expansion
-            timeout "$CGROUP_WALK_TIMEOUT" find "$PROC_ROOT"/[0-9]*/stat -maxdepth 0 -readable -exec awk '
-              { print $1, $(NF - 47), $(NF - 45) }
-            ' {} + 2>/dev/null
+            timeout "$CGROUP_WALK_TIMEOUT" find "$PROC_ROOT"/[0-9]*/stat -maxdepth 0 -readable -print0 2>/dev/null |
+              awk 'BEGIN { RS = "\0" } {
+                f = $0
+                if ((getline line < f) > 0) { n = split(line, fld, " "); print fld[1], fld[n - 47], fld[n - 45] }
+                close(f)
+              }' 2>/dev/null
+          }
+
+          # One thread-state pass (2026-11-26): "<pid> <D threads>" for every
+          # process with at least one thread in uninterruptible (D) sleep.
+          # The cgroup sample says WHICH CGROUP moves data; a login-session or
+          # app scope also holds bystanders that never touch the disk (the
+          # sshd-session monitor of a login, an agent waiting on its build).
+          # On the first live day of the two-sample selection the guard froze
+          # the sshd-session monitor of seven logins for an hour each while
+          # the TTY-holding build tree beside it was, rightly, skipped.
+          # Thread level on purpose: a worker in D under an S-state leader.
+          proc_dstate_pass() {
+            # shellcheck disable=SC2016 # awk program text, never a shell expansion
+            timeout "$CGROUP_WALK_TIMEOUT" find "$PROC_ROOT"/[0-9]*/task/*/stat -maxdepth 0 -readable -print0 2>/dev/null |
+              awk 'BEGIN { RS = "\0" }
+                {
+                  f = $0
+                  path = f
+                  sub(/\/task\/[0-9]+\/stat$/, "", path)
+                  m = split(path, seg, "/")
+                  if ((getline line < f) > 0) {
+                    n = split(line, fld, " ")
+                    if (fld[n - 49] == "D") d[seg[m]]++
+                  }
+                  close(f)
+                }
+                END { for (p in d) print p, d[p] }' 2>/dev/null
           }
 
           # Unit calls go ONE CALL PER UNIT (2026-11-26, systemd 262 verified
@@ -817,7 +866,19 @@ _: {
               # journal line: the line then implies the counter survived
               # the cut. Zone/history state is fsynced after its writes
               # below.
-              sync -f "$LAST_TRIP_FILE" "$COUNT_FILE" 2>/dev/null || true
+              # fsync ONLY these files (2026-11-26, measured): until then
+              # this was `sync -f` (syncfs, strace-verified), a flush of the
+              # WHOLE root filesystem issued from the guard's own cgroup,
+              # four to five times per trip. The guard writes a few KB of
+              # state per trip; 9 days of journal show every accounted run
+              # was a trip run and wrote a median 29.7 MB (p90 53 MB, max
+              # 543 MB, 86.7 GB in all), with wall p50 1.2 s, p90 8.1 s,
+              # max 268 s against 0.64 s CPU. An IO storm is the worst
+              # moment to force a filesystem flush, and the pause selection
+              # below waited behind it. `sync FILE` is fsync(fd), 5 ms on
+              # the live box; a file written in place needs nothing else to
+              # be durable.
+              sync "$LAST_TRIP_FILE" "$COUNT_FILE" 2>/dev/null || true
               case "$zone" in
                 1) zone1=$((zone1 + 1)) ;;
                 2) zone2=$((zone2 + 1)) ;;
@@ -832,7 +893,7 @@ _: {
               # change carry only $1 — they count in the aggregate, never
               # per-zone (the per-zone awk requires a valid $2).
               echo "$now $zone" >> "$HISTORY_FILE"
-              sync -f "$ZONE_FILE" "$HISTORY_FILE" 2>/dev/null || true
+              sync "$ZONE_FILE" "$HISTORY_FILE" 2>/dev/null || true
               # Trip-time I/O attribution (2026-09-28; rewritten 2026-11-26):
               # TWO cgroup samples $CGROUP_SAMPLE_SECONDS apart, taken at the
               # trip action only (zero steady-state cost). Their delta is what
@@ -856,7 +917,24 @@ _: {
               # leaves the evidence missing (the emptiness check follows).
               if [ -d "$CGROUP_IO_SRC" ]; then
                 cg_a=$(cgroup_io_walk) && cg_a_rc=0 || cg_a_rc=$?
-                sleep "$CGROUP_SAMPLE_SECONDS"
+                # The sample window is filled with stall sampling (it used to
+                # be a plain sleep, so the window is never shorter than
+                # before): one thread-state pass about every 0.2 s. A process
+                # counts as I/O-stalled when a thread was in D state in at
+                # least a quarter of the passes.
+                declare -A d_hits=()
+                d_passes=0
+                d_deadline=$(( $(date +%s%N) / 1000000 + CGROUP_SAMPLE_SECONDS * 1000 ))
+                while :; do
+                  while read -r d_pid d_hits_n; do
+                    [ -n "''${d_pid:-}" ] || continue
+                    d_hits["$d_pid"]=$(( ''${d_hits[$d_pid]:-0} + d_hits_n ))
+                  done <<< "$(proc_dstate_pass)"
+                  d_passes=$((d_passes + 1))
+                  [ "$(( $(date +%s%N) / 1000000 ))" -lt "$d_deadline" ] || break
+                  sleep 0.2
+                done
+                d_bar=$(( (d_passes + 3) / 4 ))
                 cg_b=$(cgroup_io_walk) && cg_b_rc=0 || cg_b_rc=$?
                 [ "$cg_a_rc" -le 1 ] || cg_a_rc=2
                 [ "$cg_b_rc" -le 1 ] || cg_b_rc=2
@@ -975,6 +1053,24 @@ _: {
                 cand_pids_unresolved=0
                 cand_pgids=0
                 cand_cgs_unreadable=0
+              # Per-group stall evidence (2026-11-26): the cgroup sample
+              # says WHICH CGROUP moves data. Whether that is evidence
+              # against ONE process group depends on what the cgroup is. A
+              # service holding ONE group is one tree (a model loading):
+              # the cgroup's I/O is its evidence. A cgroup holding SEVERAL
+              # groups is a bag of trees (a service such as nix-daemon: one
+              # listener, one worker per connection and every build), and
+              # so is every *.scope (a login session or app scope is a
+              # container by construction, whatever it holds right now): a
+              # group in it is pausable only when ITSELF was I/O-stalled in
+              # the trip window. On the first live day of
+              # the two-sample selection the guard froze the sshd-session
+              # monitor of seven logins and twice the nix-daemon listener
+              # (every nix build on the box hung for an hour) on the I/O of
+              # the tree beside them.
+              declare -A pg_dhits=()
+              unstalled_skipped=0
+              cap_reached=0
                 if [ "$proc_scan_status" = "ok" ]; then
                   while IFS= read -r cand; do
                     [ -n "$cand" ] || continue
@@ -985,11 +1081,48 @@ _: {
                       cand_cgs_unreadable=$((cand_cgs_unreadable + 1))
                       continue
                     fi
+                    stalled_pgs=" "
+                    cand_groups=" "
+                    cand_group_count=0
+                    while IFS= read -r spid; do
+                      case "$spid" in
+                        *[!0-9]*) continue ;;
+                      esac
+                      spg="''${pgid_of[$spid]:-}"
+                      [ -n "$spg" ] || continue
+                      case " $cand_groups " in
+                        *" $spg "*) ;;
+                        *)
+                          cand_groups="$cand_groups$spg "
+                          cand_group_count=$((cand_group_count + 1))
+                          ;;
+                      esac
+                      [ "''${d_hits[$spid]:-0}" -le "''${pg_dhits[$spg]:-0}" ] || pg_dhits["$spg"]="''${d_hits[$spid]}"
+                      if [ "''${d_hits[$spid]:-0}" -ge "$d_bar" ]; then
+                        case " $stalled_pgs " in
+                          *" $spg "*) ;;
+                          *) stalled_pgs="$stalled_pgs$spg " ;;
+                        esac
+                      fi
+                    done < "$procs_f"
+                    # One group in a service: the cgroup's I/O is its
+                    # evidence. Several groups, or any *.scope: each group
+                    # needs its own stall evidence.
+                    needs_stall=0
+                    case "$cand_cg" in *.scope) needs_stall=1 ;; esac
+                    [ "$cand_group_count" -le 1 ] || needs_stall=1
                     while IFS= read -r cpid; do
                       case "$cpid" in
                         *[!0-9]*) continue ;;
                       esac
                       cand_pids_seen=$((cand_pids_seen + 1))
+                      # The cap counts process GROUPS (2026-11-26): it was
+                      # checked once per cgroup, and one trip SIGSTOPped 10
+                      # groups, 9 of them in nix-daemon.service.
+                      if [ "$pause_count" -ge "$IO_PAUSE_MAX_GROUPS" ]; then
+                        cap_reached=1
+                        break
+                      fi
                       cpgid="''${pgid_of[$cpid]:-}"
                       if [ -z "$cpgid" ]; then
                         cand_pids_unresolved=$((cand_pids_unresolved + 1))
@@ -1008,11 +1141,21 @@ _: {
                         echo "IO-PAUSE skip: pgid ''${cpgid} in ''${cand_cg} holds a controlling TTY — owner-interactive work is never pausable" >&2
                         continue
                       fi
+                      if [ "$needs_stall" = "1" ]; then
+                        case " $stalled_pgs " in
+                          *" $cpgid "*) ;;
+                          *)
+                            unstalled_skipped=$((unstalled_skipped + 1))
+                            echo "IO-PAUSE skip: pgid ''${cpgid} in ''${cand_cg} was not I/O-stalled in the trip sample (''${pg_dhits[$cpgid]:-0} of ''${d_passes} passes with a thread in D state): beside other process groups only a group that is itself I/O-stalled is pausable (''${cand_group_count} groups in this cgroup)" >&2
+                            continue
+                            ;;
+                        esac
+                      fi
                       if kill -STOP -"$cpgid" 2>/dev/null; then
                         pause_count=$((pause_count + 1))
                         new_paused="$new_paused $cpgid"
                         new_paused_lines="''${new_paused_lines}$cpgid $cand_cg"$'\n'
-                        new_paused_desc="$new_paused_desc $cand_cg(pgid ''${cpgid})"
+                        new_paused_desc="$new_paused_desc $cand_cg(pgid ''${cpgid}, D ''${pg_dhits[$cpgid]:-0}/''${d_passes})"
                       fi
                     done <"$procs_f"
                   done <<< "$cand_list"
@@ -1039,8 +1182,14 @@ _: {
                   io_nomatch_reason=" (process scan unavailable, the never-PTY invariant cannot be proven, nobody is paused)"
                 elif [ "$tty_skipped" -gt 0 ]; then
                   io_nomatch_reason=" (''${tty_skipped} matching process group(s) hold a controlling TTY, owner-interactive work is never pausable; movers: ''${io_top:-unknown})"
+                elif [ "$unstalled_skipped" -gt 0 ]; then
+                  io_nomatch_reason=" (''${unstalled_skipped} headless process group(s) beside other groups were not I/O-stalled in the trip sample (''${d_passes} passes, bar ''${d_bar}): bystanders are never pausable; movers: ''${io_top:-unknown})"
                 else
                   io_nomatch_reason=" (matching cgroups held no live headless process to signal: ''${cand_pids_seen} pid(s) listed, ''${cand_pids_unresolved} not in the process map, ''${cand_pgids} distinct process group(s) passed the dedup, ''${cand_cgs_unreadable} cgroup.procs unreadable, 0 pausable; movers: ''${io_top:-unknown})"
+                fi
+                cap_note=""
+                if [ "$cap_reached" = "1" ]; then
+                  cap_note="; the pause cap (''${IO_PAUSE_MAX_GROUPS} groups) is reached, further drivers stay running until a later trip"
                 fi
                 if [ -n "$new_paused" ]; then
                   old_epoch=0
@@ -1056,8 +1205,10 @@ _: {
                     if [ -n "$new_paused_lines" ]; then printf '%s' "$new_paused_lines"; fi
                   } > "$PAUSE_FILE.tmp"
                   mv "$PAUSE_FILE.tmp" "$PAUSE_FILE"
-                  sync -f "$PAUSE_FILE" 2>/dev/null || true
-                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} [drivers:''${new_paused_desc} ] — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
+                  # File AND directory: the pause state is renamed into
+                  # place above, so its name must be durable too.
+                  sync "$PAUSE_FILE" "${stateDir}" 2>/dev/null || true
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} [drivers:''${new_paused_desc} ] — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s''${cap_note}" >&2
                   echo 0 > "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || true
                   rm -f "$IO_PAUSE_DISARMED_FILE" 2>/dev/null || true
                 elif [ ! -f "$PAUSE_FILE" ]; then
@@ -1236,19 +1387,27 @@ _: {
           # boot". A boot that racks up hundreds of trips is a structural
           # defect (freeze-#7: 432 trips/boot), not normal operation. The
           # count rides the lifetime counter minus a per-boot baseline:
-          # when the boot epoch (now - uptime) differs from the stored one
-          # we are in a fresh boot and the baseline re-snapshots, so no
-          # write on the trip path is needed.
-          UPTIME_SRC="''${UPTIME_SRC:-/proc/uptime}"
-          BOOT_EPOCH_FILE="${stateDir}/boot-epoch"
+          # when the boot differs from the stored one we are in a fresh
+          # boot and the baseline re-snapshots, so no write on the trip
+          # path is needed.
+          #
+          # Boot identity is the kernel's boot id (2026-11-26). It used to
+          # be "now minus uptime" with BOTH sides truncated to whole
+          # seconds, which flips between two adjacent values inside one
+          # boot with the sub-second phase of the run: on the live box 22
+          # of 40 samples 57 ms apart differed from the stored value, the
+          # baseline re-snapshotted on most runs, and trips_this_boot read
+          # 0 in a boot with about 300 trips (stored baseline = lifetime
+          # counter). load_bearing and the per-boot leg of the storm latch
+          # could not fire. An unreadable id re-snapshots every run: the
+          # count reads 0, never a false alarm.
+          BOOT_ID_SRC="''${BOOT_ID_SRC:-/proc/sys/kernel/random/boot_id}"
+          BOOT_ID_FILE="${stateDir}/boot-id"
           BOOT_BASELINE_FILE="${stateDir}/boot-baseline.count"
-          uptime_s=$(awk '{print int($1)}' "$UPTIME_SRC" 2>/dev/null || true)
-          uptime_s="''${uptime_s:-0}"
-          boot_epoch=$((now - uptime_s))
-          stored_boot_epoch=$(cat "$BOOT_EPOCH_FILE" 2>/dev/null || echo 0)
-          stored_boot_epoch="''${stored_boot_epoch:-0}"
-          if [ "$stored_boot_epoch" != "$boot_epoch" ]; then
-            echo "$boot_epoch" > "$BOOT_EPOCH_FILE"
+          boot_id=$(cat "$BOOT_ID_SRC" 2>/dev/null || true)
+          stored_boot_id=$(cat "$BOOT_ID_FILE" 2>/dev/null || true)
+          if [ -z "$boot_id" ] || [ "$boot_id" != "$stored_boot_id" ]; then
+            [ -z "$boot_id" ] || printf '%s\n' "$boot_id" > "$BOOT_ID_FILE"
             echo "$tripped_total" > "$BOOT_BASELINE_FILE"
           fi
           boot_baseline=$(cat "$BOOT_BASELINE_FILE" 2>/dev/null || echo "$tripped_total")
@@ -1303,33 +1462,49 @@ _: {
           churn_ts_line=""
           churn_rearm_total=$(cat "$CHURN_REARM_FILE" 2>/dev/null || echo 0)
           churn_rearm_total="''${churn_rearm_total:-0}"
+          # The stop HOLDS for one IO action cooldown (2026-11-26): the io
+          # PSI value is read BEFORE this run's trip action, so a memory
+          # trip on a box with calm io stopped the churn units and this
+          # block re-armed them in the same run (an in-flight backup killed
+          # and restarted for nothing), and a PSI hovering at the bar
+          # re-armed on the first run under it. A missing or malformed
+          # epoch line re-arms as before (epoch 0 is always old enough).
+          churn_stopped_epoch=$(awk 'NR == 1 { print; exit }' "$CHURN_STOPPED_FILE" 2>/dev/null) || churn_stopped_epoch=0
+          churn_stopped_epoch="''${churn_stopped_epoch:-0}"
+          case "$churn_stopped_epoch" in
+            *[!0-9]*) churn_stopped_epoch=0 ;;
+          esac
           if [ -f "$CHURN_STOPPED_FILE" ] && [ "$io_psi_some_avg60" != "-1" ] && awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}) }'; then
-            scrub_rearm_skipped=""
-            while IFS= read -r cu; do
-              [ -n "$cu" ] || continue
-              case "$cu" in
-                btrfs-scrub@*.service)
-                  # btrfs scrub has NO resume — a restart re-reads the
-                  # filesystem from byte 0. Re-arming a guard-killed scrub
-                  # under an oscillating PSI was the freeze-#7 restart loop
-                  # (432 trips / 37 h / 5.9 TB read / zero completions).
-                  # A stopped scrub stays dead until its own weekly timer
-                  # window; the coverage gap is bounded and Gatus-visible
-                  # via the btrfs-health scrub metrics (never-finished),
-                  # exactly like the deferral-skip path.
-                  scrub_rearm_skipped="$scrub_rearm_skipped $cu"
-                  continue
-                  ;;
-              esac
-              systemctl start --no-block "$cu" 2>/dev/null || true
-            done < <(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null)
-            churn_rearm_total=$((churn_rearm_total + 1))
-            echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
-            echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})''${scrub_rearm_skipped:+; btrfs-scrub left stopped (no-resume, freeze-#7):''${scrub_rearm_skipped}}" >&2
-            rm -f "$CHURN_STOPPED_FILE"
-            # Backups are running again — the starvation clock stops with
-            # them (2026-09-28).
-            rm -f "$BACKUP_STOPPED_EPOCH_FILE"
+            if [ $((now - churn_stopped_epoch)) -lt "$IO_ACTION_COOLDOWN_SECONDS" ]; then
+              echo "GUARD CHURN-REARM HELD: io PSI some avg60=''${io_psi_some_avg60}% is under the ${toString cfg.ioPsiSomeAvg60ThresholdPercent}% bar but the churn units were stopped $((now - churn_stopped_epoch))s ago (minimum ''${IO_ACTION_COOLDOWN_SECONDS}s): the stop holds for one IO action cooldown" >&2
+            else
+              scrub_rearm_skipped=""
+              while IFS= read -r cu; do
+                [ -n "$cu" ] || continue
+                case "$cu" in
+                  btrfs-scrub@*.service)
+                    # btrfs scrub has NO resume — a restart re-reads the
+                    # filesystem from byte 0. Re-arming a guard-killed scrub
+                    # under an oscillating PSI was the freeze-#7 restart loop
+                    # (432 trips / 37 h / 5.9 TB read / zero completions).
+                    # A stopped scrub stays dead until its own weekly timer
+                    # window; the coverage gap is bounded and Gatus-visible
+                    # via the btrfs-health scrub metrics (never-finished),
+                    # exactly like the deferral-skip path.
+                    scrub_rearm_skipped="$scrub_rearm_skipped $cu"
+                    continue
+                    ;;
+                esac
+                systemctl start --no-block "$cu" 2>/dev/null || true
+              done < <(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null)
+              churn_rearm_total=$((churn_rearm_total + 1))
+              echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
+              echo "MEMORY EMERGENCY io drained (io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.ioPsiSomeAvg60ThresholdPercent}%) — churn units re-armed (re-arm #''${churn_rearm_total})''${scrub_rearm_skipped:+; btrfs-scrub left stopped (no-resume, freeze-#7):''${scrub_rearm_skipped}}" >&2
+              rm -f "$CHURN_STOPPED_FILE"
+              # Backups are running again — the starvation clock stops with
+              # them (2026-09-28).
+              rm -f "$BACKUP_STOPPED_EPOCH_FILE"
+            fi
           fi
 
           # Backup starvation + bounded catch-up slot (2026-09-28): multi-day
