@@ -938,7 +938,19 @@ _: {
                 elif [ -z "$io_movers" ]; then
                   io_nomatch_reason=" (no cgroup moved data in the trip sample: device-level wedging, not a process)"
                 elif [ -z "$cand_list" ]; then
-                  io_nomatch_reason=" (movers outside the pause set: ''${io_top:-unknown})"
+                  pattern_movers=$(printf '%s\n' "$io_movers" |
+                    awk -v pats="$IO_PAUSE_PATTERNS" '
+                      BEGIN { n = split(pats, P, " ") }
+                      {
+                        for (i = 1; i <= n; i++)
+                          if (index($2, P[i]) > 0 && $2 !~ /\.slice$/) { c++; next }
+                      }
+                      END { print c + 0 }' || true)
+                  if [ "''${pattern_movers:-0}" = "0" ]; then
+                    io_nomatch_reason=" (no pattern covers any driver; movers: ''${io_top:-unknown})"
+                  else
+                    io_nomatch_reason=" (''${pattern_movers} pattern cgroup(s) move data but none is a driver (below ''${IO_PAUSE_MIN_RATE_MB}MB/s or ''${IO_PAUSE_MIN_SHARE_PCT}% of the top mover); movers: ''${io_top:-unknown})"
+                  fi
                 elif [ "$proc_scan_status" != "ok" ]; then
                   io_nomatch_reason=" (process scan unavailable, the never-PTY invariant cannot be proven, nobody is paused)"
                 elif [ "$tty_skipped" -gt 0 ]; then
