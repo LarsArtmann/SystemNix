@@ -633,7 +633,7 @@ _: {
             # the 4x-proven wrong tool (freezes #24, #25, 2026-10-27 x2).
             if [ "$io_split_active" = "0" ] && [ -n "$SOCKET_UNITS" ]; then
               # shellcheck disable=SC2086 # deliberate field split: unit list
-              systemctl stop $SOCKET_UNITS 2>/dev/null || true
+              stop_units $SOCKET_UNITS
             fi
 
             if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt "$cooldown_bar" ]; then
@@ -669,9 +669,7 @@ _: {
                 echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
                   lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
                 } to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
-                systemctl stop ${
-                  lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-                } 2>/dev/null || true
+                stop_units ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits}
               fi
               # Zone 6's real mitigation: stop the resumable churn sources
               # (btrbk sends, balance, scrub). The post-storm drain path
@@ -736,7 +734,8 @@ _: {
                 # deliberate word splitting over the unit list
                 # shellcheck disable=SC2086
                 if [ -n "$churn_stop_list" ]; then
-                  systemctl stop $churn_stop_list 2>/dev/null || true
+                  # shellcheck disable=SC2086
+                  stop_units $churn_stop_list
                 fi
               fi
               # Attribution capture at trap time (2026-09-14): the trip says
@@ -1049,7 +1048,7 @@ _: {
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
               } 2>/dev/null || true
               # shellcheck disable=SC2086 # deliberate field split: unit list
-              systemctl start $SOCKET_UNITS 2>/dev/null || true
+              stop_units $SOCKET_UNITS 2>/dev/null || true
               restored_total=$((restored_total + 1))
               echo "$restored_total" > "$RESTORED_COUNT_FILE"
               echo "$((restores_today + 1))" > "$RESTORE_TODAY_FILE"
@@ -1238,7 +1237,7 @@ _: {
                   continue
                   ;;
               esac
-              systemctl start "$cu" 2>/dev/null || true
+              systemctl start --no-block "$cu" 2>/dev/null || true
             done < <(awk 'NR>1 && NF' "$CHURN_STOPPED_FILE" 2>/dev/null)
             churn_rearm_total=$((churn_rearm_total + 1))
             echo "$churn_rearm_total" > "$CHURN_REARM_FILE"
@@ -1278,7 +1277,7 @@ _: {
           then
             # deliberate word splitting over the backup unit list
             # shellcheck disable=SC2086
-            systemctl start $BACKUP_UNITS 2>/dev/null || true
+            start_units_no_block $BACKUP_UNITS
             echo "$now" > "$BACKUP_CATCHUP_EPOCH_FILE"
             rm -f "$BACKUP_STOPPED_EPOCH_FILE"
             backup_catchup_total=$((backup_catchup_total + 1))

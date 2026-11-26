@@ -33,10 +33,33 @@
     }:
     let
       cfg = config.services.overview;
-      inherit (import ../../../lib/default.nix lib) ports;
+      inherit (import ../../../lib/default.nix lib) ports ioTier;
       domain = config.networking.domain;
       daemonSock = "/run/project-discovery/daemon.sock";
       daemonMode = cfg.daemonSocket != "";
+
+      primaryUser = config.users.primaryUser;
+      projectsDir = "/home/${primaryUser}/projects";
+
+      # ── Compliance evidence (BuildFlow) ───────────────────────────────────
+      # The unprivileged overview user cannot read BuildFlow's state DB (it
+      # lives under the primary user's 0700 home), so the documented daemon
+      # recipe applies instead of the in-process source: a timer running AS
+      # the primary user renders the frozen v1 JSON contract to a file the
+      # service CAN read. Active exactly when the host points the upstream
+      # option at that file (configuration.nix), so a host that leaves
+      # complianceSource empty pays nothing.
+      evidenceDir = "/var/lib/overview-evidence";
+      complianceEvidenceFile = "${evidenceDir}/compliance.json";
+      complianceEvidenceEnabled = cfg.complianceSource == "file:${complianceEvidenceFile}";
+      buildflow = inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
+      # ── Code-risk hotspots (go-hotspot) ───────────────────────────────────
+      # go-hotspot analyzes ONE repository per invocation, and the upstream
+      # consumer feeds it the ABSOLUTE paths the discovery daemon reports
+      # (~/projects), so the analysis must run against those paths.
+      hotspotEnabled = cfg.hotspotSource == "auto";
+      goHotspot = inputs.go-hotspot.packages.${pkgs.stdenv.hostPlatform.system}.default;
       waitDaemonReady = pkgs.writeShellApplication {
         name = "overview-wait-daemon";
         runtimeInputs = [ pkgs.curl ];
@@ -77,6 +100,35 @@
           systemctl restart overview.service
         '';
       };
+
+      # Renders the BuildFlow compliance evidence the dashboard's /compliance
+      # heatmap consumes. Atomic (temp file + rename) because the service
+      # re-reads the file on its TTL: a half-written JSON body would flip the
+      # whole heatmap to Unknown.
+      complianceEvidence = pkgs.writeShellApplication {
+        name = "overview-compliance-evidence";
+        runtimeInputs = [
+          buildflow
+          pkgs.coreutils
+        ];
+        text = ''
+          set -euo pipefail
+          tmp="$(mktemp "${evidenceDir}/compliance.XXXXXXXX")"
+          trap 'rm -f "$tmp"' EXIT
+          buildflow compliance --json --since 14d --stale-after 336h >"$tmp"
+          chmod 0644 "$tmp"
+          mv -f "$tmp" "${complianceEvidenceFile}"
+          trap - EXIT
+        '';
+      };
+
+      # git ≥2.35.2 refuses read-tree work on foreign-owned checkouts
+      # ("dubious ownership") — the hotspot pass runs as the overview service
+      # user over the primary user's repos.
+      gitSafeConfig = pkgs.writeText "overview-gitconfig" ''
+        [safe]
+        	directory = *
+      '';
     in
     {
       imports = [ inputs.overview.nixosModules.default ];
@@ -122,11 +174,38 @@
             # input is bumped past ac307aa8 the stale [Service] copies vanish.
             startLimitBurst = 3;
             startLimitIntervalSec = 60;
-            serviceConfig.ExecStartPre = lib.mkIf daemonMode "+${lib.getExe waitDaemonReady}";
-            serviceConfig.TimeoutStartSec = "3min";
-            environment = {
-              OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
-            };
+            serviceConfig = lib.mkMerge [
+              {
+                ExecStartPre = lib.mkIf daemonMode "+${lib.getExe waitDaemonReady}";
+                TimeoutStartSec = "3min";
+              }
+              (lib.mkIf hotspotEnabled {
+                # Code-risk analysis reads the primary user's checkouts, which a
+                # 0700 home makes impossible for a service user, and home-dir
+                # ACLs are forbidden (mask-recalc trap, hermes 2026-08-20). A
+                # fresh tmpfs over the home with ONLY the projects tree
+                # bind-mounted in keeps every discovered absolute path valid
+                # while exposing nothing else from the home.
+                TemporaryFileSystem = "/home/${primaryUser}";
+                BindReadOnlyPaths = [ projectsDir ];
+                ProtectHome = lib.mkForce false;
+              })
+              # Per-repo `git log --numstat` over the whole fleet is bulk IO on
+              # the freeze-prone QLC root: background tier, never desktop's.
+              (lib.mkIf hotspotEnabled ioTier.background)
+            ];
+            # go-hotspot shells out to `git` for the churn collection.
+            path = lib.mkIf hotspotEnabled [ pkgs.git ];
+            environment =
+              {
+                OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+              }
+              // lib.optionalAttrs hotspotEnabled {
+                # The home is a tmpfs — keep the XDG fallbacks writable.
+                HOME = "/var/lib/overview";
+                GIT_CONFIG_GLOBAL = gitSafeConfig;
+                OVERVIEW_HOTSPOT_COMMAND = "${goHotspot}/bin/go-hotspot";
+              };
           };
 
           services.overview-discovery-watchdog = {
