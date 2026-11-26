@@ -1,7 +1,7 @@
 # baidu.com is allowed and live-verified, the carrying switch is UNANCHORED: dnsblockd block diagnosis, whitelist allow, self-review (2026-11-26, 06:40)
 
 **Created:** 2026-11-26 06:40 CET · Crush agent session (glm-5.4) · basis: this session's three turns only (owner: "DO NOT RESEARCH OTHER STUFF UNRELATED TO WHAT YOU DID").
-**Harvest status: HARVESTED at authoring time** — 4 items ride existing rows, 5 were closed in this pass, 8 are deliberately not harvested under intake control (ledger in section h).
+**Harvest status: HARVESTED at authoring time** — 5 items ride existing rows (one adjacent), 3 were closed in this pass, 7 are deliberately not harvested (intake control or an open question), 3 declined (ledger in section h).
 **HEAD at authoring:** `da6fb86fe`
 
 ## Scope line
@@ -21,15 +21,16 @@
 - Which device 192.168.1.46 is (a MAC OUI and a config comment only).
 - Why the mapping fell on 2026-11-24 (the timeline yes, the per-list cause no).
 - Who ran the 06:15:07 `nh os switch` (the sudo journal shows only `lars`, TTY pts/40) and why `service-health-check.service` failed at 06:17:58.
+- Why the 19:47:07 deploy attempt exited 12 after 859 s (I read only its first WARN line).
 - The rpi3-dns hardware state, the SearXNG `baidu images` engine, the dashboard allow routes (never exercised), and the wall time of the two module evals (the `time` output went to a stderr tail I cut).
 
 ## TL;DR
 
 1. **Cause.** `www.baidu.com` was blocked by the `HaGeZi-nosafesearch` list, which carries `baidu.com` at the apex. Upstream added it from a community batch (issue #1397, 2023-08-08), with no Baidu-specific reason recorded.
 2. **Allow.** `"baidu.com"` joined the permanent whitelist on 2026-11-25 (daemon commit `833bb57cc`). A switch that is not mine carried it live at 06:21 on 2026-11-26, and it is verified: deployed mapping 2,160,147 keys with zero under `baidu.com`, real addresses on every resolver path, HTTPS 200, no block line in the journal.
-3. **That switch is UNANCHORED.** The activation ended with exit 4 (`service-health-check.service` failed), the profile is still `system-1031-link`, and no `system-1032-link` exists. A reboot reverts to gen-1031 and blocks Baidu again.
+3. **That switch is UNANCHORED.** The activation ended with exit 4 (`service-health-check.service` failed), the profile is still `system-1031-link`, and no `system-1032-link` exists. Per the exit-4 rule in AGENTS.md a reboot would boot gen-1031 and block Baidu again (the ESP itself is not readable unprivileged).
 4. **My worst mistake.** The first answer said the entry would also strip "roughly 840 other Baidu rows". The real figure is 180; the other 664 rows were unrelated domain names that contain the word "baidu". Corrected in the second answer.
-5. **The box is still storming.** io PSI has not been below 25 % at any of my samples since 20:57 on 2026-11-25; eleven `nix run .#deploy` attempts between 19:47 and 06:37 were refused rc=12 at the pressure gate.
+5. **The box is still storming.** io PSI has not been below 25 % at any of my samples since 20:57 on 2026-11-25; Thirteen `nix run .#deploy` attempts between 20:21 that day and 06:37 today were refused at the pressure gate (exit 12); seven of those refusals name the "D-state phantom with idle disks" class.
 
 ## Self-review (the twelve brutal-self-review questions)
 
@@ -94,7 +95,7 @@ Every other number in the two answers was re-read at report time or comes from t
 **12. Did I re-verify inherited claims?** Four failed re-verification:
 
 - `docs/services/dnsblockd.md` says the gateway is armed and the decrypt overlay is enabled. The tree has both disabled (known: the `[decision]` row "Reconcile the dns-blocker render fixture with the gateway-disable decision").
-- The same runbook says the host resolves through rpi3 first. Live `/etc/resolv.conf` is `127.0.0.1` then `9.9.9.9`, because that ordering is conditional on the armed gateway.
+- The same runbook says the host resolves through rpi3 first. It states that without its condition: the ordering applies only while the gateway is armed, and live `/etc/resolv.conf` is `127.0.0.1` then `9.9.9.9`.
 - `docs/DOMAIN_LANGUAGE.md`, `README.md` (three places) and `platforms/nixos/system/dns-blocker-config.nix` line 4 claim ~4M+ blocked domains. Live: 2,160,147.
 - The device registry says the MacBook is 192.168.1.62. That address has no line in the dnsblockd journal for 14 days; 192.168.1.46 has 4,935 lines since at least 2026-11-17 and carries the Realtek OUI the registry comment calls the Mac's USB adapter. Unverified.
 
@@ -106,7 +107,7 @@ Every other number in the two answers was re-read at report time or comes from t
 | a2  | Upstream origin traced: issue #1397 (2023-08-08), a batch of about 50 search engines, accepted by the project bot                                                                                                                       | `~/.cache/baidu-allow/gh-1397-comments.json`                                                                                                                                                                                                    |
 | a3  | `"baidu.com"` added to the permanent whitelist; count pin 77 → 78 in the render test and the runbook; CHANGELOG entry; library verification row                                                                                         | daemon commits `833bb57cc` (21:07:42, four files of mine plus four foreign files, not amended), `58f6c01ee` (CHANGELOG wording), `08969de87` (library row)                                                                                     |
 | a4  | Eval-level verification: 78 entries on both hosts, formatter-clean                                                                                                                                                                     | `nix eval` pure and via `nixosConfigurations.{rpi3-dns,evo-x2}.config.services.dns-blocker.whitelist`, rc=0; `nix fmt -- --fail-on-change` "0 changed"                                                                                        |
-| a5  | Live verification after the 06:16:48 switch: deployed mapping 2,160,147 keys, zero under `baidu.com`, the 664 substring-only rows kept (627 HaGeZi-tif, 24 HaGeZi-ultimate, 8 HaGeZi-gambling, 3 StevenBlack-everything, 1 HaGeZi-doh, 1 HaGeZi-nsfw) | `journalctl` 06:17:31 and 06:21:25 (`domains=2160147`); python over `/nix/store/7nrhmsm3myp62nys4cdymmpwbfs1n30b-dns-blocker-processed/mapping.json`; `www.baidu.com` → 103.235.47.188 / 103.235.46.96 on 127.0.0.1 and 192.168.1.53; HTTPS by name `HTTP/1.1 200 OK`; zero `domain blocked` lines for `baidu.com` since 06:15 (the only Baidu substring block is my `live-857-baidu.com` probe at 06:22:04, via HaGeZi-tif) |
+| a5  | Live verification after the 06:16:48 switch: deployed mapping 2,160,147 keys, zero under `baidu.com`, the 664 substring-only rows kept (627 HaGeZi-tif, 24 HaGeZi-ultimate, 8 HaGeZi-gambling, 3 StevenBlack-everything, 1 HaGeZi-doh, 1 HaGeZi-nsfw) | `journalctl` 06:17:31 and 06:21:25 (`domains=2160147`); python over `/nix/store/7nrhmsm3myp62nys4cdymmpwbfs1n30b-dns-blocker-processed/mapping.json`; `www.baidu.com` → real public addresses on 127.0.0.1, 192.168.1.200 and 192.168.1.53; HTTPS by name `HTTP/1.1 200 OK`; zero `domain blocked` lines for `baidu.com` since 06:15 (the only Baidu substring block is my `live-857-baidu.com` probe at 06:22:04, via HaGeZi-tif) |
 | a6  | This pass: library row ticked (`scripts/tick-todo-rows.sh --apply`), CHANGELOG marker set to live, duplicate fragment removed, triage recipe added to `docs/services/dnsblockd.md`, bulk-read clause added to the Build-Storm runbook, the UNANCHORED and rpi3 rows stamped | section h                                                                                                                                                                                                                                      |
 
 ## b) PARTIALLY DONE
@@ -141,11 +142,9 @@ Every other number in the two answers was re-read at report time or comes from t
 | d3  | About 3 GB of needless store reads on a storm-prone box                                               | Low this time, high if repeated                 | Scanning 35 builds to support a "not a regression" sentence                                                                 | Clause added to the Build-Storm runbook                                                           |
 | d4  | Journal-last diagnosis: about ten extra probe batches before the one-line answer                      | Low: owner time                                  | Anchored on "resolver says fine, so it is not DNS"                                                                           | Recipe added to the runbook                                                                      |
 | d5  | Hand-rolled IO sampler failed three times                                                              | Low                                             | Tool-shell `printf` has no width or precision; then a `read` field misalignment                                               | Use the canonical probe verbatim                                                                  |
-| d6  | IO storm: io PSI some avg10 25.7–47.5 % at every sample from 20:57 on 2026-11-25 to 06:40; eleven deploy attempts refused rc=12 (19:47, 20:21, 20:24, 20:29, 20:33, 20:35, 20:37, 20:40, 20:42, 06:12, 06:18, 06:24, 06:31, 06:37) | High: nothing deploys through the gate          | Not established. Top readers in my 6 s window: two `crush -y` processes (PIDs 47288 and 9772, started 11:07–11:09 on 2026-11-25); earlier gopls | Existing `[decision]` row "Parallel-agent-session concurrency cap"; report-only for agents        |
+| d6  | IO storm: io PSI some avg10 25.7–47.5 % at every sample from 20:57 on 2026-11-25 to 06:40; Thirteen deploys refused at the pressure gate (exit 12) from 20:21 to 06:37, five bounced on the deploy lock (exit 13) between 19:40 and 19:48, and the 19:47:07 attempt exited 12 after 859 s for a reason I did not read | High: nothing deploys through the gate          | Not established. Six refusals read "REAL I/O storm" (disk busy 20.6–101.8 %) and seven read "D-state phantom … with IDLE disks" (busy 0.6–18.5 %), which the gate says to verify against a missing device or corpse pile. Top readers in my 6 s window: two `crush -y` processes (PIDs 47288 and 9772, started 11:07–11:09 on 2026-11-25); earlier gopls | Existing `[decision]` row "Parallel-agent-session concurrency cap"; report-only for agents        |
 | d7  | Blocklist coverage claims: ~4M+ and 4,296,867 in five places; live 2,160,147                            | Unknown until question g Q3 is answered         | The mapping fell from 3,329,343 to 2,160,328 between 20:47:02 and 21:37:02 on 2026-11-24 (journal `loaded blocklist mapping`) | None yet                                                                                         |
-| d8  | DNS outage class: six dnsblockd restarts between 06:15 on 2026-11-25 and 06:21 on 2026-11-26, each a LAN-wide outage | High for the household                           | `server_init` reads 222–321 s (journal) with the failover peer down                                                                          | Existing rows `docs/todo/services.md` 791, 1151, 1152                                               |
-
-Note on d6: that list holds fourteen attempts, not eleven. The count in the row title is wrong; the list is right.
+| d8  | DNS outage class: six dnsblockd restarts between 06:15 on 2026-11-25 and 06:21 on 2026-11-26, 225–326 s each | High for the household                           | `server_init` takes 222–321 s (journal) while the failover peer is unreachable; LAN-wide impact was verified only for the 19:36:43–19:41:18 restart                                                                          | Existing rows `docs/todo/services.md` 791, 1151, 1152                                               |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -180,8 +179,6 @@ Session-scoped by the owner's instruction. Twelve real items, not fifty: the res
 | F10 | Cut the dnsblockd `server_init` cost (225–326 s per restart)                                                                                        | High     | L      | Bug          | HARVESTED: existing rows `docs/todo/services.md` 1151 and 1152         |
 | F11 | Contain the storm writers (two `crush -y` processes)                                                                                               | High     | M      | Bug          | HARVESTED: existing row `docs/todo/stability.md` 17                   |
 | F12 | Check the SearXNG `baidu images` engine after the allow                                                                                            | Low      | S      | Bug          | HARVESTED: adjacent existing row `docs/todo/services.md` 792          |
-
-<!-- fresh:skip: F2 F3 F4 F5 F6 F7 F8 are deliberately not harvested under intake control (close >= mint); see section h -->
 
 ## g) Questions I can not answer myself
 
