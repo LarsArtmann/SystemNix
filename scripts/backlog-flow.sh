@@ -15,10 +15,14 @@
 #     (default 2026-11-07, the bulk harvest): how many are still open, what
 #     share of the open queue they hold, per library and per source month
 #   the gate's WARN counts (unharvested §f reports, queue/library drifts)
+#   the block rows' shape: body length class, pairing with the linked
+#     library, and an optional seeded sample (--sample N --seed S) so a
+#     staleness read is reproducible
 #
 # Usage:
 #   scripts/backlog-flow.sh [REPO] [--json] [--no-gate]
 #       [--block-day YYYY-MM-DD] [--rev NAME=REV]... [--window NAME=REV]...
+#       [--sample N] [--seed S]
 #   scripts/backlog-flow.sh --selftest
 #
 # REPO defaults to the directory above scripts/. A date-based revision whose
@@ -74,6 +78,8 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
         "b1done": "- [x] [ready] **B1 block row** — body → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-09-05_10-00_x.md §f.3)\n",
         "b2": "- [ ] [ready] **B2 block row** — body → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-30_10-00_x.md §f.4)\n",
         "b3": "- [ ] [watch] **B3 block watch row** — body → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-09-06_10-00_x.md §f.5)\n",
+        "b4": "- [ ] [ready] **B4 title-only block row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_10-00_x.md §f.6)\n",
+        "b4done": "- [x] [ready] **B4 title-only block row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-02_10-00_x.md §f.6)\n",
         "r5": "- [ ] [blocked:user] **R5 new row** — body\n",
     }
 
@@ -87,8 +93,11 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
         return run(["git", "-C", root, "rev-parse", "HEAD"]).stdout.strip()
 
     pre = commit("2026-11-01T10:00:00 +0100", "old", "r1", "r2", "r3", "r4")
-    post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "b1", "b2", "b3")
-    head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "r5")
+    post = commit("2026-11-07T10:00:00 +0100", "old", "r1", "r2done", "r3", "r4", "b1", "b2", "b3", "b4")
+    head = commit("2026-11-20T10:00:00 +0100", "old", "r1", "r2done", "r4", "b1done", "b2", "b3", "b4done", "r5")
+    with open(os.path.join(root, "docs", "todo", "services.md"), "w", encoding="utf-8") as handle:
+        os.makedirs(os.path.dirname(handle.name), exist_ok=True)
+        handle.write("# Lib\n\n" + rows["b2"].replace(" — body → [docs/todo/services.md](docs/todo/services.md)", "") )
 
     command = ["bash", script, root, "--json"]
     result = run(command)
@@ -101,13 +110,13 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     revisions = {entry["name"]: entry for entry in report["revisions"]}
     expect(list(revisions) == ["now", "7d", "30d", "pre-block", "post-block"],
            "five revisions in the default order", result.stdout)
-    expect(revisions["now"]["open"] == 5 and revisions["now"]["ticked"] == 3, "open and ticked rows at HEAD", result.stdout)
+    expect(revisions["now"]["open"] == 5 and revisions["now"]["ticked"] == 4, "open and ticked rows at HEAD", result.stdout)
     expect(revisions["7d"]["sha"] == post[:7], "the 7-day revision is the last commit before HEAD minus 7 days", result.stdout)
     expect(revisions["30d"]["sha"] is None and revisions["30d"]["open"] is None, "a date older than the history yields an empty revision", result.stdout)
     expect([entry["name"] for entry in report["windows"]] == ["7d", "pre-block"], "a window whose start predates the history is skipped", result.stdout)
     expect(revisions["pre-block"]["sha"] == pre[:7] and revisions["post-block"]["sha"] == post[:7], "block edges resolve by date", result.stdout)
     expect(revisions["pre-block"]["open"] == 4 and revisions["pre-block"]["ticked"] == 1, "census at the pre-block revision", result.stdout)
-    expect(revisions["post-block"]["open"] == 6 and revisions["post-block"]["ticked"] == 2, "census at the post-block revision", result.stdout)
+    expect(revisions["post-block"]["open"] == 7 and revisions["post-block"]["ticked"] == 2, "census at the post-block revision", result.stdout)
     now_tags = revisions["now"]["tags"]
     expect(now_tags.get("ready") == 2 and now_tags.get("decision") == 1 and now_tags.get("watch") == 1
            and now_tags.get("blocked:user") == 1 and now_tags.get("blocked:deploy") == 0, "per-tag census at HEAD", result.stdout)
@@ -130,8 +139,15 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     expect(pinned["pre-block"]["added_open"] == 3, "a pinned window leaves the other windows on their dates", json.dumps(pinned["pre-block"]))
 
     block = report["block"]
-    for field, value in {"day": "2026-11-07", "added": 3, "open_now": 2, "share_pct": 40.0, "closed_or_removed": 1}.items():
+    for field, value in {"day": "2026-11-07", "added": 4, "open_now": 2, "share_pct": 40.0, "closed_or_removed": 2,
+                         "pool_visible_now": 1, "paired_in_library": 1, "without_library_row": 1, "unlinked": 0}.items():
         expect(block[field] == value, f"block field {field}: want {value}", result.stdout)
+    expect(block["by_tag"] == {"ready": 1, "watch": 1}, "open block rows by tag", result.stdout)
+    expect(block["by_body"] == {"title only": 0, "short body (under 120 chars)": 2, "full body": 0}, "open block rows by body class", result.stdout)
+    expect("sample" not in block, "no sample unless --sample asks for one", result.stdout)
+    sampled = json.loads(run(["bash", script, root, "--json", "--no-gate", "--sample", "5", "--seed", "7"]).stdout)["block"]
+    expect(sorted(row["title"] for row in sampled["sample"]) == ["B2 block row", "B3 block watch row"], "a sample larger than the block returns every open block row", json.dumps(sampled["sample"]))
+    expect(all(isinstance(row["line"], int) and row["line"] > 0 for row in sampled["sample"]) and sampled["sample_seed"] == 7, "sample rows carry their queue line number and the seed", json.dumps(sampled["sample"]))
     expect(block["by_library"] == {"docs/todo/monitoring.md": 1, "docs/todo/services.md": 1}, "open block rows by library", result.stdout)
     expect(block["by_source_month"] == {"2026-09": 1, "2026-10": 1}, "open block rows by source month", result.stdout)
     domains = report["domains"]["now"]
@@ -150,11 +166,15 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     report = json.loads(moved.stdout)
     expect(report["gate"] is None, "--no-gate leaves the gate empty", moved.stdout)
     expect(report["block"]["added"] == 4 and report["block"]["open_now"] == 2, "--block-day moves the block", moved.stdout)
+    expect(report["block"]["by_body"] == {"title only": 0, "short body (under 120 chars)": 2, "full body": 2},
+           "body classes: R2's and R3's bodies are title-only or short, R1's and R4's count as they are written", json.dumps(report["block"]["by_body"]))
+    expect(report["block"]["without_library_row"] == 2, "--block-day pairing is recomputed for the moved block", moved.stdout)
 
-    text = run(["bash", script, root, "--no-gate", "--window", "7d=" + pre])
+    text = run(["bash", script, root, "--no-gate", "--window", "7d=" + pre, "--sample", "2", "--seed", "7"])
     expect(text.returncode == 0, "text mode exits 0", text.stdout + text.stderr)
     for needle in ("Open queue rows per revision", "Flow since each window start",
-                   "Block (rows added on 2026-11-07): 3 added, 2 still open (40.0% of the open queue), 1 closed or removed"):
+                   "Block (rows added on 2026-11-07): 4 added, 2 still open (40.0% of the open queue), 2 closed or removed",
+                   "pool-visible now (ready or blocked:deploy): 1", "sample (seed 7):", "    L"):
         expect(needle in text.stdout, f"text mode must print: {needle}", text.stdout + text.stderr)
 
     extra = run(["bash", script, root, "--json", "--no-gate", "--rev", "first=" + pre, "--window", "whole=" + pre])
@@ -173,7 +193,7 @@ with tempfile.TemporaryDirectory(prefix="backlog-flow-selftest-") as scratch:
     before = run(["git", "-C", root, "status", "--porcelain", "--", "TODO_LIST.md"]).stdout
     expect(before == "", "the script never writes to the queue file", before)
 
-print("SELFTEST OK: date-resolved revisions incl. a too-old date, per-tag census, window flow, per-tag flow, block share by library and source month, domains, gate WARN counts, --no-gate, --block-day, extra revisions and windows, text mode, loud refusals, read-only")
+print("SELFTEST OK: date-resolved revisions incl. a too-old date, per-tag census, window flow, per-tag flow, block share by tag, library, source month and body class, pairing, seeded sample, domains, gate WARN counts, --no-gate, --block-day, extra revisions and windows, text mode, loud refusals, read-only")
 SELFTEST_EOF
 fi
 
@@ -182,11 +202,13 @@ import collections
 import datetime
 import json
 import os
+import random
 import re
 import subprocess
 import sys
 
 QUEUE = "TODO_LIST.md"
+POOL_TAGS = ("ready", "blocked:deploy")
 ROW = re.compile(r"^- \[([ x])\] (?:\[([^\]]*)\] )?\*\*([^*]+)\*\*")
 UNTITLED = re.compile(r"^- \[([ x])\] (.*)$")
 LINK = re.compile(r"docs/todo/([a-z0-9-]+)\.md")
@@ -209,19 +231,24 @@ def git(repo, *args, check=True):
 
 
 def parse_options(argv):
-    options = {"repo": None, "json": False, "gate": True, "block_day": DEFAULT_BLOCK_DAY, "rev": {}, "window": {}}
+    options = {"repo": None, "json": False, "gate": True, "block_day": DEFAULT_BLOCK_DAY, "rev": {}, "window": {},
+               "sample": 0, "seed": 1}
     index = 0
     while index < len(argv):
         arg = argv[index]
         if arg in ("--json", "--no-gate"):
             options["json" if arg == "--json" else "gate"] = arg == "--json"
-        elif arg in ("--block-day", "--rev", "--window"):
+        elif arg in ("--block-day", "--rev", "--window", "--sample", "--seed"):
             value = argv[index + 1] if index + 1 < len(argv) else ""
             index += 1
             if arg == "--block-day":
                 if not re.fullmatch(r"20\d\d-\d\d-\d\d", value):
                     fail(f"--block-day wants YYYY-MM-DD, got {value!r}")
                 options["block_day"] = value
+            elif arg in ("--sample", "--seed"):
+                if not re.fullmatch(r"[0-9]+", value):
+                    fail(f"{arg} wants a whole number, got {value!r}")
+                options[arg[2:]] = int(value)
             else:
                 name, separator, revision = value.partition("=")
                 if not name or not separator or not revision:
@@ -240,26 +267,38 @@ def parse_options(argv):
 
 
 def parse_rows(text):
-    """title -> (open?, tag, library, source month). A title that appears open
-    and ticked in one file counts as open (the ticked copy is a leftover)."""
+    """title -> (open?, tag, library, source month, body chars, queue line). A
+    title that appears open and ticked in one file counts as open (the ticked
+    copy is a leftover). Body chars = the text between the title and the
+    library link, dashes stripped: 0 means a title-only row."""
     rows = {}
-    for line in text.split("\n"):
+    for number, line in enumerate(text.split("\n"), 1):
         if not line.startswith("- ["):
             continue
         match = ROW.match(line)
         if match:
             state, tag, title = match.group(1), match.group(2) or "untagged", match.group(3)
+            rest = line[match.end():]
         else:
             match = UNTITLED.match(line)
             if not match:
                 continue
             state, tag, title = match.group(1), "untagged", match.group(2)
+            rest = ""
         if title in rows and rows[title][0]:
             continue
         link = LINK.search(line)
         month = MONTH.search(re.split(r"(?i)source", line)[-1]) or MONTH.search(line)
-        rows[title] = (state == " ", tag, f"docs/todo/{link.group(1)}.md" if link else UNLINKED, month.group(1) if month else "unknown")
+        body = len(re.split(r" → \[docs/todo/", rest, maxsplit=1)[0].strip(" —-").strip())
+        rows[title] = (state == " ", tag, f"docs/todo/{link.group(1)}.md" if link else UNLINKED,
+                       month.group(1) if month else "unknown", body, number)
     return rows
+
+
+def body_class(body_chars):
+    if body_chars == 0:
+        return "title only"
+    return "short body (under 120 chars)" if body_chars < 120 else "full body"
 
 
 def sorted_counts(values):
@@ -398,15 +437,34 @@ def main(argv):
     open_now = {title: value for title, value in now_rows.items() if value[0]}
     added = block_titles(repo, options["block_day"])
     still_open = [title for title in open_now if title in added]
+    open_library_titles = set()
+    for library in {value[2] for value in open_now.values()} - {UNLINKED}:
+        path = os.path.join(repo, library)
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as handle:
+                open_library_titles.update(title for title, value in parse_rows(handle.read()).items() if value[0])
+    paired = sum(1 for title in still_open if title in open_library_titles)
     block = {
         "day": options["block_day"],
         "added": len(added),
         "open_now": len(still_open),
         "share_pct": round(100.0 * len(still_open) / len(open_now), 1) if open_now else 0.0,
         "closed_or_removed": len(added) - len(still_open),
+        "pool_visible_now": sum(1 for title in still_open if open_now[title][1] in POOL_TAGS),
+        "by_tag": sorted_counts(open_now[title][1] for title in still_open),
         "by_library": sorted_counts(open_now[title][2] for title in still_open),
         "by_source_month": sorted_counts(open_now[title][3] for title in still_open),
+        "by_body": {kind: sum(1 for title in still_open if body_class(open_now[title][4]) == kind)
+                    for kind in ("title only", "short body (under 120 chars)", "full body")},
+        "paired_in_library": paired,
+        "without_library_row": len(still_open) - paired - sum(1 for title in still_open if open_now[title][2] == UNLINKED),
+        "unlinked": sum(1 for title in still_open if open_now[title][2] == UNLINKED),
     }
+    if options["sample"]:
+        chosen = random.Random(options["seed"]).sample(sorted(still_open), min(options["sample"], len(still_open)))
+        block["sample"] = [{"line": open_now[title][5], "tag": open_now[title][1], "title": title,
+                           "library": open_now[title][2]} for title in chosen]
+        block["sample_seed"] = options["seed"]
     report = {
         "repo": repo,
         "head": git(repo, "rev-parse", "--short=7", "HEAD").strip(),
@@ -460,8 +518,15 @@ def render(report):
     print()
     print(f"Block (rows added on {block['day']}): {block['added']} added, {block['open_now']} still open "
           f"({block['share_pct']}% of the open queue), {block['closed_or_removed']} closed or removed")
-    for label, key in (("library", "by_library"), ("source month", "by_source_month")):
+    print(f"  pool-visible now (ready or blocked:deploy): {block['pool_visible_now']}")
+    for label, key in (("tag", "by_tag"), ("library", "by_library"), ("source month", "by_source_month"), ("body", "by_body")):
         print(f"  by {label}: " + (", ".join(f"{name} {count}" for name, count in block[key].items()) or "none"))
+    print(f"  pairing: {block['paired_in_library']} open block rows also open in their linked library, "
+          f"{block['without_library_row']} with no library row, {block['unlinked']} without a library link")
+    if block.get("sample"):
+        print(f"  sample (seed {block['sample_seed']}):")
+        for row in block["sample"]:
+            print(f"    L{row['line']} [{row['tag']}] {row['title']}")
     gate = report["gate"]
     if gate is None:
         print("Gate: skipped (--no-gate)")
