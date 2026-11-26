@@ -159,15 +159,18 @@ find_hash_line() {
 }
 
 FAILED=0
+# The working copy. Global on purpose: the EXIT trap reads it after
+# run_update has returned and its locals are gone.
+WORK=""
 
-# Replaces the blocklist file with the finished copy $work in ONE rename.
+# Replaces the blocklist file with the finished copy $WORK in ONE rename.
 # The staged file is created in the same directory (same filesystem, so mv is
 # an atomic rename): concurrent readers (nix evals in sibling sessions, the
 # auto-commit daemon) see either the old or the new file, never a torn one.
 publish_work() {
   local staged
   staged=$(mktemp "${BLOCKLIST_FILE}.XXXXXX") || return 1
-  if ! cat "$work" >"$staged"; then
+  if ! cat "$WORK" >"$staged"; then
     rm -f "$staged"
     return 1
   fi
@@ -178,14 +181,14 @@ publish_work() {
 # One transaction over a COPY of the blocklist file. Sets FAILED to the number
 # of lists that did not hash and publishes only when it is zero.
 run_update() {
-  local work base new_base line entry fragment url b32 sri hline old new_sb current_sb
-  work=$(mktemp) || return 1
-  trap 'rm -f "$work"' EXIT
-  cp "$BLOCKLIST_FILE" "$work" || return 1
+  local base new_base line entry fragment url b32 sri hline old new_sb current_sb
+  WORK=$(mktemp) || return 1
+  trap 'rm -f "$WORK"' EXIT
+  cp "$BLOCKLIST_FILE" "$WORK" || return 1
 
   # The HaGeZi base is resolved BEFORE anything is decided: a file whose
   # helper lost its pinned commit must fail here, not half-updated.
-  base=$(extract_hagezi_base "$work")
+  base=$(extract_hagezi_base "$WORK")
   if [[ -z $base ]]; then
     echo "ERROR: could not extract the pinned HaGeZi base from $BLOCKLIST_FILE"
     echo "       (expected the hagezi helper to carry a raw.githubusercontent.com/hagezi/dns-blocklists/<40-hex>/ URL)"
@@ -200,13 +203,13 @@ run_update() {
     else
       # Only the helper's CODE line is rewritten; a comment that quotes the
       # old URL keeps quoting it.
-      line=$(grep -n -F "$base" "$work" | grep -v -E '^[0-9]+:[[:space:]]*#' | head -1 | cut -d: -f1 || true)
+      line=$(grep -n -F "$base" "$WORK" | grep -v -E '^[0-9]+:[[:space:]]*#' | head -1 | cut -d: -f1 || true)
       if [[ -z $line ]]; then
         echo "ERROR: the pinned base $base appears only in comments; there is no helper line to bump"
         return 1
       fi
-      sed -i "${line}s|${base}|${new_base}|" "$work" || return 1
-      if [[ $(extract_hagezi_base "$work") != "$new_base" ]]; then
+      sed -i "${line}s|${base}|${new_base}|" "$WORK" || return 1
+      if [[ $(extract_hagezi_base "$WORK") != "$new_base" ]]; then
         echo "ERROR: the pin rewrite did not take (the helper still extracts another base)"
         return 1
       fi
@@ -225,13 +228,13 @@ run_update() {
         echo "ERROR: could not fetch StevenBlack HEAD"
         return 1
       fi
-      current_sb=$(extract_sb_pin "$work")
+      current_sb=$(extract_sb_pin "$WORK")
       if [[ -z $current_sb ]]; then
         echo "ERROR: could not extract current StevenBlack commit pin (expected hosts/<40-hex>/ URL shape)"
         return 1
       fi
       if [[ $current_sb != "$new_sb" ]]; then
-        sed -i "s/${current_sb}/${new_sb}/g" "$work" || return 1
+        sed -i "s/${current_sb}/${new_sb}/g" "$WORK" || return 1
         echo "  StevenBlack: $current_sb -> $new_sb"
       else
         echo "  StevenBlack: pin unchanged ($new_sb)"
@@ -246,10 +249,10 @@ run_update() {
   local entries=()
   while IFS= read -r sub; do
     entries+=("hagezi \"${sub}\"|${base}/${sub}")
-  done < <(grep -oP 'hagezi "\K[^"]+' "$work")
+  done < <(grep -oP 'hagezi "\K[^"]+' "$WORK")
   while IFS= read -r url; do
     entries+=("${url}|${url}")
-  done < <(grep -oP 'url = "\K[^"]+(?=")' "$work" | grep -v '^hagezi' || true)
+  done < <(grep -oP 'url = "\K[^"]+(?=")' "$WORK" | grep -v '^hagezi' || true)
 
   for entry in "${entries[@]}"; do
     fragment="${entry%%|*}"
@@ -267,19 +270,19 @@ run_update() {
       FAILED=$((FAILED + 1))
       continue
     fi
-    line=$(grep -nF "$fragment" "$work" | head -1 | cut -d: -f1)
+    line=$(grep -nF "$fragment" "$WORK" | head -1 | cut -d: -f1)
     hline=""
-    [[ -n $line ]] && hline=$(find_hash_line "$work" "$line")
+    [[ -n $line ]] && hline=$(find_hash_line "$WORK" "$line")
     if [[ -z $hline ]]; then
       echo "FAILED (no hash line below fragment)"
       FAILED=$((FAILED + 1))
       continue
     fi
-    old=$(sed -n "${hline}p" "$work" | sed 's/.*hash = "//;s/".*//')
+    old=$(sed -n "${hline}p" "$WORK" | sed 's/.*hash = "//;s/".*//')
     if [[ $old == "$sri" ]]; then
       echo "unchanged"
     else
-      sed -i "${hline}s|.*|      hash = \"$sri\";|" "$work" || return 1
+      sed -i "${hline}s|.*|      hash = \"$sri\";|" "$WORK" || return 1
       echo "updated"
     fi
   done
@@ -513,11 +516,37 @@ NIX
 
   # The all-or-nothing contract: one unreachable list must leave the file
   # byte-identical, including the lists that DID hash.
-  cp "$tmp/pristine.nix" "$fixture"
-  sed -i 's|      url = hagezi "dnsmasq/tif.txt";|      url = hagezi "dnsmasq/tif.txt";\n    }\n    {\n      name = "HaGeZi-gone";\n      url = hagezi "dnsmasq/missing.txt";\n      hash = "sha256-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC=";|' "$fixture"
+  # The same file plus one list upstream no longer ships (fetch fails).
+  cat >"$tmp/pristine-gone.nix" <<NIX
+let
+  hagezi =
+    subpath:
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/${hagezi_commit}/\${subpath}";
+in
+{
+  blocklists = [
+    {
+      name = "HaGeZi-tif";
+      url = hagezi "dnsmasq/tif.txt";
+      hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+    }
+    {
+      name = "HaGeZi-gone";
+      url = hagezi "dnsmasq/missing.txt";
+      hash = "sha256-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD=";
+    }
+  ];
+}
+NIX
+  if [[ $(grep -c 'HaGeZi-gone' "$tmp/pristine-gone.nix") == 1 ]]; then
+    ok "the gone-list fixture carries the unreachable entry"
+  else
+    bad "the gone-list fixture is malformed"
+  fi
+  cp "$tmp/pristine-gone.nix" "$fixture"
   if run_flow hashes >"$tmp/flow-fail.log" 2>&1; then
     bad "a run with an unreachable list still succeeded"
-  elif cmp -s "$tmp/pristine.nix-with-gone" "$fixture"; then
+  elif cmp -s "$tmp/pristine-gone.nix" "$fixture"; then
     ok "an unreachable list leaves the file byte-identical"
   else
     bad "a failed run changed the file"
