@@ -261,5 +261,93 @@
             echo "ok: PromQL and Go price the fixture identically; the dashboard prices ${toString (builtins.attrNames host.costs)}"
             touch $out
           '';
+      # The ai-meter failure-rate alert under admission control (2026-11-26).
+      #
+      # WHY: on the gate's first night "AI Upstream Failure Rate High" sat
+      # firing for 85 % of 30 hours (289 of 338 five-minute points). It
+      # counted the 429 answers ai-meter makes itself (a call that waited out
+      # its budget) as failures, mixed every provider into one ratio, and
+      # read a provider with almost no traffic as "100 % failed". The rule is
+      # now per provider, without the proxy's own answers, above a volume
+      # floor. promtool evaluates the query the rule file REALLY carries, so a
+      # rule that loses one of the three properties fails here:
+      #
+      #   gate-only      z.ai: 20 served, 19 sent back by ai-meter, 1 real 429
+      #                  -> 4.8 %, silent
+      #   provider-down  z.ai: 10 served, 30 failed (500)             -> fires
+      #   storm          z.ai: 40 plain 429s and no admission outcome  -> fires
+      #   quiet          llama-embeddings: one failed call per 5 min   -> 4 %, silent
+      #   one-of-two     z.ai healthy, llama-embeddings failing        -> only it fires
+      #
+      # "Fires" is the rule's own comparison, applied by the test.
+      #
+      # Negative legs: scripts/negative-test-lints.sh, group `aimeter`
+      # (alert-gate-blind-dropped, alert-floor-lowered, alert-floor-raised,
+      # alert-429-ignored, alert-mixed-providers).
+      checks.ai-meter-alert-promql =
+        let
+          rule = (builtins.fromJSON (builtins.readFile inputs.self.nixosConfigurations.evo-x2.config.environment.etc."signoz/rules/ai-upstream-failure-rate.json".source)).condition;
+          fires = "(${(lib.head rule.compositeQuery.queries).spec.query}) >= ${toString rule.target}";
+          zai = "client=\"crush\",model=\"m\",upstream=\"zai\"";
+          embed = "client=\"paperless\",model=\"bge-m3\",upstream=\"llama-embeddings\"";
+          # A counter that grows by perMinute every minute, sampled 41 times.
+          linear = metric: labels: perMinute: {
+            series = "${metric}{${labels}}";
+            values = "0+${toString perMinute}x40";
+          };
+          # One failed call every five minutes: 0.2 a minute, all of them failing.
+          trickling = {
+            series = "ai_meter_requests_total{${embed},code=\"502\"}";
+            values = lib.concatMapStringsSep " " (minute: toString (minute / 5)) (lib.range 0 40);
+          };
+          fired = upstream: {
+            labels = "{upstream=\"${upstream}\"}";
+            value = 1;
+          };
+          test = seriesList: expected: {
+            interval = "1m";
+            input_series = seriesList;
+            promql_expr_test = [
+              {
+                inherit fires;
+                eval_time = "30m";
+                exp_samples = expected;
+              }
+            ];
+          };
+          alertTest = pkgs.writeText "ai-meter-alert-test.json" (
+            builtins.toJSON {
+              rule_files = [ ];
+              evaluation_interval = "1m";
+              tests = [
+                (test [
+                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 20)
+                  (linear "ai_meter_requests_total" "${zai},code=\"429\"" 20)
+                  (linear "ai_meter_admission_outcomes_total" "${zai},outcome=\"timeout\"" 19)
+                ] [ ])
+                (test [
+                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 10)
+                  (linear "ai_meter_requests_total" "${zai},code=\"500\"" 30)
+                ] [ (fired "zai") ])
+                (test [ (linear "ai_meter_requests_total" "${zai},code=\"429\"" 40) ] [
+                  (fired "zai")
+                ])
+                (test [ trickling ] [ ])
+                (test [
+                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 40)
+                  (linear "ai_meter_requests_total" "${embed},code=\"502\"" 10)
+                ] [ (fired "llama-embeddings") ])
+              ];
+            }
+          );
+        in
+        pkgs.runCommand "ai-meter-alert-promql" { nativeBuildInputs = [ pkgs.prometheus.cli ]; }
+          ''
+            promtool test rules ${alertTest} > test.log 2>&1 \
+              || { cat test.log; echo "FAIL: ai-meter-alert-promql: the failure-rate rule no longer tells the proxy's own 429 answers, a quiet provider and a failing provider apart" >&2; exit 1; }
+            grep -q SUCCESS test.log || { cat test.log; echo "FAIL: ai-meter-alert-promql: promtool reported no SUCCESS" >&2; exit 1; }
+            echo "ok: the failure-rate rule is silent on gate answers and on a quiet provider, and fires per failing provider"
+            touch $out
+          '';
     };
 }

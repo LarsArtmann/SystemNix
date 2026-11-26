@@ -860,17 +860,60 @@ in
       severity = "warning";
     };
     # ai-meter upstream failure audit (2026-10-17): routed-AI-call failure
-    # ratio. Would have caught the Z.ai 1113 outage that morning (coding-plan
-    # key pointed at the general endpoint; ~85-93% of requests failed for
-    # hours with no signal — billing rejections arrive as HTTP 429, so this
-    # rule keys on status, not on error-class labels that don't exist here).
-    "signoz/rules/ai-upstream-failure-rate.json".source = mkRule {
-      name = "AI Upstream Failure Rate High (>30%)";
-      description = "More than 30% of routed AI calls (ai-meter) failed over 10m — upstream billing rejection (Z.ai 1113 arrives as HTTP 429), rate limit, or outage. Check the AI Meter dashboard: the Requests by Model × Code panel names the model and status.";
-      query = ''100 * sum(rate(ai_meter_requests_total{code=~"4..|5.."}[10m])) / clamp_min(sum(rate(ai_meter_requests_total[10m])), 1e-9)'';
-      target = 30;
-      interval = "10m";
-      severity = "critical";
+    # ratio per provider. Would have caught the Z.ai 1113 outage that morning
+    # (coding-plan key pointed at the general endpoint; ~85-93% of requests
+    # failed for hours with no signal — billing rejections arrive as HTTP
+    # 429, so this rule keys on status, not on error-class labels that don't
+    # exist here).
+    # 2026-11-26, admission control's first night: the plain status ratio
+    # counted the 429 answers ai-meter makes ITSELF (a call that waited out
+    # its budget, or a spent usage window) as failures and sat firing for
+    # 85 % of the next 30 hours (289 of 338 five-minute points). Three
+    # properties, each read off those 30 hours and each pinned by
+    # checks.ai-meter-alert-promql:
+    #   1. The proxy's own answers (admission outcomes timeout and circuit)
+    #      leave numerator AND denominator: they are delays, the client sends
+    #      the call again (docs/services/ai-meter.md, Dashboard).
+    #   2. Per provider, so one dead provider names itself instead of
+    #      painting every provider with the mixed ratio.
+    #   3. A volume floor of 5 decided calls a minute: a provider with
+    #      almost no traffic (the dark llama-embeddings at 0.2 calls a
+    #      minute) must not read as "100 % failed" the moment z.ai is idle.
+    # A plain 429 with no admission outcome (the provider refusing before
+    # the gate existed, or with a code the gate does not retry) is still a
+    # failure. A spent usage window is ai-quota-window-spent's to report.
+    "signoz/rules/ai-upstream-failure-rate.json".source =
+      let
+        requests = "sum by (upstream) (rate(ai_meter_requests_total[10m]))";
+        failures = ''sum by (upstream) (rate(ai_meter_requests_total{code=~"4..|5.."}[10m]))'';
+        gateAnswers = ''sum by (upstream) (rate(ai_meter_admission_outcomes_total{outcome=~"timeout|circuit"}[10m]))'';
+        # `x - empty` is empty in PromQL: a provider without gate answers
+        # needs a zero that carries its own labels.
+        ownAnswers = "(${gateAnswers} or (${requests} * 0))";
+        # 5 calls a minute, as a per-second rate.
+        floorCallsPerSecond = "0.0833333";
+      in
+      mkRule {
+        name = "AI Upstream Failure Rate High (>30%)";
+        description = "More than 30% of the calls a provider had to answer failed over 10m, at 5 or more calls a minute (the upstream label names the provider) — upstream billing rejection (Z.ai 1113 arrives as HTTP 429), rate limit, or outage. The 429s ai-meter answers itself while a call waits for provider room are not failures and are not counted. Check the AI Meter dashboard: Requests by Model x Code names the model and status.";
+        query = "100 * ((${failures} - ${ownAnswers}) or (${requests} * 0)) / clamp_min((${requests} - ${ownAnswers}), ${floorCallsPerSecond})";
+        target = 30;
+        interval = "10m";
+        severity = "critical";
+      };
+    # A spent usage window is not a failure of the proxy or the provider:
+    # z.ai says so itself, ai-meter stops sending and answers every call 429
+    # with Retry-After until the reset. It stops every session on the box
+    # all the same (three on the night of 2026-11-25/26: 21:50-00:30,
+    # 02:05-05:35, 08:00-11:00), so it pages once, as a warning: nothing to
+    # repair, calls resume at the reset or go to another provider.
+    "signoz/rules/ai-quota-window-spent.json".source = mkRule {
+      name = "AI Quota Window Spent (ai-meter)";
+      description = "z.ai reports a spent usage window and ai-meter is answering every routed z.ai call 429 until the reset time it named. Nothing to repair: calls resume at the reset, or route work to another provider until then. The AI Meter dashboard (Quota Exhausted) and any 429's Retry-After header name the time.";
+      query = "max(ai_meter_quota_exhausted) or vector(0)";
+      target = 1;
+      interval = "5m";
+      severity = "warning";
     };
 
     # Unit crash-loop consumption (2026-10-25, monitoring.md row: the nsfw
