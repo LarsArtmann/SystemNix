@@ -422,6 +422,17 @@
     # PRIVATE repo → git+ssh URL (cv/crm pattern). All its Go deps are
     # PUBLIC (go proxy), so its FODs need no private-repo plumbing; the
     # nixpkgs follows keep the lock dedup honest.
+    # ai-meter — loopback metering proxy every OpenAI-compatible AI call on
+    # the host routes through: tokens, reference cost, latency, one span per
+    # call, the durable ledger and admission control. Extracted from
+    # pkgs/ai-meter (2026-11-26). Consumed for its `packages.<system>.ai-meter`
+    # ONLY; the NixOS module, dashboard, health checks and VM test stay in
+    # this repo. PRIVATE repo -> git+ssh URL; standard library only, so it
+    # has no FOD. The follows keep the lock dedup honest.
+    ai-meter = {
+      url = "git+ssh://git@github.com/LarsArtmann/ai-meter?ref=refs/heads/master";
+    };
+
     quotaboard = {
       # LOCK REVERTED 2026-11-06 (0161f384 → 61801b11, unproven-float
       # rollback per the float doctrine): the peer-daemon float to
@@ -1355,6 +1366,8 @@
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     go-nix-helpers.inputs.nixpkgs.follows = "nixpkgs";
+    ai-meter.inputs.nixpkgs.follows = "nixpkgs";
+    ai-meter.inputs.treefmt-nix.follows = "treefmt-nix";
     quotaboard.inputs.nixpkgs.follows = "nixpkgs";
     quotaboard.inputs.treefmt-nix.follows = "treefmt-nix";
     go-structure-linter.inputs.flake-parts.follows = "flake-parts";

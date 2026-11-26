@@ -1,5 +1,29 @@
 {
   "nodes": {
+    "ai-meter": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795735792,
+        "narHash": "sha256-B1u5TUo0mf6NGWHsqV5kiSgHybVCwLlX2Ai8cMcLR70=",
+        "ref": "refs/heads/master",
+        "rev": "9fe6d3ed326475b03b00f1135d7444d072dea2cc",
+        "revCount": 102,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/ai-meter"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/ai-meter"
+      }
+    },
     "art-dupl": {
       "inputs": {
         "flake-parts": [
@@ -10808,6 +10832,7 @@
     },
     "root": {
       "inputs": {
+        "ai-meter": "ai-meter",
         "art-dupl": "art-dupl",
         "art-dupl-src": "art-dupl-src",
         "audiblesync": "audiblesync",
