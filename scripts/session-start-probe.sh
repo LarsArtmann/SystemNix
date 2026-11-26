@@ -39,6 +39,7 @@ script = sys.argv[1]
 # Resolved before the PATH is narrowed to stubs: the probe and its stubs run
 # through this bash even when no other tool is reachable.
 BASH = shutil.which("bash")
+PYTHON = shutil.which("python3")
 
 
 def run(cmd, env=None, path=None):
@@ -71,8 +72,9 @@ with tempfile.TemporaryDirectory(prefix="session-start-probe-selftest-") as scra
     repo = os.path.join(scratch, "repo")
     os.makedirs(bin_dir)
     os.makedirs(bare)
-    os.symlink(BASH, os.path.join(bin_dir, "bash"))
-    os.symlink(BASH, os.path.join(bare, "bash"))
+    for directory in (bin_dir, bare):
+        os.symlink(BASH, os.path.join(directory, "bash"))
+        os.symlink(PYTHON, os.path.join(directory, "python3"))
     os.makedirs(os.path.join(repo, ".github", "workflows"))
     os.makedirs(os.path.join(repo, "scripts"))
     for name in ("green.yml", "red-auth.yml", "red-content.yml", "never-ran.yml"):
@@ -94,8 +96,10 @@ esac
 ''')
     write_stub(os.path.join(bin_dir, "tq"), '''#!/usr/bin/env bash
 case "$*" in
-  "stats --project repo --json --db /fixture/tq.db") echo '{"budget":{"spent_today":3},"consumer_lag":[{"consumer":"readmodel","seq":100,"lag":14654}]}' ;;
-  "tasks --project repo --since 168h --limit 5000 --json --db /fixture/tq.db") echo '[{"status":"completed","type":"agent"},{"status":"cancelled","type":"agent"},{"status":"pending","type":"review"},{"status":"dead","type":"status"},{"status":"completed","type":"review"}]' ;;
+  "stats --project repo --json --db "*)
+    echo '{"budget":{"spent_today":3},"consumer_lag":[{"consumer":"readmodel","seq":100,"lag":14654}]}' ;;
+  "tasks --project repo --since 168h --limit 5000 --json --db "*)
+    echo '[{"status":"completed","type":"agent"},{"status":"cancelled","type":"agent"},{"status":"pending","type":"review"},{"status":"dead","type":"status"},{"status":"completed","type":"review"}]' ;;
   *) echo "stub tq: unexpected arguments: $*" >&2; exit 3 ;;
 esac
 ''')
@@ -111,8 +115,10 @@ echo '● service-health-check.service loaded failed failed Check critical servi
             "gate": {"exit": 0, "unharvested_reports": 103, "queue_library_drifts": 133}}
     write_stub(os.path.join(repo, "scripts", "backlog-flow.sh"),
                "#!/usr/bin/env bash\necho '" + json.dumps(flow).replace("'", "") + "'\n")
+    tq_db = os.path.join(scratch, "tq.db")
+    open(tq_db, "w", encoding="utf-8").close()
     env_path = bin_dir
-    base = [BASH, script, repo, "--tq-db", "/fixture/tq.db"]
+    base = [BASH, script, repo, "--tq-db", tq_db]
     result = run(base, path=env_path)
     out = result.stdout
     expect(result.returncode == 0, "the probe exits 0", out + result.stderr)
@@ -120,11 +126,11 @@ echo '● service-health-check.service loaded failed failed Check critical servi
         "1. CI",
         "green.yml",
         "2026-11-20",
-        "2 of 4 workflows green",
-        "never ran: never-ran.yml",
+        "1 of 4 workflows green, 2 red, 1 never ran",
+        "never-ran.yml",
         "3. Pool and failed units",
         "budget spent today: 3",
-        "completed 2, cancelled 1, pending 1, dead 1",
+        "cancelled 1, completed 2, dead 1, pending 1",
         "read model trails the journal by 14654 facts",
         "failed units: 2",
         "inboxclean-sync.service",
@@ -135,7 +141,7 @@ echo '● service-health-check.service loaded failed failed Check critical servi
         "gate WARNs: 103 unharvested",
     ):
         expect(needle in out, f"the report must contain: {needle}", out)
-    expect(out.count("WARN") == 1, "a fully stubbed run prints only the read-model WARN", out)
+    expect(out.count("WARN:") == 1, "a fully stubbed run prints only the read-model WARN", out)
 
     result = run(base + ["--logs"], path=env_path)
     out = result.stdout
@@ -151,12 +157,12 @@ echo '● service-health-check.service loaded failed failed Check critical servi
     result = run(base, path=env_path)
     out = result.stdout
     expect(result.returncode == 0, "an unauthenticated gh must not fail the probe", out + result.stderr)
-    expect("WARN" in out and "CI section skipped" in out, "an unauthenticated gh prints a WARN and skips the section", out)
+    expect("WARN:" in out and "CI section skipped" in out, "an unauthenticated gh prints a WARN and skips the section", out)
 
     result = run(base, path=bare)
     out = result.stdout
     expect(result.returncode == 0, "a shell without gh, tq and systemctl must not fail the probe", out + result.stderr)
-    expect(out.count("WARN") >= 3 and "3. Pool and failed units" in out, "each missing tool degrades to a WARN", out)
+    expect(out.count("WARN:") >= 3 and "3. Pool and failed units" in out, "each missing tool degrades to a WARN", out)
 
     result = run(base, path=bare, env={"PROBE_TIMEOUT_SECONDS": "1"})
     expect(result.returncode == 0, "a slow tool must time out into a WARN, never a failure", result.stdout)
@@ -315,15 +321,16 @@ def backlog_section(repo, timeout):
         head += (f", 7 days ago {week['open']}, net {'+' if flow['net_open'] >= 0 else ''}{flow['net_open']} in 7 days"
                  f" (+{flow['added_open']} open added, +{flow['added_closed']} added and closed, -{flow['removed']} removed, {flow['ticked']} ticked)")
     print("   " + head)
-    print(f"   block (rows added on {block['day']}): {block['open_now']} open = {block['share_pct']} % of the open queue "
-          f"({block['pool_visible_now']} visible to the pool)")
-    gate = report.get("gate")
-    if gate:
-        print(f"   gate WARNs: {gate['unharvested_reports']} unharvested section-f reports, {gate['queue_library_drifts']} queue/library drifts"
-              + (f" (gate exit {gate['exit']})" if gate["exit"] not in (0, None) else " (gate exit 0)"))
-    domain = report["domains"]["now"]
+    print(f"   block (rows added on {block.get('day', '?')}): {block.get('open_now', '?')} open = {block.get('share_pct', '?')} % of the open queue"
+          + (f" ({block['pool_visible_now']} visible to the pool)" if "pool_visible_now" in block else ""))
+    gate = report.get("gate") or {}
+    print(f"   gate WARNs: {gate.get('unharvested_reports', '?')} unharvested section-f reports, "
+          f"{gate.get('queue_library_drifts', '?')} queue/library drifts"
+          + (f" (gate exit {gate['exit']})" if gate.get("exit") not in (0, None) else " (gate exit 0)"))
+    domain = (report.get("domains") or {}).get("now") or {}
     top = ", ".join(f"{os.path.basename(name)} {count}" for name, count in list(domain.items())[:4])
-    print(f"   largest libraries: {top}")
+    if top:
+        print(f"   largest libraries: {top}")
 
 
 def pool_section(repo, tq_db, timeout):
@@ -342,7 +349,7 @@ def pool_section(repo, tq_db, timeout):
             except ValueError:
                 payload = {}
             spent = (payload.get("budget") or {}).get("spent_today")
-            print(f"   pool budget spent today: {spent if spent is not None else 'unknown'} (repo {project}; the pool's cap is 30 a day, shared by its repos)")
+            print(f"   pool budget spent today: {spent if spent is not None else 'unknown'} (project {project}; the pool's cap is 30 a day, shared by its repos)")
             lag = next((entry.get("lag") for entry in payload.get("consumer_lag", []) if entry.get("consumer") == "readmodel"), None)
             if lag:
                 print(f"   WARN: the tq read model trails the journal by {lag} facts — `tq stats` counters are empty until it catches up")
