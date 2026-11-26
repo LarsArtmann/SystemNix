@@ -405,30 +405,11 @@ in
               f" DISKSTATS_SRC=/tmp/gt/{case}-diskstats {extra_env} {script} 2>&1"
           )
 
-      def reset_state():
-          machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip"
-                          " /var/lib/memory-emergency-guard/tripped.count"
-                          " /var/lib/memory-emergency-guard/psi-episodes"
-                          " /var/lib/memory-emergency-guard/zone-counts"
-                          " /var/lib/memory-emergency-guard/trip-history"
-                          " /var/lib/memory-emergency-guard/restored.count"
-                          " /var/lib/memory-emergency-guard/io-ticks"
-                          " /var/lib/memory-emergency-guard/io-ticks.epoch"
-                          " /var/lib/memory-emergency-guard/io-ticks.cur"
-                          " /var/lib/memory-emergency-guard/churn-stopped"
-                          " /var/lib/memory-emergency-guard/churn-rearm.count"
-                          " /var/lib/memory-emergency-guard/backup-stopped.epoch"
-                          " /var/lib/memory-emergency-guard/backup-catchup.epoch"
-                          " /var/lib/memory-emergency-guard/backup-catchup.count"
-                          " /var/lib/memory-emergency-guard/cooldown-log.epoch"
-                          " /var/lib/memory-emergency-guard/capped-log.epoch"
-                          " /var/lib/memory-emergency-guard/drift-log.epoch"
-                          " /var/lib/memory-emergency-guard/cgroup-io.last")
-          machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
-          # Bring every sacrifice unit back up (the restore path only
-          # restarts the socket; activation would re-spawn the backend).
-          # Order matters: the socket FIRST — systemd refuses a socket whose
-          # service is already active ("Socket service ... refusing").
+      def bring_units_up():
+          # The UNIT half of reset_state (2026-11-26): restarts every fixture
+          # unit WITHOUT touching any guard state file. Order matters: the
+          # socket FIRST — systemd refuses a socket whose service is already
+          # active ("Socket service ... refusing").
           # A stale /run/flm-test.sock (left when the guard stopped the
           # socket mid-listen) makes ListenStream fail with EADDRINUSE.
           machine.succeed("rm -f /run/flm-test.sock")
@@ -453,6 +434,28 @@ in
           # 300.0 s starts). Queued is enough: the unit is "activating" at once,
           # the state the guard must treat as live.
           machine.succeed("systemctl start --no-block btrbk-root.service")
+
+      def reset_state():
+          machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip"
+                          " /var/lib/memory-emergency-guard/tripped.count"
+                          " /var/lib/memory-emergency-guard/psi-episodes"
+                          " /var/lib/memory-emergency-guard/zone-counts"
+                          " /var/lib/memory-emergency-guard/trip-history"
+                          " /var/lib/memory-emergency-guard/restored.count"
+                          " /var/lib/memory-emergency-guard/io-ticks"
+                          " /var/lib/memory-emergency-guard/io-ticks.epoch"
+                          " /var/lib/memory-emergency-guard/io-ticks.cur"
+                          " /var/lib/memory-emergency-guard/churn-stopped"
+                          " /var/lib/memory-emergency-guard/churn-rearm.count"
+                          " /var/lib/memory-emergency-guard/backup-stopped.epoch"
+                          " /var/lib/memory-emergency-guard/backup-catchup.epoch"
+                          " /var/lib/memory-emergency-guard/backup-catchup.count"
+                          " /var/lib/memory-emergency-guard/cooldown-log.epoch"
+                          " /var/lib/memory-emergency-guard/capped-log.epoch"
+                          " /var/lib/memory-emergency-guard/drift-log.epoch"
+                          " /var/lib/memory-emergency-guard/cgroup-io.last")
+          machine.succeed("rm -f /var/lib/memory-emergency-guard/restores-*")
+          bring_units_up()
 
       def assert_all_down():
           machine.fail("systemctl is-active --quiet fastflowlm.socket")
@@ -738,6 +741,13 @@ in
       assert "memory_emergency_guard_load_bearing 0" in prom
       # Leave a deterministic slate for 6b-cap: no fixture uptime file, no
       # stale baseline pair (the next run re-snapshots), churn window empty.
+      # COUNTERS STAY (2026-11-26): 6b-cap reads the lifetime restore counter
+      # (expects 2: 6a's restore + its own), the daily budget (1 spent, so
+      # its second restore is capped) and zone2_trips_total (expects 3:
+      # 6a's + its two). This block used to end with reset_state(), which
+      # wiped all three: the suite has been red at the bare
+      # `restored_total 2` assert since 2026-10-26 (commit 2a3932939), on an
+      # unmodified tree. Only the units come back up here.
       machine.succeed(
           "rm -f /tmp/gt/uptime"
           " /tmp/gt/fixepoch"
@@ -746,8 +756,12 @@ in
           " /var/lib/memory-emergency-guard/last-trip"
           " ; truncate -s 0 /var/lib/memory-emergency-guard/trip-history"
       )
-      reset_state()
+      bring_units_up()
       run_guard("healthy")
+      pre = machine.succeed("cat /var/lib/memory-emergency-guard/restored.count").strip()
+      assert pre == "1", (
+          f"6b-cap premise: one lifetime restore so far (6a's), got {pre!r}"
+      )
 
       # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
       #      this VM): burn the budget with one more trip->restore cycle,
@@ -767,7 +781,10 @@ in
       out = run_guard("zramfull")
       assert "sacrifice sockets restored" in out, "restore #2 of the day must still succeed (budget 2)"
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
-      assert "memory_emergency_guard_restored_total 2" in prom
+      assert "memory_emergency_guard_restored_total 2" in prom, (
+          "6b-cap restore #2 must read lifetime 2 (6a's + this one): "
+          f"prom=\n{prom}"
+      )
 
       machine.succeed(
           "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
@@ -784,8 +801,10 @@ in
       )
       machine.fail("systemctl is-active --quiet fastflowlm.socket")
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
-      assert "memory_emergency_guard_restore_capped 1" in prom
-      assert "memory_emergency_guard_zone2_trips_total 3" in prom
+      assert "memory_emergency_guard_restore_capped 1" in prom, f"prom=\n{prom}"
+      assert "memory_emergency_guard_zone2_trips_total 3" in prom, (
+          f"6a's zone-2 trip + two here = 3: prom=\n{prom}"
+      )
 
       # --- 6b. Zone 5 (episodic avg10, avg60 LOW) — the CALIBRATED 16:34
       #      signature: the real boot's avg60 peaked at 3.93% (SigNoz); only
@@ -874,16 +893,37 @@ in
       # ran on): the trip must stop it AND run its ExecStop cancel.
       machine.fail("systemctl is-active --quiet btrfs-scrub@-.service")
       machine.succeed("test -f /tmp/scrub-cancel-ran")
+      # The processes are GONE, not just the unit state (2026-11-26, one
+      # call per unit): until that change a single not-loaded name in the
+      # 13-unit list made the combined `systemctl stop` a no-op here.
+      balance_pid = machine.succeed(
+          "systemctl show -p MainPID --value btrfs-balance-data.service"
+      ).strip()
+      assert balance_pid == "0", (
+          f"balance dummy process must be dead after the trip, MainPID={balance_pid!r}"
+      )
+      # The mid-send backup (Type=oneshot, state "activating") is killed by
+      # the trip: the 2026-10-11 trip #2663 class (forgejo seed killed
+      # mid-receive, recorded NOTHING).
+      btrbk_state = machine.succeed(
+          "systemctl show -p ActiveState --value btrbk-root.service"
+      ).strip()
+      assert btrbk_state not in ("activating", "active"), (
+          f"the in-flight backup must be stopped by the trip, state={btrbk_state!r}"
+      )
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
-      assert "memory_emergency_guard_io_psi_some_avg60_percent 55.00" in prom
+      assert "memory_emergency_guard_io_psi_some_avg60_percent 55.00" in prom, f"prom=\n{prom}"
+      assert (
+          "memory_emergency_guard_churn_units_stopped{unit=\"btrbk-root.service\"} 1" in prom
+      ), f"the in-flight backup must be in the churn forensics: prom=\n{prom}"
       # The busy% value depends on the integer-second elapsed between the
       # seeded epoch and the guard run (12000 ms delta / elapsed), so the
       # exact printed value is timing-flaky (40.0 at elapsed=30, 38.7 at
       # 31). Assert it is KNOWN and the corroboration gate PASSED — the
       # trip itself is only reachable with busy >= 20.
-      assert "memory_emergency_guard_io_disk_busy_percent_max " in prom
-      assert "memory_emergency_guard_io_disk_busy_percent_max -1" not in prom
-      assert "memory_emergency_guard_zone6_trips_total 1" in prom
+      assert "memory_emergency_guard_io_disk_busy_percent_max " in prom, f"prom=\n{prom}"
+      assert "memory_emergency_guard_io_disk_busy_percent_max -1" not in prom, f"prom=\n{prom}"
+      assert "memory_emergency_guard_zone6_trips_total 1" in prom, f"prom=\n{prom}"
       # Churn-stop forensics must be a prom read (2026-09-15): the trip
       # stopped the ACTIVE balance unit, so the per-unit metric names it,
       # stamped with the trip epoch; the run-freshness stamp is always
@@ -908,9 +948,12 @@ in
           "once io PSI drains under the trip threshold the guard must "
           "re-arm the stopped churn units (2026-09-16 trip #299 class)"
       )
+      # the re-arm must have actually started the stopped churn unit. The
+      # guard queues the start (--no-block since 2026-11-26), so poll.
       machine.succeed(
-          "systemctl is-active --quiet btrfs-balance-data.service"
-      )  # the re-arm must have actually started the stopped churn unit
+          "for i in $(seq 100); do systemctl is-active --quiet btrfs-balance-data.service"
+          " && exit 0; sleep 0.1; done; systemctl status btrfs-balance-data.service; exit 1"
+      )
       machine.fail(
           "systemctl is-active --quiet btrfs-scrub@-.service"
       )  # freeze-#7: btrfs scrub has NO resume — a guard-killed scrub stays
@@ -1094,9 +1137,16 @@ in
 
       def start_tty_sleeper():
           # A process WITH a controlling terminal: script(1) runs the sleep
-          # inside its own pty session (611 is unique in this VM).
+          # inside its own pty session (611 is unique in this VM). POLLED
+          # (2026-11-26): a fixed 0.5 s sleep returned an empty pid on 1 of
+          # 9 local harness runs, the fixture wrote an EMPTY cgroup.procs and
+          # the guard could only report "no live headless process".
           machine.succeed("setsid script -qec 'sleep 611' /dev/null >/dev/null 2>&1 &")
-          pid = machine.succeed("sleep 0.5; pgrep -f '^sleep 611$' | head -1").strip()
+          pid = machine.succeed(
+              "for i in $(seq 50); do p=$(pgrep -f '^sleep 611$' | head -1);"
+              " [ -n \"$p\" ] && { echo \"$p\"; exit 0; }; sleep 0.1; done; exit 1"
+          ).strip()
+          assert pid.isdigit(), f"fixture tty sleeper never appeared (got {pid!r})"
           tty = machine.succeed(f"ps -o tty= -p {pid}").strip()
           assert tty != "?", f"fixture tty sleeper must hold a tty (got {tty!r})"
           return pid

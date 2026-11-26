@@ -696,6 +696,16 @@ _: {
             else
               run_memory_action=1
               run_churn_stop=1
+              # Truthful action wording (2026-11-26): evo-x2 configures NO
+              # socket and NO sacrifice unit, yet every memory trip there
+              # logged "sockets + sacrifice units stopped" and "the socket
+              # stays down". The journal must say what the trip really did.
+              # The "MEMORY EMERGENCY action taken" prefix is a contract
+              # (deploy.sh trip-recency gate, crash-triage census): unchanged.
+              memory_action_desc="sockets + sacrifice units stopped"
+              manages_sacrifice=1
+              [ -n "$SACRIFICE_UNITS$SOCKET_UNITS" ] || manages_sacrifice=0
+              [ "$manages_sacrifice" = "1" ] || memory_action_desc="I/O churn units only (no socket or sacrifice unit is configured: observe-only mode)"
               if [ "$io_split_active" = "1" ]; then
                 run_memory_action=0
                 run_churn_stop=0
@@ -714,7 +724,11 @@ _: {
                 fi
               fi
               if [ "$run_memory_action" = "1" ]; then
-                echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ''${SACRIFICE_UNITS:-(no sacrifice units configured)} to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
+                if [ "$manages_sacrifice" = "1" ]; then
+                  echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ''${SACRIFICE_UNITS} to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
+                else
+                  echo "MEMORY EMERGENCY: ''${reason} — stopping the I/O churn units to relieve pressure (no socket or sacrifice unit is configured: observe-only mode; 2026-08-22 incident class)." >&2
+                fi
                 # shellcheck disable=SC2086 # deliberate field split: unit list
                 stop_units $SACRIFICE_UNITS
               fi
@@ -1072,9 +1086,9 @@ _: {
               if [ "$io_split_active" = "1" ]; then
                 : # the IO-PAUSE line above IS the zone-6 action line
               elif [ -n "$attribution" ]; then
-                echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone}) — top io since last trip: ''${attribution}" >&2
+                echo "MEMORY EMERGENCY action taken: ''${memory_action_desc} (trip #''${tripped_total}, zone ''${zone}) — top io since last trip: ''${attribution}" >&2
               else
-                echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
+                echo "MEMORY EMERGENCY action taken: ''${memory_action_desc} (trip #''${tripped_total}, zone ''${zone})" >&2
               fi
             fi
           elif

@@ -968,6 +968,16 @@
             guardModule = ((import (root + "/modules/nixos/services/memory-emergency-guard.nix") { }).flake.nixosModules.memory-emergency-guard);
             hostShape = lib.modules.evalModules {
               modules = [
+                # NixOS declares `systemd` itself (a freeform submodule tree);
+                # this module evaluation stands outside NixOS, so the guard's
+                # `systemd.services...` config needs the option to exist.
+                {
+                  options.systemd = lib.mkOption {
+                    type = lib.types.attrsOf lib.types.anything;
+                    internal = true;
+                    default = { };
+                  };
+                }
                 guardModule
                 {
                   services.memory-emergency-guard = {
