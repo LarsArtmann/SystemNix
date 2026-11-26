@@ -309,7 +309,7 @@
             input_series = seriesList;
             promql_expr_test = [
               {
-                inherit fires;
+                expr = fires;
                 eval_time = "30m";
                 exp_samples = expected;
               }
