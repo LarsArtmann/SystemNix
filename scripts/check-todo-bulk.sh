@@ -32,6 +32,15 @@ staged_open_additions() {
 }
 
 selftest() {
+  # A commit hook exports the committing repository's git environment
+  # (GIT_INDEX_FILE names the index being committed). Inherited by the
+  # scratch repo, `git add` writes the scratch queue into THAT index and
+  # the scratch commits die on objects the scratch object store never had,
+  # so every commit through the hook failed a selftest leg and was refused
+  # with a bogus count (2026-11-26, 60 rows against a 3-line tick).
+  unset GIT_INDEX_FILE GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR \
+    GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_NAMESPACE \
+    GIT_INDEX_VERSION GIT_PREFIX
   local scratch out rc
   scratch=$(mktemp -d)
   mkdir -p "$scratch/repo/scripts"

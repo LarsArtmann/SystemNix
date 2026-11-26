@@ -159,6 +159,13 @@ _: {
           DRIFT_LOG_EPOCH_FILE="${stateDir}/drift-log.epoch"
           CGROUP_IO_SNAPSHOT="${stateDir}/cgroup-io.last"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
+          # The sacrifice list lives in a variable like SOCKET_UNITS (2026-11-26):
+          # evo-x2 configures it EMPTY (observe-only), and a helper called with
+          # a literal empty expansion is a shellcheck SC2119/SC2120 finding,
+          # which fails the host build of this script inside
+          # writeShellApplication. The VM node never sees that shape (its
+          # lists are non-empty), so build BOTH variants after a guard edit.
+          SACRIFICE_UNITS="${lib.concatStringsSep " " cfg.sacrificeUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
           IO_ACTION_COOLDOWN_SECONDS=${toString cfg.ioActionCooldownSeconds}
           # VM-test seams (like the kernel sources below): an env override
@@ -707,10 +714,9 @@ _: {
                 fi
               fi
               if [ "$run_memory_action" = "1" ]; then
-                echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
-                  lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-                } to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
-                stop_units ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits}
+                echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ''${SACRIFICE_UNITS:-(no sacrifice units configured)} to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
+                # shellcheck disable=SC2086 # deliberate field split: unit list
+                stop_units $SACRIFICE_UNITS
               fi
               # Zone 6's real mitigation: stop the resumable churn sources
               # (btrbk sends, balance, scrub). The post-storm drain path
@@ -1109,7 +1115,8 @@ _: {
                 echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory AND I/O pressure are healthy: systemctl start $SOCKET_UNITS" >&2
               fi
             else
-              reset_failed_units ${lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits}
+              # shellcheck disable=SC2086 # deliberate field split: unit list
+              reset_failed_units $SACRIFICE_UNITS
               # shellcheck disable=SC2086 # deliberate field split: unit list
               start_units $SOCKET_UNITS
               restored_total=$((restored_total + 1))
