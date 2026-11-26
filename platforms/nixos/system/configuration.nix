@@ -2155,7 +2155,20 @@ in
         # and needs only modest memory (~250MB steady state — the daemon pays
         # the 7GB discovery spike, not overview).
         daemonSocket = "unix:///run/project-discovery/daemon.sock";
-        memoryMax = "512M";
+        # Compliance + code-risk integrations (enabled 2026-11-26). The
+        # wrapper module (modules/nixos/services/overview.nix) owns both
+        # support legs and keys them off exactly these values:
+        #   - the BuildFlow evidence timer writes that exact file: path
+        #     (the unprivileged service cannot read BuildFlow's state DB);
+        #   - `auto` execs go-hotspot per discovered repo, with the projects
+        #     tree bind-mounted into a home tmpfs (0700 home, no ACLs).
+        complianceSource = "file:/var/lib/overview-evidence/compliance.json";
+        hotspotSource = "auto";
+        # One fleet hotspot pass is ~293 `git log --numstat` walks; 6h keeps
+        # the QLC root calm while the dashboard stays useful.
+        hotspotRefreshInterval = "6h";
+        # 4 concurrent go-hotspot analyses on top of the ~250MB dashboard.
+        memoryMax = "2G";
       };
 
       # Standalone discovery daemon — owns /run/project-discovery/daemon.sock.

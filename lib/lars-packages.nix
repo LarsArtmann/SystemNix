@@ -310,6 +310,18 @@ lib.filterAttrs (_: v: v != null) {
   # hash (2tOFS9U1…, from the same failing FOD) — the plain package
   # reproduces; re-add ONLY via nix-hash-fix evidence, never by hand.
   go-humanize-linter = flakePkg inputs.go-humanize-linter;
+  # go-hotspot — churn × complexity hotspot CLI; the code-risk evidence
+  # source for the Overview dashboard. TEMPORARY vendorHash shim: upstream
+  # flake.nix at the locked rev f92826e specifies 14YXgHlo…, which no
+  # longer reproduces under its own locked nixpkgs — got gxpziPVF (first-hand
+  # `nix build .`, 2026-11-26). The fix is COMMITTED but UNPUSHED in
+  # ~/projects/go-hotspot (d647f65); DROP this shim once it reaches the
+  # remote and the input floats past it. Re-add ONLY via nix-hash-fix
+  # evidence, never by hand. NON-FOLLOWER nixpkgs class — see
+  # lib/lock-audit.nix.
+  go-hotspot =
+    flakePkgShim inputs.go-hotspot "default"
+      "sha256-gxpziPVF/3gbHvTMhul/6X1zsr3Q04yH455WuUbOv/U=";
   # go-structure-linter shim DROPPED (2026-10-18): upstream vendorHash.nix
   # at tip 25b9f6a7 bakes the shim's own O2hpYHSc… value — bit-neutral
   # override (graph verified identical tip-vs-lock). Re-add ONLY via

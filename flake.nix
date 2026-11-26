@@ -578,6 +578,21 @@
       url = "git+ssh://git@github.com/LarsArtmann/journal?ref=refs/heads/master";
     };
 
+    # go-hotspot — churn × complexity hotspot analysis CLI: the code-risk
+    # evidence source for the Overview dashboard (`/risk` fleet matrix +
+    # per-project Code Risk cards). PUBLIC repo. NON-FOLLOWER class for
+    # nixpkgs (deliberate table in lib/lock-audit.nix): upstream builds
+    # against its own locked nixpkgs, so following would re-tool the
+    # go-modules FOD on every root-nixpkgs bump (the journal/invoices wave
+    # class). Its own flake's vendorHash was stale — refreshed upstream on
+    # 2026-11-26 so no consumer-side shim is needed. Evaluation-only deps
+    # (flake-utils, flake-compat) follow the root, so the input adds no
+    # lock nodes. Floats on ?ref=master per the pin policy; bumps flow via
+    # `nix flake lock --update-input go-hotspot --refresh`.
+    go-hotspot = {
+      url = "github:LarsArtmann/go-hotspot?ref=master";
+    };
+
     # go-paperless — journal's own lock pins this dep to a LOCAL
     # file:///home/lars/projects/go-paperless path, which only resolves on
     # this machine and kills CI eval the moment journal's inputs are
@@ -1331,6 +1346,10 @@
     audiblesync.inputs.nixpkgs.follows = "nixpkgs";
     audiblesync.inputs.flake-utils.follows = "flake-utils";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
+    # go-hotspot: eval-only deps follow (nixpkgs deliberately NOT followed —
+    # FOD-governing, see the deliberate table in lib/lock-audit.nix).
+    go-hotspot.inputs.flake-utils.follows = "flake-utils";
+    go-hotspot.inputs.flake-compat.follows = "flake-compat";
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     go-nix-helpers.inputs.nixpkgs.follows = "nixpkgs";

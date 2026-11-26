@@ -225,6 +225,39 @@
               AccuracySec = "30s";
             };
           };
+
+          # Compliance evidence refresher — the producer half of the
+          # `file:` source documented upstream. Runs AS the primary user:
+          # BuildFlow's state DB lives under that user's home (0700, so the
+          # service cannot reach it) and its SQLite WAL needs writable
+          # sidecars — a root run would leave root-owned -wal/-shm files in
+          # the user's state dir.
+          services.overview-compliance-evidence = lib.mkIf complianceEvidenceEnabled {
+            description = "Render BuildFlow fleet-compliance evidence for Overview";
+            serviceConfig = {
+              Type = "oneshot";
+              User = primaryUser;
+              # `+` = privileged: the evidence dir must belong to the primary
+              # user for the atomic rename, and tmpfiles application has
+              # proven unreliable across switches (2026-11-04 lesson).
+              ExecStartPre = "+${pkgs.coreutils}/bin/install -d -m 0750 -o ${primaryUser} -g ${cfg.group} ${evidenceDir}";
+              ExecStart = lib.getExe complianceEvidence;
+              TimeoutStartSec = "10min";
+              PrivateTmp = true;
+              NoNewPrivileges = true;
+              ProtectSystem = "full";
+            };
+          };
+
+          timers.overview-compliance-evidence = lib.mkIf complianceEvidenceEnabled {
+            description = "Refresh Overview's BuildFlow compliance evidence";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "15min";
+              OnUnitActiveSec = "6h";
+              AccuracySec = "5min";
+            };
+          };
         };
 
         # Service-integration registry entry: the Overview homepage tile, the
