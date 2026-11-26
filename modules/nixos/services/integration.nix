@@ -153,25 +153,36 @@ _: {
 
       # Tiles that ship their own mark: homepage.iconFile (the file) is
       # copied into the icon pack under homepage.icon (the name the tile
-      # references). Two assertions guard the pair below: the name must be a
-      # pack-style name (a null icon renders the monogram and an http(s) icon
-      # is fetched from that URL, so the file would be dead weight), and one
-      # name must not carry two files.
-      iconFileEntries = lib.filterAttrs (
-        _: e: e.homepage != null && e.homepage.iconFile != null
+      # references). A mark can only land under a pack-style name: a null
+      # icon renders the monogram and an http(s) icon is fetched from that
+      # URL, so the file would be dead weight. The fan-out below copies only
+      # the pack-named marks (a null name aborts evaluation before any
+      # assertion could explain it); the two assertions below report the rest.
+      hasPackIconName = e: lib.isString e.homepage.icon && !lib.hasPrefix "http" e.homepage.icon;
+
+      packNamedIconFiles = lib.filterAttrs (
+        _: e: e.homepage != null && e.homepage.iconFile != null && hasPackIconName e
       ) enabledEntries;
 
       danglingIconFiles = lib.filterAttrs (
-        _: e:
-        e.homepage != null
-        && e.homepage.iconFile != null
-        && !(lib.isString e.homepage.icon && !lib.hasPrefix "http" e.homepage.icon)
+        _: e: e.homepage != null && e.homepage.iconFile != null && !hasPackIconName e
       ) enabledEntries;
 
-      iconFileNames = map (e: e.homepage.icon) (lib.attrValues iconFileEntries);
+      # Icon name -> the distinct mark files shipped under it.
+      marksByIconName = lib.groupBy' (lib.attrValues packNamedIconFiles) (
+        e: e.homepage.icon
+      ) (e: toString e.homepage.iconFile);
+
+      # One icon-pack name holds one file. Entries that ship the SAME file
+      # under one name are fine (two tiles of one product); a second, different
+      # mark would leave all but one of them showing a foreign logo.
+      collidingIconNames = lib.filter (
+        icon: lib.length (lib.unique marksByIconName.${icon}) > 1
+      ) (lib.attrNames marksByIconName);
+
       collidingIconFiles = lib.filterAttrs (
-        _: e: (lib.count (icon: icon == e.homepage.icon) iconFileNames) > 1
-      ) iconFileEntries;
+        _: e: lib.elem e.homepage.icon collidingIconNames
+      ) packNamedIconFiles;
     in
     {
       options.services.integration = lib.mkOption {
@@ -721,8 +732,12 @@ _: {
           );
           # homepage.iconFile lands in the icon pack under the tile's own
           # icon name (the option's documented contract, wired 2026-11-26).
+          # Only pack-named marks: a null or URL icon has no pack slot, and
+          # forcing one here would abort eval before the assertions print.
           services.papdashboard.extraIcons = lib.listToAttrs (
-            map (e: lib.nameValuePair e.homepage.icon e.homepage.iconFile) (lib.attrValues iconFileEntries)
+            map (e: lib.nameValuePair e.homepage.icon e.homepage.iconFile) (
+              lib.attrValues packNamedIconFiles
+            )
           );
         })
         (lib.optionalAttrs (options ? services.backup-coordination) {
