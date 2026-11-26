@@ -95,6 +95,36 @@ evidence_file_for() { # short-id -> path or empty
   ls "$DOCS_ROOT"/docs/status/tasks/*boot-"$1"*evidence*.md 2>/dev/null | head -1 || true
 }
 
+# --- EFI-pstore decoder ----------------------------------------------------
+# Whose log a pstore dump is, and whether the capture kernel survived: the
+# kdump= verdict of every boot that ended. The dump of a boot's death is
+# archived by the NEXT boot (like the reset reason), so each line reads the
+# boot processed just before it. Tokens: capture-kernel-OOM (the MAIN
+# kernel's panic text is not in pstore), capture-kernel-panicked,
+# main-kernel-panic-captured, none. With a crash image loaded the capture
+# kernel itself died of the inherited watermark four times (2026-11-23 and
+# 2026-11-25), and /var/crash stayed empty: "a dump exists" never meant
+# "the panic was captured".
+pstore_lib="$(cd "$(dirname "$0")" && pwd)/lib/pstore-records.sh"
+[ -r "$pstore_lib" ] || {
+  echo "crash-triage: missing pstore decoder: $pstore_lib" >&2
+  exit 1
+}
+# shellcheck source=lib/pstore-records.sh
+. "$pstore_lib"
+
+kdump_verdict() { # <next-boot id or ''> -> token, or the fetch state when the token is not established
+  local facts token fetch
+  facts=$(pstore_facts_for "$1")
+  token=$(pstore_fact "$facts" token) || token=unknown
+  fetch=$(pstore_fact "$facts" fetch) || fetch=unknown
+  case "$fetch" in
+  ok) printf '%s' "$token" ;;
+  nonext) printf '%s' "no-next-boot" ;;
+  *) printf '%s' "unknown(journal-unreadable)" ;;
+  esac
+}
+
 echo "=== crash-triage: last $BOOTS boots (newest first) ==="
 abrupt_boots=()
 abrupt_branches=()
@@ -102,6 +132,7 @@ abrupt_evidence=()
 clean_total=0
 running_total=0
 i=0
+newer_full=""
 for line in "${bootlist[@]}"; do
   i=$((i + 1))
   [ "$i" -gt "$BOOTS" ] && break
@@ -110,13 +141,20 @@ for line in "${bootlist[@]}"; do
   end=$(printf '%s\n' "$line" | awk '{print $8, $9, $10}')
   short="${full:0:8}"
   clean=$(shutdown_ceremony "$full")
-  # trips metric counts BOTH eras (2026-10-31 fix): the socket-stop era
-  # ('action taken: sockets') AND the ioPause era (live since the Oct 28
-  # 18:06 mid-boot deploy, 'IO-PAUSE (trip' — both the SIGSTOPped and the
-  # NO-eligible shapes are distinct trips). The sockets-only grep
-  # undercounted freeze #38 by 10x (40 vs 412 real trips, boot 0 0 vs 169).
-  trips=$(census "$full" 'action taken: sockets|IO-PAUSE \(trip')
+  # trips metric counts EVERY action-line shape (fixed twice): the
+  # socket-stop era ('action taken: sockets'), the ioPause era (live since
+  # the Oct 28 18:06 mid-boot deploy, 'IO-PAUSE (trip' — both the
+  # SIGSTOPped and the NO-eligible shapes are distinct trips), and since
+  # 2026-11-26 the observe-only memory trips of a box with no socket and
+  # no sacrifice unit ('action taken: I/O churn units only'). The
+  # sockets-only grep undercounted freeze #38 by 10x (40 vs 412 real
+  # trips, boot 0 0 vs 169); 'action taken: sockets' then missed every
+  # observe-only trip the same way.
+  trips=$(census "$full" 'action taken: |IO-PAUSE \(trip')
   throttle=$(census "$full" 'DEEP THROTTLE ENTER')
+  # Guided-mode EPISODES, against the deep-cap APPLICATIONS above (the two
+  # were conflated in the freeze ledger: 7 / 4 / 15 against 254 / 109 / 427).
+  episodes=$(census "$full" 'THERMAL THROTTLE ENTER')
   oom=$(census "$full" 'invoked oom-killer')
   memcg_gap=$(oom_memcg_gap "$full")
   # S-0025 legs (2026-11-03): hung-task (D-state/writeback stall class —
@@ -130,6 +168,14 @@ for line in "${bootlist[@]}"; do
   # (valid for every boot incl. the newest — boot 0 carries the last
   # crash's reason; "none" = previous boot ended cleanly or first boot)
   reason=$(reset_reason_for "$full")
+  # kdump verdict of THIS boot's end, read from the next (newer) boot. The
+  # running boot has none yet. An unreadable journal is a failed read, never
+  # "none": the line says so and the boot is flagged below.
+  if [ "$offset" = "0" ]; then
+    kdump="pending(running)"
+  else
+    kdump=$(kdump_verdict "$newer_full")
+  fi
   endkind="ABRUPT"
   [ "$clean" = "1" ] && endkind="clean"
   # discriminator branch proposal (docs/agents/stability.md fork)
@@ -149,7 +195,10 @@ for line in "${bootlist[@]}"; do
   evfile=$(evidence_file_for "$short")
   [ -n "$evfile" ] && ev+="$(basename "$evfile")" || ev+="NONE"
   ev+=")"
-  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap hung_task=$hung btrfs_warn=$btrfs_warn kthermal=$kthermal → boot-evidence-pull kill-pass join"
+  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle throttle_episodes=$episodes oom=$oom oom-memcg-attested=$memcg_gap hung_task=$hung btrfs_warn=$btrfs_warn kthermal=$kthermal kdump=$kdump → boot-evidence-pull kill-pass join"
+  if [[ $kdump == unknown* ]]; then
+    echo "    !! KDUMP VERDICT UNREADABLE — the next boot's journal did not answer the pstore query; 'none' is NOT established"
+  fi
   # Bookkeeping for the verdict block. offset 0 is the RUNNING boot:
   # "abrupt" there only means it has not shut down yet — counted as
   # running, NEVER paged on (same rule as the per-boot flag below).
@@ -169,6 +218,7 @@ for line in "${bootlist[@]}"; do
   if [ "$endkind" = "ABRUPT" ] && [ "$offset" != "0" ] && [ -z "$evfile" ]; then
     echo "    !! UNEVIDENCED CRASHED BOOT — pull evidence NOW: scripts/boot-evidence-pull.sh -b <offset> (journal vacuum eats oldest boots at the cap)"
   fi
+  newer_full="$full"
 done
 
 # --- Verdict (S-0025): name the OPEN discriminators, never bury them ----

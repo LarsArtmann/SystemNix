@@ -217,7 +217,9 @@
         # M10/F39): stub-journalctl world encoding the double-crash night
         # — reset-reason attribution to the NEXT boot, full-count
         # censuses (the F35 anti-truncation rule), discriminator branch
-        # proposals, un-evidenced-crashed-boot sweep, vacuum clock.
+        # proposals, un-evidenced-crashed-boot sweep, vacuum clock, and
+        # since 2026-11-26 the kdump= verdict per boot (EFI-pstore records
+        # of the next boot, decoded by the shared pstore library).
         crash-triage-selftest =
           pkgs.runCommand "crash-triage-selftest"
             {
@@ -232,6 +234,10 @@
               scratch=$(mktemp -d)
               cp ${root}/scripts/crash-triage.sh "$scratch/crash-triage.sh"
               cp ${root}/scripts/test-crash-triage.sh "$scratch/test-crash-triage.sh"
+              # crash-triage sources the EFI-pstore decoder from lib/ next
+              # to itself; without it every run dies "missing pstore decoder".
+              mkdir -p "$scratch/lib"
+              cp ${root}/scripts/lib/pstore-records.sh "$scratch/lib/pstore-records.sh"
               ${pkgs.bash}/bin/bash "$scratch/test-crash-triage.sh"
               touch $out
             '';
