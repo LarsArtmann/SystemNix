@@ -159,6 +159,10 @@ in
       # with two real trips (production default is 10).
       services.memory-emergency-guard.loadBearingTripsPerBoot = 2;
 
+      # 1 s trip-sample window instead of the 3 s production default: every
+      # trip action in this suite sleeps for it, ~20 times per run.
+      services.memory-emergency-guard.ioPause.sampleSeconds = 1;
+
       # Dummy stand-ins with the real unit names: backend, per-connection
       # template, and the activation socket. sleep(1) processes so systemctl
       # stop is observable.
@@ -439,7 +443,12 @@ in
           machine.succeed("rm -f /tmp/scrub-cancel-ran")
           machine.succeed("systemctl start btrfs-scrub@-.service")
           # The backup-class churn unit for the scenario-9 catch-up slot.
-          machine.succeed("systemctl start btrbk-root.service")
+          # --no-block (2026-11-26): the fixture is Type=oneshot running
+          # `sleep 300`, so a blocking start waited the full five minutes on
+          # EVERY reset_state (measured: 2,157 s to reach scenario 6b, seven
+          # 300.0 s starts). Queued is enough: the unit is "activating" at once,
+          # the state the guard must treat as live.
+          machine.succeed("systemctl start --no-block btrbk-root.service")
 
       def assert_all_down():
           machine.fail("systemctl is-active --quiet fastflowlm.socket")

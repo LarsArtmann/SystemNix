@@ -1,6 +1,6 @@
-# Status 2026-11-26 05:37: plan v6, second execution leg — seven tasks done, three partial, sixteen open
+# Status 2026-11-26 05:37: plan v6, second execution leg — seven tasks done, four partial, fifteen open
 
-**Written:** 2026-11-26 05:37 CET (`date`), boot `0737ecd7` (18.5 h up), HEAD `8441c5415`, `master` 27 commits ahead of `origin/master` and nothing pushed by this session. io PSI some avg10 49.8 %. Live system: gen-1031 (`6q9jp84a`), switched at 19:33 on 2026-11-25 by a sibling session's deploy, profile anchored. Tree at authoring: six uncommitted files; five are this report's own harvest (TODO_LIST.md, three libraries, the appendix on the 17:30 report), `modules/nixos/services/memory-emergency-guard.nix` belongs to a sibling session. The auto-commit daemon picks them up.
+**Written:** 2026-11-26 05:37 CET (`date`), boot `0737ecd7` (18.5 h up), HEAD `8441c5415`, `master` 27 commits ahead of `origin/master` and nothing pushed by this session. io PSI some avg10 49.8 %. Live system: gen-1031 (`6q9jp84a`), switched at 19:33 on 2026-11-25 by a sibling session's deploy, profile anchored. Tree at authoring: this report and its harvest are uncommitted (TODO_LIST.md, four libraries, the appendix on the 17:30 report; the daemon commits them within minutes), and `modules/nixos/services/memory-emergency-guard.nix` is a sibling session's edit.
 
 **Plan:** [2026-11-25 00:06 SUPERB backlog masterplan v6](../planning/2026-11-25_00-06_SUPERB-backlog-masterplan-v6.md). Its marker still reads `EXECUTING (instance crush-glm54-full-exec-1125-0818)`. Previous report of this session: [2026-11-25 17:30](./2026-11-25_17-30_plan-v6-full-execution-paused-t07-done-t08-in-tree-offsite-borg-key-unloadable-status.md).
 
@@ -10,9 +10,9 @@
 
 1. **The T08 fixes are live and hold.** A sibling's deploy switched gen-1031 at 19:33. Verified again at 05:38: the nightly audiblesync backup ran at 02:35, the Rust cache GC has its stamp, cvagent has zero throttle events since the switch, the Forgejo re-interval strike counter reached quarantine, and the Borg job is `Type=oneshot`.
 2. **The offsite Borg backup is still dead and now says so.** Zero archives since go-live; the phantom success marker is gone and the metrics read `backup_ever_succeeded 0`. It waits on the owner's key.
-3. **Plan v6 stands at 7 of 27 tasks done, 3 partial, 16 not started, 1 not due.** Done since 17:30: T06, T08, T10, T11, T16, T18, and the marker fix. The remaining thirteen agent tasks need about 14 hours of execution.
+3. **Plan v6 stands at 7 of 27 tasks done, 4 partial, 15 not started, 1 not due.** Done since 17:30: T06, T08, T10, T11, T16, T18, and the marker fix. The remaining thirteen agent tasks need about 14 hours of execution.
 4. **The block ruling pack is ready.** 1,504 open rows (42.3 % of the queue) come from the 2026-11-07 bulk harvest. The dispatch pool reached none of them in the measured week: the harvester works the section heads and the block sits in the tail. A seeded sample of 30 closed 7 on one re-check.
-5. **The box had no calm window all night.** io PSI stayed between 40 % and 58 % from about 19:00 on. Eight deploys were refused by the pressure gate (20:21 to 20:42). My two Nix edits of tonight are parse-checked but not evaluated.
+5. **The box had no calm window all night.** The last calm reading was 0.96 % at 18:51; every reading after that, up to 49.8 % at 05:38, lay between 36 % and 58 %. Eight deploys were refused by the pressure gate (20:21 to 20:42). My two Nix edits of tonight are parse-checked but not evaluated.
 6. **96 failed units at 05:38, 88 of them template instances** of the llama per-connection proxies. And the root snapshot chain has produced nothing for ten days (the verifiers say so; not triaged here).
 
 ## Scope: what was verified here, and what was not
@@ -88,7 +88,7 @@ Run: the selftests of item T05 at 05:41 to 05:47; the pool numbers at 01:11. Not
 
 ## c) NOT STARTED
 
-16 of the 27 plan tasks, 59 % of the plan:
+15 of the 27 plan tasks, 56 % of the plan:
 
 | Task | Why not |
 | --- | --- |
@@ -115,7 +115,7 @@ The session spent its time on four things instead: verifying and rowing T08, fou
 | d2 | The root snapshot chain has produced nothing for ten days: `Root snapshot is 10 days old (threshold: 3)` (00:35), pool root backup ten days old (00:32), `btrbk-forgejo-clean` exit 10 (04:18) | Critical: local backup of the root subvolume | unknown; not triaged here | the storage row is annotated with tonight's lines; triage is next item 7 |
 | d3 | 96 failed units at 05:38; 88 are template instances of `llama-chat@` (42) and `llama-vlm-cap@` (46) | High: `systemctl --failed` is no longer a signal | each proxy lives 29 min 59 s and exits 1 (sampled instance 20:18:15 to 20:48:15) | new row; the fix direction is an exit 0 on the idle end |
 | d4 | `forgejo-github-sync` fails every hour at phase 5: `audiblesync` is listed as a native repo but is still a pull mirror | Medium: an hourly failed unit and an OnFailure page | the re-interval fix let the sync reach phase 5 again; the flip the config comment claims for 2026-11-15 did not hold | owner call: flip, or drop it from the canonical list (new row) |
-| d5 | io PSI 40 % to 58 % from about 19:00 to 05:37; eight deploys refused (exit 12) between 20:21 and 20:42 | High: nothing in tree is deployed, nothing can be evaluated | not investigated here; the deploy logs name the ghostty terminal scopes as the most stalled cgroups | the patient path (`scripts/deploy-when-quiescent.sh`) is the tool; the box needs quiet |
+| d5 | io PSI 36 % to 58 % in every reading from 20:01 to 05:37 (0.96 % at 18:51 was the last calm one); eight deploys refused (exit 12) between 20:21 and 20:42 | High: nothing in tree is deployed, nothing can be evaluated | not investigated here; the deploy logs name the ghostty terminal scopes as the most stalled cgroups | the patient path (`scripts/deploy-when-quiescent.sh`) is the tool; the box needs quiet |
 | d6 | CI: `nix-check.yml` last green 2026-07-29 (120 days) | High: no gate between commit and deploy | four of five red workflows fail on auth or fetch of private inputs; one on two live keys | owner: read-only PAT and deploy keys (T02), key rotations (T01) |
 | d7 | `/data` grew 22 GB in 24 h on two nights (threshold 5 GB) | Medium | not attributed | the `/data` watch row is annotated |
 | d8 | cvagent answers 500 on `GET /` six times in ten hours while `/health` is 200 | Medium | the page scans the fact-set store on the request path (upstream) | the cap removal cut the rate from about 24 an hour to 0.6; upstream row exists |
@@ -126,7 +126,7 @@ My own mistakes of this leg:
 1. **I lost the daemon race twice** by running a dry-run between applying edits and committing. Two batches of my work landed under heuristic messages (`58f6c01ee`, `799a776d7`). I had that rule in my own notes from the morning.
 2. **The first draft of `backlog-flow.sh` was sloppy**: leftover expressions and dead branches. I rewrote it before it worked on the real repository, but it cost an hour.
 3. **A scratch tool missed 7 untagged rows** in the block count (1,497 against 1,504). The committed tool counted right; I found it only because I reconciled the two numbers before writing the ruling pack.
-4. **Thirteen plan tasks are untouched** after another twelve hours. I built tool where the plan asked for sweeps, and the tool serves the sweeps, but the sweeps did not run.
+4. **Fifteen plan tasks are untouched** (thirteen of them the agent's) after another twelve hours. I built tool where the plan asked for sweeps, and the tool serves the sweeps, but the sweeps did not run.
 5. **Two Nix edits ride the next deploy unevaluated** (parse-checked only). They are small, and that is still a risk a two-minute eval would have removed.
 6. **The NOW block's panic bullet went stale within hours** (sibling fix at 00:36). The block has no gate leg that would notice; the validator is a scratch script.
 7. **I added a leg to a gate that already takes 30 seconds under load.** The TODO gate spawns thousands of greps in its pairing check; the session-start probe had to make the gate counts opt-in for that reason.
@@ -143,7 +143,7 @@ My own mistakes of this leg:
 | Scratch tools next to committed tools | numbers disagree; the reader cannot tell which is right | reconcile before quoting; delete the scratch tool once the committed one exists |
 | Plan v6's premise for T03 | the plan says the pool budget goes to the block; it does not | errata entry: the block costs file size and honesty, not dispatches |
 | Plan v6's T08 list | grew by two root causes the plan did not name (phase 5 pull mirror, cvagent upstream scan) | errata entry; both have rows now |
-| The session wrote three reports and two packs in 24 hours while thirteen tasks waited | the owner asked for each one | after this report: one uninterrupted execution leg for the thirteen tasks, in a calm window |
+| Two status reports in twelve hours while the tasks waited | each stop costs the execution leg its momentum | after this report: one uninterrupted execution leg for the thirteen tasks, in a calm window |
 
 ## f) Up to 50 things to get done next (ranked by impact)
 
@@ -203,8 +203,8 @@ The list is a brainstorm past item 20, not a commitment. Items 1 to 4 and 36 to 
 | State | Tasks | Count |
 | --- | --- | ---: |
 | Done | T06, T07, T08, T10, T11, T16, T18 | 7 |
-| Partial | T03 (pack done, ruling open), T05 (hook leg unproven, M32 open), T09 (data only) | 3 |
-| Not started | T01, T02 (only the classification), T04, T12, T13, T14, T15, T17, T19, T20, T21, T22, T23, T24, T26, T27 | 16 |
+| Partial | T02 (classification only), T03 (pack done, ruling open), T05 (hook leg unproven, M32 open), T09 (data only) | 4 |
+| Not started | T01, T04, T12, T13, T14, T15, T17, T19, T20, T21, T22, T23, T24, T26, T27 | 15 |
 | Not due | T25 (first probes on 2026-12-02) | 1 |
 
 ## Live checks owed after the next deploy and the next boot
@@ -218,9 +218,9 @@ The list is a brainstorm past item 20, not a commitment. Items 1 to 4 and 36 to 
 
 Harvested at authoring, in the working tree (the daemon commits it):
 
-- One new row pair, queue section `ai-stack` and `docs/todo/ai-stack.md`: "llama-chat and llama-vlm-cap proxy instances fail with exit 1 after 30 minutes and pile up in the failed-unit list" (from d3, next item 6).
-- One library watch row in `docs/todo/pipeline.md`: "nix-optimise exits 1 when a source store path vanishes mid-run" (from the failed-unit list, next item 33).
-- Two annotations on both surfaces: the "Backups stale beyond audiblesync" row (root snapshot and pool root backup ten days old, `btrbk-forgejo-clean` exit 10) and the `/data` watch row (22 GB a day, two nights).
+- Two new row pairs, each in the queue and its library: "llama-chat and llama-vlm-cap proxy instances fail with exit 1 after 30 minutes and pile up in the failed-unit list" (`docs/todo/ai-stack.md`, from d3, next item 6) and "TODO gate and session-start probe: a NOW-block WARN leg and collapsed template instances in the failed-unit count" (`docs/todo/pipeline.md`, next items 29 and 30).
+- Two library-only rows: the watch row "nix-optimise exits 1 when a source store path vanishes mid-run" (`docs/todo/pipeline.md`, next item 33) and the `[blocked:push]` row "go-taskqueue: `tq stats` read model mounts with empty counters 14,663 facts behind the journal" (`docs/todo/upstream.md`, next item 35).
+- Three annotations on both surfaces: the "Backups stale beyond audiblesync" row (root snapshot and pool root backup ten days old, `btrbk-forgejo-clean` exit 10), the `/data` watch row (22 GB a day, two nights), and the "Gate hardness" decision row (the gate takes 30 s and more under load; batch the pairing greps before strict mode).
 - An appendix on the 2026-11-25 17:30 report recording what of its section f is now done.
 
-Deliberately not harvested as rows: next items 1 to 4, 34 and 36 to 39 are owner asks whose rows exist (Borg key, pull mirror, InboxClean re-consent, CI auth, keys, cvagent upstream, zombie mirror); items 7 to 15, 17 to 21 and 23 to 27 are plan tasks that the plan file itself tracks; items 8, 9 and 10 are verification legs recorded in the section above; item 5 is covered by the annotated backups row; item 28 to 30 and 35 are tooling improvements that belong in the T05 and T12 follow-ups (the gate-speed fix is the first step of M32).
+Deliberately not harvested as rows: next items 1 to 4, 34 and 36 to 39 are owner asks whose rows exist (Borg key, pull mirror, InboxClean re-consent, CI auth, keys, cvagent upstream, zombie mirror); items 7 to 15, 17 to 21 and 23 to 27 are plan tasks that the plan file itself tracks; items 8, 9 and 10 are verification legs recorded in the section above; items 5, 28, 29, 30, 33 and 35 are the rows and annotations listed above.
