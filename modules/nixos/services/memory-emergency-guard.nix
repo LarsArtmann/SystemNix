@@ -759,97 +759,176 @@ _: {
               # per-zone (the per-zone awk requires a valid $2).
               echo "$now $zone" >> "$HISTORY_FILE"
               sync -f "$ZONE_FILE" "$HISTORY_FILE" 2>/dev/null || true
-              # Top-I/O offender attribution (2026-09-28): 1300+ trips said
-              # "I/O stalled" without naming a culprit — attribution lived
-              # only in the forensics bundles. The per-cgroup io.stat walk
-              # runs ONLY at trip actions (>= cooldown apart), snapshotted
-              # so the NEXT action prints the delta: zero steady-state
-              # cost, and the trip line becomes self-attributing. Bounded
-              # depth + timeout (the forensics lesson: an unbounded find
-              # during an IO storm wedges the tool itself).
+              # Trip-time I/O attribution (2026-09-28; rewritten 2026-11-26):
+              # TWO cgroup samples $CGROUP_SAMPLE_SECONDS apart, taken at the
+              # trip action only (zero steady-state cost). Their delta is what
+              # is moving data RIGHT NOW: the only basis for a pause, and the
+              # IO-TOP line that names the movers whether or not any of them
+              # is pausable. The delta against the PREVIOUS action's snapshot
+              # (kept for the legacy "top io since last trip" wording) can be
+              # hours old on the first trip of a storm, so it ranks nobody.
+              # What the 2026-09-28 walk got wrong (13,311 zone-6 trips, 0
+              # pauses, every one logged "NO eligible headless tree"): it kept
+              # the /io.stat suffix on each path, ranked by lifetime bytes,
+              # and forked one awk per cgroup.
               attribution=""
+              io_movers=""
+              io_top=""
+              io_sample_status="unavailable"
               if [ -d "$CGROUP_IO_SRC" ]; then
-                cur_cg=$(
-                  timeout 10 find "$CGROUP_IO_SRC" -maxdepth 4 -name io.stat -readable -print0 2>/dev/null |
-                    while IFS= read -r -d "" f; do
-                      cg_rel="''${f#"$CGROUP_IO_SRC"/}"
-                      # the root cgroup aggregates the whole system — it
-                      # would be the permanent #1 and name no culprit
-                      [ "$cg_rel" = "io.stat" ] && continue
-                      cg_total=$(awk '{for (i = 2; i <= NF; i++) {split($i, kv, "="); if (kv[1] == "rbytes" || kv[1] == "wbytes") t += kv[2]}} END {print t + 0}' "$f" 2>/dev/null) || cg_total=0
-                      printf '%s %s\n' "''${cg_total:-0}" "$cg_rel"
-                    done | sort -rn | head -40 || true
-                )
-                if [ -n "$cur_cg" ] && [ -s "$CGROUP_IO_SNAPSHOT" ]; then
+                cg_a=$(cgroup_io_walk) && cg_a_rc=0 || cg_a_rc=$?
+                sleep "$CGROUP_SAMPLE_SECONDS"
+                cg_b=$(cgroup_io_walk) && cg_b_rc=0 || cg_b_rc=$?
+                if [ "$cg_a_rc" -eq 0 ] && [ "$cg_b_rc" -eq 0 ] && [ -n "$cg_b" ] &&
+                  printf '%s\n' "$cg_a" > "''${CGROUP_IO_SNAPSHOT}.a" 2>/dev/null &&
+                  printf '%s\n' "$cg_b" > "''${CGROUP_IO_SNAPSHOT}.b" 2>/dev/null; then
+                  io_sample_status="ok"
+                  io_movers=$(
+                    awk '
+                      FILENAME == ARGV[1] { a[$2] = $1; next }
+                      ($2 in a) { d = $1 - a[$2]; if (d > 0) print d, $2 }
+                    ' "''${CGROUP_IO_SNAPSHOT}.a" "''${CGROUP_IO_SNAPSHOT}.b" 2>/dev/null | sort -rn || true
+                  )
+                fi
+                if [ -s "$CGROUP_IO_SNAPSHOT" ] && [ -f "''${CGROUP_IO_SNAPSHOT}.b" ]; then
                   attribution=$(
-                    printf '%s\n' "$cur_cg" |
-                      awk 'NR == FNR { prev[$2] = $1; next } ($2 in prev) { d = $1 - prev[$2]; if (d > 0) print d, $2 }' "$CGROUP_IO_SNAPSHOT" - |
+                    awk '
+                      FILENAME == ARGV[1] { sub(/\/io\.stat$/, "", $2); prev[$2] = $1; next }
+                      ($2 in prev) { d = $1 - prev[$2]; if (d > 0) print d, $2 }
+                    ' "$CGROUP_IO_SNAPSHOT" "''${CGROUP_IO_SNAPSHOT}.b" 2>/dev/null |
                       sort -rn | head -3 |
                       awk '{ mb = int($1 / 1048576); if (mb < 1) mb = 1; printf "%s%s +%dMB", (NR > 1 ? ", " : ""), $2, mb }' || true
                   )
                 fi
-                printf '%s\n' "$cur_cg" > "''${CGROUP_IO_SNAPSHOT}.tmp" 2>/dev/null &&
-                  mv "''${CGROUP_IO_SNAPSHOT}.tmp" "$CGROUP_IO_SNAPSHOT" || true
-              fi
-              # Zone-6 pause action (2026-10-28 §7.1a): SIGSTOP the headless
-              # driver trees the attribution just named — NEVER the sockets/
-              # sacrifice. Selection: top attribution cgroups matching a
-              # configured pattern -> cgroup.procs -> process groups.
-              # HARD never-PTY invariant (the 2026-10-07 SIGSTOP-license
-              # revocation, honored by construction): a group is pausable
-              # only when NO member holds a controlling terminal — one
-              # /proc pass builds the tty-owning pgid set, and any overlap
-              # is skipped with a log line.
-              if [ "$io_split_active" = "1" ]; then
-                pgid_has_tty=""
-                for pst in /proc/[0-9]*/stat; do
-                  [ -r "$pst" ] || continue
-                  IFS= read -r stat_line < "$pst" 2>/dev/null || continue
-                  rest="''${stat_line#*) }"
-                  # shellcheck disable=SC2086 # deliberate field split: $1 state, $3 pgrp, $5 tty_nr
-                  set -- $rest
-                  if [ "''${5:-0}" != "0" ] && [ -n "''${3:-}" ]; then
-                    case " $pgid_has_tty " in
-                      *" $3 "*) ;;
-                      *) pgid_has_tty="$pgid_has_tty $3" ;;
-                    esac
-                  fi
-                done
-                cand_pgids=""
-                if [ -n "$cur_cg" ]; then
-                  # deliberate word splitting: cgroup paths carry no spaces
-                  # shellcheck disable=SC2086
-                  for pat in $IO_PAUSE_PATTERNS; do
-                    # shellcheck disable=SC2086
-                    for cg in $(printf '%s\n' "$cur_cg" | awk -v pat="$pat" 'index($2, pat) > 0 {print $2}' | head -3); do
-                      procs_f="$CGROUP_IO_SRC/$cg/cgroup.procs"
-                      [ -r "$procs_f" ] || continue
-                      while IFS= read -r cpid; do
-                        cpgid=$(awk '{ s = index($0, ")"); rest = substr($0, s + 2); split(rest, f, " "); print f[3] }' "/proc/$cpid/stat" 2>/dev/null) || continue
-                        [ -n "$cpgid" ] || continue
-                        case " $cand_pgids " in
-                          *" $cpgid "*) ;;
-                          *) cand_pgids="$cand_pgids $cpgid" ;;
-                        esac
-                      done <"$procs_f"
-                    done
-                  done
+                if [ "$cg_b_rc" -eq 0 ]; then
+                  printf '%s\n' "$cg_b" > "''${CGROUP_IO_SNAPSHOT}.tmp" 2>/dev/null &&
+                    mv "''${CGROUP_IO_SNAPSHOT}.tmp" "$CGROUP_IO_SNAPSHOT" || true
                 fi
-                pause_count=0
-                new_paused=""
-                # shellcheck disable=SC2086
-                for cpgid in $cand_pgids; do
-                  [ "$pause_count" -ge "$IO_PAUSE_MAX_GROUPS" ] && break
-                  case " $pgid_has_tty " in
-                    *" $cpgid "*)
-                      echo "IO-PAUSE skip: pgid ''${cpgid} holds a controlling TTY — owner-interactive work is never pausable" >&2
-                      continue
-                      ;;
-                  esac
-                  if kill -STOP -"$cpgid" 2>/dev/null; then
-                    pause_count=$((pause_count + 1))
-                    new_paused="$new_paused $cpgid"
-                  fi
+              fi
+              # Zone-6 pause action (2026-10-28 §7.1a; selection rewritten
+              # 2026-11-26): SIGSTOP the headless driver trees the trip sample
+              # just named, NEVER the sockets/sacrifice. A cgroup is a driver
+              # when, in the trip sample, it moved at least minDriverRateMB AND
+              # at least minDriverTopSharePercent of the largest mover, its
+              # path contains a cgroupPatterns entry, and it is not a *.slice
+              # (a slice aggregates its children; the leaf names the culprit).
+              # HARD never-PTY invariant (the 2026-10-07 SIGSTOP-license
+              # revocation, honored by construction): a process group is
+              # pausable only when NO member holds a controlling terminal:
+              # one /proc pass builds the tty-owning pgid set and any overlap
+              # is skipped with a log line. That pass returning nothing means
+              # the invariant cannot be proven: NOBODY is paused (fail closed;
+              # the 2026-10-28 loop failed open on an empty scan).
+              pause_count=0
+              new_paused=""
+              new_paused_lines=""
+              new_paused_desc=""
+              tty_skipped=0
+              cand_list=""
+              proc_scan_status="unavailable"
+              declare -A pgid_of=() tty_pgid=()
+              if [ "$io_split_active" = "1" ]; then
+                if [ "$io_sample_status" != "ok" ]; then
+                  io_top="walk unavailable"
+                  echo "MEMORY EMERGENCY IO-TOP (trip #''${tripped_total}, zone 6): cgroup walk unavailable (empty result or ''${CGROUP_WALK_TIMEOUT}s timeout): nobody is paused on missing evidence" >&2
+                elif [ -z "$io_movers" ]; then
+                  io_top="none: no cgroup moved data in the ''${CGROUP_SAMPLE_SECONDS}s sample"
+                  echo "MEMORY EMERGENCY IO-TOP (trip #''${tripped_total}, zone 6): ''${io_top}. Pressure without a writer is device-level wedging (btrfs metadata, fsync storm), which no pause sheds" >&2
+                else
+                  io_top=$(
+                    printf '%s\n' "$io_movers" | head -6 |
+                      awk -v pats="$IO_PAUSE_PATTERNS" -v s="$CGROUP_SAMPLE_SECONDS" '
+                        BEGIN {
+                          n = split(pats, P, " ")
+                          if (s < 1) s = 1
+                        }
+                        {
+                          tag = "no pattern"
+                          for (i = 1; i <= n; i++) if (index($2, P[i]) > 0) tag = "pattern"
+                          if ($2 ~ /\.slice$/) tag = "slice"
+                          printf "%s%s @%.0fMB/s [%s]", (NR > 1 ? ", " : ""), $2, ($1 / 1048576) / s, tag
+                        }' || true
+                  )
+                  echo "MEMORY EMERGENCY IO-TOP (trip #''${tripped_total}, zone 6, ''${CGROUP_SAMPLE_SECONDS}s sample): ''${io_top}" >&2
+                fi
+                if [ "$io_sample_status" = "ok" ] && [ -n "$io_movers" ]; then
+                  top_delta=$(printf '%s\n' "$io_movers" | head -1 | cut -d' ' -f1)
+                  cand_list=$(
+                    printf '%s\n' "$io_movers" |
+                      awk -v pats="$IO_PAUSE_PATTERNS" -v floor_bytes="$((IO_PAUSE_MIN_RATE_MB * 1048576 * CGROUP_SAMPLE_SECONDS))" -v top="$top_delta" -v share="$IO_PAUSE_MIN_SHARE_PCT" '
+                        BEGIN {
+                          n = split(pats, P, " ")
+                          bar = floor_bytes
+                          rel = top * share / 100
+                          if (rel > bar) bar = rel
+                        }
+                        $1 < bar { next }
+                        $2 ~ /\.slice$/ { next }
+                        {
+                          for (i = 1; i <= n; i++)
+                            if (index($2, P[i]) > 0) { print; next }
+                        }' || true
+                  )
+                fi
+                proc_map=$(proc_pgid_tty_scan) && proc_scan_rc=0 || proc_scan_rc=$?
+                if [ "$proc_scan_rc" -eq 0 ] && [ -n "$proc_map" ]; then
+                  proc_scan_status="ok"
+                  while IFS= read -r p_pid p_pgrp p_tty; do
+                    [ -n "''${p_pgrp:-}" ] || continue
+                    pgid_of["$p_pid"]="$p_pgrp"
+                    [ "$p_tty" = "0" ] || tty_pgid["$p_pgrp"]=1
+                  done <<< "$proc_map"
+                fi
+                my_pgid="''${pgid_of[$$]:-}"
+                seen_pgids=" "
+                if [ "$proc_scan_status" = "ok" ]; then
+                  while IFS= read -r cand; do
+                    [ -n "$cand" ] || continue
+                    [ "$pause_count" -lt "$IO_PAUSE_MAX_GROUPS" ] || break
+                    cand_cg="''${cand#* }"
+                    procs_f="$CGROUP_IO_SRC/$cand_cg/cgroup.procs"
+                    [ -r "$procs_f" ] || continue
+                    while IFS= read -r cpid; do
+                      case "$cpid" in
+                        *[!0-9]*) continue ;;
+                      esac
+                      cpgid="''${pgid_of[$cpid]:-}"
+                      [ -n "$cpgid" ] || continue
+                      case " $seen_pgids " in
+                        *" $cpgid "*) continue ;;
+                        *) seen_pgids="$seen_pgids$cpgid " ;;
+                      esac
+                      if [ "$cpgid" -le 1 ] || [ "$cpgid" = "$my_pgid" ]; then
+                        continue
+                      fi
+                      if [ -n "''${tty_pgid[$cpgid]:-}" ]; then
+                        tty_skipped=$((tty_skipped + 1))
+                        echo "IO-PAUSE skip: pgid ''${cpgid} in ''${cand_cg} holds a controlling TTY — owner-interactive work is never pausable" >&2
+                        continue
+                      fi
+                      if kill -STOP -"$cpgid" 2>/dev/null; then
+                        pause_count=$((pause_count + 1))
+                        new_paused="$new_paused $cpgid"
+                        new_paused_lines="''${new_paused_lines}$cpgid $cand_cg"$'\n'
+                        new_paused_desc="$new_paused_desc $cand_cg(pgid ''${cpgid})"
+                      fi
+                    done <"$procs_f"
+                  done <<< "$cand_list"
+                fi
+                if [ "$io_sample_status" != "ok" ]; then
+                  io_nomatch_reason=" (cgroup walk unavailable, nobody is paused on missing evidence)"
+                elif [ -z "$io_movers" ]; then
+                  io_nomatch_reason=" (no cgroup moved data in the trip sample: device-level wedging, not a process)"
+                elif [ -z "$cand_list" ]; then
+                  io_nomatch_reason=" (movers outside the pause set: ''${io_top:-unknown})"
+                elif [ "$proc_scan_status" != "ok" ]; then
+                  io_nomatch_reason=" (process scan unavailable, the never-PTY invariant cannot be proven, nobody is paused)"
+                elif [ "$tty_skipped" -gt 0 ]; then
+                  io_nomatch_reason=" (''${tty_skipped} matching process group(s) hold a controlling TTY, owner-interactive work is never pausable; movers: ''${io_top:-unknown})"
+                else
+                  io_nomatch_reason=" (matching cgroups held no live headless process to signal; movers: ''${io_top:-unknown})"
+                fi
+              fi
                 done
                 if [ -n "$new_paused" ]; then
                   old_epoch=0

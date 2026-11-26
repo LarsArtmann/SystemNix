@@ -6,8 +6,10 @@
 #      latest failure (--logs fetches the failed-step logs; off by default
 #      because one log can be tens of megabytes). A workflow that is not
 #      green is not a gate: do not cite it as one.
-#   2. Backlog: open rows now and 7 days ago, the 7-day flow, the block
-#      share and the TODO gate's WARN counts (scripts/backlog-flow.sh).
+#   2. Backlog: open rows now and 7 days ago, the 7-day flow and the block
+#      share (scripts/backlog-flow.sh). The TODO gate's WARN counts come
+#      with --gate only: the gate spawns thousands of greps and can take
+#      half a minute on a loaded box, which is too slow for every start.
 #   3. Pool and failed units: the daily budget spent, the outcomes of this
 #      repo's pool tasks over 7 days, and `systemctl --failed`.
 #
@@ -17,7 +19,7 @@
 # either: it reports, the reader judges.
 #
 # Usage:
-#   scripts/session-start-probe.sh [REPO] [--logs] [--tq-db PATH]
+#   scripts/session-start-probe.sh [REPO] [--logs] [--gate] [--tq-db PATH]
 #   scripts/session-start-probe.sh --selftest
 #
 # REPO defaults to the directory above scripts/. The pool's project name is
@@ -40,6 +42,7 @@ script = sys.argv[1]
 # through this bash even when no other tool is reachable.
 BASH = shutil.which("bash")
 PYTHON = shutil.which("python3")
+SLEEP = shutil.which("sleep")
 
 
 def run(cmd, env=None, path=None):
@@ -75,6 +78,7 @@ with tempfile.TemporaryDirectory(prefix="session-start-probe-selftest-") as scra
     for directory in (bin_dir, bare):
         os.symlink(BASH, os.path.join(directory, "bash"))
         os.symlink(PYTHON, os.path.join(directory, "python3"))
+        os.symlink(SLEEP, os.path.join(directory, "sleep"))
     os.makedirs(os.path.join(repo, ".github", "workflows"))
     os.makedirs(os.path.join(repo, "scripts"))
     for name in ("green.yml", "red-auth.yml", "red-content.yml", "never-ran.yml"):
@@ -108,13 +112,17 @@ echo '● inboxclean-sync.service loaded failed failed InboxClean - incremental 
 echo '● service-health-check.service loaded failed failed Check critical services and notify on failure'
 ''')
     flow = {"head": "abc1234", "head_date": "2026-11-26T01:00:00+01:00",
+            "domains": {"now": {"docs/todo/pipeline.md": 900, "docs/todo/services.md": 800}},
             "revisions": [{"name": "now", "open": 3558, "ticked": 328, "tags": {"ready": 2428}},
                           {"name": "7d", "open": 3420, "ticked": 216, "tags": {"ready": 2312}}],
             "windows": [{"name": "7d", "added_open": 241, "added_closed": 20, "removed": 11, "ticked": 92, "reopened": 0, "net_open": 138}],
-            "block": {"day": "2026-11-07", "open_now": 1504, "share_pct": 42.3},
+            "block": {"day": "2026-11-07", "open_now": 1504, "share_pct": 42.3, "pool_visible_now": 1074},
             "gate": {"exit": 0, "unharvested_reports": 103, "queue_library_drifts": 133}}
     write_stub(os.path.join(repo, "scripts", "backlog-flow.sh"),
                "#!/usr/bin/env bash\necho '" + json.dumps(flow).replace("'", "") + "'\n")
+    write_stub(os.path.join(repo, "scripts", "check-todo-system.sh"),
+               "#!/usr/bin/env bash\nsleep \"${PROBE_TEST_GATE_SLEEP:-0}\"\necho 'WARN: 103 unharvested §f-bearing report(s) (CHECK_TODO_HARVEST=strict fails)'\n"
+               "echo 'WARN: 133 queue/library entry drift(s) (CHECK_TODO_PAIRING=strict fails)'\n")
     tq_db = os.path.join(scratch, "tq.db")
     open(tq_db, "w", encoding="utf-8").close()
     env_path = bin_dir
@@ -137,11 +145,17 @@ echo '● service-health-check.service loaded failed failed Check critical servi
         "2. Backlog",
         "open rows now 3558 (ready 2428)",
         "7 days ago 3420, net +138 in 7 days",
-        "block (rows added on 2026-11-07): 1504 open = 42.3 % of the open queue",
-        "gate WARNs: 103 unharvested",
+        "block (rows added on 2026-11-07): 1504 open = 42.3 % of the open queue (1074 visible to the pool)",
+        "largest libraries: pipeline.md 900",
+        "TODO gate WARN counts: not read (use --gate",
     ):
         expect(needle in out, f"the report must contain: {needle}", out)
     expect(out.count("WARN:") == 1, "a fully stubbed run prints only the read-model WARN", out)
+
+    out = run(base + ["--gate"], path=env_path).stdout
+    expect("gate WARNs: 103 unharvested section-f reports, 133 queue/library drifts (gate exit 0)" in out, "--gate reads the TODO gate's WARN counts", out)
+    out = run(base + ["--gate"], path=env_path, env={"PROBE_TIMEOUT_SECONDS": "1", "PROBE_TEST_GATE_SLEEP": "6"}).stdout
+    expect("the TODO gate timed out" in out, "a slow gate degrades to a WARN under --gate", out)
 
     result = run(base + ["--logs"], path=env_path)
     out = result.stdout
@@ -189,12 +203,14 @@ AUTH_SIGNATURES = (
 
 
 def parse_options(argv):
-    options = {"repo": None, "logs": False, "tq_db": DEFAULT_TQ_DB}
+    options = {"repo": None, "logs": False, "gate": False, "tq_db": DEFAULT_TQ_DB}
     index = 0
     while index < len(argv):
         arg = argv[index]
         if arg == "--logs":
             options["logs"] = True
+        elif arg == "--gate":
+            options["gate"] = True
         elif arg == "--tq-db":
             options["tq_db"] = argv[index + 1] if index + 1 < len(argv) else ""
             index += 1
@@ -311,14 +327,14 @@ def ci_section(out, repo, logs, timeout):
         out.print("      run with --logs to classify the failures (downloads each failed step's log)")
 
 
-def backlog_section(out, repo, timeout):
+def backlog_section(out, repo, timeout, gate):
     out.print()
     out.print("2. Backlog (scripts/backlog-flow.sh)")
     flow_script = os.path.join(repo, "scripts", "backlog-flow.sh")
     if not os.path.isfile(flow_script):
         out.print("   WARN: scripts/backlog-flow.sh is missing — backlog section skipped")
         return
-    result = call(["bash", flow_script, repo, "--json"], timeout)
+    result = call(["bash", flow_script, repo, "--json", "--no-gate"], timeout)
     if result is None or result.returncode != 0:
         out.print("   WARN: scripts/backlog-flow.sh failed or timed out — backlog section skipped")
         return
@@ -327,27 +343,41 @@ def backlog_section(out, repo, timeout):
     except ValueError:
         out.print("   WARN: scripts/backlog-flow.sh printed no JSON — backlog section skipped")
         return
-    revisions = {entry["name"]: entry for entry in report["revisions"]}
+    revisions = {entry["name"]: entry for entry in report.get("revisions", [])}
     now = revisions.get("now") or {}
     week = revisions.get("7d") or {}
-    flow = next((entry for entry in report["windows"] if entry["name"] == "7d"), None)
-    block = report["block"]
+    flow = next((entry for entry in report.get("windows", []) if entry["name"] == "7d"), None)
+    block = report.get("block") or {}
     ready = (now.get("tags") or {}).get("ready")
     head = f"open rows now {now.get('open')}" + (f" (ready {ready})" if ready is not None else "")
     if week.get("open") is not None and flow:
         head += (f", 7 days ago {week['open']}, net {'+' if flow['net_open'] >= 0 else ''}{flow['net_open']} in 7 days"
                  f" (+{flow['added_open']} open added, +{flow['added_closed']} added and closed, -{flow['removed']} removed, {flow['ticked']} ticked)")
     out.print("   " + head)
-    out.print(f"   block (rows added on {block.get('day', '?')}): {block.get('open_now', '?')} open = {block.get('share_pct', '?')} % of the open queue"
-          + (f" ({block['pool_visible_now']} visible to the pool)" if "pool_visible_now" in block else ""))
-    gate = report.get("gate") or {}
-    out.print(f"   gate WARNs: {gate.get('unharvested_reports', '?')} unharvested section-f reports, "
-          f"{gate.get('queue_library_drifts', '?')} queue/library drifts"
-          + (f" (gate exit {gate['exit']})" if gate.get("exit") not in (0, None) else " (gate exit 0)"))
+    out.print(f"   block (rows added on {block.get('day', '?')}): {block.get('open_now', '?')} open = "
+              f"{block.get('share_pct', '?')} % of the open queue"
+              + (f" ({block['pool_visible_now']} visible to the pool)" if "pool_visible_now" in block else ""))
     domain = (report.get("domains") or {}).get("now") or {}
     top = ", ".join(f"{os.path.basename(name)} {count}" for name, count in list(domain.items())[:4])
     if top:
         out.print(f"   largest libraries: {top}")
+    if not gate:
+        out.print("   TODO gate WARN counts: not read (use --gate; the gate can take half a minute under load)")
+        return
+    gate_script = os.path.join(repo, "scripts", "check-todo-system.sh")
+    if not os.path.isfile(gate_script):
+        out.print("   WARN: scripts/check-todo-system.sh is missing — gate counts skipped")
+        return
+    gate_timeout = timeout * 2
+    result = call(["bash", gate_script], gate_timeout)
+    if result is None:
+        out.print(f"   WARN: the TODO gate timed out after {gate_timeout} s — gate counts skipped")
+        return
+    text = result.stdout + result.stderr
+    unharvested = re.search(r"WARN: (\d+) unharvested", text)
+    drift = re.search(r"WARN: (\d+) queue/library entry drift", text)
+    out.print(f"   gate WARNs: {unharvested.group(1) if unharvested else 0} unharvested section-f reports, "
+              f"{drift.group(1) if drift else 0} queue/library drifts (gate exit {result.returncode})")
 
 
 def pool_section(out, repo, tq_db, timeout):
@@ -369,7 +399,7 @@ def pool_section(out, repo, tq_db, timeout):
             out.print(f"   pool budget spent today: {spent if spent is not None else 'unknown'} (project {project}; the pool's cap is 30 a day, shared by its repos)")
             lag = next((entry.get("lag") for entry in payload.get("consumer_lag", []) if entry.get("consumer") == "readmodel"), None)
             if lag:
-                print(f"   WARN: the tq read model trails the journal by {lag} facts — `tq stats` counters are empty until it catches up")
+                out.print(f"   WARN: the tq read model trails the journal by {lag} facts — `tq stats` counters are empty until it catches up")
         tasks = call(["tq", "tasks", "--project", project, "--since", "168h", "--limit", "5000", "--json", "--db", tq_db], timeout)
         if tasks is None or tasks.returncode != 0:
             out.print("   WARN: tq tasks failed or timed out — outcome line skipped")
@@ -420,7 +450,7 @@ def main():
     outputs = [Lines(), Lines(), Lines()]
     jobs = [
         (lambda out: guarded(lambda o: ci_section(o, repo, options["logs"], timeout), out, "CI"), outputs[0]),
-        (lambda out: guarded(lambda o: backlog_section(o, repo, max(timeout, 60)), out, "backlog"), outputs[1]),
+        (lambda out: guarded(lambda o: backlog_section(o, repo, timeout, options["gate"]), out, "backlog"), outputs[1]),
         (lambda out: guarded(lambda o: pool_section(o, repo, options["tq_db"], timeout), out, "pool"), outputs[2]),
     ]
     with ThreadPoolExecutor(max_workers=3) as pool:
