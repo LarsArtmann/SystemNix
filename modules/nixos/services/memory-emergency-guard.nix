@@ -947,23 +947,39 @@ _: {
                 fi
                 my_pgid="''${pgid_of[$$]:-}"
                 seen_pgids=" "
+                # Selection bookkeeping for the no-match line: WHY nothing
+                # was signalled must be readable without a re-run (2026-11-26:
+                # a fixture race wrote an empty cgroup.procs and the line
+                # could only say "no live headless process").
+                cand_pids_seen=0
+                cand_pids_unresolved=0
+                cand_pgids=0
+                cand_cgs_unreadable=0
                 if [ "$proc_scan_status" = "ok" ]; then
                   while IFS= read -r cand; do
                     [ -n "$cand" ] || continue
                     [ "$pause_count" -lt "$IO_PAUSE_MAX_GROUPS" ] || break
                     cand_cg="''${cand#* }"
                     procs_f="$CGROUP_IO_SRC/$cand_cg/cgroup.procs"
-                    [ -r "$procs_f" ] || continue
+                    if [ ! -r "$procs_f" ]; then
+                      cand_cgs_unreadable=$((cand_cgs_unreadable + 1))
+                      continue
+                    fi
                     while IFS= read -r cpid; do
                       case "$cpid" in
                         *[!0-9]*) continue ;;
                       esac
+                      cand_pids_seen=$((cand_pids_seen + 1))
                       cpgid="''${pgid_of[$cpid]:-}"
-                      [ -n "$cpgid" ] || continue
+                      if [ -z "$cpgid" ]; then
+                        cand_pids_unresolved=$((cand_pids_unresolved + 1))
+                        continue
+                      fi
                       case " $seen_pgids " in
                         *" $cpgid "*) continue ;;
                         *) seen_pgids="$seen_pgids$cpgid " ;;
                       esac
+                      cand_pgids=$((cand_pgids + 1))
                       if [ "$cpgid" -le 1 ] || [ "$cpgid" = "$my_pgid" ]; then
                         continue
                       fi
@@ -1004,7 +1020,7 @@ _: {
                 elif [ "$tty_skipped" -gt 0 ]; then
                   io_nomatch_reason=" (''${tty_skipped} matching process group(s) hold a controlling TTY, owner-interactive work is never pausable; movers: ''${io_top:-unknown})"
                 else
-                  io_nomatch_reason=" (matching cgroups held no live headless process to signal; movers: ''${io_top:-unknown})"
+                  io_nomatch_reason=" (matching cgroups held no live headless process to signal: ''${cand_pids_seen} pid(s) listed, ''${cand_pids_unresolved} not in the process map, ''${cand_pgids} distinct process group(s) passed the dedup, ''${cand_cgs_unreadable} cgroup.procs unreadable, 0 pausable; movers: ''${io_top:-unknown})"
                 fi
                 if [ -n "$new_paused" ]; then
                   old_epoch=0

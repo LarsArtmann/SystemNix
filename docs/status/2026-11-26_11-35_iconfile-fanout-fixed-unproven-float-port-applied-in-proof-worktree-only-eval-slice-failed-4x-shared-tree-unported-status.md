@@ -15,9 +15,9 @@
 - Proof worktree `~/.cache/quotaboard-vhost/wt-float`: moved from `db2576666` to `396af91f5` (`git switch --detach`), then `nix flake update quotaboard` changed exactly one lock node (`dfe77818` → `dae5132`, revCount 385, narHash `sha256-BBucflk8d…`, 614 nodes before and after, root inputs equal; `lock-update2.log`). Upstream master is `dae5132` on Forgejo AND GitHub, nothing after it.
 - The port is applied in that worktree (`apply-port.py`, both anchors matched): `flake.lock` (8 lines), `modules/nixos/services/quotaboard.nix` (156), `platforms/nixos/desktop/quickshell.nix` (26). Both Nix files parse; `nix fmt --fail-on-change` = "formatted 2 files (0 changed)".
 - Nix 2.35.6 `tryEval` behaviour (five one-second evals at 11:36): it catches `builtins.throw` (`{"success":false}`) and does NOT catch type errors (`1 + "a"`, `substring` on null, `"${null}"`), in pure mode as well.
-- Live state, read at 06:2x to 06:5x: boot unchanged (`0737ecd7`, up since 2026-11-25 11:06:49). At 06:16:48 a session on pts/40 (cwd SystemNix) ran `nh` 4.5.0 with `NixosActivate` action `Switch` on `d5qzj0h2…` (`install_bootloader: false`; sudo journal), outside `deploy.sh`. That system carries last night's blocklist work: the timer wrapper `n1iv9aid…-dns-update` references coreutils-9.12 and gnugrep-3.12 (no python3); the observer `70fnjw6q…` contains `dnsblockd-blocklist-freshness`; `/var/lib/dnsblockd-otel/` holds `blocklist-since` + `last-errors`, the retired `blocklist-set-hash`/`-since` are gone. The live user unit has `WantedBy=default.target` (still through the override).
-- Live anchors at 11:35: `/run/current-system` = profile `system-1032-link` = `zm83sr9716…`; the symlink was set at 06:48:22. No deploy log spans that minute (`06-37-21` ends 06:37, the next starts 07:20); I did not trace the command.
-- Deploy attempts logged today: 37 between 06:12 and 11:31. The six I read end `deploy exited code=12` after 3 to 4 s (entry gate: io PSI 36 to 44 % with disk busy 83 to 91 %). Two logs are long (`07-20-19` to 07:26, `07-37-58` to 08:56) and were not read.
+- Live state: boot unchanged (`0737ecd7`, up since 2026-11-25 11:06:49). At 06:16:48 a session on pts/40 (cwd SystemNix) ran `nh` 4.5.0 with `NixosActivate` action `Switch` on `d5qzj0h2…` (`install_bootloader: false`; sudo journal), outside `deploy.sh`; at 06:22 `/run/current-system` was that path while the profile still held gen-1031. The generation running since 06:48:22 (gen-1032, `zm83sr9716…`) carries last night's blocklist work, read at 11:40: the timer wrapper `n1iv9aid…-dns-update` closure has coreutils-9.12 and gnugrep-3.12 (no python3); the observer script its unit points at contains `dnsblockd-blocklist-freshness` (2 references); `/var/lib/dnsblockd-otel/blocklist-since` has 22 lines and no `systemnix-extra`; the retired `blocklist-set-hash`/`-since` are gone. The live user unit (read about 06:45) has `WantedBy=default.target`, still through the override.
+- Live anchors at 11:40: `/run/current-system` = profile `system-1032-link` = `zm83sr9716…`; the symlink was set at 06:48:22. No deploy log spans that minute (`06-37-21` ends 06:37, the next starts 07:20); I did not trace the command.
+- Deploy attempts logged today: 40 between 06:12 and 11:31. The six I read end `deploy exited code=12` after 3 to 4 s (entry-gate refusal; the two I read in full show io PSI 36.7 to 44.3 % with disk busy 83 to 91 %). Two logs are long (`07-20-19` to 07:26, `07-37-58` to 08:56) and were not read.
 - IO attribution (runbook probe set, about 06:50): `cvagent` pid 372048 86.1 MB/s + 106 % CPU, `duckdbengine.te` pid 342655 215 % CPU; PSI some avg10 39.18 → 35.51 across the probes; Samsung (`nvme1n1`) 20 MiB read in the 4 s window. At 11:35: PSI some avg10 35.75, load 21.05 / 41.12 / 49.05.
 - `buildflow --dry-run --verbose` in SystemNix: rc=69, 39 error-severity findings that predate me (nix-checker 16, file-size-check 8, go-structure-linter 8, two more tools; not inspected in detail). Its `nix-fmt` step is a round-trip detect that runs the repo's own `nix -- fmt . <files>`, so the project's `nix fmt -- <paths> --fail-on-change` is the same pinned formatter.
 
@@ -26,16 +26,16 @@
 - The fan-out fix: no harness run. `CASES=iconfile` was not executed once in this session. The group is now 5 cases plus the harness control; none has a result.
 - The port: no attribute of it was ever read back. Four eval slices of the ported worktree all failed, each on my slice code, never on the port (b2). No toplevel build. So "the package builds from `dae5132` under SystemNix's nixpkgs" is still an open question.
 - Shared tree: port not applied, no `nix flake check --no-build`.
-- Live: the metric values (`dnsblockd_blocklist_age_seconds`, `refresh_stale`, `observer_ok`), the state file's line count, the new gatus alert text, the boot entry for gen-1032 (I compared profile and running system only), the timer unit's next run.
+- Live: the metric values (`dnsblockd_blocklist_age_seconds`, `refresh_stale`, `observer_ok`), the state file's first-seen epochs, the new gatus alert text, the boot entry for gen-1032 (I compared profile and running system only), the timer unit's next run.
 - Nothing was deployed by me. No doc, CHANGELOG, runbook or TODO row was written.
 
 ## TL;DR
 
 1. **The core item did not move.** The shared tree is exactly where the 05:39 report left it: lock `dfe7781`, override in place, favicon as tile. What exists is one step further than last night only in the proof worktree: lock floated and port applied there, still without one successful eval.
-2. **The red harness leg's root cause is found and fixed in the tree, unproven.** It was my own fan-out: `listToAttrs` forces the icon name as a string, so a null icon killed eval before any assertion could print.
+2. **The red harness leg's root cause is found and fixed in the tree, unproven.** It was my own fan-out: `builtins.listToAttrs` forces the icon name as a string (on a null name the builtin prints the leg's exact error text, one-second eval at 11:40), so a null icon killed eval before any assertion could print.
 3. **I widened the collision rule while I was in there** (two tiles may now share one file under one icon name; a collision needs two different files). That changed one harness leg and added a case. Unproven, and already committed by the daemon for every session to evaluate against.
 4. **Four eval slices, four failures, 98 minutes, zero proof.** The first three forced every assertion's message (sops-nix's interpolates a null owner). The fourth wrapped that in `tryEval`, which does not catch type errors on this Nix. Each attempt cost 59 to 119 s on a storming box.
-5. **Found, not caused by me:** the box was switched outside `deploy.sh` at 06:16:48 (no profile generation) and again at 06:48:22 (gen-1032, profile-anchored, no deploy log). A sibling loop re-fires deploys every ~5.5 minutes since 08:55; every one I read was refused at the entry gate.
+5. **Found, not caused by me:** the box was switched outside `deploy.sh` at 06:16:48 (no profile generation) and again at 06:48:22 (gen-1032, profile-anchored, no deploy log). 40 deploy attempts were logged today; a sibling loop has re-fired them every ~5.5 minutes since 08:55, and every one I read was refused at the entry gate.
 6. **My turn ended at 07:55 after the fourth failed trace, with no status line.** The owner had to ask for this report. Third time in this arc.
 
 ---
@@ -43,7 +43,7 @@
 ## a) FULLY DONE
 
 1. **Context and state pinned.** 05:39 report read in full; `buildflow` skill loaded (SystemNix is a covered project); `next-queue` skill loaded and `NEXT.md` head read (1521 items, one external-human item, §f 34).
-2. **Root cause of the red leg `iconfile/mark-without-icon-name` (b2 of 05:39) located.** Not one of the two `hasPrefix "http"` sites: the fan-out at `integration.nix` `services.papdashboard.extraIcons = lib.listToAttrs (map (e: lib.nameValuePair e.homepage.icon …) …)` forces the name as a string, and a null icon throws "expected a string but found null" before the assertions are consulted.
+2. **Root cause of the red leg `iconfile/mark-without-icon-name` (b2 of 05:39) located by code reading.** Not one of the two `hasPrefix "http"` sites: the fan-out at `integration.nix` `services.papdashboard.extraIcons = lib.listToAttrs (map (e: lib.nameValuePair e.homepage.icon …) …)` forces the name as a string, and a null icon throws before the assertions are consulted. `builtins.listToAttrs [ { name = null; value = 1; } ]` prints "expected a string but found null: null", the leg's error text. The harness run (§f 4) closes it.
 3. **Fix written (`integration.nix`, committed by the daemon).** One predicate `hasPackIconName`; `packNamedIconFiles` (the only marks the fan-out copies); `danglingIconFiles` (its complement, same predicate); `marksByIconName` (a `lib.foldl'` from icon name to mark files); `collidingIconNames` (more than one distinct file under one name); `collidingIconFiles`. Parse and formatter clean.
 4. **Harness updated (`negative-test-lints.sh` lines 692 to 711, committed by the daemon).** `two-marks-one-name` now ships two different real files (`assets/monitor365-logo.svg`, `assets/immich-logo.svg`); new case `same-mark-shared` (two tiles, one icon name, one file, must stay green); comment states the null-name lesson. `bash -n` clean.
 5. **Float proven clean in the worktree, again.** One lock node moved, to the commit both remotes carry.
@@ -59,7 +59,7 @@
    - 07:53 `apply4.nix`, `tryEval (deepSeq message message)`: same error raised inside `tryEval`. The 11:36 isolation evals show why: on Nix 2.35.6 `tryEval` catches `throw` only, not type errors.
    - Weak evidence only, not relied on: in the first two attempts the attributes that JSON encodes before `failedMine` (`entry`, `extraIcons`) were computed without error in the ported worktree.
 2. **Fan-out fix + harness legs.** Written, parse and formatter clean, committed. No run of `CASES=iconfile`. The null-icon leg is expected to fail with my assertion text now, but that is an expectation.
-3. **Live verification of last night's blocklist work.** Unit, wrapper closure, observer script and state file names read in the running system. Values, line count, gatus text and boot entry not read.
+3. **Live verification of last night's blocklist work.** In gen-1032: wrapper closure, observer script and state file read (22 lines, no `systemnix-extra`). Values, first-seen epochs, gatus text and boot entry not read.
 
 ## c) NOT STARTED
 
@@ -106,9 +106,9 @@
 7. `nix flake check --no-build` on the final tree (capture once to a file).
 8. Deploy per Q1's answer: `scripts/deploy-when-quiescent.sh --fire`, never forced.
 9. Live verification after a deploy: unit file from the upstream option, `/icons/quotaboard.svg` is the 96-viewBox mark, `dnsblockd_blocklist_age_seconds` value, state file 22 lines without `systemnix-extra`, gatus alert text, timer PATH, boot entry = new generation on both ESPs, quotaboard smoke lines in the deploy log.
-10. Read now, cheap: the three freshness metrics from `:9400/metrics`, the state file's line count and first-seen epochs (the first sample after the 06:16 switch starts every list at age 0, so the alarm arms about 30 days later), the boot entry for gen-1032.
+10. Read now, cheap: the three freshness metrics from `:9400/metrics`, the state file's first-seen epochs (the first sample after this morning's switch starts every list at age 0, so the alarm arms about 30 days later), the boot entry for gen-1032.
 11. Identify the session behind the 06:16:48 raw `nh` switch (pts/40) and the 06:48:22 activation; record why `deploy.sh` was bypassed.
-12. Identify the loop re-firing deploys every ~5.5 minutes since 08:55 (37 attempts today, the ones read all rc=12); read the two long logs (`07-20-19`, `07-37-58`).
+12. Identify the loop re-firing deploys every ~5.5 minutes since 08:55 (40 attempts today, the ones read all rc=12); read the two long logs (`07-20-19`, `07-37-58`).
 13. Row (owner): `cvagent` 86 MB/s and `duckdbengine.te` 215 % CPU hold the deploy gate shut (Q2).
 14. Tick `docs/todo/pipeline.md` + `TODO_LIST.md` "HaGeZi FOD hash churn …"; tick `docs/todo/services.md` "Nightly dns-blocklist drift automation"; re-tag "HaGeZi blocklist refresh workflow" to `[decision]`.
 15. SystemNix CHANGELOG: blocklist repair, refresh automation (timer PATH, all-or-nothing script, bump mode, workflow proof step, `blocklist-fetches`), per-list gauge, iconFile wiring + fan-out fix, quotaboard upstream option (after the port).
@@ -121,7 +121,7 @@
 22. AGENTS.md lessons: a fan-out must not force a value an assertion is meant to explain; prove with the build; one change per fix; foreign live-state changes are flagged at once.
 23. README line 15: add Quotaboard to "Self-Hosted Services".
 24. `bash scripts/check-todo-system.sh` and `bash scripts/check-doc-links.sh` after the doc pass.
-25. Row: watch the weekly timer's first run on the fixed unit (Monday 2026-11-30, 04:00 to 05:00): expect a StevenBlack pin advance commit or "pin unchanged". The unit is live since the 06:16 switch, so the 05:39 prediction (fails again Monday) no longer applies.
+25. Row: watch the weekly timer's first run on the fixed unit (Monday 2026-11-30, 04:00 to 05:00): expect a StevenBlack pin advance commit or "pin unchanged". The fixed unit is live in gen-1032 (read 11:40), so the 05:39 prediction (fails again Monday) holds only if an older generation is booted before then.
 26. Row: confirm the "Prove the repair" step is green on a GitHub runner once the workflow commit reaches GitHub.
 27. Row: after the next reboot into a generation carrying the port, confirm `quotaboard.service` is active while `graphical-session.target` is inactive.
 28. Rows (owner eyeball): tile "Quotaboard" with its mark; DMS bar widget shows values, not `!`.
@@ -138,7 +138,7 @@
 ## g) QUESTIONS FOR THE OWNER
 
 1. **Two activations outside `deploy.sh` this morning, and a sibling loop re-firing deploys every ~5.5 minutes.** When the gate opens, that loop deploys the tree as it is then, so without my port unless I land it first. Do you want me to land the port as soon as it is proven and let whichever deploy fires carry it, or hold the port until that session's deploy has landed?
-2. **`cvagent` (pid 372048) wrote 86 MB/s and `duckdbengine.te` (pid 342655) used 215 % CPU during my probe, and the io PSI has not been under 20 % all morning, so every deploy is refused.** Is that load expected (then I simply wait for a calm window), or is `cvagent` misbehaving? I will not touch either process without your word.
+2. **`cvagent` (pid 372048) wrote 86 MB/s and `duckdbengine.te` (pid 342655) used 215 % CPU during my probe; every io-PSI reading I took between 06:17 and 11:35 was above 35 %, and every deploy attempt I read was refused at the gate.** Is that load expected (then I simply wait for a calm window), or is `cvagent` misbehaving? I will not touch either process without your word.
 3. **Always-on polling (carried from 05:39 g2).** The server polls Z.ai and Synthetic around the clock, one request per provider per minute, live since 2026-11-25 19:05. Keep, or pause the refresher when nobody has a session? The port keeps it as it is. Defaults I will take unless you say otherwise: the tile shows the new `brand/quotaboard.svg` mark (say "favicon" to keep the tab icon), and the HaGeZi pin stays a manual `--bump-hagezi latest` (say "auto" to add it to the weekly timer).
 
 ## Appendix: scratch and commands
