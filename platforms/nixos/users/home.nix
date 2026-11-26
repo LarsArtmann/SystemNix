@@ -286,7 +286,7 @@ in
         # full-time IO-stalled cgroup. Four monitor windows held system io PSI at
         # 40-65% for 20 h (2026-11-25 19:57 onward): the memory emergency guard kept
         # tripping Zone 6 and the deploy gate refused every deploy. Off-screen A/B
-        # with ghostty 1.4.0 (2026-11-26): default backend 100% cgroup io pressure,
+        # with ghostty 1.4.0 (2026-11-26): default backend ~60% cgroup io pressure,
         # epoll 0.00%. Needs a full ghostty restart after the deploy.
         async-backend = "epoll";
       };
