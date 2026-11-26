@@ -14,6 +14,21 @@
 
 ## Queue
 
+### NOW (max 10)
+
+The ten rows worth the first hour of a session, re-ranked at every session start. A bullet is a pointer, not a row: it names an existing row by its exact title and leaves when that row closes. Read this block before claiming work.
+
+- **Public exposure, two live keys sit in public history:** `docs/todo/security.md` → "Secret-history-scan stays red until 2 rotations (user)" (owner: delete the Gemini key, rotate the Context7 key).
+- **CI is dark, one console step un-blocks the nix workflows:** `docs/todo/pipeline.md` → "Create NIX_GITHUB_RO_TOKEN (fine-grained PAT, Contents: Read-only) and set the repo secret", then "CI read-only GitHub PAT (user, 1 step)".
+- **One ruling frees 42 % of the queue:** the 2026-11-07 block, [ruling pack](./docs/planning/2026-11-26_01-20_2026-11-07-block-ruling-pack.md) (1,504 open rows; options keep, re-park, re-park and stamp).
+- **The offsite backup has never produced an archive:** `docs/todo/storage.md` → "Offsite Borg: replace the unloadable borg_ssh_key secret — zero archives since the 2026-11-16 go-live" (owner holds the key material).
+- **Local snapshots are stale too:** `docs/todo/storage.md` → "Backups stale beyond audiblesync: data 999h / pool 195h / root 174h + two failed units" (`backup_all_healthy 0`).
+- **The Forgejo sync fails every hour:** `docs/todo/services.md` → "forgejo-github-sync fails every run at phase 5: audiblesync is still a pull mirror" (owner call: flip, or drop it from the canonical list).
+- **A panic still loses its own evidence:** `docs/todo/stability.md` → "Make kdump capture one cut"; the fix is items 2 and 3 of the [2026-11-25 crash diagnosis](./docs/status/2026-11-25_18-02_crash-diagnosis-two-panic-reboot-cuts-kdump-capture-kernel-oom-session-status.md) section f (the capture kernel inherits a 2 GiB watermark inside 512 MiB and dies before it can write the dump).
+- **The next gated deploy carries two fixes that wait on it:** `docs/todo/services.md` → "health-dashboard-rediscover: indexer-web and timesheets are federated in tree — verify the daily sweep passes"; `docs/todo/storage.md` → "rust-cache-projects-links boot race: unit ordered after user@1000.service in tree — verify green on the next boot".
+- **103 follow-up reports are harvested by nobody:** `docs/todo/pipeline.md` → "Run a dedicated unharvested-§f-report sweep".
+- **The negative-test harness cannot yet run an honest night:** `docs/todo/pipeline.md` → "Negative-test harness: INFRA class, abort on a failed pristine fetch, live doc-count mutations, --check-mutations".
+
 ### catalog / inventory
 
 - [ ] [blocked:push] **Push the curated pbx.artmann.tech inventory descriptor (2026-10-24, shipped locally)** — `scripts/catalog-inventory.pbx.json` (service names + subdomains only, private-repo hygiene documented in the script header) rides the inventory union as a fourth host, killing the false "not deployed" chips on pbx/webphone/pbx-lens in catalog.home.lan; the script now ABORTS when the file is missing (a dropped host silently drops deployments). The hourly `catalog-inventory-sync` timer runs from THIS checkout on evo-x2, so regeneration already produces the new shape — only the git push is pending (Source: eventcatalog-hub docs/planning/2026-10-24_17-00 tier 2b)
