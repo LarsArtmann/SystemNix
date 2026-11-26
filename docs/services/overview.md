@@ -6,9 +6,58 @@ Web dashboard over the project fleet (repos, stats, activity), fed by the **proj
 
 ## What it serves
 
-| Route | Auth                    | What              |
-| ----- | ----------------------- | ----------------- |
-| `/`   | forward-auth / open LAN | Project dashboard |
+| Route             | Auth                    | What                                                  |
+| ----------------- | ----------------------- | ----------------------------------------------------- |
+| `/`               | forward-auth / open LAN | Project dashboard                                     |
+| `/compliance`     | forward-auth / open LAN | BuildFlow compliance heatmap (repo × gate class)      |
+| `/risk`           | forward-auth / open LAN | Code-risk hotspots (churn × complexity, worst first)  |
+| `/api/compliance` | forward-auth / open LAN | JSON compliance snapshot (ETag, SSE-live)             |
+| `/api/hotspot`    | forward-auth / open LAN | JSON hotspot snapshot (ETag, SSE-live)                |
+
+## Compliance + code risk (enabled 2026-11-26)
+
+Both upstream integrations are opt-in and were off on this host. They are now
+wired in `configuration.nix` (`complianceSource`, `hotspotSource`) with the
+support machinery in the wrapper module. The two legs have DIFFERENT shapes
+because the overview service user (`overview`) cannot read the primary user's
+0700 home:
+
+- **Compliance — `file:` source (producer/consumer split).** The upstream
+  `auto` source execs `buildflow compliance --json`, but BuildFlow's state DB
+  lives in `~lars/.local/state/buildflow` — unreachable for `overview`, and a
+  root-run producer would leave root-owned SQLite `-wal`/`-shm` files in the
+  user's state dir. So `overview-compliance-evidence.service` (oneshot,
+  `User=lars`, timer 15min after boot then every 6h) writes
+  `/var/lib/overview-evidence/compliance.json`; overview reads it through
+  `OVERVIEW_COMPLIANCE_SOURCE=file:/var/lib/overview-evidence/compliance.json`.
+  The write is atomic (mktemp + `mv`): a partial file would flip the whole
+  heatmap to Unknown. Evidence dir is (re)created by a `+`-privileged
+  `install -d` on every run — NOT a tmpfiles rule (tmpfiles application has
+  proven unreliable across switches, 2026-11-04). Window: `--since 14d`,
+  `--stale-after 336h` matching the consumer's staleness threshold.
+- **Code risk — in-process `auto` source.** go-hotspot analyzes ONE repo per
+  invocation with `git log --numstat` over a year, against the ABSOLUTE paths
+  the discovery daemon reports (`/home/lars/projects/...`). A service user
+  cannot traverse the 0700 home, and home-dir ACLs are FORBIDDEN (the
+  mask-recalc trap that silently killed hermes' access, 2026-08-20). Instead
+  the unit gets `TemporaryFileSystem=/home/lars` + `BindReadOnlyPaths=
+  [/home/lars/projects]` (with `ProtectHome=false`): a fresh tmpfs over the
+  home containing ONLY the projects tree, so the discovered paths stay valid
+  and nothing else from the home is exposed. `path = [ git ]` supplies the git
+  the CLI shells out to, and `GIT_CONFIG_GLOBAL` points at a store gitconfig
+  with `[safe] directory = *` (git ≥2.35.2 otherwise refuses foreign-owned
+  work trees).
+- **Cost knobs** — `hotspotRefreshInterval = 6h` (a full pass is ~293
+  `git log --numstat` walks; measured 12.7s for SystemNix alone) and the unit
+  runs at BE/6 (`ioTier.background`) so the fleet scan never contends with the
+  desktop on the QLC root. `memoryMax = 2G` (4 concurrent analyses + the
+  ~250MB dashboard).
+- **Verify** — `journalctl -u overview-compliance-evidence` shows the pass;
+  `stat /var/lib/overview-evidence/compliance.json` must be fresh and
+  lars-owned. For code risk, `/risk` fills in one refresh AFTER a restart
+  (first fetch is a background pass) — an empty matrix right after a deploy is
+  expected, not a failure. `/proc/<overview-pid>/mountinfo` shows the
+  tmpfs+bind pair.
 
 ## Ops
 

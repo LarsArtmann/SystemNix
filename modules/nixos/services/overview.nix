@@ -197,7 +197,7 @@
                 # fresh tmpfs over the home with ONLY the projects tree
                 # bind-mounted in keeps every discovered absolute path valid
                 # while exposing nothing else from the home.
-                TemporaryFileSystem = "/home/${primaryUser}";
+                TemporaryFileSystem = "/home/${primaryUser}:ro";
                 BindReadOnlyPaths = [ projectsDir ];
                 ProtectHome = lib.mkForce false;
               })
