@@ -48,6 +48,7 @@ _: {
         harden
         ioTier
         ;
+      templateActivity = (import ./_llama-idle-activity.nix { inherit lib pkgs; }).templateActivity;
       inherit (config.users) primaryUser;
 
       serverType = lib.types.submodule {
@@ -189,7 +190,10 @@ _: {
             # freeze-#56 death boot; the 13:10:49 reload is the fatal
             # 35->75% IO-PSI step). Upstream leg (probe counts as keep-alive
             # natively) stays owned by docs/todo/stability.md [blocked:push].
-            if ${lib.getExe' pkgs.systemd "journalctl"} -u 'llama-vlm-${name}@*.service' --since "${s.keepAlive} ago" -n 1 --output cat 2>/dev/null | grep -q .; then
+            # Indexed by message id (see _llama-idle-activity.nix): a unit
+            # glob here read up to 72 GB of journal in one run and was the
+            # io storm of 2026-11-25/26.
+            if ${templateActivity} 'llama-vlm-${name}@' "${s.keepAlive}"; then
               exit 0
             fi
             systemctl stop 'llama-vlm-${name}@*.service' llama-vlm-${name}.service

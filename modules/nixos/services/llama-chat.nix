@@ -95,6 +95,7 @@ _: {
     let
       cfg = config.services.llama-chat;
       libHelpers = import ../../../lib/default.nix lib;
+      templateActivity = (import ./_llama-idle-activity.nix { inherit lib pkgs; }).templateActivity;
       inherit (libHelpers)
         harden
         ioTier
@@ -189,7 +190,9 @@ _: {
           # Freeze-#56 fallback leg (llama-vlm): short probes start AND
           # finish a bridge between two idle-check runs, yet every probe IS
           # traffic — any bridge-unit journal line inside the window counts.
-          if ${lib.getExe' pkgs.systemd "journalctl"} -u 'llama-chat@*.service' --since "${cfg.keepAlive} ago" -n 1 --output cat 2>/dev/null | grep -q .; then
+          # Indexed by message id (see _llama-idle-activity.nix): a unit glob
+          # here read gigabytes of journal on every run and was the io storm.
+          if ${templateActivity} 'llama-chat@' "${cfg.keepAlive}"; then
             exit 0
           fi
           systemctl stop 'llama-chat@*.service' llama-chat.service
