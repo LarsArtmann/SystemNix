@@ -64,6 +64,7 @@ How it behaves, in one paragraph: a call to a gated upstream takes a slot or wai
 | D10 | The in-tree copy is deleted only after the input build is deployed and verified | "land the replacement before removing the old source" |
 | D11 | No stack change: stdlib only stays | this is an extraction, not a new service. `STACK.md` records why the fleet default (go-appkit) is declined |
 | D12 | CI lives in `.forgejo/workflows/`, not `.github/workflows/` | the Forgejo sync token lacks the `workflow` scope; a `.github/workflows` file would stall the push mirror (the `webphone-android` precedent in `platforms/nixos/system/configuration.nix`) |
+| D13 | Wait budget 270 s, raised from 30 s on 2026-11-26 | owner direction ("set the timeout to like 5 minutes"). At 30 s, 4,454 of 10,535 ledger lines (42%) in the first 11 live hours were the proxy's budget answer. The budget has to end before the client's own clock: crush v0.102.0 abandons a stream with no first part within 5 minutes (`internal/agent/request_guard.go`), cvagent gives one extraction 300 s. 270 leaves 30 s for the time to first token (p99 20 s over 5,836 streamed calls). A literal 300 would race crush's clock |
 
 ## 4. Pareto breakdown
 
@@ -298,6 +299,8 @@ Found while preparing, not changed here (this file is additive):
 - `pkgs/ai-meter.nix` says "homelab-specific infrastructure, deliberately NOT a separate LarsArtmann repo". Superseded by the owner's direction of 2026-11-25; T16.2 rewrites it.
 - TODO_LIST rows 1634 (ledger report consumer), 2593 (golangci-lint pass), 3005 (junk audit), 3043 (502 on client abort) name `pkgs/ai-meter/...`. They move with the code (T16.3). Row 2593 may already be done: the 05:26 status report records `0 issues` from a real lint run; tick it only after re-running the lint in T01.3.
 - No row existed for the rate-limit problem or the extraction; both start here.
+- The T01 block (section 5) and the comment it asked for were written for a 30 s budget. D13 raised it to 270 s on 2026-11-26; the module comment carries the reasoning.
+- Section 1's row "Crush HTTP timeout: none by default" is true for the HTTP client and incomplete: crush v0.102.0 wraps every model call in a request guard whose stream watchdog gives up after 5 minutes without a first part (`internal/agent/request_guard.go`, `defaultFirstPartTimeout`; `options.request_timeout` is unset here, so the 2-minute `DefaultRequestTimeout` applies only to non-streaming calls). Found 2026-11-26 while setting D13.
 - `usage_test.go` is unformatted since 2026-11-11 (not this session's file). It gets formatted with the first `nix fmt` in the new repo (T11.4).
 
 Harvest at execution time, not now: T18.1 and T18.2 are the only tasks that should become `[ready]` queue rows; everything else is done inline by the executor, and adding it to the queue now would send a second session into the same files.

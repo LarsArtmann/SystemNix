@@ -169,16 +169,16 @@ _: {
       ) enabledEntries;
 
       # Icon name -> the distinct mark files shipped under it.
-      marksByIconName = lib.groupBy' (lib.attrValues packNamedIconFiles) (
-        e: e.homepage.icon
-      ) (e: toString e.homepage.iconFile);
+      marksByIconName = lib.groupBy' (lib.attrValues packNamedIconFiles) (e: e.homepage.icon) (
+        e: toString e.homepage.iconFile
+      );
 
       # One icon-pack name holds one file. Entries that ship the SAME file
       # under one name are fine (two tiles of one product); a second, different
       # mark would leave all but one of them showing a foreign logo.
-      collidingIconNames = lib.filter (
-        icon: lib.length (lib.unique marksByIconName.${icon}) > 1
-      ) (lib.attrNames marksByIconName);
+      collidingIconNames = lib.filter (icon: lib.length (lib.unique marksByIconName.${icon}) > 1) (
+        lib.attrNames marksByIconName
+      );
 
       collidingIconFiles = lib.filterAttrs (
         _: e: lib.elem e.homepage.icon collidingIconNames
@@ -349,6 +349,16 @@ _: {
                         type = lib.types.attrs;
                         default = { };
                         description = "Extra request headers (e.g. auth)";
+                      };
+                      method = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "HTTP method for the probe (e.g. POST); null leaves gatus's GET default";
+                      };
+                      body = lib.mkOption {
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = "Request body for the probe (POST/write checks that must prove functional work, not just liveness); null sends none";
                       };
                     };
                   }
@@ -724,6 +734,8 @@ _: {
             }
             // lib.optionalAttrs (check.client != { }) { inherit (check) client; }
             // lib.optionalAttrs (check.headers != { }) { inherit (check) headers; }
+            // lib.optionalAttrs (check.method != null) { inherit (check) method; }
+            // lib.optionalAttrs (check.body != null) { inherit (check) body; }
           ) entryChecks;
         })
         (lib.optionalAttrs (options ? services.papdashboard) {
@@ -735,9 +747,7 @@ _: {
           # Only pack-named marks: a null or URL icon has no pack slot, and
           # forcing one here would abort eval before the assertions print.
           services.papdashboard.extraIcons = lib.listToAttrs (
-            map (e: lib.nameValuePair e.homepage.icon e.homepage.iconFile) (
-              lib.attrValues packNamedIconFiles
-            )
+            map (e: lib.nameValuePair e.homepage.icon e.homepage.iconFile) (lib.attrValues packNamedIconFiles)
           );
         })
         (lib.optionalAttrs (options ? services.backup-coordination) {

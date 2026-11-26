@@ -464,6 +464,8 @@ in
       alerts ? [ ],
       client ? { },
       headers ? { },
+      method ? null,
+      body ? null,
     }:
     {
       inherit
@@ -476,7 +478,9 @@ in
         ;
     }
     // lib.optionalAttrs (client != { }) { inherit client; }
-    // lib.optionalAttrs (headers != { }) { inherit headers; };
+    // lib.optionalAttrs (headers != { }) { inherit headers; }
+    // lib.optionalAttrs (method != null) { inherit method; }
+    // lib.optionalAttrs (body != null) { inherit body; };
 
   # Discord alert for a gatus endpoint. NOTE: the YAML field is
   # `description` (gatus alert.Alert yaml tag) — `desc:` is silently
