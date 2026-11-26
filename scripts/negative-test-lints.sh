@@ -1127,6 +1127,29 @@ run_case aimeter dot-as-escape ai-meter-spend-promql fail \
   'sed:modules/nixos/services/_ai-meter-dashboard.nix:s|"\[.\]"|"\\\\."|'
 run_case aimeter comment-control ai-meter-spend-promql pass '' \
   'sed:modules/nixos/services/_ai-meter-dashboard.nix:s|^{ lib }:$|{ lib }:\n# control comment|'
+# The failure-rate alert under admission control (2026-11-26): on the gate's
+# first night it counted ai-meter's own 429 answers as failures and sat firing
+# for 85 % of 30 hours. Each leg removes one property of the repaired rule
+# (its own answers are not failures, per provider, above a volume floor, a
+# plain 429 still is a failure); the promtool fixtures in
+# checks.ai-meter-alert-promql must go red.
+run_case aimeter alert-gate-blind-dropped ai-meter-alert-promql fail \
+  'the failure-rate rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/outcome=~"timeout|circuit"}\[10m\]))/outcome=~"timeout|circuitX"}[10m]))/'
+run_case aimeter alert-floor-lowered ai-meter-alert-promql fail \
+  'the failure-rate rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/floorCallsPerSecond = "0.0833333";/floorCallsPerSecond = "0.000001";/'
+run_case aimeter alert-floor-raised ai-meter-alert-promql fail \
+  'the failure-rate rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/floorCallsPerSecond = "0.0833333";/floorCallsPerSecond = "5";/'
+run_case aimeter alert-429-ignored ai-meter-alert-promql fail \
+  'the failure-rate rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/{code=~"4..|5.."}\[10m\]))/{code=~"5.."}[10m]))/'
+run_case aimeter alert-providers-mixed ai-meter-alert-promql fail \
+  'the failure-rate rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/sum by (upstream) (rate/sum(rate/g'
+run_case aimeter alert-comment-control ai-meter-alert-promql pass '' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s|^        floorCallsPerSecond = "0.0833333";$|        floorCallsPerSecond = "0.0833333"; # control|'
 
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]
