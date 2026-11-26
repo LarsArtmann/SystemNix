@@ -164,6 +164,16 @@ Method caveats (data provenance): **wtmp rotated 2026-11-01 00:49** — `last -x
 
 Codified from the 2026-10-15 85–96 % storm attribution (one pass named `crush -y` ≈ 407 MB/s + a `go test -race` trio ≈ 130 MB/s combined; source: `docs/status/2026-10-16_00-07_boot-failure-triage.md` §a.2/§f.9). Run these three probes in this order BEFORE any containment recommendation (the SIGSTOP doctrine above requires attribution first):
 
+**Step 0 (2026-11-26): rank cgroups by `io.pressure` before trusting system io PSI.** A thread parked in an io_uring completion wait is booked as IO-stalled for the whole wait once its ring has handled one request, disks idle or not, and ghostty's default `async-backend` is io_uring. Four ghostty monitor windows held system io PSI at 40-65% for 20 h with every disk <= 5% busy, kept the guard in Zone 6 and blocked all 40 deploys of the day (the deploy gate's "IDLE disks" branch refuses too). The guard's IO-TOP line ranks by bytes and cannot see a phantom that moves none (it named llama-embeddings, whose bytes are zram swap-out). Proven by off-screen A/B with ghostty 1.4.0: default backend ~60% cgroup io pressure, epoll 0.00%. `platforms/nixos/users/home.nix` pins ghostty to `async-backend = "epoll"` (`8a5896295`), load-bearing, live only after a deploy plus a full ghostty restart; any other io_uring event-loop app re-opens the class. Source: `docs/status/2026-11-26_15-48_memory-emergency-guard-autopsy-phantom-io-psi-ghostty-io-uring-status.md`.
+
+   ```bash
+   # scopes high in this list that hold io_uring fds and no D-state thread are the phantom
+   find /sys/fs/cgroup -maxdepth 9 -name io.pressure | while read -r f; do
+     printf '%s %s\n' "$(sed -nE 's/^some avg10=[0-9.]+ avg60=([0-9.]+).*/\1/p' "$f")" "${f#/sys/fs/cgroup/}"
+   done | sort -rn | head -15
+   ls -l /proc/<pid>/fd | grep -c io_uring
+   ```
+
 1. **Pressure context — `/proc/pressure/io` before/after** (bracket the whole attribution window so the numbers below are storm-anchored):
 
    ```bash
