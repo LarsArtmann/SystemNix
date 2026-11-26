@@ -436,8 +436,8 @@ _: {
 
         memoryMax = lib.mkOption {
           type = lib.types.str;
-          default = "2G";
-          description = "Memory ceiling per service. 568M-param models need <1 GB; 2G gives headroom.";
+          default = "4G";
+          description = "Memory ceiling per service; harden derives MemoryHigh as 80% of it. 4G because the bge-m3 server's charged working set measured 2.0-2.35 GiB on 2026-11-25/26 (RSS pinned at the old 1.6 GiB watermark plus 0.36-0.7 GiB in swap): the former 2G sat under the working set, so the unit thrashed at memory.high (10.8M throttle events, 1.3e9 major faults in 10.5 h).";
         };
 
         host = lib.mkOption {
