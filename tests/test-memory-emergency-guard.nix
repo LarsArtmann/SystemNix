@@ -39,6 +39,10 @@
 #      in the churn stop; the cooldown steady-state line dedups.
 #   9c. Trip-line offender attribution: top per-cgroup io.stat delta vs the
 #      previous action's snapshot (CGROUP_IO_SRC fixture).
+#   9d. Zone-6 IO-PAUSE selection (2026-10-31; rewritten 2026-11-26): the
+#      two-sample driver selection over MOVING fixture cgroups: pause of a
+#      headless pattern driver, hard-cap resume, never-PTY skip, idle
+#      heavyweight, bystander, process-scan-unavailable, walk-unavailable.
 #   5. Cooldown: repeat trip within 600 s → service stop skipped (counter
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
