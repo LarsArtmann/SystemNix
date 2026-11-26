@@ -181,7 +181,7 @@ echo '● service-health-check.service loaded failed failed Check critical servi
     result = run(base, path=bare, env={"PROBE_TIMEOUT_SECONDS": "1"})
     expect(result.returncode == 0, "a slow tool must time out into a WARN, never a failure", result.stdout)
 
-print("SELFTEST OK: CI last-green and failure classes (--logs), WARN on an unauthenticated gh, backlog from backlog-flow.sh, pool budget/outcomes/read-model lag, failed units, every missing tool degrades to WARN, exit 0 always")
+print("SELFTEST OK: CI last-green and failure classes (--logs), WARN on an unauthenticated gh, backlog from backlog-flow.sh, pool budget/outcomes/read-model lag, failed units, --gate counts and its timeout, every missing tool degrades to WARN, exit 0 always")
 SELFTEST_EOF
 fi
 
