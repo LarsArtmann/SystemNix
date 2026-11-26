@@ -964,41 +964,51 @@
         # script (shellcheck runs at build time), then pins the three baked
         # host-shape lines so a copy of the VM node's config cannot pass.
         memory-emergency-guard-host-shape-build =
-          let
-            guardModule = ((import (root + "/modules/nixos/services/memory-emergency-guard.nix") { }).flake.nixosModules.memory-emergency-guard);
-            hostShape = lib.modules.evalModules {
-              modules = [
-                # NixOS declares `systemd` itself (a freeform submodule tree);
-                # this module evaluation stands outside NixOS, so the guard's
-                # `systemd.services...` config needs the option to exist.
-                {
-                  options.systemd = lib.mkOption {
-                    type = lib.types.attrsOf lib.types.anything;
-                    internal = true;
-                    default = { };
-                  };
-                }
-                guardModule
-                {
-                  services.memory-emergency-guard = {
-                    enable = true;
-                    socketUnits = [ ];
-                    sacrificeUnits = [ ];
-                    ioPause.enable = true;
-                  };
-                }
-              ];
-              specialArgs = { inherit pkgs; };
-            };
-            guardExe = hostShape.config.systemd.services.memory-emergency-guard.serviceConfig.ExecStart;
-          in
-          pkgs.runCommand "memory-emergency-guard-host-shape-build" { }
-            ''
-              test -x ${guardExe}
-              grep -q -x -F 'SACRIFICE_UNITS=""' ${guardExe} || { echo "FAIL: sacrifice list is not the empty host shape"; exit 1; }
-              grep -q -x -F 'SOCKET_UNITS=""' ${guardExe} || { echo "FAIL: socket list is not the empty host shape"; exit 1; }
-              grep -q -x -F 'IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-true}"' ${guardExe} || { echo "FAIL: ioPause is not baked on"; exit 1; }
-              touch $out
+          # Linux-only (the same trap as prom-tmp-janitor-selftest above):
+          # the guard module builds a systemd unit, and a darwin eval of
+          # pkgs.systemd throws and broke the aarch64-darwin leg of
+          # `nix flake check --all-systems` (2026-11-26). A named no-op
+          # keeps the check name set stable across systems.
+          if pkgs.stdenv.hostPlatform.isLinux then
+            let
+              guardModule = ((import (root + "/modules/nixos/services/memory-emergency-guard.nix") { }).flake.nixosModules.memory-emergency-guard);
+              hostShape = lib.modules.evalModules {
+                modules = [
+                  # NixOS declares `systemd` itself (a freeform submodule tree);
+                  # this module evaluation stands outside NixOS, so the guard's
+                  # `systemd.services...` config needs the option to exist.
+                  {
+                    options.systemd = lib.mkOption {
+                      type = lib.types.attrsOf lib.types.anything;
+                      internal = true;
+                      default = { };
+                    };
+                  }
+                  guardModule
+                  {
+                    services.memory-emergency-guard = {
+                      enable = true;
+                      socketUnits = [ ];
+                      sacrificeUnits = [ ];
+                      ioPause.enable = true;
+                    };
+                  }
+                ];
+                specialArgs = { inherit pkgs; };
+              };
+              guardExe = hostShape.config.systemd.services.memory-emergency-guard.serviceConfig.ExecStart;
+            in
+            pkgs.runCommand "memory-emergency-guard-host-shape-build" { }
+              ''
+                test -x ${guardExe}
+                grep -q -x -F 'SACRIFICE_UNITS=""' ${guardExe} || { echo "FAIL: sacrifice list is not the empty host shape"; exit 1; }
+                grep -q -x -F 'SOCKET_UNITS=""' ${guardExe} || { echo "FAIL: socket list is not the empty host shape"; exit 1; }
+                grep -q -x -F 'IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-true}"' ${guardExe} || { echo "FAIL: ioPause is not baked on"; exit 1; }
+                touch $out
+              '';
+          else
+            pkgs.runCommand "memory-emergency-guard-host-shape-build-linux-only-noop" { } ''
+              echo "skipped: builds the systemd guard script, linux-only" > $out
             '';
 
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
