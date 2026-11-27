@@ -3,6 +3,21 @@
 **Session window:** 2026-11-27 12:17 to 14:05 (fix work), 16:59 to 17:07 (re-pin and this report).
 **Trigger:** `DEPLOY_FORCE_PRESSURE=2 nix run .#deploy` died in `go-taskqueue-0.4.2` after §11 had printed "20 uncached go-modules FOD(s) built clean".
 
+**Follow-up session (2026-11-27 22:49 to 23:55, same harness rules: no commits, no push; its work rode the daemon commits named below).** §11's build leg is fixed and proven, and the survey it ran found §15's pre-vacuum evidence gate deaf since its birth and fixed that too. Every resolved item below carries an inline `done at` marker; the open ones say where they stand. Verified in that session, outputs under `~/.cache/systemnix-fodreuse/leg1/`:
+
+| Claim | Evidence |
+| ----- | -------- |
+| §11 leg 1 realises now | `36b248c5d`: `nix-store --realise --keep-going` over every go-modules FOD of the toplevel closure whose output is not valid; leg 2 reads the store's record of every FOD and FAILs on any output still invalid |
+| The old verb is a no-op, live | `nix build <drv> --keep-going --no-link` on a tiny FOD whose output was not valid: rc 0, output still not valid, `result` re-pointed at the `.drv` |
+| Live harness, real store | two stale tiny FODs: FAIL twice with the real got-hash; a correct one: PASS; the old verb answering the realise call: FAIL `NOT REALISED` |
+| On the tree | `nix run .#pre-deploy-check -- --section-11-only`, tree `d1b856d`, 23:24 to 23:39: PASS, 72 realised + 129 verified (41 by deriver identity, 63 re-verified by check-mode rebuild, 25 by prior receipt), 0 FAIL |
+| Fixture suite | `scripts/test-pre-deploy-vendor.sh`: 120 assertions, five persisted mutation legs each proven to fail the suite while a comment-only control passes; flake check `pre-deploy-vendor-selftest` green in the sandbox |
+| §15 gate was deaf | `grep -E '^- \[ \]' docs/todo/stability.md` piped into `grep -q -- 2026-11-03`: rc 141 against 52 citing rows; fixed in `scripts/pre-vacuum-evidence-gate.sh` (one `grep -qE`, four selftest legs padded with 6000 rows, the old form fails them); live after: pass, every exposed boot guarded |
+| check #1's named blocker | `nix build .#checks.x86_64-linux.doc-counts` rc 0 at 23:24:22; FEATURES.md 55 to 54 by another session (`56e15c1dd`) |
+| Queue | five rows closed on both surfaces, three minted (net minus two); `scripts/check-todo-system.sh` rc 0 |
+
+**NOT verified in the follow-up session:** the full toplevel build; `nix flake check --no-build` as a whole (only its doc-counts check); the deploy (no attempt since 16:49, profile still `system-1033` at 23:40); a real stale-hash go-modules FOD on the tree (the tree had none, so the proof used tiny throwaway FODs); cargo and pnpm hashes (outside the gate's scope, queued); a fetched stale-hash FOD against a real substituter (covered by fixtures only).
+
 ## Scope line
 
 **Verified here** (commands run in this session, outputs on disk under `~/.cache/systemnix-fodreuse/`), repo at `git rev-parse --short HEAD` = `ec52fa153` (clean tree, 17:06):
@@ -97,12 +112,12 @@ All of it sits in daemon `chore: auto-commit` commits (I made no commits; harnes
 | ------- | ------ | ------------- |
 | ~~Verdict lines are not tied to proof that their command did the work~~ done — `36b248c5d`: verdicts are read off the store (`nix-store -q --deriver`), never off an exit code; five persisted mutation legs | ~~§11 leg 1 hollow for 54 days; one false PASS today~~ | ~~For every verdict: a negative test that makes the condition true and asserts the flip. For builds: assert output-path validity after the command (`nix path-info <out>`), never rc alone~~ |
 | ~~Leg 1 and leg 2 use different realisation forms~~ done — `36b248c5d`: both legs use `nix-store` (leg 1 `--realise --keep-going`, leg 2 `--realise --check`); the hook's lock-build leg realises the flake-attr toplevel and needs no change | ~~One works, one does not~~ | ~~One helper, `nix-store --realise` (plus `--check` for valid paths), used by both legs and by the pre-commit lock-build gate~~ |
-| Lock waves land through `--no-verify` | The build gate is dead for every daemon lock commit | Owner decision: a proof off the commit path (post-commit or timer, alert on failure), or accept §11 as the gate. You retired the lock-float gate on 2026-11-11; do not rebuild it by accident |
-| vendorHash shims per surface (tq: 2 sites, journal: 2 sites) | Every re-stale is a multi-file edit; one missed site is a dead deploy | One shim constant per package in `lib/lars-packages.nix`, imported by the modules |
-| Upstream bakes that only hold under the upstream lock | The treadmill | Decide per input: un-follow its nixpkgs (the `journal` precedent) or accept the consumer shim as permanent |
-| FOD verification only at deploy time, under pressure | Runs in the storm window | Batch the audit into quiescent windows and emit a metric, so a stale FOD is known before a deploy is attempted |
-| Same templ FOD built as five derivations | Five check-mode rebuilds per wave for one content | Dedupe the templ input across consumers |
-| Evidence typed by hand where no live site exists | Transcription risk (journal hash, two files) | Let `fod-hash-diff.sh --add-shim <pkg> <got>` write the shim at declared sites |
+| Lock waves land through `--no-verify` **→ owner decision; already the `[decision]` row TODO_LIST.md → "§11-after-any-lock-wave enforcement point (pre-commit vs update-bot vs manual discipline)"** | The build gate is dead for every daemon lock commit | Owner decision: a proof off the commit path (post-commit or timer, alert on failure), or accept §11 as the gate. You retired the lock-float gate on 2026-11-11; do not rebuild it by accident |
+| vendorHash shims per surface (tq: 2 sites, journal: 2 sites) **→ open, not harvested: no queue row yet (§f 11 below)** | Every re-stale is a multi-file edit; one missed site is a dead deploy | One shim constant per package in `lib/lars-packages.nix`, imported by the modules |
+| Upstream bakes that only hold under the upstream lock **→ open, owner decision (the shim policy per input, §f 10)** | The treadmill | Decide per input: un-follow its nixpkgs (the `journal` precedent) or accept the consumer shim as permanent |
+| FOD verification only at deploy time, under pressure **→ routed to TODO_LIST.md row "Move pre-deploy §11's check-mode rebuilds into a quiescence-aware window" (docs/todo/pipeline.md)** | Runs in the storm window | Batch the audit into quiescent windows and emit a metric, so a stale FOD is known before a deploy is attempted |
+| Same templ FOD built as five derivations **→ open, not harvested: no queue row yet (§f 15 below)** | Five check-mode rebuilds per wave for one content | Dedupe the templ input across consumers |
+| Evidence typed by hand where no live site exists **→ open, not harvested: no queue row yet (§f 12 below)** | Transcription risk (journal hash, two files) | Let `fod-hash-diff.sh --add-shim <pkg> <got>` write the shim at declared sites |
 
 ## f) Up to 50 things to get done next
 
@@ -115,31 +130,31 @@ Ranked by impact. "Direct" marks a follow-up of this report.
 | ~~3~~ done — `nix run .#pre-deploy-check -- --section-11-only` on tree `d1b856d`, 23:24 to 23:39: PASS, 72 go-modules FODs realised + 129 verified (41 by deriver identity, 63 re-verified by check-mode rebuild, 25 by prior receipt), 0 FAIL | ~~Direct. Re-run `--section-11-only` on the repaired tree and read the leg 1 part as proven~~ | ~~Critical~~ | ~~S~~ | ~~Bug~~ |
 | ~~4~~ done at `36b248c5d` | ~~Direct. Correct `AGENTS.md`, `docs/agents/nix-flakes.md` and the CHANGELOG entry once leg 1 is real; add the leg 1 no-op to the traps list~~ | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | 5 **→ blocker gone: FEATURES.md re-stamped 55 to 54 by another session (`56e15c1dd`), `nix build .#checks.x86_64-linux.doc-counts` rc 0 at 23:24:22; no deploy attempt since 16:49, so this stays open** | Direct. Land the deploy: the 16:15 and 16:45 batteries are blocked by check #1 (`doc-counts: FEATURES packages asserts 55, eval truth is 54`) | Critical | S | Bug |
-| 6 | Direct. Owner: bake `sha256-HqHkPDVQ…` in go-taskqueue and `sha256-2piQtqwo…` in journal upstream, push, re-float, drop both shims (four sites) | High | M | Cleanup |
-| 7 | Extend the cached-FOD audit to source fetchers and pnpm and cargo deps hashes | High | M | Feature |
-| 8 | Emit §11 counts as metrics (stale, reused, receipted) and a SigNoz rule on stale > 0 | Medium | S | Feature |
+| 6 **→ open, owner step (section g, question 3); carried by the 2026-11-27 wave bullet of the re-pin sweep row in docs/todo/upstream.md** | Direct. Owner: bake `sha256-HqHkPDVQ…` in go-taskqueue and `sha256-2piQtqwo…` in journal upstream, push, re-float, drop both shims (four sites) | High | M | Cleanup |
+| 7 **→ routed to TODO_LIST.md row "Extend pre-deploy §11's FOD proof beyond go-modules: cargo vendor dirs, pnpm deps and source fetchers" (docs/todo/pipeline.md)** | Extend the cached-FOD audit to source fetchers and pnpm and cargo deps hashes | High | M | Feature |
+| 8 **→ open, not harvested: no queue row yet** | Emit §11 counts as metrics (stale, reused, receipted) and a SigNoz rule on stale > 0 | Medium | S | Feature |
 | ~~9~~ **NOT-DO — DUPLICATE: already the `[decision]` row TODO_LIST.md "§11-after-any-lock-wave enforcement point (pre-commit vs update-bot vs manual discipline)"; nothing new to mint.** | ~~Decide the lock-wave proof placement (question 2)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
-| 10 | Decide the shim policy per input: un-follow nixpkgs or permanent consumer shim | Medium | M | Quality |
-| 11 | Single shim constant per package, imported by its modules (tq, journal) | Medium | M | Refactor |
-| 12 | Add `--add-shim` to `fod-hash-diff.sh` so a hash with no live site gets its shim written, not typed | Medium | S | Feature |
-| 13 | Teach `fod-hash-diff.sh` to read a §11 log directly (it does today; add a test) | Low | S | Quality |
-| 14 | Identify the carrier of the module-graph drift behind the watch row | Medium | M | Bug |
-| 15 | Dedupe the templ-0.3.1100 go-modules derivation across its consumers | Low | M | Cleanup |
-| 16 | Move §11's 20-plus check-mode rebuilds into a quiescence-aware window | Medium | M | Stability |
-| 17 | Reword or squash the daemon commits carrying this session (question 1) | Low | S | Cleanup |
-| 18 | Add a docs-gate rule: a status report's PASS quotes must name which leg or command produced them | Low | S | Quality |
-| 19 | Record in `docs/CONTRIBUTING.md`: "rc 0 from `nix build <drv>` is not a build" | Low | S | Documentation |
+| 10 **→ open, owner decision; open, not harvested: no queue row yet** | Decide the shim policy per input: un-follow nixpkgs or permanent consumer shim | Medium | M | Quality |
+| 11 **→ open, not harvested: no queue row yet** | Single shim constant per package, imported by its modules (tq, journal) | Medium | M | Refactor |
+| 12 **→ open, not harvested: no queue row yet** | Add `--add-shim` to `fod-hash-diff.sh` so a hash with no live site gets its shim written, not typed | Medium | S | Feature |
+| 13 **→ partly: flow G4 now reads a §11-shaped gate output and G8 a real mismatch block through `vendor_freshness_mismatch_pairs`; `scripts/fod-hash-diff.sh` itself is still not driven by a §11 log in any test** | Teach `fod-hash-diff.sh` to read a §11 log directly (it does today; add a test) | Low | S | Quality |
+| 14 **→ open (the watch row in docs/todo/upstream.md still says UNIDENTIFIED)** | Identify the carrier of the module-graph drift behind the watch row | Medium | M | Bug |
+| 15 **→ open, not harvested: no queue row yet** | Dedupe the templ-0.3.1100 go-modules derivation across its consumers | Low | M | Cleanup |
+| 16 **→ routed to TODO_LIST.md row "Move pre-deploy §11's check-mode rebuilds into a quiescence-aware window" (docs/todo/pipeline.md)** | Move §11's 20-plus check-mode rebuilds into a quiescence-aware window | Medium | M | Stability |
+| 17 **→ open, owner question 1 (section g)** | Reword or squash the daemon commits carrying this session (question 1) | Low | S | Cleanup |
+| 18 **→ open, not harvested: no queue row yet** | Add a docs-gate rule: a status report's PASS quotes must name which leg or command produced them | Low | S | Quality |
+| ~~19~~ done — recorded on 2026-11-27 in `AGENTS.md` (Session Discipline) and in `docs/agents/nix-flakes.md` instead of `docs/CONTRIBUTING.md` | ~~Record in `docs/CONTRIBUTING.md`: "rc 0 from `nix build <drv>` is not a build"~~ | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
 | ~~20~~ done — 2026-11-27: every `nix build` call site under scripts/, .githooks/, flake/, flake.nix, lib/, modules/, platforms/, systems/ and pkgs/ read; the gate's leg 1 was the only raw-`.drv` proof, fixed at `36b248c5d` | ~~Survey whether any other script uses `nix build <drv>` on a raw drv path as proof~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
-| 21 | Survey `| grep -q` under `pipefail` in the other gate scripts (same race class) | Medium | S | Bug |
+| ~~21~~ done — 2026-11-27: 109 sites in pipefail scripts read; one real instance found and fixed (§15's `pvg_open_row_hits`, rc 141 against 52 citing rows, `scripts/pre-vacuum-evidence-gate.sh`); the 10 open sites are queued as TODO_LIST.md row "Fix the remaining `producer \| grep -q` pipefail races named by the 2026-11-27 survey" | ~~Survey `\| grep -q` under `pipefail` in the other gate scripts (same race class)~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
 | ~~22~~ **NOT-DO — the hook's leg realises the flake-attr toplevel (`nix build .#…toplevel --keep-going --no-link`), never a raw `.drv`; there is no second form to unify.** | ~~Make the pre-commit hook's lock-build leg use the shared realisation helper~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
-| 23 | Receipt store: add `--forget-receipts` to the §11-only mode for debugging | Low | S | Feature |
-| 24 | Print the closure's stale FOD names in the §11 FAIL summary line (one line, all names) | Low | S | Feature |
-| 25 | Reduce the two-line progress output per re-verified FOD to one line | Low | S | Cleanup |
-| 26 | Add the 2026-11-27 captures as fixtures in `negative-test-lints.sh` once a leg exists there | Low | S | Quality |
-| 27 | Re-verify the four shim literals after the next lock float with the audit alone (no hand probe) | Medium | S | Quality |
-| 28 | Close `TODO_LIST.md:3959` (art-dupl, samber-linter reproduce per the audit; cv and signoz re-stamped by `3a66b194e`) after one green toplevel | Low | S | Cleanup |
-| 29 | Drop the "fifth re-stale" phrasing if a count is not wanted in shim comments | Low | S | Cleanup |
-| 30 | Prune `~/.cache/systemnix-fodreuse/` once the evidence is cited from a committed report | Low | S | Cleanup |
+| 23 **→ open, not harvested: no queue row yet** | Receipt store: add `--forget-receipts` to the §11-only mode for debugging | Low | S | Feature |
+| 24 **→ open, not harvested: no queue row yet** | Print the closure's stale FOD names in the §11 FAIL summary line (one line, all names) | Low | S | Feature |
+| 25 **→ open, not harvested: no queue row yet** | Reduce the two-line progress output per re-verified FOD to one line | Low | S | Cleanup |
+| 26 **→ open, not harvested: no queue row yet** | Add the 2026-11-27 captures as fixtures in `negative-test-lints.sh` once a leg exists there | Low | S | Quality |
+| 27 **→ open; the audit already does it at every deploy (the 23:24 run verified go-taskqueue and journal after the 23:19 lock wave, no hand probe); the row waits for a float that actually moves those two inputs** | Re-verify the four shim literals after the next lock float with the audit alone (no hand probe) | Medium | S | Quality |
+| 28 **→ open: no toplevel build was run in the follow-up session either** | Close `TODO_LIST.md:3959` (art-dupl, samber-linter reproduce per the audit; cv and signoz re-stamped by `3a66b194e`) after one green toplevel | Low | S | Cleanup |
+| 29 **→ open, not harvested: no queue row yet** | Drop the "fifth re-stale" phrasing if a count is not wanted in shim comments | Low | S | Cleanup |
+| 30 **→ open; the follow-up session added its own evidence under the same directory (`leg1/`)** | Prune `~/.cache/systemnix-fodreuse/` once the evidence is cited from a committed report | Low | S | Cleanup |
 
 Items 17 to 30 are ROADMAP fuel more than commitments.
 
