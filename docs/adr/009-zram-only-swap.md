@@ -126,9 +126,9 @@ filesystem IO → 133). The earlier wording in this ADR and in boot.nix, kernel 
 | Where the swapped pages sat  | `user-1000.slice` 48.0 GiB (pinned at its `MemorySwapMax=48G`), `system.slice` 13.6 GiB        |
 
 **Why 100 and not lower:** every value below 100 tells the kernel that swapping is
-dearer than file IO, and the two values this box ran below 100 are the incidents in
-Context 1 (`1` until 2026-05-25, `10` until 2026-08-13). `100` removes the anon bias
-without crossing that line.
+dearer than file IO, and both values this box ran below 100 ended in an incident
+(`1` in the 2026-05-25 OOM, `10` in the BTRFS I/O storms of Context 1). `100`
+removes the anon bias without crossing that line.
 
 **What 100 does not fix:** about 35 GiB of the 60 GiB in zram was tmpfs (`/tmp` is a
 48 GiB tmpfs) charged to one login scope: 5,716 leftover `go-build*` dirs (39 GiB)
