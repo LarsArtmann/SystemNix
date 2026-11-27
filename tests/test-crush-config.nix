@@ -86,7 +86,9 @@ let
       # a text conjunct on `model add zai/glm-5.3-flash` would have turned red
       # at the lock bump that dropped that hand declaration. This consumer
       # asserts the model as deployed BEHAVIOR instead:
-      # scripts/post-deploy-check.sh -> crush-rc-test.sh --expect-model.
+      # scripts/post-deploy-check.sh -> crush-rc-test.sh --expect-live (a catalog
+      # provider's models list even when it is disabled; --expect-model proved
+      # nothing, found 2026-11-27) plus the crush-config live and wire harnesses.
       name = "personal-set-rendered";
       pass =
         lib.hasInfix "crush_key synthetic synthetic_api_key" rc

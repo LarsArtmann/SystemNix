@@ -290,15 +290,41 @@
       # Negative legs: scripts/negative-test-lints.sh, group `aimeter`
       # (alert-gate-blind-dropped, alert-floor-lowered, alert-floor-raised,
       # alert-429-ignored, alert-providers-mixed).
+      #
+      # The second rule, "AI Embeddings Calls Failing (ai-meter)", is held by
+      # the same derivation. WHY: on 2026-11-26 llama-embeddings was active and
+      # listening and failed 387 of 424 calls (each hung until its client gave
+      # up); the unit rule saw nothing and the failure-rate rule keeps that
+      # little traffic below its floor on purpose. The rule fires when at least
+      # two calls failed and at least half of the calls did, in 30 minutes:
+      #
+      #   hang         one failed call every 5 minutes, nothing served  -> fires
+      #   single       one failed call in the half hour                  -> 25, silent
+      #   healthy      12 served                                          -> 0, silent
+      #   minority     12 served, 6 failed                                -> 33, silent
+      #   majority     6 served, 9 failed                                 -> 60, fires
+      #   reset        only failures, the counter restarts midway         -> fires
+      #   elsewhere    z.ai fails 40 a minute, embeddings served          -> 0, silent
+      #
+      # Negative legs: embeddings-floor-lowered, embeddings-window-shortened,
+      # embeddings-status-widened, embeddings-target-raised,
+      # embeddings-upstream-dropped (same group).
       checks.ai-meter-alert-promql =
         let
-          rule =
+          readRule =
+            path:
             (builtins.fromJSON (
-              builtins.readFile
-                inputs.self.nixosConfigurations.evo-x2.config.environment.etc."signoz/rules/ai-upstream-failure-rate.json".source
+              builtins.readFile inputs.self.nixosConfigurations.evo-x2.config.environment.etc.${path}.source
             )).condition;
+          # A rule's own comparison as a boolean: 1 where it would fire.
+          firesOf =
+            condition:
+            "(${(lib.head condition.compositeQuery.queries).spec.query}) >= bool ${toString condition.target}";
+          rule = readRule "signoz/rules/ai-upstream-failure-rate.json";
+          embeddingsRule = readRule "signoz/rules/ai-embeddings-failing.json";
           # The rule's own comparison as a boolean: 1 where it would fire.
-          fires = "(${(lib.head rule.compositeQuery.queries).spec.query}) >= bool ${toString rule.target}";
+          fires = firesOf rule;
+          embeddingsFires = firesOf embeddingsRule;
           zai = "client=\"crush\",model=\"m\",upstream=\"zai\"";
           embed = "client=\"paperless\",model=\"bge-m3\",upstream=\"llama-embeddings\"";
           # A counter that grows by perMinute every minute, sampled 41 times.
@@ -366,12 +392,64 @@
               ];
             }
           );
+          # The embeddings rule sums without a by(), so its result carries no labels.
+          plain = doesFire: {
+            labels = "{}";
+            value = if doesFire then 1 else 0;
+          };
+          embTest = seriesList: doesFire: {
+            interval = "1m";
+            input_series = seriesList;
+            promql_expr_test = [
+              {
+                expr = embeddingsFires;
+                eval_time = "30m";
+                exp_samples = [ (plain doesFire) ];
+              }
+            ];
+          };
+          served = perMinute: linear "ai_meter_requests_total" "${embed},code=\"200\"" perMinute;
+          failed = perMinute: linear "ai_meter_requests_total" "${embed},code=\"502\"" perMinute;
+          # One failed call, at minute 10; the counter then stays.
+          single = {
+            series = "ai_meter_requests_total{${embed},code=\"502\"}";
+            values = lib.concatMapStringsSep " " (minute: if minute < 10 then "0" else "1") (lib.range 0 40);
+          };
+          # A failed-call counter that restarts at minute 20 and counts on.
+          restarted = {
+            series = "ai_meter_requests_total{${embed},code=\"502\"}";
+            values = lib.concatMapStringsSep " " (
+              minute: toString (if minute < 20 then minute else minute - 20)
+            ) (lib.range 0 40);
+          };
+          embeddingsTest = pkgs.writeText "ai-meter-embeddings-alert-test.json" (
+            builtins.toJSON {
+              rule_files = [ ];
+              evaluation_interval = "1m";
+              tests = [
+                (embTest [ trickling ] true)
+                (embTest [ single ] false)
+                (embTest [ (served 0.4) ] false)
+                (embTest [ (served 0.4) (failed 0.2) ] false)
+                (embTest [ (served 0.2) (failed 0.3) ] true)
+                (embTest [ restarted ] true)
+                (embTest [
+                  (linear "ai_meter_requests_total" "${zai},code=\"502\"" 40)
+                  (served 0.4)
+                ] false)
+              ];
+            }
+          );
         in
         pkgs.runCommand "ai-meter-alert-promql" { nativeBuildInputs = [ pkgs.prometheus.cli ]; } ''
           promtool test rules ${alertTest} > test.log 2>&1 \
             || { cat test.log; echo "FAIL: ai-meter-alert-promql: the failure-rate rule no longer tells the proxy's own 429 answers, a quiet provider and a failing provider apart" >&2; exit 1; }
           grep -q SUCCESS test.log || { cat test.log; echo "FAIL: ai-meter-alert-promql: promtool reported no SUCCESS" >&2; exit 1; }
+          promtool test rules ${embeddingsTest} > embeddings.log 2>&1 \
+            || { cat embeddings.log; echo "FAIL: ai-meter-alert-promql: the embeddings rule no longer tells a hung server (most calls failing) from one failed call, a healthy server and another provider's failures" >&2; exit 1; }
+          grep -q SUCCESS embeddings.log || { cat embeddings.log; echo "FAIL: ai-meter-alert-promql: promtool reported no SUCCESS for the embeddings rule" >&2; exit 1; }
           echo "ok: the failure-rate rule is silent on gate answers and on a quiet provider, and fires per failing provider"
+          echo "ok: the embeddings rule fires on a hung server and stays silent on one failed call, a healthy server and another provider's failures"
           touch $out
         '';
     };

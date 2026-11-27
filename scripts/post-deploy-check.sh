@@ -2742,6 +2742,30 @@ if [ -e "$CRUSH_RC" ]; then
   else
     report_fail "Crush - isolated rc load FAILED (see /tmp/.smoke-crush-rc.log tail: $(tail -3 /tmp/.smoke-crush-rc.log | tr '\n' ' '))"
   fi
+
+  # 4. The real interpreter and the wire. crush-rc-test.sh proves the rc
+  # LOADS; these two prove what it DOES: the embedded-shell key and
+  # version-gate matrix (42 checks), and the request glm-5.3-flash sends
+  # from the large slot (thinking enabled, effort max: the catalog gives
+  # that model reasoning levels). Both run against a scratch config and a
+  # loopback mock; nothing reaches a provider. They live in crush-config
+  # (one source for every consumer), so they run only when a checkout is
+  # at hand: $CRUSH_CONFIG_SRC, or the sibling of this repo.
+  crush_config_src="${CRUSH_CONFIG_SRC:-$(cd "$smoke_dir/.." && pwd)/../crush-config}"
+  if [[ -x $crush_config_src/scripts/crush-rc-live-test.sh ]]; then
+    if bash "$crush_config_src/scripts/crush-rc-live-test.sh" "$CRUSH_RC" >/tmp/.smoke-crush-live.log 2>&1; then
+      report_pass "Crush - live rc matrix OK ($(grep -c '^PASS' /tmp/.smoke-crush-live.log) checks through the real binary)"
+    else
+      report_fail "Crush - live rc matrix FAILED (see /tmp/.smoke-crush-live.log tail: $(tail -3 /tmp/.smoke-crush-live.log | tr '\n' ' '))"
+    fi
+    if bash "$crush_config_src/scripts/crush-wire-capture.sh" --rc "$CRUSH_RC" --model zai/glm-5.3-flash --expect-thinking enabled --expect-effort max >/tmp/.smoke-crush-wire.log 2>&1; then
+      report_pass "Crush - wire: glm-5.3-flash sends thinking enabled at effort max"
+    else
+      report_fail "Crush - wire capture missed its expectation (see /tmp/.smoke-crush-wire.log tail: $(tail -3 /tmp/.smoke-crush-wire.log | tr '\n' ' '))"
+    fi
+  else
+    report_skip "Crush - live rc matrix and wire capture (no crush-config checkout at $crush_config_src)"
+  fi
 else
   report_skip "Crush - no crushrc deployed (programs.crush-config not enabled)"
 fi

@@ -232,7 +232,13 @@ in
     # adapter, 2026-10-17 — NOT OpenAI-compat; the adapter handles the
     # protocol).
     extraRc = lib.mkIf ((osConfig.services.ai-meter or { }).enable or false) ''
-      if [ -f /run/ai-meter-keys/crush ]; then
+      # Reachability gate: the proxy answers /health on its own port (live
+      # 2026-11-27: 200 on 8107, admin plane on 8108). While the meter is
+      # down the two providers keep the direct URL and raw key that
+      # crush_key gave them (unmetered, but alive) instead of every call
+      # failing on a dead loopback port. `if` only: a failing statement
+      # aborts the WHOLE config load.
+      if [ -f /run/ai-meter-keys/crush ] && curl -fsS --max-time 2 -o /dev/null "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/health" 2>/dev/null; then
         provider add zai --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/zai" --api-key "$(cat /run/ai-meter-keys/crush)" --disable false
         provider add gemini --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/gemini" --api-key "$(cat /run/ai-meter-keys/crush)" --disable false
         # Small slot (summarization/compaction), host-scoped and inside the
@@ -240,7 +246,8 @@ in
         # state (crush load.go resolveSelectedModels — rc slot > store >
         # catalog default), which had drifted to hyper/deepseek-v4.1-flash
         # (charm-cloud OAuth, un-metered). Pinning zai's flash tier keeps
-        # summarization cheap, non-thinking, and inside the ai-meter.
+        # summarization cheap and non-thinking; it sits inside the meter
+        # block so its base URL is the metered one whenever the meter is up.
         # Non-thinking is a wire fact, not a declaration: on v0.102.0 a
         # request built from the SMALL slot carries neither "thinking" nor
         # "reasoning_effort", whatever the slot line or the model
