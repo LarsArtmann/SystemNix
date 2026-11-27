@@ -19,8 +19,8 @@
 # A cached FOD never appears in the preview, and until 2026-11-27 the gate
 # took that as proof ("vendorHash proven by prior builds"). It is not —
 # see the cached-FOD audit below: that claim let go-taskqueue and journal
-# ride a stale module tree into the 12:0x deploy build, the third
-# recurrence of the class.
+# ride a stale module tree into the 12:0x deploy build — a trap
+# documented in that shim's own comments since 2026-10-28.
 #
 # Captured output shapes (verbatim, see test fixtures):
 #   uncached dry-run: "these N derivations will be built:" then
