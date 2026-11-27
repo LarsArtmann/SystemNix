@@ -13,12 +13,13 @@
 # scopes as the stalled parties on both 2026-10-08 and 2026-10-13).
 #
 # Usage:
-#   io-psi-crosscheck.sh            # gate mode: per-device %util + top-3
-#                                   #   stalled cgroups (what deploy.sh calls)
+#   io-psi-crosscheck.sh            # gate mode: per-device %util + the TRIM
+#                                   #   share of each device's busy time +
+#                                   #   top-3 stalled cgroups (deploy.sh calls it)
 #   io-psi-crosscheck.sh full       # divergence probe: adds PSI readings,
 #                                   #   zram ops delta, io.cost state, D-state
 #                                   #   scan, per-pid io deltas (§f.8 probe)
-#   io-psi-crosscheck.sh verdict    # one-line PHANTOM / REAL STORM /
+#   io-psi-crosscheck.sh verdict    # one-line PHANTOM / REAL STORM / TRIM STORM /
 #                                   #   INCONCLUSIVE classification of a
 #                                   #   refusal (ghostty io_cqring_wait class)
 #   io-psi-crosscheck.sh selftest [path/to/deploy.sh]
@@ -94,7 +95,9 @@ crosscheck_discard_lines() {
       share = busy > 0 ? 100.0 * ($7 - $3) / busy : 100.0
       if (share > 100) share = 100
       ios = $8 - $4
-      printf "%s is %.0f%% TRIM discards (%.0f/s, %.1f ms each)\n", $1, share, ios / w, ios > 0 ? ($7 - $3) / ios : 0
+      ms = 0
+      if (ios > 0) ms = ($7 - $3) / ios
+      printf "%s is %.0f%% TRIM discards (%.0f/s, %.1f ms each)\n", $1, share, ios / w, ms
     }'
 }
 
@@ -326,6 +329,33 @@ selftest() {
     fails=$((fails + 1))
   fi
 
+  # 2b. TRIM share math: known discard deltas through the pure helpers.
+  out="$(crosscheck_discard_lines "$(printf 'nvme1n1 1000 0 0\n')" "$(printf 'nvme1n1 2000 900 1000\n')" 1)"
+  if [ "$out" != "nvme1n1 is 90% TRIM discards (1000/s, 0.9 ms each)" ]; then
+    echo "FAIL discard share line: '$out'"
+    fails=$((fails + 1))
+  fi
+  out="$(crosscheck_discard_lines "$(printf 'sda 5 0 0\n')" "$(printf 'sda 9 0 0\n')" 1)"
+  if [ -n "$out" ]; then
+    echo "FAIL discard line without discards: '$out'"
+    fails=$((fails + 1))
+  fi
+  out="$(crosscheck_discard_lines "$(printf 'sdb 100 0 0\n')" "$(printf 'sdb 100 50 0\n')" 1)"
+  if [ "$out" != "sdb is 100% TRIM discards (0/s, 0.0 ms each)" ]; then
+    echo "FAIL discard line share cap and zero-count guard: '$out'"
+    fails=$((fails + 1))
+  fi
+  out="$(printf '%s\n' 'nvme0n1 is 12% TRIM discards (3/s, 1.0 ms each)' 'nvme1n1 is 97% TRIM discards (500/s, 1.2 ms each)' | crosscheck_max_trim)"
+  if [ "$out" != "97 nvme1n1" ]; then
+    echo "FAIL max trim pick: '$out'"
+    fails=$((fails + 1))
+  fi
+  out="$(printf '' | crosscheck_max_trim)"
+  if [ "$out" != "0 -" ]; then
+    echo "FAIL max trim empty: '$out'"
+    fails=$((fails + 1))
+  fi
+
   # 3. fixture cgroup tree: ranking, root exclusion, decimal order, malformed skip.
   local cgt
   cgt="$tmp/cgroup"
@@ -392,6 +422,31 @@ selftest() {
   fi
   wait
 
+  # 5a. end-to-end gate mode against a 17-field fixture stat: the mutator
+  # adds 300 discard ticks and 600 io_ticks to sdb mid-window, so the gate
+  # must print a 50% TRIM share and name the walk.
+  mkdir -p "$tmp/sys/block/sdb"
+  printf '1 2 3 4 5 6 7 8 9 1000 0 0 0 0 0 0\n' >"$tmp/sys/block/sdb/stat"
+  (
+    sleep 0.3
+    printf '1 2 3 4 5 6 7 8 9 1600 0 0 200 0 0 300\n' >"$tmp/sys/block/sdb/stat"
+  ) &
+  out="$(
+    CROSSCHECK_SYS_BLOCK="$tmp/sys/block" \
+      CROSSCHECK_CGROUP="$tmp/endsys/cg" \
+      CROSSCHECK_WINDOW_S=1 \
+      bash "${BASH_SOURCE[0]}" gate
+  )"
+  if ! grep -q 'sdb is 50% TRIM discards (200/s, 1.5 ms each)' <<<"$out"; then
+    echo "FAIL e2e TRIM share line: $out"
+    fails=$((fails + 1))
+  fi
+  if ! grep -q 'sdb is mostly TRIM' <<<"$out"; then
+    echo "FAIL e2e TRIM walk note: $out"
+    fails=$((fails + 1))
+  fi
+  wait
+
   # 5b. verdict classifier unit cases (pure function, fixed inputs; the
   # thresholds and precedence live in stability.md's phantom shortcuts).
   out="$(verdict_classify 0.4 3 0)"
@@ -430,6 +485,26 @@ selftest() {
     fails=$((fails + 1))
     ;;
   esac
+  # TRIM share is a 4th/5th input (device name); ≥50% of a busy device's time
+  # in discards turns REAL STORM into TRIM STORM, D-state keeps precedence.
+  out="$(verdict_classify 98.0 0 0 96 nvme1n1)"
+  case "$out" in "TRIM STORM: device nvme1n1 is 98.0% busy and 96%"*) ;; *)
+    echo "FAIL verdict trim-storm shape: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
+  out="$(verdict_classify 98.0 0 0 30 nvme1n1)"
+  case "$out" in "REAL STORM"*) ;; *)
+    echo "FAIL verdict low-trim-share stays real storm: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
+  out="$(verdict_classify 45 1 2 96 nvme1n1)"
+  case "$out" in "INCONCLUSIVE: D-state"*) ;; *)
+    echo "FAIL verdict d-state outranks trim: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
 
   # 6. static tripwire: deploy.sh must still wire the crosscheck beside the
   # PSI refusal line (a deleted call would go phantom-green otherwise).
@@ -456,7 +531,10 @@ full) full_mode ;;
 verdict) verdict_mode ;;
 selftest)
   shift || true
+  # The selftest's own exit status must be the script's (the bare `exit 0`
+  # below used to mask its failures whenever the caller runs without set -e).
   selftest "${1:-}"
+  exit $?
   ;;
 *)
   echo "usage: io-psi-crosscheck.sh [gate|full|verdict|selftest [deploy.sh]]" >&2
