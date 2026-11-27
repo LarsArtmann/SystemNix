@@ -906,6 +906,7 @@ hollow-verb	s|nix-store --realise --keep-going \$to_build|nix build $to_build --
 audit-skips-unrealised	/go-modules FOD NOT REALISED/d
 preview-only-input	s|to_build=\$(vendor_freshness_uncached_fods "\$fods")|to_build=$(printf '%s\\n' "$dryrun_out" \| grep -E -- '-go-modules\\.drv$' \| sort -u \|\| true)|
 reported-fod-reported-twice	s|if grep -qxF -- "\$name" <<<"\$reported"; then|if false; then|
+old-error-line-classifier	s|if \[ -n "\$(vendor_freshness_real_errors "\$output")" ]; then|if printf '%s\\n' "$output" \| grep -q '^[[:space:]]*error:'; then|
 EOF
 fi
 rm -rf "$vf_mut_dir"
