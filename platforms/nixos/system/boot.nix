@@ -461,7 +461,7 @@ in
   #
   # swappiness=150 (2026-08-13 to 2026-11-27) then overshot to the other side: it
   # priced anon pages 3:1 cheaper to evict than file pages, and the box ran zram
-  # 100% full next to 29-43 GiB of file cache (2026-11-27 17:1x-17:4x). 100 is the
+  # 100% full next to 29-43 GiB of file cache (2026-11-27 17:35-17:54). 100 is the
   # kernel's neutral point (vm.rst: "At 100, the VM assumes equal IO cost"; for
   # in-memory swap "values beyond 100 can be considered"): from there the measured
   # refault cost of each LRU decides the split. Owner directive 2026-11-27: use the

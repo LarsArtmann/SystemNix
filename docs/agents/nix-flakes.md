@@ -109,7 +109,7 @@ The 4023-line flake.nix was split into flake-parts modules (2026-10-09). flake.n
 
 ## flake-check memory profile + the targeted-eval alternative (2026-10-12)
 
-`nix flake check --no-build` on this flake peaks ~20GB RAM and ~6-7min (measured 2026-10-12, completed and passed): it forces EVERY output — all 3 host toplevels + darwin + every auto-discovered `nixosModules.<name>` standalone + vm-test/fixtures/selftests + mkLarsPackages go graphs + the audit layers' unit-text forcing — and the memoized eval lives until process exit. `--no-build` skips builds, not evaluation.
+`nix flake check --no-build` on this flake peaks ~20GB RAM and ~6-7min (measured 2026-10-12, completed and passed): it forces EVERY output — all 3 host toplevels + darwin + every auto-discovered `nixosModules.<name>` standalone + vm-test/fixtures/selftests + mkLarsPackages go graphs + the audit layers' unit-text forcing — and the memoized eval lives until process exit. `--no-build` skips builds, not evaluation. Read `SwapFree` and `MemAvailable` beside io PSI before launching it by hand: with zram full there is no swap headroom, and the zone-2 guard trip of 2026-11-27 18:14:32 (MemAvailable 9.6 % AND zram 96.8 %) fell inside one such run (18:06:52-18:16:40) that a sysctl-literal change did not need; a comment or literal in one module takes the targeted eval below.
 
 For single-module changes, the cheap equivalent is a single-host toplevel eval:
 

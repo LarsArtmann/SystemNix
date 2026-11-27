@@ -116,7 +116,7 @@ swap "values beyond 100 can be considered", with a ratio rule (swap 2x faster th
 filesystem IO → 133). The earlier wording in this ADR and in boot.nix, kernel docs:
 "for zram, use 100+", was a paraphrase of that paragraph, not a quote.
 
-**Live state at 150** (boot `0737ecd7`, 54.5 h up, read-only probes 17:1x-17:4x):
+**Live state at 150** (boot `0737ecd7`, 54.5 h up, read-only probes 17:35-17:54):
 
 | Reading                      | Value                                                                                          |
 | ---------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -133,6 +133,8 @@ removes the anon bias without crossing that line.
 **What 100 does not fix:** about 35 GiB of the 60 GiB in zram was tmpfs (`/tmp` is a
 48 GiB tmpfs) charged to one login scope: 5,716 leftover `go-build*` dirs (39 GiB)
 whose sizes line up with that scope's 35.2 GiB swapped plus 2.9 GiB resident shmem.
+Confirmed when `tmp-cleanup` removed them at 19:44:39 (4,475 entries, 40 GB): zram
+fell to 19.2 GiB of originals and that scope's swap charge to 0.05 GiB (read 22:49).
 Shmem leaves RAM only through swap whatever `vm.swappiness` says, and cgroup caps
 (`memory.high`, `MemorySwapMax`) force their own reclaim. Both are written up in
 `docs/agents/stability.md` "ZRAM & Memory Reclaim"; the `go-build` leak has a
@@ -142,7 +144,8 @@ Shmem leaves RAM only through swap whatever `vm.swappiness` says, and cgroup cap
 2026-11-27 at 17:54:32 CET (`sudo sysctl -w vm.swappiness=100`); `nix eval` of
 `boot.kernel.sysctl."vm.swappiness"` for evo-x2 prints the same 100. The live
 generation (1033) still declares `150`, so a reboot or a `systemd-sysctl` restart
-before the next deploy brings `150` back.
+before the next deploy brings `150` back. Undo is one command:
+`sudo sysctl -w vm.swappiness=150`.
 
 **Reopen when:** file refaults on the QLC root feed an IO storm (IO PSI high while
 `workingset_refault_file` climbs and swap traffic is low): step back toward `150`.
