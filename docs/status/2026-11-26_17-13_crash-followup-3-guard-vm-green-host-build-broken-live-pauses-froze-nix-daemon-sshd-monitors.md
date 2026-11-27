@@ -264,3 +264,8 @@ My own errors, in order of cost:
 ## Harvest record
 
 Deliberately not harvested into `TODO_LIST.md` / `docs/todo/stability.md` / `docs/todo/services.md` at authoring time: the owner asked for this report immediately and then a stop. The 00:36 and 07:12 lists are unharvested as well; row 10 above is that harvest.
+
+
+## Harvest log
+
+HARVESTED 2026-11-27 (session 4). Disposition of the 30 rows of section f: landed in the tree, rows 1, 2, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 25 (the project half), 26 and 29; library rows, 3 and 4 (`[blocked:user]`), 7, 21 and 30 (`[decision]`; the root-btrfs decision of row 30 sits on the storage row); queue rows, 20 and 28; an existing row covers 27; closed by design, 5 and 6 (the listener and the collector now need their own stall evidence, both patterns stay); dropped, 24 (not worth a dispatch). Rows and evidence: `docs/status/2026-11-27_01-10_crash-followup-4-guard-round3-per-group-stall-evidence-deploy-gate-blind-boot-id-evidence-tooling-landed.md`, section f and its harvest record. Two facts were missing from this report and are recorded there: the deploy gate's trip census was blind to every zone-6 trip as well (this report saw only the crash census), and the per-boot trip count never worked (its boot identity flipped inside one boot).

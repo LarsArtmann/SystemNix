@@ -2,7 +2,10 @@
 # shellcheck shell=bash
 # pstore-records.sh: shared EFI-pstore record decoding for the boot autopsy
 # scripts (the "pstore (EFI) crash dump" section of boot-evidence-pull.sh and
-# the `kdump=` verdict line of crash-triage.sh).  Sourced, never executed.
+# the `kdump=` verdict line of crash-triage.sh).  Sourced by those scripts;
+# executed directly it runs nothing but its fixture selftest
+# (`pstore-records.sh [selftest]`, flake check
+# checks.x86_64-linux.pstore-records-selftest).
 #
 # Why (2026-11-25, two kernel panics at 08:57:47 and 11:05:51): with a crash
 # image loaded, vpanic() jumps into the capture kernel BEFORE the main kernel
@@ -45,7 +48,10 @@
 #
 # Testable seams (live default in parentheses):
 #   PSTORE_JOURNALCTL      journalctl command ("journalctl", or the value of
-#                          crash-triage.sh's JOURNALCTL when that is set)
+#                          crash-triage.sh's JOURNALCTL when that is set);
+#                          pstore_journalctl_cmd resolves it, so a sourcing
+#                          script's own journal read goes through the SAME
+#                          seam and one stub covers both
 #   PSTORE_ARCHIVE_ROOT    prefix of /var/lib/systemd/pstore; the archive
 #                          files are read directly when readable, which in
 #                          practice means a root run (/var/lib/systemd/pstore;
@@ -217,6 +223,9 @@ PSTORE_EPOCHS=''     # distinct dump ids (epoch of the record id), first-seen or
 PSTORE_KINDS=''      # distinct header kinds, e.g. "Panic#1"
 PSTORE_BYTES=0       # bytes of the assembled dump text
 PSTORE_ARCH_HITS=0   # records whose body came from the archive (root run)
+PSTORE_HDR_OF=()     # record header line ("Panic#1 Part2"), keyed like PSTORE_BODY
+PSTORE_ARCHIVE_OF=() # archive path under /var/lib/systemd/pstore ('' when the
+                     # message does not name one), keyed like PSTORE_BODY
 PSTORE_EPOCH=''      # scratch of pstore_epoch_of
 PSTORE_VAL=''        # scratch of pstore_json_getv
 
@@ -250,6 +259,8 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
   PSTORE_KINDS=''
   PSTORE_BYTES=0
   PSTORE_ARCH_HITS=0
+  PSTORE_HDR_OF=()
+  PSTORE_ARCHIVE_OF=()
   while IFS= read -r line || [ -n "$line" ]; do
     [ -n "$line" ] || continue
     PSTORE_PARSE_LINES=$((PSTORE_PARSE_LINES + 1))
@@ -283,24 +294,23 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
     body=${body#"$nl"}
     m=''
     if pstore_json_getv "$line" MESSAGE; then m=$PSTORE_VAL; fi
+    rel=''
+    case "$m" in
+    *' moved to /var/lib/systemd/pstore/'*) rel=${m#* moved to /var/lib/systemd/pstore/} ;;
+    esac
     # Root run: the archived file wins when it is readable (the journal copy
     # stays the unprivileged path).  The file may repeat the header line.
-    if [ -n "$PSTORE_ARCHIVE_ROOT" ]; then
-      case "$m" in
-      *' moved to /var/lib/systemd/pstore/'*)
-        rel=${m#* moved to /var/lib/systemd/pstore/}
-        if [ -r "$PSTORE_ARCHIVE_ROOT/$rel" ]; then
-          b2=$(cat "$PSTORE_ARCHIVE_ROOT/$rel" 2>/dev/null) || b2=''
-          if [ -n "$b2" ]; then
-            case "$b2" in
-            "$hdr"$nl*) b2=${b2#"$hdr$nl"} ;;
-            esac
-            body=$b2
-            PSTORE_ARCH_HITS=$((PSTORE_ARCH_HITS + 1))
-          fi
+    if [ -n "$PSTORE_ARCHIVE_ROOT" ] && [ -n "$rel" ]; then
+      if [ -r "$PSTORE_ARCHIVE_ROOT/$rel" ]; then
+        b2=$(cat "$PSTORE_ARCHIVE_ROOT/$rel" 2>/dev/null) || b2=''
+        if [ -n "$b2" ]; then
+          case "$b2" in
+          "$hdr"$nl*) b2=${b2#"$hdr$nl"} ;;
+          esac
+          body=$b2
+          PSTORE_ARCH_HITS=$((PSTORE_ARCH_HITS + 1))
         fi
-        ;;
-      esac
+      fi
     fi
     kind=${hdr%% *}
     count=0
@@ -315,6 +325,8 @@ pstore_jsonl_parse() { # stdin: `journalctl -o json` lines -> PSTORE_* globals
     ' x') continue ;; # duplicate (count, part): the first occurrence wins
     esac
     PSTORE_BODY[idx]=$body
+    PSTORE_HDR_OF[idx]=$hdr
+    PSTORE_ARCHIVE_OF[idx]=$rel
     PSTORE_N=$((PSTORE_N + 1))
     PSTORE_BYTES=$((PSTORE_BYTES + ${#body}))
     [ "$count" -le "$PSTORE_MAXCOUNT" ] || PSTORE_MAXCOUNT=$count
@@ -354,8 +366,33 @@ pstore_dump_text() { # assembled dump on stdout, oldest line first (descending p
   return 0
 }
 
+pstore_records_list() { # one line per record on stdout, dump order (same walk as pstore_dump_text): header, archive path, size, first line
+  local c p i first
+  local LC_ALL=C # the cut below is a byte cut: it must never split a multi-byte character
+  for ((c = PSTORE_MAXCOUNT; c >= 0; c--)); do
+    for ((p = PSTORE_MAXPART; p >= 0; p--)); do
+      i=$((c * 1000000 + p))
+      case " ${PSTORE_BODY[i]+x}" in
+      ' x') ;;
+      *) continue ;;
+      esac
+      # The header IS the record's identity (the archive file is named after
+      # it); the first body line carries the uptime stamp the part starts at.
+      first=${PSTORE_BODY[i]%%$'\n'*}
+      [ "${#first}" -le 200 ] || first="${first:0:200}..."
+      printf -- '- record=%s archive=%s bytes=%s first-line: %s\n' \
+        "${PSTORE_HDR_OF[i]}" "${PSTORE_ARCHIVE_OF[i]:-none}" "${#PSTORE_BODY[i]}" "${first:-(empty)}"
+    done
+  done
+  return 0
+}
+
 pstore_part_gaps() { # part numbers missing between the lowest and the highest part ('' when none)
   local p c found gaps=''
+  # No records means there is no part range at all.  The walk below would
+  # otherwise test part 0, find nothing, and the facts block would print
+  # `gaps=0`: a "missing part 0" in a dump that does not exist (2026-11-26).
+  [ "$PSTORE_N" -gt 0 ] || return 0
   for ((p = PSTORE_MINPART; p <= PSTORE_MAXPART; p++)); do
     found=0
     for ((c = 0; c <= PSTORE_MAXCOUNT; c++)); do
@@ -454,11 +491,16 @@ pstore_facts() { # PSTORE_* records -> key=value lines (token= first): whose log
 
 # --- live read ---------------------------------------------------------------
 
+pstore_journalctl_cmd() { # -> the journalctl command every read below execs (the one seam a selftest stubs)
+  printf '%s\n' "${PSTORE_JOURNALCTL:-${JOURNALCTL:-journalctl}}"
+}
+
 pstore_journal_fetch() { # <boot id or index> -> JSON lines on stdout
   # rc 0 = the journal answered (zero lines is a valid answer: "no pstore
   # data"); rc 1 = journalctl is missing or could not read that boot, which is
   # NOT an answer and must never be read as "no dump".
-  local jc="${PSTORE_JOURNALCTL:-${JOURNALCTL:-journalctl}}"
+  local jc
+  jc=$(pstore_journalctl_cmd)
   command -v "$jc" >/dev/null 2>&1 || {
     echo "pstore-records: journalctl command not found: $jc" >&2
     return 1
@@ -497,3 +539,173 @@ pstore_fact() { # <key=value block> <key> -> value on stdout ('' and rc 1 when a
 
 # shellcheck disable=SC2034  # read by the sourcing scripts
 PSTORE_RECORDS_LOADED=1
+
+# --- fixture selftest (runs only when this file is EXECUTED) -----------------
+
+pstore_selftest() (
+  # Subshell body: the scratch-dir EXIT trap and the exit statuses stay
+  # scoped to the selftest.  Strict mode mirrors the sourcing scripts, so
+  # the functions are exercised under the shell options they run with live.
+  set -euo pipefail
+  local failures=0 tmp block
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+
+  check() { # <desc> <cmd...>
+    local desc="$1"
+    shift
+    if "$@"; then
+      :
+    else
+      echo "FAIL: $desc"
+      failures=$((failures + 1))
+    fi
+  }
+
+  PSTORE_ARCHIVE_ROOT='' # the direct archive read (root only) stays out of the legs
+  PSTORE_STUB_DIR="$tmp"
+  export PSTORE_STUB_DIR
+
+  # Stub journalctl: the library's only external read goes through
+  # PSTORE_JOURNALCTL, so the legs answer it from a fixture file, fail on
+  # demand, and log every call to prove WHAT was asked.
+  mkdir -p "$tmp/bin"
+  {
+    printf '#!%s\n' "$BASH"
+    cat <<'STUB'
+printf '%s\n' "$*" >>"$PSTORE_STUB_DIR/calls"
+[ -z "${PSTORE_STUB_FAIL:-}" ] || { echo "stub journalctl: $PSTORE_STUB_FAIL" >&2; exit 1; }
+cat "$PSTORE_STUB_DIR/${PSTORE_STUB_FILE:-records.jsonl}"
+STUB
+  } >"$tmp/bin/journalctl"
+  chmod +x "$tmp/bin/journalctl"
+  PSTORE_JOURNALCTL="$tmp/bin/journalctl"
+  export PSTORE_JOURNALCTL
+
+  # Capture-kernel dump of the 2026-11-25 cuts, shrunk to three parts: the
+  # 512 MiB kernel speaks ("131118 pages RAM"), the inherited watermark
+  # ("min:2097152kB") and its OOM panic sit on different parts, so the
+  # decode has to assemble them.  Parts are stored NEWEST-first.
+  cat >"$tmp/records.jsonl" <<'JSONL'
+{"SYSLOG_IDENTIFIER":"systemd-pstore","_BOOT_ID":"0737ecd796a143208516dbcff4e46e07","FILE":"Panic#1 Part3\n<6>[    0.000000] Linux version 7.3.5 (stub)\n<4>[   13.062148] Node 0 DMA32 free:156464kB boost:0kB min:2097152kB low:2621440kB high:3145728kB\n<4>[   13.062170] 131118 pages RAM\n","MESSAGE":"PStore dmesg-efi_pstore-179560116503001 moved to /var/lib/systemd/pstore/1795601165/001/dmesg-efi_pstore-179560116503001","__REALTIME_TIMESTAMP":"1795601218315500"}
+{"SYSLOG_IDENTIFIER":"systemd-pstore","_BOOT_ID":"0737ecd796a143208516dbcff4e46e07","FILE":"Panic#1 Part1\n<4>[   13.064394] Out of memory and no killable processes...\n<0>[   13.064395] Kernel panic - not syncing: System is deadlocked on memory\n","MESSAGE":"PStore dmesg-efi_pstore-179560116501001 moved to /var/lib/systemd/pstore/1795601165/001/dmesg-efi_pstore-179560116501001","__REALTIME_TIMESTAMP":"1795601218315583"}
+{"SYSLOG_IDENTIFIER":"systemd-pstore","_BOOT_ID":"0737ecd796a143208516dbcff4e46e07","FILE":"Panic#1 Part2\n<4>[   13.064380] systemd invoked oom-killer: gfp_mask=0xcc0\n<4>[   13.064390] Out of memory: Killed process 1 (systemd) total-vm:42524kB\n","MESSAGE":"PStore dmesg-efi_pstore-179560116502001 moved to /var/lib/systemd/pstore/1795601165/001/dmesg-efi_pstore-179560116502001","__REALTIME_TIMESTAMP":"1795601218315540"}
+JSONL
+  : >"$tmp/calls"
+  block=$(pstore_facts_for 0)
+  check "records: fetch ok" grep -qx 'fetch=ok' <<<"$block"
+  check "records: token capture-kernel-OOM" grep -qx 'token=capture-kernel-OOM' <<<"$block"
+  check "records: basis pages_ram" grep -qx 'basis=pages_ram' <<<"$block"
+  check "records: 3 records" grep -qx 'records=3' <<<"$block"
+  check "records: pages_ram decoded" grep -qx 'pages_ram=131118' <<<"$block"
+  check "records: min_kb decoded" grep -qx 'min_kb=2097152' <<<"$block"
+  check "records: deadlocked counted" grep -qx 'deadlocked=1' <<<"$block"
+  check "records: panic line counted" grep -qx 'panic_lines=1' <<<"$block"
+  check "records: kinds" grep -qx 'kinds=Panic#1' <<<"$block"
+  check "records: epochs" grep -qx 'epochs=1795601165' <<<"$block"
+  check "records: part range" grep -qx 'part_range=3..1' <<<"$block"
+  check "records: no missing part prints an EMPTY gaps" grep -qx 'gaps=' <<<"$block"
+  check "query: next boot by id, validated selector" \
+    grep -qxF -- '--quiet --no-pager -b 0 -o json SYSLOG_IDENTIFIER=systemd-pstore' "$tmp/calls"
+
+  # Per-record listing and the assembled dump: dump order is highest part
+  # first (Part1 holds the newest lines), so the assembled text ends with
+  # the panic line.
+  pstore_jsonl_parse <"$tmp/records.jsonl"
+  pstore_records_list >"$tmp/list"
+  check "list: one line per record" test "$(grep -c '^- record=' "$tmp/list")" = 3
+  check "list: dump order, newest part last" \
+    test "$(sed -n 's/^- record=Panic#1 Part\([0-9]*\) .*/\1/p' "$tmp/list")" = $'3\n2\n1'
+  check "list: archive path from the message" \
+    grep -qF -- '- record=Panic#1 Part1 archive=1795601165/001/dmesg-efi_pstore-179560116501001 ' "$tmp/list"
+  check "list: first line of the part" \
+    grep -qF 'first-line: <4>[   13.064394] Out of memory and no killable processes...' "$tmp/list"
+  pstore_dump_text >"$tmp/dump"
+  check "dump: oldest part first" test "$(head -n 1 "$tmp/dump")" = '<6>[    0.000000] Linux version 7.3.5 (stub)'
+  check "dump: newest part last" \
+    test "$(tail -n 1 "$tmp/dump")" = '<0>[   13.064395] Kernel panic - not syncing: System is deadlocked on memory'
+
+  # Missing part: Part2 never made it out of the EFI ring.
+  grep -v 'Part2' "$tmp/records.jsonl" >"$tmp/records.gap.jsonl"
+  export PSTORE_STUB_FILE=records.gap.jsonl
+  block=$(pstore_facts_for 0)
+  check "gap: records=2" grep -qx 'records=2' <<<"$block"
+  check "gap: the missing part is named" grep -qx 'gaps=2' <<<"$block"
+
+  # No records: the journal ANSWERED with zero lines (a clean boot archived
+  # nothing).  The block must say so and must not invent a part 0 gap.
+  : >"$tmp/records.none.jsonl"
+  export PSTORE_STUB_FILE=records.none.jsonl
+  block=$(pstore_facts_for 0)
+  check "none: token none" grep -qx 'token=none' <<<"$block"
+  check "none: zero lines is a valid answer" grep -qx 'fetch=ok' <<<"$block"
+  check "none: records=0" grep -qx 'records=0' <<<"$block"
+  check "none: gaps stays EMPTY" grep -qx 'gaps=' <<<"$block"
+  if grep -qx 'gaps=0' <<<"$block"; then
+    echo "FAIL: none: gaps=0 reports a missing part 0 in a dump that does not exist (2026-11-26)"
+    failures=$((failures + 1))
+  fi
+
+  # No next boot: the pulled boot is the newest one, so there is nothing to
+  # ask the journal for.
+  export PSTORE_STUB_FILE=records.jsonl
+  : >"$tmp/calls"
+  block=$(pstore_facts_for '')
+  check "nonext: two-line block" test "$(printf '%s\n' "$block")" = $'token=none\nfetch=nonext'
+  check "nonext: journal never asked" test ! -s "$tmp/calls"
+
+  # Unreadable journal: NOT an answer.  It must surface as fetch=error and
+  # never as the zero-record token alone.
+  block=$(PSTORE_STUB_FAIL='boot -9 unreadable' pstore_facts_for 0)
+  check "error: fetch=error" grep -qx 'fetch=error' <<<"$block"
+  check "error: rc of the raw fetch" test "$(PSTORE_STUB_FAIL=x pstore_journal_fetch 0 >/dev/null 2>&1; echo "$?")" = 1
+
+  # Main-kernel dump (the shape a working capture path leaves): long uptime
+  # stamps, no memory report, an Oops kind.
+  cat >"$tmp/records.main.jsonl" <<'JSONL'
+{"SYSLOG_IDENTIFIER":"systemd-pstore","FILE":"Oops#2 Part1\n<4>[ 86412.345678] RIP: 0010:stub_init+0x1a/0x30\n<0>[ 86412.400000] Kernel panic - not syncing: Fatal exception\n","MESSAGE":"PStore dmesg-efi_pstore-179570000001002 moved to /var/lib/systemd/pstore/1795700000/001/dmesg-efi_pstore-179570000001002"}
+JSONL
+  export PSTORE_STUB_FILE=records.main.jsonl
+  block=$(pstore_facts_for 0)
+  check "main: token main-kernel-panic-captured" grep -qx 'token=main-kernel-panic-captured' <<<"$block"
+  check "main: basis uptime" grep -qx 'basis=uptime' <<<"$block"
+  check "main: oops kind" grep -qx 'kinds=Oops#2' <<<"$block"
+  check "main: epoch from the record id" grep -qx 'epochs=1795700000' <<<"$block"
+
+  # Older systemd: no FILE field, the record text sits in MESSAGE.
+  cat >"$tmp/records.old.jsonl" <<'JSONL'
+{"SYSLOG_IDENTIFIER":"systemd-pstore","MESSAGE":"Panic#1 Part1\n<0>[   13.064395] Kernel panic - not syncing: System is deadlocked on memory\n"}
+JSONL
+  export PSTORE_STUB_FILE=records.old.jsonl
+  block=$(pstore_facts_for 0)
+  check "old-systemd: record read from MESSAGE" grep -qx 'records=1' <<<"$block"
+  check "old-systemd: capture kernel by uptime" grep -qx 'basis=uptime-short' <<<"$block"
+
+  # JSON escapes: a quote, a tab and a newline inside one FILE value.  The
+  # \uXXXX path goes through printf '%b' '\U...', which bash only turns
+  # into UTF-8 under a UTF-8 locale (under LC_ALL=C it stays literal text,
+  # found in the nix sandbox on 2026-11-26), so the leg names the locale
+  # the records are read in.
+  check "json: escapes decoded" test "$(LC_ALL=C.UTF-8 pstore_json_get '{"FILE":"a\"b\tc\n\u00e9"}' FILE)" = $'a"b\tc\né'
+
+  if [ "$failures" -eq 0 ]; then
+    echo "pstore-records selftest: all cases green"
+    exit 0
+  fi
+  echo "pstore-records selftest: $failures FAILURE(S)"
+  exit 1
+)
+
+# Sourcing runs nothing below this line: BASH_SOURCE is this file, $0 is
+# the sourcing script.  Only a direct execution reaches the selftest.
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  case "${1:-selftest}" in
+  selftest)
+    pstore_selftest
+    ;;
+  *)
+    echo "usage: $0 [selftest] (this file is a library: the autopsy scripts source it)" >&2
+    exit 2
+    ;;
+  esac
+fi

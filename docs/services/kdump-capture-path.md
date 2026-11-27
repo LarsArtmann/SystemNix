@@ -3,7 +3,7 @@
 **Module:** `modules/nixos/services/kdump-capture-path.nix` (auto-discovered as `flake.nixosModules.kdump-capture-path`; active whenever `boot.crashDump.enable` is true)
 **Capture-side units:** `modules/nixos/services/_kdump-capture-units.nix` (`kdump-save.service`, `kdump-retention.service` + timer, the `/var/crash` tmpfiles rule)
 **VM regression test:** `checks.x86_64-linux.kdump-capture-boot` (`tests/test-kdump-capture-boot.nix`, one fixed node and one unfixed control node)
-**Gates that read it:** `scripts/pre-reboot-check.sh` section 12 (contract of the generation the reboot boots) and `scripts/post-deploy-check.sh` section 26 (kdump capture contract). Queued, not implemented: the `kdump=` verdict in `scripts/crash-triage.sh` and the pstore section in `scripts/boot-evidence-pull.sh`.
+**Gates that read it:** `scripts/pre-reboot-check.sh` section 12 (contract of the generation the reboot boots) and `scripts/post-deploy-check.sh` section 26 (kdump capture contract). `scripts/crash-triage.sh` prints the `kdump=` verdict per boot since 2026-11-26 (decoded by `scripts/lib/pstore-records.sh`; fixture-tested by `checks.x86_64-linux.crash-triage-selftest`). `scripts/boot-evidence-pull.sh` renders the pstore section with the kdump capture line since 2026-11-27 (fixture-tested by `checks.x86_64-linux.boot-evidence-pull-selftest`; the library itself by `checks.x86_64-linux.pstore-records-selftest`).
 **Created:** 2026-11-25, after the two evidence-less panic cuts #64 (08:57:47) and #65 (11:05:51)
 
 ## What it does (three legs)
@@ -26,13 +26,19 @@ Retention: `kdump-retention` keeps the 2 newest entries, 20 G cap, boot + weekly
 
 - `N pages RAM` below about 2000000 in a pstore dump = the 512 MiB capture kernel is speaking, not the crashed one. `min:2097152kB` plus `System is deadlocked on memory` = the capture kernel OOM-panicked (the pre-fix signature of #61, #62, #64, #65).
 - Parts are stored newest-first (`Panic#1 Part1` holds the last lines); the archive's `dmesg.txt` is already chronological.
-- By hand until the tooling lands: `journalctl -b <next boot> -o json _SYSTEMD_UNIT=systemd-pstore.service | grep -c FILE=`, then decode the record ids with `date -d @<epoch>`. The planned `scripts/crash-triage.sh` verdict vocabulary is `main-kernel-panic-captured`, `capture-kernel-OOM`, `capture-kernel-panicked`, `none`.
+- The verdict: `scripts/crash-triage.sh --boots 6` prints `kdump=` on every boot line (`main-kernel-panic-captured`, `capture-kernel-OOM`, `capture-kernel-panicked`, `none`; `unknown(journal-unreadable)` when the next boot's journal did not answer, which is a failed read and is flagged, never "none"). Live 2026-11-26 23:38: `capture-kernel-OOM` for the boots `3aa71817`, `a95832c5`, `b4931451`, `8b31b428`, `none` for `27ec3ede`.
+- By hand: `journalctl -b <next boot> -o json SYSLOG_IDENTIFIER=systemd-pstore | grep -c FILE=`. The selector `_SYSTEMD_UNIT=systemd-pstore.service` matches nothing on this system (systemd 262: the short-lived process is gone before journald attaches the unit field; verified 2026-11-26), then decode the record ids with `date -d @<epoch>`.
 
 ## Verification (2026-11-25)
 
 - VM test green (`nix build .#checks.x86_64-linux.kdump-capture-boot -L`, 2 min 13 s): the fixed node crashes (`echo c > /proc/sysrq-trigger`), the capture kernel runs `kdump-save` at 7.15 s, reboots at 7.58 s, and the next boot holds `/var/crash/<ts>/vmcore-dmesg.txt` with `sysrq triggered crash` plus the main kernel's panic text under `/var/lib/systemd-pstore/`. Capture-boot memory in the VM (256 MiB reservation): `MemTotal 202224 kB, MemAvailable 113532 kB`.
 - The unfixed control node: the capture boot dies right after `Apply Kernel Variables` (5.2 s), `/var/crash` stays empty and the box only returns through the capture kernel's own panic.
 - Host eval green with the module (evo-x2 toplevel, 2026-11-25).
+
+## Live state (2026-11-26)
+
+- Deployed half: generation 1032 (activated 2026-11-26 06:50:06) contains `kdump-capture-boot-sysctl.service`.
+- Boot-time half NOT live: the running kernel booted 2026-11-25 11:06:51, before the fix, so its command line has no `crash_kexec_post_notifiers` (`tr ' ' '\n' < /proc/cmdline | grep -c crash_kexec_post_notifiers` reads 0) and the loaded crash image is the pre-fix one. Until the next reboot every panic-class cut still leaves only the capture kernel's log and an empty `/var/crash`.
 
 ## Live acceptance (owner, one deliberate crash)
 

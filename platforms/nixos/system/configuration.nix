@@ -2351,24 +2351,39 @@ in
           # installed on evo-x2, audio on the HDD pool"). Two collectors:
           # mic_monitor = the extracted LarsArtmann/mic-monitor change-
           # detection engine (RecordingStarted/Stopped per (device, process,
-          # pid) + DeviceConnected/Disconnected via pactl; a 5s μ-law
-          # snippet rides every RecordingStarted — capture_snippets). All
-          # recorded audio is OWNER-private telemetry, never leaves this
-          # host's monitor365 stack. audio_stream = periodic ambient mic
-          # capture (parecord from the default source, 10s every 5 min,
-          # captures below -60 dBFS RMS skipped as silence). Both need the
-          # graphical session (pactl/parecord against the displayUser's
-          # pipewire-pulse socket; headless = probe-once skip, the
-          # graphical-restart path unit re-arms them at login). Event
-          # lifecycle: DuckDB 100d hot window -> hourly Parquet archival at
-          # 90d (audio payload included) -> /mnt/pool/services/monitor365/
-          # archives (BindPaths wiring in monitor365.nix) — the pool copy
-          # is the durable one, the DuckDB rows age out. Volume at these
-          # settings: ~1-3 MB/day.
+          # pid) via pactl; an optional 5s μ-law snippet rides every
+          # RecordingStarted — capture_snippets). All recorded audio is
+          # OWNER-private telemetry, never leaves this host's monitor365
+          # stack. audio_stream = periodic ambient mic capture (parecord from
+          # the default source, 10s every 5 min, captures below -60 dBFS RMS
+          # skipped as silence). Both need the graphical session (pactl/
+          # parecord against the displayUser's pipewire-pulse socket;
+          # headless = probe-once skip, the graphical-restart path unit
+          # re-arms them at login). Event lifecycle: DuckDB 100d hot window
+          # -> hourly Parquet archival at 90d (audio payload included) ->
+          # /mnt/pool/services/monitor365/archives (BindPaths wiring in
+          # monitor365.nix) — the pool copy is the durable one, the DuckDB
+          # rows age out. Volume at these settings (computed 2026-11-26,
+          # not measured): audio_stream is 288 events a day of ~100 KB
+          # base64, 17-30 MB/day, because room noise here (-53 to -55 dBFS
+          # RMS) sits above the -60 dBFS silence threshold; a snippet adds
+          # ~50 KB per microphone recording that starts.
+          #
+          # capture_snippets stays off until SystemNix floats mic-monitor
+          # AND monitor365 past their 2026-11-27 capture fix. The deployed
+          # mic-monitor (259d2df2) cannot record (its parecord has no
+          # --duration), names no process, and with the parecord shim live
+          # would attach 5 s of the DEFAULT microphone to every recording
+          # start, including the system-audio taps of DankMaterialShell's
+          # visualizer (cava, 60 stream starts on 2026-11-25 alone). LIFT:
+          # set true in the wave that floats both repos past the fix and
+          # lifts the shim (modules/nixos/services/monitor365.nix); the
+          # fixed engine records microphone sources only and names the
+          # process and the source of each recording.
           mic_monitor = {
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 10;
-            capture_snippets = lib.mkDefault true;
+            capture_snippets = lib.mkDefault false;
             snippet_duration_seconds = lib.mkDefault 5;
           };
           audio_stream = {

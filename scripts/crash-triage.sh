@@ -16,7 +16,10 @@
 # JOURNAL_CAP_BYTES (vacuum math).  Read-only; never mutates anything.
 set -euo pipefail
 
-BOOTS=5
+# 6 boots (2026-11-27): the census of docs/agents/stability.md ("Freeze
+# census", regenerated with --boots 6) is the documented reading; the default
+# and the doc disagreed since 2026-10-28.
+BOOTS=6
 JOURNALCTL="${JOURNALCTL:-journalctl}"
 DOCS_ROOT="${DOCS_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 JOURNAL_CAP_BYTES="${JOURNAL_CAP_BYTES:-8589934592}"

@@ -209,3 +209,8 @@ bash scripts/post-deploy-check.sh --section-26-only
 bash ~/.cache/freeze-triage-20261125/work/guard-sim.sh
 cat /proc/sys/kernel/random/boot_id
 ```
+
+
+## Harvest log
+
+HARVESTED 2026-11-27 (session 4). Rows f/7 to f/11 (the evidence scripts) and f/32 to f/34 (the AGENTS routing, the guard runbook, the kdump-capture-path tool commands) landed in the tree; the two evidence files of f/10 carry a measured annotation (the "PIPELINE DARK" line was false for both boots: the remote tail was 10.1 s and 7.6 s behind the cut). The decisions are library rows: f/15 (`kernel.hung_task_panic`), f/20 (root btrfs fully chunked, on the storage row) and f/29 (the 10:56 compile burst). The reboot and the crash test are the library row "Make kdump capture one cut". Full record: `docs/status/2026-11-27_01-10_crash-followup-4-guard-round3-per-group-stall-evidence-deploy-gate-blind-boot-id-evidence-tooling-landed.md`.
