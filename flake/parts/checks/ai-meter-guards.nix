@@ -299,6 +299,7 @@
       # two calls failed and at least half of the calls did, in 30 minutes:
       #
       #   hang         one failed call every 5 minutes, nothing served  -> fires
+      #   busy-box     the same while z.ai serves 20 calls a minute     -> fires
       #   single       one failed call in the half hour                  -> 25, silent
       #   healthy      12 served                                          -> 0, silent
       #   minority     12 served, 6 failed                                -> 33, silent
@@ -428,6 +429,10 @@
               evaluation_interval = "1m";
               tests = [
                 (embTest [ trickling ] true)
+                (embTest [
+                  trickling
+                  (linear "ai_meter_requests_total" "${zai},code=\"200\"" 20)
+                ] true)
                 (embTest [ single ] false)
                 (embTest [ (served 0.4) ] false)
                 (embTest [ (served 0.4) (failed 0.2) ] false)

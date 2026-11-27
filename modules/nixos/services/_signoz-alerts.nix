@@ -929,7 +929,9 @@ in
     "signoz/rules/ai-embeddings-failing.json".source =
       let
         calls = ''sum(increase(ai_meter_requests_total{upstream="llama-embeddings"}[30m]))'';
-        failed = ''sum(increase(ai_meter_requests_total{upstream="llama-embeddings",code=~"4..|5.."}[30m]))'';
+        # Until the first failure after a proxy start there is no failed series,
+        # and `100 * empty` is empty in PromQL: the rule must read 0, not vanish.
+        failed = ''(sum(increase(ai_meter_requests_total{upstream="llama-embeddings",code=~"4..|5.."}[30m])) or (${calls} * 0))'';
         floorCalls = "4";
       in
       mkRule {

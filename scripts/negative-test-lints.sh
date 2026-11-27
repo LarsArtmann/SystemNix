@@ -1174,6 +1174,28 @@ run_case aimeter alert-providers-mixed ai-meter-alert-promql fail \
   'sed:modules/nixos/services/_signoz-alerts.nix:s/sum by (upstream) (rate/sum(rate/g'
 run_case aimeter alert-comment-control ai-meter-alert-promql pass '' \
   'sed:modules/nixos/services/_signoz-alerts.nix:s|^        floorCallsPerSecond = "0.0833333";$|        floorCallsPerSecond = "0.0833333"; # control|'
+# The embeddings rule (2026-11-27): llama-embeddings was active and listening
+# and failed 387 of 424 calls in a day while every other layer stayed quiet.
+# Each leg removes one property (two failed calls at least, half of the calls,
+# the half-hour window, real failures only, llama-embeddings only); the
+# promtool fixtures for it in checks.ai-meter-alert-promql must go red.
+run_case aimeter embeddings-floor-lowered ai-meter-alert-promql fail \
+  'the embeddings rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/floorCalls = "4";/floorCalls = "1";/'
+run_case aimeter embeddings-target-raised ai-meter-alert-promql fail \
+  'the embeddings rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/target = 49.5;/target = 95;/'
+run_case aimeter embeddings-window-shortened ai-meter-alert-promql fail \
+  'the embeddings rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/llama-embeddings"}\[30m\]/llama-embeddings"}[5m]/;s/4..|5.."}\[30m\]/4..|5.."}[5m]/'
+run_case aimeter embeddings-status-widened ai-meter-alert-promql fail \
+  'the embeddings rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/llama-embeddings",code=~"4..|5.."}\[30m\]/llama-embeddings",code=~".."}[30m]/'
+run_case aimeter embeddings-upstream-dropped ai-meter-alert-promql fail \
+  'the embeddings rule no longer tells' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s/ai_meter_requests_total{upstream="llama-embeddings"}\[30m\]/ai_meter_requests_total[30m]/'
+run_case aimeter embeddings-comment-control ai-meter-alert-promql pass '' \
+  'sed:modules/nixos/services/_signoz-alerts.nix:s|^    # calls themselves are the signal. The denominator is clamped at four calls$|    # calls themselves are the signal. The denominator is clamped at four calls (control)|'
 
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]

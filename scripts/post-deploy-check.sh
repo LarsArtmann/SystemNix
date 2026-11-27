@@ -2754,7 +2754,7 @@ if [ -e "$CRUSH_RC" ]; then
   crush_config_src="${CRUSH_CONFIG_SRC:-$(cd "$smoke_dir/.." && pwd)/../crush-config}"
   if [[ -x $crush_config_src/scripts/crush-rc-live-test.sh ]]; then
     if bash "$crush_config_src/scripts/crush-rc-live-test.sh" "$CRUSH_RC" >/tmp/.smoke-crush-live.log 2>&1; then
-      report_pass "Crush - live rc matrix OK ($(grep -c '^PASS' /tmp/.smoke-crush-live.log) checks through the real binary)"
+      report_pass "Crush - live rc matrix OK: $(tail -1 /tmp/.smoke-crush-live.log)"
     else
       report_fail "Crush - live rc matrix FAILED (see /tmp/.smoke-crush-live.log tail: $(tail -3 /tmp/.smoke-crush-live.log | tr '\n' ' '))"
     fi
