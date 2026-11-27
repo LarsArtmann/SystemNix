@@ -64,6 +64,48 @@ crosscheck_snapshot_io_ticks() {
   return 0
 }
 
+# One "name io_ticks discard_ticks discard_ios" line per device (fields 10,
+# 16 and 13 of /sys/block/<dev>/stat; a stat without discard fields reads as
+# zeros). A TRIM walk (fstrim, online discard) parks these NVMe parts for
+# about 1 ms per discard command, so a device at ~100% util with a few
+# hundred discards per second is a maintenance walk, not a read/write storm:
+# the nightly fstrim of 2026-11-27 01:10-02:15 read as REAL STORM on util alone.
+crosscheck_snapshot_discard() {
+  local d base
+  for d in "$CROSSCHECK_SYS_BLOCK"/sd* "$CROSSCHECK_SYS_BLOCK"/nvme*n* "$CROSSCHECK_SYS_BLOCK"/vd*; do
+    if [ -e "$d/stat" ]; then
+      base="${d##*/}"
+      awk -v n="$base" '{ printf "%s %s %s %s\n", n, $10, $16 + 0, $13 + 0 }' "$d/stat" 2>/dev/null
+    fi
+  done
+  return 0
+}
+
+# Pure: TRIM lines from two "name io_ticks discard_ticks discard_ios" streams.
+# One line per device whose discard ticks moved in the window: "<name> is
+# <share>% TRIM discards (<n>/s, <ms> ms each)", where share is the discard
+# tick delta as a share of the io_ticks delta (the device's busy time), capped
+# at 100. A device that discarded nothing prints nothing.
+crosscheck_discard_lines() {
+  local a="$1" b="$2" w="${3:-1}"
+  paste <(sort <<<"$a") <(sort <<<"$b") |
+    awk -v w="$w" 'NF == 8 && $1 == $5 && ($7 - $3) > 0 {
+      busy = $6 - $2
+      share = busy > 0 ? 100.0 * ($7 - $3) / busy : 100.0
+      if (share > 100) share = 100
+      ios = $8 - $4
+      printf "%s is %.0f%% TRIM discards (%.0f/s, %.1f ms each)\n", $1, share, ios / w, ios > 0 ? ($7 - $3) / ios : 0
+    }'
+}
+
+# Pure: "<share> <name>" of the device with the largest TRIM share in a
+# crosscheck_discard_lines stream ("0.0 -" when nothing discarded).
+crosscheck_max_trim() {
+  awk '{
+    for (i = 1; i <= NF; i++) if ($i == "is") { s = $(i + 1); sub(/%/, "", s); if (s + 0 > m) { m = s + 0; n = $1 } }
+  } END { printf "%.0f %s\n", m + 0, (n == "" ? "-" : n) }'
+}
+
 # Stream "avg10 cgroup/relative/path" lines for every readable io.pressure
 # under the cgroup root, EXCLUDING the root cgroup's own file (it aggregates
 # the whole system, which the PSI line already carries). Malformed or vanished
@@ -95,7 +137,11 @@ verdict_classify() {
   if [ "$dstate" -gt 0 ]; then
     echo "INCONCLUSIVE: D-state tasks present with high PSI — the automount/corpse class, NOT the phantom; run 'full' and read the wchans before forcing"
   elif awk -v m="$max_util" 'BEGIN { exit !(m >= 20) }'; then
-    echo "REAL STORM: max device util ${max_util}% ≥ 20% — genuine device work; wait for the calm window"
+    if awk -v t="${4:-0}" 'BEGIN { exit !(t >= 50) }'; then
+      echo "TRIM STORM: device ${5:-?} is ${max_util}% busy and ${4}% of its busy time is TRIM discards (fstrim or online discard) — a maintenance walk, not a workload; wait for it to finish (journalctl -u fstrim) rather than forcing"
+    else
+      echo "REAL STORM: max device util ${max_util}% ≥ 20% — genuine device work; wait for the calm window"
+    fi
   elif awk -v m="$max_util" 'BEGIN { exit !(m <= 5) }' && [ "$cq" -gt 0 ]; then
     echo "PHANTOM — SAFE TO FORCE: all devices ≤5% util (max ${max_util}%) with ${cq} S-state io_cqring_wait sleeper(s) and zero D-state — PSI books TSK_IOWAIT against idle io_uring CQ-waiters (ghostty class)"
   else
@@ -105,12 +151,16 @@ verdict_classify() {
 
 verdict_mode() {
   local w="$CROSSCHECK_WINDOW_S"
-  local snap_a snap_b util_lines max_util cq dstate
+  local snap_a snap_b util_lines max_util cq dstate disc_a disc_b disc_lines trim
+  disc_a="$(crosscheck_snapshot_discard)"
   snap_a="$(crosscheck_snapshot_io_ticks)"
   sleep "$w"
   snap_b="$(crosscheck_snapshot_io_ticks)"
+  disc_b="$(crosscheck_snapshot_discard)"
   util_lines="$(crosscheck_util_lines "$snap_a" "$snap_b" "$w")"
   max_util="$(crosscheck_max_util <<<"$util_lines")"
+  disc_lines="$(crosscheck_discard_lines "$disc_a" "$disc_b" "$w")"
+  trim="$(crosscheck_max_trim <<<"$disc_lines")"
   # S-state CQ-waiters: the phantom signature — ghostty scopes sleep in
   # io_cqring_wait TASK_INTERRUPTIBLE with in_iowait=1, so PSI charges them
   # while io.stat stays empty. /proc wchan read, no privileges needed.
@@ -118,17 +168,28 @@ verdict_mode() {
   dstate="$(ps -eo stat --no-headers 2>/dev/null | awk '$1 ~ /^D/' | wc -l)"
   echo "per-device %util (${w}s io_ticks window, max ${max_util}%):"
   [ -n "$util_lines" ] && printf '%s\n' "$util_lines" | sed 's/^/  /'
-  echo "verdict inputs: max_util=${max_util}% cq_waiters=${cq} d_state=${dstate}"
-  echo "VERDICT: $(verdict_classify "$max_util" "$cq" "$dstate")"
+  echo "TRIM share of each device's busy time:"
+  if [ -n "$disc_lines" ]; then
+    printf '%s\n' "$disc_lines" | sed 's/^/  /'
+  else
+    echo "  (no discards in the window)"
+  fi
+  echo "verdict inputs: max_util=${max_util}% cq_waiters=${cq} d_state=${dstate} trim_share=${trim% *} trim_device=${trim#* }"
+  echo "VERDICT: $(verdict_classify "$max_util" "$cq" "$dstate" "${trim% *}" "${trim#* }")"
 }
 
 gate_mode() {
   local w="$CROSSCHECK_WINDOW_S"
   local snap_a snap_b util_lines cg_lines
+  local disc_a disc_b disc_lines trim
+  disc_a="$(crosscheck_snapshot_discard)"
   snap_a="$(crosscheck_snapshot_io_ticks)"
   sleep "$w"
   snap_b="$(crosscheck_snapshot_io_ticks)"
+  disc_b="$(crosscheck_snapshot_discard)"
   util_lines="$(crosscheck_util_lines "$snap_a" "$snap_b" "$w")"
+  disc_lines="$(crosscheck_discard_lines "$disc_a" "$disc_b" "$w")"
+  trim="$(crosscheck_max_trim <<<"$disc_lines")"
   cg_lines="$(crosscheck_rank_cgroups_stream | sort -rn | head -3)"
 
   echo "per-device %util (${w}s io_ticks window, max $(crosscheck_max_util <<<"$util_lines")%):"
@@ -136,6 +197,13 @@ gate_mode() {
     printf '%s\n' "$util_lines" | sed 's/^/  /'
   else
     echo "  (no block devices found under $CROSSCHECK_SYS_BLOCK)"
+  fi
+  if [ -n "$disc_lines" ]; then
+    echo "TRIM share of each device's busy time (a walk, not a workload, when the share is high):"
+    printf '%s\n' "$disc_lines" | sed 's/^/  /'
+    if awk -v t="${trim% *}" 'BEGIN { exit !(t >= 50) }'; then
+      echo "  → ${trim#* } is mostly TRIM: a fstrim or online-discard walk is holding the device"
+    fi
   fi
   echo "top-3 stalled cgroups (io.pressure some avg10):"
   if [ -n "$cg_lines" ]; then
