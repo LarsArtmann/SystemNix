@@ -498,6 +498,14 @@ run_case signozdash tile-title-cut signoz-query-lint fail 'the header cuts it wi
   'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Failures \/ min"/"name": "Failures per minute today"/'
 run_case signozdash selftest-tile-title-rule-dropped signoz-dashboard-lint-selftest fail 'leg narrowTileTitleCut is false' \
   'sed:lib/signoz-dashboard-lint.nix:s/maxNarrowTileTitle = 22;/maxNarrowTileTitle = 400;/'
+# The post-deploy dashboard drift verdict must stay able to fail: a comparison
+# blind to what the API serves, or to a dashboard it does not serve at all,
+# is the green it exists to disprove (the hand-edited ai-meter dashboard of
+# 2026-11-26 behind a green provisioner).
+run_case signozdash selftest-dashboards-drift-blind post-deploy-signoz-dashboards-selftest fail 'edited names the dashboard' \
+  'sed:scripts/lib/signoz-dashboards-drift.sh:s/\[ "\$dash_live" = "\$dash_want" \]/true/'
+run_case signozdash selftest-dashboards-unserved-blind post-deploy-signoz-dashboards-selftest fail 'not served' \
+  'sed:scripts/lib/signoz-dashboards-drift.sh:s/if \[ -z "\$dash_id" \]; then/if false; then/'
 
 # ── with-pkgs-lint: the shadow trap + exemption/comment immunity ──
 # The 2026-10-14 sweep removed all module/platform sites; the mutation
