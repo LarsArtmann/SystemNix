@@ -969,6 +969,40 @@
               touch $out
             '';
 
+        guard-churn-listener-selftest =
+          pkgs.runCommand "guard-churn-listener-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              grep -q 'CHURN_UNITS=".*cfg\.ioChurnUnits}"' "$mod" ||
+                { echo "FAIL: ioChurnUnits is no longer rendered into CHURN_UNITS"; exit 1; }
+              grep -q 'IO_PAUSE_PATTERNS=".*cfg\.ioPause\.cgroupPatterns}' "$mod" ||
+                { echo "FAIL: ioPause.cgroupPatterns is no longer rendered into IO_PAUSE_PATTERNS"; exit 1; }
+              hits=$(grep -n '"inboxclean-web.service"' "$mod" | cut -d: -f1)
+              count=$(printf '%s\n' "$hits" | grep -c .) || true
+              if [ "''${count:-0}" -ne 1 ]; then
+                echo "FAIL: expected exactly one declaration of inboxclean-web.service (ioPause.cgroupPatterns only), found ''${count:-0}"
+                exit 1
+              fi
+              pause_start=$(grep -n 'cgroupPatterns = lib.mkOption' "$mod" | head -1 | cut -d: -f1)
+              pause_desc=$(grep -n 'description = "Substring patterns selecting' "$mod" | head -1 | cut -d: -f1)
+              if [ -z "$pause_start" ] || [ -z "$pause_desc" ]; then
+                echo "FAIL: ioPause.cgroupPatterns option anchors missing (start@$pause_start desc@$pause_desc)"
+                exit 1
+              fi
+              if [ "$hits" -le "$pause_start" ] || [ "$hits" -ge "$pause_desc" ]; then
+                echo "FAIL: inboxclean-web.service is declared outside the ioPause.cgroupPatterns default list (line $hits, list $pause_start..$pause_desc): back in ioChurnUnits, every trip action stops the dashboard and its listener, and the InboxClean Gatus checks page (2026-11-26 06:57)"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Guard reader shape (2026-11-26): the guard reads /proc and cgroupfs
         # with `find -print0` and ONE awk that opens each file by getline.
         # The earlier `find -exec awk {} +` handed awk the paths as
