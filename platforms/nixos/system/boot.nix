@@ -446,28 +446,32 @@ in
   '';
 
   # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical,
-  # ~125 GiB visible to Linux with the 512 MiB BIOS VRAM carveout (GTT-first,
-  # 2026-09-02). GPU/CPU share the same RAM via GTT on this unified-memory APU)
+  # ~124 GiB visible to Linux with the 1 GiB BIOS VRAM carveout (the BIOS floor,
+  # GTT-first since 2026-09-05. GPU/CPU share the same RAM via GTT on this unified-memory APU)
   #
-  # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13):
+  # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13, rebalanced 2026-11-27):
   # This machine has zram as its ONLY swap (no disk swap). zram compresses in RAM
-  # at ~370 MiB/s — far faster than BTRFS page cache reclaim on QLC NAND (~253ms/write).
-  # Therefore we want the kernel to PREFER zram swap over disk page cache reclaim.
+  # at ~370 MiB/s, far faster than BTRFS page cache reclaim on QLC NAND (~253ms/write),
+  # so swapping must never be priced dearer to the kernel than page-cache eviction.
   #
   # The old swappiness=10 was BACKWARDS for zram-only: it told the kernel to prefer
   # page cache reclaim (disk I/O) over swap (zram, in RAM), causing BTRFS I/O storms
-  # when memory pressure rose. swappiness=150 makes the kernel prefer zram swap,
-  # reducing disk I/O pressure dramatically.
+  # when memory pressure rose. swappiness=1 never swapped at all (the 2026-05-25 OOM).
+  # Both sit below 100, where the kernel prices swapping dearer than file IO.
   #
-  # The 2026-05-25 OOM crash was caused by swappiness=1 (never swap, always reclaim
-  # page cache). swappiness=10 was raised as a fix but was still too low for zram-only.
-  # The correct value for zram-only is 100-200 (kernel docs: "for zram, use 100+").
+  # swappiness=150 (2026-08-13 to 2026-11-27) then overshot to the other side: it
+  # priced anon pages 3:1 cheaper to evict than file pages, and the box ran zram
+  # 100% full next to 29-43 GiB of file cache (2026-11-27 17:1x-17:4x). 100 is the
+  # kernel's neutral point (vm.rst: "At 100, the VM assumes equal IO cost"; for
+  # in-memory swap "values beyond 100 can be considered"): from there the measured
+  # refault cost of each LRU decides the split. Owner directive 2026-11-27: use the
+  # RAM before compressing into it. Evidence: docs/adr/009-zram-only-swap.md.
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
-    "vm.swappiness" = 150; # zram-only: prefer zram swap (in RAM, ~370 MiB/s) over page cache reclaim (disk I/O, ~253ms/write on QLC NAND). Old value 10 caused BTRFS I/O storms.
+    "vm.swappiness" = 100; # Neutral: anon and file pages cost the same to evict. The floor for zram-only is 100 (10 fed the BTRFS I/O storms, 1 the 2026-05-25 OOM). 150 from 2026-08-13 to 2026-11-27 priced anon 3:1 cheaper; lowered by owner directive to use RAM before compressing into it. docs/adr/009-zram-only-swap.md.
     "vm.page-cluster" = 0; # zram-only: swap readahead of 8 pages (default 3) is an HDD seek optimization; on zram it wastes CPU decompressing unneeded pages. Fedora/Pop!_OS/ChromeOS all ship 0 (2026-09-05 internet sweep: docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md §2.1).
     "vm.watermark_boost_factor" = 0; # zram-only: watermark boosting force-reclaims on fragmentation signals — kswapd boost storms are the stutter/freeze class this box is prone to. Pop!_OS + Clear Linux ship 0 (same sweep).
-    "vm.watermark_scale_factor" = 100; # Start background reclaim earlier & gradually (default 100). Old value 10 caused "panic reclaim" — sudden large I/O bursts when memory ran low.
+    "vm.watermark_scale_factor" = 100; # Start background reclaim earlier & gradually (kernel default 10). Old value 10 caused "panic reclaim" — sudden large I/O bursts when memory ran low.
     "vm.vfs_cache_pressure" = 150; # Prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive). Default 100.
     "vm.dirty_ratio" = 5; # Start foreground writeback at 5% memory (~4.7GB) — lower than old 10% to reduce BTRFS writeback bursts on QLC NAND
     "vm.dirty_background_ratio" = 1; # Background writeback at 1% (~940MB) — start gentle writeback sooner, avoid sudden bursts
@@ -792,14 +796,15 @@ in
   # original data. GPU and CPU share this RAM, so AI workloads compete directly with
   # system processes.
   #
-  # swappiness=150 (set above) makes the kernel prefer zram swap over page cache reclaim.
-  # This is CRITICAL: zram compresses in RAM at ~370 MiB/s, while page cache reclaim hits
-  # QLC NAND at ~253ms/write. Preferring zram reduces BTRFS I/O pressure dramatically.
-  # The old swappiness=10 was backwards for zram-only — it forced disk I/O instead of
-  # using fast in-RAM compression, causing BTRFS writeback storms (2026-08-13 incident).
+  # swappiness stays at or above 100 (set above): zram compresses in RAM at ~370 MiB/s,
+  # while page cache reclaim hits QLC NAND at ~253ms/write, so a lower value prices
+  # in-RAM swap dearer than disk I/O. The old swappiness=10 was backwards for zram-only:
+  # it forced disk I/O instead of fast in-RAM compression, causing BTRFS writeback
+  # storms (2026-08-13 incident), and swappiness=1 never swapped (2026-05-25 OOM).
   #
-  # The 2026-05-25 OOM crash was caused by swappiness=1 (never swap). The fix to 10 was
-  # insufficient — 150 is correct for zram-only per kernel docs ("for zram, use 100+").
+  # 150 was the 2026-08-13 answer. Lowered to the neutral 100 on 2026-11-27 by owner
+  # directive: at 150 reclaim favoured anon pages 3:1 over file cache. History and
+  # evidence: docs/adr/009-zram-only-swap.md (Amendment).
   #
   # Why 30% not 17%: The old 17% (16 GiB) filled to 98.4% under normal load, leaving no
   # headroom. When zram fills completely with no disk swap fallback, the kernel falls
