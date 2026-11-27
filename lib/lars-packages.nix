@@ -423,7 +423,15 @@ lib.filterAttrs (_: v: v != null) {
   # ANZD3eOm (got==bake). All surfaces un-shimmed in the same pass;
   # module defaults consolidated to _journal-package.nix (2026-11-19) —
   # a future re-stale edits TWO sites: here + _journal-package.nix.
-  journal = flakePkg inputs.journal;
+  # RE-STALE 2026-11-27 10:34 daemon lock float (97b74f040): journal@f32e70c2
+  # bakes 9M6laArs but stales under our graph, got 2piQtqwo (first-hand
+  # check-mode rebuild, pre-deploy §11 cached-FOD audit — the stale FOD was
+  # silently REUSED in cache). Shim RE-ADDED, mirrored in
+  # _journal-package.nix — update BOTH together. Drop when upstream bakes
+  # 2piQtqwo.
+  journal =
+    flakePkgShim inputs.journal "default"
+      "sha256-2piQtqwofrGHq5IsRjyH5MFQasYLZikjE50O0+WQV6c=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
@@ -817,6 +825,12 @@ lib.filterAttrs (_: v: v != null) {
     # 4zISVNEX, got wtkejgEG (first-hand,
     # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Drop when
     # upstream bakes wtkejgEG; re-add ONLY via nix-hash-fix evidence.
-    vendorHash = "sha256-+JIm293yLjRrZGzaZV2d+OEjfyDyL0judEoReC1Ir+Q=";
+    # RE-STALE 2026-11-27 10:34 daemon lock float (97b74f040): at
+    # go-taskqueue@af5b6ec5 spec +JIm293yLj, got HqHkPDVQ (first-hand
+    # check-mode rebuild, pre-deploy §11 cached-FOD audit — the stale FOD
+    # was silently REUSED in cache, the 2026-10-28 trap). Same value as the
+    # modules/nixos/services/tq-agent-pool.nix surface — update BOTH
+    # together. Drop when upstream bakes HqHkPDVQ.
+    vendorHash = "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=";
   });
 }

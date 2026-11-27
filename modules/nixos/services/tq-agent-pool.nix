@@ -81,7 +81,13 @@ _: {
             # ~/.cache/toplevel-build-20261110-f.log). Same value as the
             # lars-packages `tq` surface (already updated there) — update BOTH
             # together. Drop when upstream bakes +JIm293yLj.
-            vendorHash = "sha256-+JIm293yLjRrZGzaZV2d+OEjfyDyL0judEoReC1Ir+Q=";
+            # RE-STALE 2026-11-27 10:34 daemon lock float (97b74f040): at
+            # go-taskqueue@af5b6ec5 spec +JIm293yLj, got HqHkPDVQ (first-hand
+            # check-mode rebuild, pre-deploy §11 cached-FOD audit — the stale
+            # FOD was silently REUSED in cache, the 2026-10-28 trap). Same
+            # value as the lars-packages `tq` surface — update BOTH together.
+            # Drop when upstream bakes HqHkPDVQ.
+            vendorHash = "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden

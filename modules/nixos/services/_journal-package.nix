@@ -10,16 +10,23 @@
 # 0663476 got OBIY8Nxi): SHIM DROPPED 2026-11-12 (treadmill drop-protocol) —
 # the daemon float to 0ed74483 re-staled OBIY8Nxi (got ANZD3eOm,
 # toplevel-proof-20261112-drop.log) and upstream 0ed74483 ALREADY BAKES
-# exactly ANZD3eOm. Re-add a shim ONLY via nix-hash-fix evidence: change the
-# `default` below to `pkg.overrideAttrs { vendorHash = <got>; }` on
-# FIRST-HAND FOD proof, never by hand.
+# exactly ANZD3eOm.
+# SHIM RE-ADDED 2026-11-27 (first-hand FOD proof): the 10:34 daemon lock
+# float (97b74f040) holds journal@f32e70c2, whose upstream bake 9M6laArs
+# (flake.nix:215) stales under our graph — got 2piQtqwo from the pre-deploy
+# §11 cached-FOD audit's check-mode rebuild (the stale FOD was silently
+# REUSED in cache, so the old gate never saw it). Drop when upstream bakes
+# 2piQtqwo; a future re-stale edits the `vendorHash` line below on
+# first-hand FOD proof, never by hand.
 #
-# NOTE: lib/lars-packages.nix's `journal = flakePkg inputs.journal` entry
-# (the PATH CLI surface) is a separate consumer — if a future shim lands
-# here, mirror it there (TWO sites total: this file + lars-packages PATH
-# entry), the module defaults follow this file automatically.
+# NOTE: lib/lars-packages.nix's `journal` entry (the PATH CLI surface) is a
+# separate consumer — a shim here is mirrored there (TWO sites total: this
+# file + lars-packages PATH entry), the module defaults follow this file
+# automatically.
 {
   inputs,
   system,
 }:
-inputs.journal.packages.${system}.default
+inputs.journal.packages.${system}.default.overrideAttrs (_: {
+  vendorHash = "sha256-2piQtqwofrGHq5IsRjyH5MFQasYLZikjE50O0+WQV6c=";
+})
