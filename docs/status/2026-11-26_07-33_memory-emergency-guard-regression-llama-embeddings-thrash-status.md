@@ -32,3 +32,16 @@ The old option text claimed "568M-param models need <1 GB; 2G gives headroom". T
 2. Trace the uncapped model-load stall with root tooling before touching the ceiling again.
 3. Decide whether `llama-embeddings.service` joins the guard's pause patterns (it is a headless llama-server consumer like `llama-chat.service`); the guard currently names it as the IO driver and then reports nothing pausable.
 4. The pipeline mislabels a dead-lettered task as "completed, then regressed" (REGRESSION prio 150 from a task with zero changes).
+
+## Re-dispatch 2026-11-27 03:46: the fix is undeployable while the storm runs
+
+- Still undeployed 21 h later: the running unit holds the old limits (MemoryHigh 1717986918, MemoryMax 2147483648) and is still pinned (16.4M `high` events, swap 368 MiB, `churn_mode 1`, 11 Zone-6 trips in 30 min).
+- Every deploy since 2026-11-26 10:37 was refused by `scripts/deploy.sh` at ENTRY, on the storm the fix removes: `I/O PSI some avg10 >= 20% WITH disk busy >= 20%` or `memory-emergency-guard tripped 7x in the last 60 min` (exit 12; logs 11:31, 00:43). The one battery that got past entry (23:28, 68 min) stopped on `nixosConfigurations.evo-x2 evaluation failed` at HEAD `4a62be45e` (exit 1), not on this change.
+- Deadlock: the deploy gate needs a calm box, the box calms only when this change is live, and agent shells have no root (`sudo: The "no new privileges" flag is set`, re-probed 03:47). `DEPLOY_FORCE_PRESSURE=2` is the scripted escape and is the wrong tool here (twice-fatal evidence in the gate's own text).
+- Correction to "What is NOT proven": the disks are idle during the storm (nvme 3-6 % util, HDDs under 1 %, 10 s sample 03:50). The only busy block device is zram0 (49.7 % util, 139.6 MB/s in, 147.0 MB/s out) and swap use grew 10.6 -> 30.2 GB since 2026-11-26 05:5x. The IO PSI is a swap-thrash signal, not disk saturation. The 07:47 control probe ran inside `tq-agent-pool.service` (memory.max 8G, unknown CPU quota), so its stall proves nothing about the unit; treat it as void.
+- D-state census (40 samples, 03:52): the only user-space process in D state is the embeddings `llama-server` (wchan `amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu`); the rest are unbound kworkers.
+- The guard's `io_disk_busy_percent_max` corroboration reads 90-100 % during this (zram counts as a disk), so the "real disk saturation" filter does not separate this storm from a true one.
+
+## Owner unblock (asked through the task's question channel)
+
+`systemctl set-property --runtime llama-embeddings.service MemoryMax=4G MemoryHigh=3435973836` applies the committed ceiling at once, reverts on reboot, and needs no deploy. The next ordinary `nix run .#deploy` then carries the declarative value. Fallback if inference stays wedged after the limit lifts: `systemctl restart llama-embeddings.service`.
