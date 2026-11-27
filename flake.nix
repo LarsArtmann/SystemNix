@@ -1642,7 +1642,8 @@
     # docs-gates -> erraudit -> go-nix-helpers (a copy at a different rev than
     # root's treefmt-nix; eval-only dep, always safe to follow — the
     # journal/bank-sync shape).
-    project-discovery-daemon.inputs.docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    project-discovery-daemon.inputs.docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows =
+      "treefmt-nix";
     project-meta.inputs.flake-parts.follows = "flake-parts";
     project-meta.inputs.go-nix-helpers.follows = "go-nix-helpers";
     project-meta.inputs.nixpkgs.follows = "nixpkgs";
