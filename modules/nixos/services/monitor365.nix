@@ -1086,6 +1086,8 @@
               pkgs.systemd
               pkgs.curl
               pkgs.jq
+              pkgs.gawk
+              pkgs.coreutils
             ];
             script = ''
               AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
@@ -1150,6 +1152,35 @@
               # Devices are flowing again — clear the bounded counter so a
               # future transient deadlock still gets its full restart budget.
               rm -f "$ZERO_DEVICE_STAMP" 2>/dev/null || true
+
+              # 5. Do the audio_stream captures run? (2026-11-27) The
+              # collector records the duration of every cycle: a real capture
+              # makes a cycle about 10 s, a failed one about 5 ms (parecord
+              # without --duration exited at once for five days, without one
+              # log line). The cumulative average (sum/count) is exported for
+              # SigNoz; the rule "Monitor365 audio capture dead" pages when
+              # it drops below 1 s or this export goes stale.
+              # collector_events_collected is NOT evidence: it also counts
+              # empty cycles.
+              AUDIO_PROM_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+              AUDIO_PROM="$AUDIO_PROM_DIR/monitor365-audio.prom"
+              AS_METRICS=$(curl -sf -m 5 "$AGENT_METRICS" 2>/dev/null || true)
+              AS_COUNT=$(printf '%s\n' "$AS_METRICS" | awk '$1 == "collector_collection_duration_count{collector=\"audio_stream\"}" { print int($2) }')
+              AS_SUM=$(printf '%s\n' "$AS_METRICS" | awk '$1 == "collector_collection_duration_sum{collector=\"audio_stream\"}" { print $2 }')
+              if [ -n "$AS_COUNT" ] && [ "$AS_COUNT" -ge 1 ] && [ -d "$AUDIO_PROM_DIR" ]; then
+                awk -v s="$AS_SUM" -v c="$AS_COUNT" -v now="$(date +%s)" 'BEGIN {
+                  avg = s / c
+                  printf "monitor365_audio_stream_cycles %d\n", c
+                  printf "monitor365_audio_stream_cycle_seconds_avg %.3f\n", avg
+                  printf "monitor365_audio_stream_capture_ok %d\n", (avg >= 1) ? 1 : 0
+                  printf "monitor365_audio_stream_watchdog_timestamp_seconds %d\n", now
+                }' >"$AUDIO_PROM.tmp" && mv -f "$AUDIO_PROM.tmp" "$AUDIO_PROM"
+                if [ "$AS_COUNT" -ge 2 ] && awk -v s="$AS_SUM" -v c="$AS_COUNT" 'BEGIN { exit (s / c < 1) ? 0 : 1 }'; then
+                  echo "monitor365-agent-watchdog: audio_stream cycles average $(awk -v s="$AS_SUM" -v c="$AS_COUNT" 'BEGIN { printf "%.3f", s / c }') s over $AS_COUNT cycles — no capture is running"
+                fi
+              elif [ -f "$AUDIO_PROM" ]; then
+                rm -f "$AUDIO_PROM"
+              fi
               echo "monitor365-agent-watchdog: agent healthy (process active, metrics responding, server connected)"
             '';
           };

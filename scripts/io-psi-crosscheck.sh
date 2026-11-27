@@ -83,10 +83,12 @@ crosscheck_snapshot_discard() {
 }
 
 # Pure: TRIM lines from two "name io_ticks discard_ticks discard_ios" streams.
-# One line per device whose discard ticks moved in the window: "<name> is
-# <share>% TRIM discards (<n>/s, <ms> ms each)", where share is the discard
-# tick delta as a share of the io_ticks delta (the device's busy time), capped
-# at 100. A device that discarded nothing prints nothing.
+# One line per device whose discard ticks moved in the window AND that is
+# either a fifth of its busy time or has completions (a long discard still in
+# flight has ticks but no completion yet): "<name> is <share>% TRIM discards
+# (<n>/s, <ms> ms each)", where share is the discard tick delta as a share of
+# the io_ticks delta (the device's busy time), capped at 100. Below both
+# bars a device prints nothing (the stray-tick noise of 2026-11-27 02:05).
 crosscheck_discard_lines() {
   local a="$1" b="$2" w="${3:-1}"
   paste <(sort <<<"$a") <(sort <<<"$b") |
@@ -95,6 +97,7 @@ crosscheck_discard_lines() {
       share = busy > 0 ? 100.0 * ($7 - $3) / busy : 100.0
       if (share > 100) share = 100
       ios = $8 - $4
+      if (share < 20 && ios <= 0) next
       ms = 0
       if (ios > 0) ms = ($7 - $3) / ios
       printf "%s is %.0f%% TRIM discards (%.0f/s, %.1f ms each)\n", $1, share, ios / w, ms
@@ -343,6 +346,11 @@ selftest() {
   out="$(crosscheck_discard_lines "$(printf 'sdb 100 0 0\n')" "$(printf 'sdb 100 50 0\n')" 1)"
   if [ "$out" != "sdb is 100% TRIM discards (0/s, 0.0 ms each)" ]; then
     echo "FAIL discard line share cap and zero-count guard: '$out'"
+    fails=$((fails + 1))
+  fi
+  out="$(crosscheck_discard_lines "$(printf 'sdc 1000 2 0\n')" "$(printf 'sdc 1200 9 0\n')" 1)"
+  if [ -n "$out" ]; then
+    echo "FAIL discard line printed for stray ticks: '$out'"
     fails=$((fails + 1))
   fi
   out="$(printf '%s\n' 'nvme0n1 is 12% TRIM discards (3/s, 1.0 ms each)' 'nvme1n1 is 97% TRIM discards (500/s, 1.2 ms each)' | crosscheck_max_trim)"
