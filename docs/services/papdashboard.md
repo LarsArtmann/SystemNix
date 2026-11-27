@@ -217,6 +217,12 @@ pbx handover below closes the window. Between the two:
   deploy; do not "fix" it by disabling federation.
 - The gatus `PapDashboard Replica (pbx)` tile is red — same window.
 
+**Window CLOSED: the pbx replica deploy landed 2026-11-21.** The alert-relay journal
+shows the replica tile's first `state=resolved` at 19:30:30 that evening and no trigger
+until the 2026-11-23 boot storms. Both alerts above are live production signals now; the
+"expected-red" reading applies again only if a future wave re-deploys the primary ahead
+of the replica.
+
 ### pbx replica handover (USER-RUN — the assistant never SSHes/deploys pbx)
 
 Prereq (already staged by the wiring session): the federation key at
@@ -244,6 +250,35 @@ stops climbing (the crit resolves), and `curl -s localhost:8088/api/health |
 jq .federation.lagSeconds` drops below 60. A persistent 401-shaped error
 rate after the switch means a key mismatch — re-run BOTH rotation halves
 (push-secrets there, sops+deploy here), never just one.
+
+### Federation incident triage (the stale-incident class, 2026-11-27)
+
+The tq incident sink reports **triggers only**: a resolve never reaches the pipeline
+(`docs/services/gatus-alert-relay.md` → "Incident sink"), so a mesh outage that
+self-healed still mints an agent fix task, and every later outage re-mints it as a
+regression. Observed instances: the 2026-11-25 `tq Agent Pool Service` task
+(`000001a21238adac2f56d9ee845a00000000`) and task
+`000001a21238adb3b0f4bce43f000000000` (a `PapDashboard Replica (pbx)` trigger whose
+alert had resolved 42 h before dispatch). Triage a `PapDashboard Replica (pbx)` or
+`PapDashboard Federation Lag` incident in this order before changing anything:
+
+1. **Is it still red?** `journalctl -u gatus-alert-relay --since "-2d" | rg 'Replica \(pbx\)'`
+   (or `rg 'Federation Lag'`) and let the LAST line win: `state=resolved` after the last
+   `state=triggered` means the check is green and the incident is stale. Gatus' own journal
+   logs triggers only, its API is OIDC-gated and its sqlite is root-only, so the relay
+   journal is the agent-readable state channel for both edges.
+2. **Live probes**: the replica answers 200 with `federation.role = "replica"` at
+   `http://100.112.17.187:8412/api/health`, and the primary's `jq .federation` shows
+   `lagSeconds` 0 with `lastAckedPosition` equal to `watermark`.
+3. **Attribute the window**: the `NetBird Control Plane/*` checks red in the same window
+   mean the path to the pbx VPS was down (the NetBird control plane and the replica both
+   live on that host), not the replica unit; that outage self-heals when the streams
+   reconnect. A red replica with green NetBird checks points at the replica host or its
+   peer link: run the post-switch checks above.
+
+Do not raise either check's failure threshold to hide path outages. The 2026-11-25
+09:42–10:05 CET loss (about 22 minutes, all four `NetBird Control Plane` checks red) was
+a real gap in the failover capability the replica exists for and had to page.
 
 ## Deploy verification (built into post-deploy-check)
 

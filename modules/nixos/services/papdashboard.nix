@@ -843,10 +843,10 @@
           # the replica's own PAP_API_KEY (one machine key guards every keyed
           # route), rendered by sops as a LoadCredential — the module passes
           # it as PAP_FED_KEY_FILE=%d/pap-fed-key, never into the store.
-          # Until the pbx deploy lands, the forwarder retry-loops against a
-          # dead peer: papdashboard_fed_errors_total climbs and the gatus
-          # replica tile stays red — the expected transitional state (the
-          # handover command is in docs/services/papdashboard.md).
+          # The pbx replica deploy landed 2026-11-21, so a climbing
+          # papdashboard_fed_errors_total or a red gatus replica tile is a
+          # real replication outage, not a transitional state (runbook:
+          # docs/services/papdashboard.md, "Federation incident triage").
           federation = {
             enable = true;
             role = "primary";
@@ -998,10 +998,14 @@
                 alert = "PapDashboard federation lag over 60s — the pbx replica is falling behind (dead peer, wedged forwarder, or SQLite contention). Check: curl -s localhost:${toString cfg.port}/api/health | jq .federation; journalctl -u papdashboard -n 50 | grep -i fed";
               }
               {
-                # F2.2c: the PRIMARY observes the REPLICA over the mesh. RED
-                # until the pbx-artmann deploy lands (handover pending — see
-                # docs/services/papdashboard.md); after that, red means the
-                # always-readable dashboard is unreachable.
+                # F2.2c: the PRIMARY observes the REPLICA over the mesh. The
+                # pbx-artmann deploy landed 2026-11-21 (first green in the
+                # alert-relay journal): red now means the always-readable
+                # dashboard is unreachable. A mesh path outage self-heals
+                # while the incident sink still mints a fix task for its
+                # trigger (resolves are never incidents), so a re-dispatch
+                # reads the relay journal first (runbook: "Federation
+                # incident triage").
                 name = "PapDashboard Replica (pbx)";
                 group = "Monitoring";
                 url = "http://100.112.17.187:${toString ports.papdashboard-pbx-replica}/api/health";
@@ -1009,7 +1013,7 @@
                 conditions = [
                   "[STATUS] == 200"
                 ];
-                alert = "PapDashboard pbx replica unreachable over the NetBird mesh. EXPECTED-RED until the pbx-artmann papdashboard deploy is run (handover in docs/services/papdashboard.md). After deploy: check netbird status on both nodes, then ssh pbx systemctl status papdashboard";
+                alert = "PapDashboard pbx replica unreachable over the NetBird mesh: the always-readable failover dashboard is down. Check netbird status on both nodes, then ssh pbx systemctl status papdashboard. NetBird Control Plane checks red in the same window mean the path to the pbx VPS is down, not the replica unit (docs/services/papdashboard.md, Federation incident triage)";
               }
             ];
           };

@@ -150,13 +150,13 @@ in
     # the exporter namespace double underscore (live-verified family style,
     # papdashboard__events_published_total). >5 failures per 5m: single
     # transient blips do not page, a dead peer (~30/min at the 2s poll)
-    # fires within one window. EXPECTED-RED between the evo-x2 primary
-    # deploy and the pbx-artmann replica deploy (handover in
-    # docs/services/papdashboard.md) — the series itself only exists once
-    # the new binary records its first error.
+    # fires within one window. The series itself only exists once the new
+    # binary records its first error; it was expected-red only between the
+    # evo-x2 primary deploy and the pbx-artmann replica deploy (landed
+    # 2026-11-21), so a firing rule is a real replication outage.
     "signoz/rules/papdashboard-fed-errors.json".source = mkRule {
       name = "PapDashboard Federation Forward Failures";
-      description = "papdashboard federation forwarder failing repeatedly (>5 in 5m) — the pbx replica is not accepting batches: peer down, key mismatch, or version-gap rejections. Expected-red UNTIL the pbx-artmann replica deploy lands (see docs/services/papdashboard.md handover); after that: check curl -s localhost:8088/api/health | jq .federation and journalctl -u papdashboard | grep -i fed";
+      description = "papdashboard federation forwarder failing repeatedly (>5 in 5m) — the pbx replica is not accepting batches: peer down, key mismatch, or version-gap rejections. Check curl -s localhost:8088/api/health | jq .federation and journalctl -u papdashboard | grep -i fed; the pbx replica deploy landed 2026-11-21, so this is a real replication outage (docs/services/papdashboard.md, Federation incident triage)";
       query = "increase(papdashboard__fed_errors_total[5m])";
       target = 5;
       severity = "critical";
