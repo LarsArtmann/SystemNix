@@ -1038,6 +1038,23 @@ in
       interval = "5m";
       severity = "critical";
     };
+    # Monitor365 audio capture (2026-11-27): the agent's audio_stream
+    # collector recorded nothing for its first five days (parecord has no
+    # --duration; every capture exited at once without a log line) while
+    # every liveness check stayed green, because collector_events_collected
+    # also counts empty cycles. The agent watchdog exports the cumulative
+    # average cycle time as monitor365_audio_stream_capture_ok: 1 when the
+    # average is at least 1 s (a real capture is about 10 s, a failed one
+    # about 5 ms). The second clause pages when that export is over 30 min
+    # old, so a dead watchdog cannot leave a frozen "ok" behind.
+    "signoz/rules/monitor365-audio-capture-dead.json".source = mkRule {
+      name = "Monitor365 audio capture dead";
+      description = "The monitor365 agent's audio_stream collector is not recording: its cycles average under 1 s (a real capture is about 10 s), or the agent watchdog's export of that average is over 30 min old. Check: journalctl -u monitor365.service for 'Audio stream' lines, docs/services/monitor365.md section Microphone monitoring. collector_events_collected is no evidence either way until the monitor365 2026-11-27 fix is deployed";
+      query = "monitor365_audio_stream_capture_ok < 1 or time() - monitor365_audio_stream_watchdog_timestamp_seconds > 1800";
+      target = 1;
+      interval = "5m";
+      severity = "critical";
+    };
   };
 
   dashboards = {
