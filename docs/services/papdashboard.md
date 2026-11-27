@@ -272,13 +272,16 @@ alert had resolved 42 h before dispatch). Triage a `PapDashboard Replica (pbx)` 
    `lagSeconds` 0 with `lastAckedPosition` equal to `watermark`.
 3. **Attribute the window**: the `NetBird Control Plane/*` checks red in the same window
    mean the path to the pbx VPS was down (the NetBird control plane and the replica both
-   live on that host), not the replica unit; that outage self-heals when the streams
-   reconnect. A red replica with green NetBird checks points at the replica host or its
-   peer link: run the post-switch checks above.
+   live on that host), not the replica unit. `Infrastructure/DNS Resolver` red as well,
+   or relay `forward-failed` lines for Discord, make it a WAN outage of evo-x2 itself;
+   either outage self-heals once connectivity returns. A red replica with green NetBird
+   checks points at the replica host or its peer link: run the post-switch checks above.
 
-Do not raise either check's failure threshold to hide path outages. The 2026-11-25
-09:42–10:05 CET loss (about 22 minutes, all four `NetBird Control Plane` checks red) was
-a real gap in the failover capability the replica exists for and had to page.
+Do not raise either check's failure threshold to hide path outages. Two within 43 hours
+were real gaps in the failover capability the replica exists for and had to page:
+2026-11-25 09:42–10:05 CET (about 22 minutes, path to the pbx VPS only, all four
+`NetBird Control Plane` checks red) and 2026-11-27 05:06–05:12 CET (WAN outage of evo-x2:
+an `eno1` netlink event, DNS forwarders `no route to host`, Discord posts failing).
 
 ## Deploy verification (built into post-deploy-check)
 
