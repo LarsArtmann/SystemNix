@@ -90,11 +90,19 @@ fhd_apply() {
 
 # Subset of fhd_sites with at least one NON-comment occurrence — i.e. the
 # files where a replacement actually changes build behaviour.
+#
+# No `… | grep -q` here: under pipefail `grep -q` exits on the first match,
+# the producer dies of SIGPIPE (141) as soon as it has more to write than
+# the pipe buffer holds, and a FOUND match reads as a miss. 2026-11-27 live:
+# tq-agent-pool.nix's shim line was reported "comment only, not rewritten"
+# and a --apply would have left it stale. Read the filtered lines to EOF
+# instead.
 fhd_live_sites() {
-  local literal=$1 f
+  local literal=$1 f hits
   while IFS= read -r f; do
     [[ -n $f ]] || continue
-    if grep -vE '^[[:space:]]*#' "$REPO_ROOT/$f" | grep -qF -- "$literal"; then
+    hits=$(grep -vE '^[[:space:]]*#' "$REPO_ROOT/$f" | grep -F -- "$literal" || true)
+    if [[ -n $hits ]]; then
       printf '%s\n' "$f"
     fi
   done < <(fhd_sites "$literal")
@@ -160,6 +168,28 @@ FIXTURE
   check "live literal located" "$(fhd_live_sites 'sha256-HASHLIVEHASHLIVEHASHLIVEHASHLIVEHASHLIVEHASH=' | tr '\n' ' ')" "live-site.nix "
   check "comment-only literal is not live" "$(fhd_live_sites 'sha256-HASHONLYHASHONLYHASHONLYHASHONLYHASHONLYHASH=' | wc -l | tr -d ' ')" "0"
   check "comment-only literal is still reported as a site" "$(fhd_sites 'sha256-HASHONLYHASHONLYHASHONLYHASHONLYHASHONLYHASH=' | tr '\n' ' ')" "comment-site.nix "
+
+  # Race regression (2026-11-27): a live literal EARLY in a file that has
+  # more non-comment lines after it than a pipe buffer holds. Under
+  # `producer | grep -q` + pipefail the match was found and still read as
+  # a miss (producer SIGPIPE 141; 20/20 runs on this fixture): a live shim
+  # reported "comment only" and skipped by --apply. The padding must be
+  # NON-comment lines — comments are what the producer filters out.
+  local pad_live='sha256-PADLIVEPADLIVEPADLIVEPADLIVEPADLIVEPADLIVE='
+  {
+    printf '{\n  vendorHash = "%s=";\n  padding = [\n' "$pad_live"
+    for ((pad = 0; pad < 3000; pad++)); do
+      printf '    "padding-padding-padding-padding-padding-padding-padding-padding-padding"\n'
+    done
+    printf '  ];\n}\n'
+  } >"$tmp/tree/padded-site.nix"
+  REPO_ROOT=$tmp/tree
+  check "early live literal in a large file is live (SIGPIPE race)" \
+    "$(fhd_live_sites "$pad_live" | tr '\n' ' ')" "padded-site.nix "
+  fhd_apply "$tmp/tree/padded-site.nix" "$pad_live" 'sha256-REPLACED='
+  check "apply rewrites the early live literal in a large file" \
+    "$(grep -cF 'sha256-REPLACED=' "$tmp/tree/padded-site.nix")" "1"
+  REPO_ROOT=$saved_root
   fhd_apply "$tmp/tree/comment-site.nix" 'sha256-HASHONLYHASHONLYHASHONLYHASHONLYHASHONLYHASH=' 'sha256-REPLACED='
   check "apply leaves the comment intact" \
     "$(grep -cF 'sha256-HASHONLYHASHONLYHASHONLYHASHONLYHASHONLYHASH=' "$tmp/tree/comment-site.nix")" "1"
@@ -217,7 +247,7 @@ while IFS=$'\t' read -r drv spec got; do
     printf '  sites:\n'
     while IFS= read -r f; do
       [[ -n $f ]] || continue
-      if printf '%s\n' "$live" | grep -qxF -- "$f"; then
+      if grep -qxF -- "$f" <<<"$live"; then
         printf '    %s\n' "$f"
       else
         printf '    %s  (comment only, not rewritten)\n' "$f"
