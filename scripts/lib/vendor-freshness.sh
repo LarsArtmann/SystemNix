@@ -249,7 +249,8 @@ vendor_freshness_classify_cached() {
 # nix's mismatch block and scripts/fod-hash-diff.sh report.
 vendor_freshness_drv_name() {
   local base="${1##*/}"
-  printf '%s' "${base#*-}"
+  base=${base#*-}
+  printf '%s' "${base%.drv}"
 }
 
 # Receipt store: one marker per FOD whose check-mode rebuild PASSED, named

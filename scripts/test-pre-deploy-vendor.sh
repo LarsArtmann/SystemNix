@@ -46,6 +46,17 @@ expect_match() {
       ;;
   esac
 }
+# Assert a command succeeds (file-state checks after a flow).
+expect_ok() {
+  local desc="$1"
+  shift
+  if "$@"; then
+    echo "  ok   $desc"
+  else
+    echo "  FAIL $desc"
+    TEST_FAILURES=$((TEST_FAILURES + 1))
+  fi
+}
 
 # --- Fixtures: REAL nix output, captured 2026-10-04 (see lib header) ---
 
@@ -318,23 +329,16 @@ vendor_freshness_receipt_write "$FOD_TQ"
 printf '%s\n' /nix/store/00000000000000000000000000000000-gone-go-modules.drv >"$vf_receipt_dir/00000000000000000000000000000000"
 printf 'keep\n' >"$vf_receipt_dir/keep-me"
 vendor_freshness_receipt_prune
-[ -e "$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn" ] && echo "  ok   live receipt survives pruning" || {
-  echo "  FAIL live receipt survived pruning"
-  TEST_FAILURES=$((TEST_FAILURES + 1))
-}
-[ -e "$vf_receipt_dir/00000000000000000000000000000000" ] && {
-  echo "  FAIL receipt for a gone drv pruned"
-  TEST_FAILURES=$((TEST_FAILURES + 1))
-} || echo "  ok   receipt for a gone drv is pruned"
-[ -e "$vf_receipt_dir/keep-me" ] && echo "  ok   foreign file in the store is untouched" || {
-  echo "  FAIL foreign file untouched"
-  TEST_FAILURES=$((TEST_FAILURES + 1))
-}
+expect_ok "live receipt survives pruning" test -e "$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
+expect_ok "receipt for a gone drv is pruned" test ! -e "$vf_receipt_dir/00000000000000000000000000000000"
+expect_ok "foreign file in the store is untouched" test -e "$vf_receipt_dir/keep-me"
 rm -rf "$vf_receipt_dir"
 
 # G gate flow, end to end, against stubbed `nix` (preview, drvPath eval,
 # FOD build) and `nix-store` (closure, outputs, deriver, check mode), and a
 # pinned tree: the verdict strings are what §11 prints.
+# The callbacks are read inside the sourced gate lib.
+# shellcheck disable=SC2034,SC2329
 vf_verdicts=""
 vf_pass() { vf_verdicts="$vf_verdicts|PASS $1"; }
 vf_fail() { vf_verdicts="$vf_verdicts|FAIL $1"; }
@@ -401,7 +405,7 @@ VF_STUB_OUTPUTS=([$FOD_AB]=$FOD_AB_OUT [$FOD_TQ]=$FOD_TQ_OUT [$FOD_JOURNAL]=$FOD
 # leg owns it).
 vf_proven_and_reused() {
   VF_STUB_CLOSURE="$FIX_CLOSURE"
-  VF_STUB_DERIVERS=([$FOD_AB_OUT]=/nix/store/f24fbri7k5r3nsxdmx490gjz2d5xi0zi-audiblesync-0.1.1-go-modules.drv [$FOD_TQ_OUT]=$FOD_TQ)
+  VF_STUB_DERIVERS=([$FOD_AB_OUT]=/nix/store/f24fbri7k5r3nsxdmx490gjz2d5xi0zi-audiblesync-0.1.1-go-modules.drv [$FOD_TQ_OUT]=$FOD_TQ [$FOD_JOURNAL_OUT]="$FIX_DERIVER_INVALID")
   VF_STUB_DERIVERS_RC=([$FOD_JOURNAL_OUT]=1)
 }
 # Audit input: only go-taskqueue, REUSED across the lock float (its output
@@ -488,11 +492,8 @@ vf_stdout=$(cat "$vf_stdout_file")
 rm -f "$vf_stdout_file"
 expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 2 cached FOD(s) verified (1 by deriver identity, 1 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\*\]" "flow: reused FOD that reproduces is re-verified and passes"
 expect_eq "$(vf_check_calls)" "1" "flow: exactly the reused FOD is re-verified (the proven and the uncached one are not)"
-expect_match "$vf_stdout" "*re-verifying cached FOD (the store names another derivation as its builder): audiblesync-0.1.1-go-modules.drv*" "flow: the re-verification is announced"
-[ -s "$VENDOR_FRESHNESS_RECEIPT_DIR/2cm4syk9yzpaarf5d4yllj1v1y7ywhkj" ] && echo "  ok   flow: PASS writes the receipt" || {
-  echo "  FAIL flow: PASS writes the receipt"
-  TEST_FAILURES=$((TEST_FAILURES + 1))
-}
+expect_match "$vf_stdout" "*re-verifying cached FOD (the store names another derivation as its builder): audiblesync-0.1.1-go-modules*" "flow: the re-verification is announced"
+expect_ok "flow: PASS writes the receipt" test -s "$VENDOR_FRESHNESS_RECEIPT_DIR/2cm4syk9yzpaarf5d4yllj1v1y7ywhkj"
 
 # G7 the receipt converges: the next run over the same closure does not
 # rebuild again.
@@ -514,12 +515,9 @@ vf_stdout_file=$(mktemp)
 vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
 vf_stdout=$(cat "$vf_stdout_file")
 rm -f "$vf_stdout_file"
-expect_match "${vf_verdicts#|}" "FAIL vendorHash STALE on a CACHED FOD — go-taskqueue-0.4.2-go-modules.drv:*sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=*fod-hash-diff.sh*" "flow: a stale CACHED FOD FAILs with its got-hash"
+expect_match "${vf_verdicts#|}" "FAIL vendorHash STALE on a CACHED FOD — go-taskqueue-0.4.2-go-modules:*sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=*fod-hash-diff.sh*" "flow: a stale CACHED FOD FAILs with its got-hash"
 expect_eq "$(vendor_freshness_mismatch_pairs "$vf_stdout" | cut -f3)" "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=" "flow: the gate output carries the verbatim block fod-hash-diff parses"
-[ -e "$VENDOR_FRESHNESS_RECEIPT_DIR/3pgfc344wpwh7d9az7kmnil3x1xfj2bn" ] && {
-  echo "  FAIL flow: a mismatch writes no receipt"
-  TEST_FAILURES=$((TEST_FAILURES + 1))
-} || echo "  ok   flow: a mismatch writes no receipt"
+expect_ok "flow: a mismatch writes no receipt" test ! -e "$VENDOR_FRESHNESS_RECEIPT_DIR/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
 
 # G9 a reused FOD whose rebuild fails for a non-hash reason blocks too.
 vf_fresh_receipts
@@ -528,7 +526,7 @@ VF_STUB_CHECK_OUT="error: cannot connect to nix daemon"
 VF_STUB_CHECK_RC=100
 vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "FAIL cached go-modules FOD re-verify FAILED (non-hash error) — audiblesync-0.1.1-go-modules.drv;*" "flow: non-hash re-verify failure FAILs"
+expect_match "${vf_verdicts#|}" "FAIL cached go-modules FOD re-verify FAILED (non-hash error) — audiblesync-0.1.1-go-modules;*" "flow: non-hash re-verify failure FAILs"
 
 # G10 the audit itself failing fails closed.
 vf_fresh_receipts
