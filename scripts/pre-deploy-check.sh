@@ -457,7 +457,7 @@ fi # end of skip-when---section-10-only/---section-11-only (sections 1-9)
 
 if [ "$SECTION11_ONLY" = true ]; then
   echo ""
-  echo "11. vendorHash freshness (deploy FOD preview)"
+  echo "11. vendorHash freshness (deploy FOD preview + cached-FOD audit)"
   # SC2034: callbacks are read inside the sourced vendor-freshness.sh
   # (same sourced-lib indirection as the OB_PASS producers above).
   # shellcheck disable=SC2034
@@ -1221,8 +1221,18 @@ fi
 # context-free WARN, and the 01:35 deploy then died on a stale
 # library-policy vendorHash the gate never previewed); only the known-
 # benign nix error classes are read past.
+# A CACHED FOD is not proof (2026-11-27): a fixed-output store path is keyed
+# by the SPECIFIED hash, so a lock float that moves a package's source while
+# the vendorHash literal stays makes nix reuse the OLD module tree — the
+# preview lists nothing, no builder runs, no mismatch is printed, and the
+# deploy dies at compile time (go-taskqueue + journal, the 12:0x deploy,
+# after this gate printed "20 uncached FODs built clean"). Whenever the
+# preview builds anything, the gate now audits every cached go-modules FOD
+# of the toplevel closure by deriver identity and re-verifies each reused
+# one with `nix-store --realise --check`. One FAIL per stale FOD with its
+# got-hash: feed this log to scripts/fod-hash-diff.sh --apply.
 echo ""
-echo "11. vendorHash freshness (deploy FOD preview)"
+echo "11. vendorHash freshness (deploy FOD preview + cached-FOD audit)"
 # SC2034: callbacks are read inside the sourced vendor-freshness.sh.
 # shellcheck disable=SC2034
 VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_FAIL=fail
