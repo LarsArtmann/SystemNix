@@ -44,12 +44,18 @@ pvg_evidence_for() {
 }
 
 # Open-row check: do unchecked stability rows reference one of the boot dates?
+# ONE grep over the file. The first form piped the open rows into a second
+# `grep -q`, which exits at the first match and left the producer to die of
+# SIGPIPE (141) whenever the open rows exceed the pipe buffer; under
+# pipefail that read as "no open row cites the boot", so on the real library
+# (248 KB of open rows) this check never hit and the gate could not block
+# (live 2026-11-27: rc 141 against 52 citing rows, deaf since 2026-10-13).
 pvg_open_row_hits() {
   local dates="$1"
   [ -f "$TODO_FILE" ] || return 1
   local d hit=1
   for d in $dates; do
-    if grep -E '^- \[ \]' "$TODO_FILE" | grep -q -- "$d"; then
+    if grep -qE -- "^- \[ \].*$d" "$TODO_FILE"; then
       hit=0
       printf '%s\n' "$d"
     fi
@@ -105,6 +111,38 @@ pvg_selftest() {
   printf -- '- [ ] [ready] **Unrelated row, no boot dates here**\n' >"$TODO_FILE"
   if pvg_open_row_hits "$dates" >/dev/null 2>&1; then
     echo "FAIL: open-row hit fired on a row without the boot dates"
+    failures=$((failures + 1))
+  fi
+  # The real library carries ~250 KB of open rows. A `grep -q` at the end of
+  # a pipe over them died of SIGPIPE and read as "no hit" (2026-11-27), so
+  # every shape below is padded past the pipe buffer.
+  printf -- '- [ ] [ready] **Triage the 2026-10-10 23:15 reboot — boot −1 ran 3.5 days**\n' >"$TODO_FILE"
+  for i in $(seq 1 6000); do
+    printf -- '- [ ] [ready] **Pad row %s, cites no boot date here (2026-01-01)**\n' "$i"
+  done >>"$TODO_FILE"
+  if ! pvg_open_row_hits "$dates" >/dev/null 2>&1; then
+    echo "FAIL: open-row hit missed when 6000 open rows follow the citing row"
+    failures=$((failures + 1))
+  fi
+  : >"$TODO_FILE"
+  for i in $(seq 1 6000); do
+    printf -- '- [ ] [ready] **Pad row %s, cites no boot date here (2026-01-01)**\n' "$i"
+  done >>"$TODO_FILE"
+  printf -- '- [ ] [ready] **Triage the 2026-10-10 23:15 reboot — boot −1 ran 3.5 days**\n' >>"$TODO_FILE"
+  if ! pvg_open_row_hits "$dates" >/dev/null 2>&1; then
+    echo "FAIL: open-row hit missed when 6000 open rows precede the citing row"
+    failures=$((failures + 1))
+  fi
+  if pvg_open_row_hits "$dates 1999-01-01" | grep -q '^1999-01-01$'; then
+    echo "FAIL: open-row hit fired for a date no open row cites"
+    failures=$((failures + 1))
+  fi
+  : >"$TODO_FILE"
+  for i in $(seq 1 6000); do
+    printf -- '- [ ] [ready] **Pad row %s, cites no boot date here (2026-01-01)**\n' "$i"
+  done >>"$TODO_FILE"
+  if pvg_open_row_hits "$dates" >/dev/null 2>&1; then
+    echo "FAIL: open-row hit fired on 6000 rows without the boot dates"
     failures=$((failures + 1))
   fi
 
