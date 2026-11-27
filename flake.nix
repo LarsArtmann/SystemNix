@@ -1354,10 +1354,16 @@
     dms-paste.inputs.nixpkgs.follows = "nixpkgs";
     dms-paste.inputs.treefmt-nix.follows = "treefmt-nix";
     erraudit.inputs.flake-parts.follows = "flake-parts";
-    # audiblesync consumes only nixpkgs + flake-utils; both follow so the
-    # input adds ZERO lock nodes (the infra-follows gate counts them).
+    # audiblesync declares nixpkgs + flake-parts + go-nix-helpers; upstream
+    # dropped flake-utils, so the old follow line here warned "override for a
+    # non-existent input 'flake-utils'" on every nix invocation (removed
+    # 2026-11-27). All three edges follow so the input adds ZERO root lock
+    # nodes; treefmt-nix arrives NESTED under its go-nix-helpers copy
+    # (journal/papdashboard precedent — a flat override warns and leaves the
+    # real edge unfollowed).
     audiblesync.inputs.nixpkgs.follows = "nixpkgs";
-    audiblesync.inputs.flake-utils.follows = "flake-utils";
+    audiblesync.inputs.flake-parts.follows = "flake-parts";
+    audiblesync.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
     # go-hotspot: eval-only dep follows (nixpkgs deliberately NOT followed —
     # FOD-governing, see the deliberate table in lib/lock-audit.nix). No
@@ -1632,6 +1638,11 @@
     project-discovery-daemon.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.go-nix-helpers.follows = "go-nix-helpers";
     project-discovery-daemon.inputs.nixpkgs.follows = "nixpkgs";
+    # treefmt-nix also arrives NESTED three levels down via pdd's own lock:
+    # docs-gates -> erraudit -> go-nix-helpers (a copy at a different rev than
+    # root's treefmt-nix; eval-only dep, always safe to follow — the
+    # journal/bank-sync shape).
+    project-discovery-daemon.inputs.docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     project-meta.inputs.flake-parts.follows = "flake-parts";
     project-meta.inputs.go-nix-helpers.follows = "go-nix-helpers";
     project-meta.inputs.nixpkgs.follows = "nixpkgs";
