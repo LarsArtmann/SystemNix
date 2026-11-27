@@ -274,9 +274,10 @@ deploy_pressure_gate() {
     pressure_blocked=1
     echo "✗ MemAvailable = ${avail_pct}% (< 10% floor)"
   fi
-  # zram near-full ALONE is NOT an emergency on this box: swappiness=150
-  # keeps cold anon compressed in zram by design (steady state sits at
-  # 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%). The
+  # zram near-full ALONE is NOT an emergency on this box: cold memory sits
+  # compressed in zram by design (steady state sits at
+  # 90-99% with PSI 0.00 — measured 2026-08-22 evening, avail 25%, at
+  # swappiness=150; 100 since 2026-11-27, not yet re-measured). The
   # freeze precursor is zram full AND degraded margins (nothing left to
   # swap new pages while already stalling) — mirror the emergency guard's
   # combined-zone semantics.

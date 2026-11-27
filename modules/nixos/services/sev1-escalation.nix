@@ -310,7 +310,8 @@ _: {
             v=$(prom_value "$HEALTH_PROM" "system_zram_fill_over_threshold")
             if [ "$v" = "1" ]; then
               # zram near-full ALONE is steady-state normal on this box
-              # (swappiness=150 keeps cold anon compressed in zram; live
+              # (cold memory sits compressed in zram; measured at
+              # swappiness=150, 100 since 2026-11-27; live
               # 2026-09-02: 97% fill with 53% MemAvailable and 0.26% PSI —
               # perfectly healthy). Combined-gate exactly like before, but
               # the tier is NOTIFY, not warn/page (2026-09-02 user
