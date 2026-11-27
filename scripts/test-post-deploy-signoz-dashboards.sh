@@ -26,7 +26,7 @@ trap 'rm -rf "$FIXTURES"' EXIT
 fixture_get() {
   case "$1" in
     "/api/v2/dashboards?limit=100&offset=0") cat "$FIXTURES/list.json" ;;
-    /api/v2/dashboards/*) cat "$FIXTURES/live${1#/api/v2/dashboards}.json" ;;
+    /api/v2/dashboards/*) cat "$FIXTURES/live${1#/api/v2/dashboards/}.json" ;;
     *) return 1 ;;
   esac
 }
@@ -86,14 +86,14 @@ dashboard_file "$FIXTURES/files" systemnix-two "Two"
 dashboard_file "$FIXTURES/files" systemnix-three "Three"
 dashboard_live id-1 systemnix-one "One"
 dashboard_live id-3 systemnix-three "Three, edited by hand"
-dashboard_list '[{id: "id-3", name: "systemnix-three"}, {id: "id-1", name: "systemnix-one"}]'
+dashboard_list '[{"id": "id-3", "name": "systemnix-three"}, {"id": "id-1", "name": "systemnix-one"}]'
 expect "not served" FAIL "systemnix-two(not provisioned)"
 expect "edited names the dashboard" FAIL " systemnix-three "
 
 # ---- identical: the third is served again, the second is restored ----
 dashboard_live id-2 systemnix-two "Two"
 dashboard_live id-3 systemnix-three "Three"
-dashboard_list '[{id: "id-3", name: "systemnix-three"}, {id: "id-2", name: "systemnix-two"}, {id: "id-1", name: "systemnix-one"}]'
+dashboard_list '[{"id": "id-3", "name": "systemnix-three"}, {"id": "id-2", "name": "systemnix-two"}, {"id": "id-1", "name": "systemnix-one"}]'
 expect "identical, key order aside" PASS "3 of 3 live dashboards equal their files"
 
 # ---- a file without a slug ----
@@ -101,9 +101,14 @@ printf '{"tags": [], "spec": {"display": {"name": "No slug"}}}\n' > "$FIXTURES/f
 expect "no slug" FAIL "systemnix-broken.json(no slug)"
 rm "$FIXTURES/files/systemnix-broken.json"
 
-# ---- the API answers nothing: a SKIP, never a FAIL ----
+# ---- the API answers nothing, or with an error: a SKIP, never a FAIL ----
 mv "$FIXTURES/list.json" "$FIXTURES/list.kept"
 expect "api silent" SKIP "API did not answer"
+printf '{"status": "error", "error": "unauthorized"}\n' > "$FIXTURES/list.json"
+expect "api answers an error" SKIP "API did not answer"
+# ---- the API serves no dashboard at all while files exist: a FAIL ----
+dashboard_list '[]'
+expect "nothing served" FAIL "systemnix-one(not provisioned)"
 mv "$FIXTURES/list.kept" "$FIXTURES/list.json"
 
 # ---- no dashboard files at all ----

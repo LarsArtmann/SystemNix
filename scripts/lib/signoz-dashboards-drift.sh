@@ -34,7 +34,9 @@ systemnix_signoz_dashboards_drift() {
     return 0
   fi
   dash_list="$("$fetch" "/api/v2/dashboards?limit=100&offset=0" 2>/dev/null)"
-  dash_count="$(jq -r '.data.dashboards | length' <<<"${dash_list:-null}" 2>/dev/null || true)"
+  # A number only for an answer that carries the list: an empty body (the API
+  # is down) or an error document is no answer. An empty list is a number, 0.
+  dash_count="$(jq -r 'if (.data.dashboards | type) == "array" then (.data.dashboards | length) else empty end' <<<"${dash_list:-}" 2>/dev/null || true)"
   if [ -z "$dash_count" ]; then
     report_skip "SigNoz dashboards - the API did not answer, live dashboards not readable"
     return 0
