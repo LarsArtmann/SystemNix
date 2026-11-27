@@ -3,6 +3,7 @@
 **Created:** 2026-11-25 06:04 CET (`date`), boot `b4931451`, HEAD `dc4a8ee69`, branch in sync with origin, tree clean.
 **EXECUTING (instance aimeter-exec-0621, 2026-11-25 06:22 CET, HEAD `07b83e5a1`):** executing (see AGENTS.md plan-execution tombstone)
 **Status:** EXECUTING (tombstone line below; `scripts/plan-marker.sh <this file> done <instance>` closes it).
+**Progress (instance aimeter-exec-0621, 2026-11-27 00:55 CET, SystemNix HEAD `23ed59f99` plus the docs commit after it, ai-meter `f2a21aa` on both remotes):** done in code and docs: T01–T03, T05 (PromQL guards; the Go suite runs in the repository's flake check and CI), T08, T09, T10, T11, T12, T13, T14, T16, T17 (docs; the data-ownership row is open), T07 (runbook section written; the `[decision]` row for the circuit is open). NOT done: **T04 and T15, the deploys.** `max_wait_seconds = 270` is committed (`0792bfa75`) and the host still runs the 30 s binary: every deploy attempt since 07:10 on 2026-11-26 was refused (exit 12, the pressure and guard-trip gates), and the last one demands `DEPLOY_FORCE_PRESSURE=2`, a token the owner has not given. T18 and the 24 h ledger measurement follow the deploy.
 **Scope line:** two efforts the owner asked for in one session, in the order that pays soonest: (1) stop the z.ai rate-limit failures that kill Crush turns, (2) move ai-meter out of SystemNix into its own Forgejo repo with a GitHub twin.
 **Related:** [v6 backlog masterplan](./2026-11-25_00-06_SUPERB-backlog-masterplan-v6.md) (queue shape), [status 2026-11-25 05:26](../status/2026-11-25_05-26_ai-meter-span-export-live-native-ai-observability-verified-dashboard-rewrite-not-started.md) (the parallel ai-meter work this plan builds on), [runbook](../services/ai-meter.md), [Forgejo runbook, canonical repos](../services/forgejo.md).
 
@@ -304,6 +305,10 @@ Found while preparing, not changed here (this file is additive):
 - `usage_test.go` is unformatted since 2026-11-11 (not this session's file). It gets formatted with the first `nix fmt` in the new repo (T11.4).
 
 Harvest at execution time, not now: T18.1 and T18.2 are the only tasks that should become `[ready]` queue rows; everything else is done inline by the executor, and adding it to the queue now would send a second session into the same files.
+
+- **2026-11-26 17:27, T04's done bar was wrong for this host.** "Client-visible 429 share on zai far below 16.9%" is met by a count that includes the proxy's own budget answer; at 30 s that answer was 42% of z.ai lines (4,454 of 10,535, 2026-11-25 18:36Z to 2026-11-26 05:54Z). The measure that matters is budget answers per call and failed client turns; D13 sets the budget to 270 s.
+- **2026-11-27 00:55, T14 deviates from its micro-tasks.** The two negative legs that edited Go sources (`go-formula-drifted`, `replay-neutered`) were removed, not reworked to mutate a copy: the Go source is a locked store path the harness cannot edit. The `aimeter` group has 13 legs, all passing in the repointed tree. The Go price fixture stays pinned by the repository's `TestEstimateCost`, which `checks.ai-meter-spend-promql` runs from the input.
+- **2026-11-27 00:55, T16 ran before T15.** The in-tree copy is removed although the input-built binary was never run on the host. Reason: after T14 no evaluation reads the copy, and two sources invite a fix landing in the dead one. The host keeps its current generation until the deploy; rollback is `git revert 23ed59f99`.
 
 ## 12. Done bar for the whole plan
 

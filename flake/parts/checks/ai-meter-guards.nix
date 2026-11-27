@@ -47,6 +47,11 @@
       ...
     }:
     lib.mkIf (system == "x86_64-linux") {
+      # The proxy's own Go suite (vet and race tests), built by the ai-meter
+      # flake from its locked source. The suite lives with the code; this
+      # check makes `nix flake check` here refuse a floated rev that fails it.
+      checks.ai-meter-go-suite = inputs.ai-meter.checks.${system}.go-test;
+
       checks.ai-meter-spend-promql =
         let
           renderer = import (root + "/modules/nixos/services/_ai-meter-dashboard.nix") { inherit lib; };
