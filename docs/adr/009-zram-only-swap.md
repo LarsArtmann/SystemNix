@@ -1,7 +1,7 @@
 # ADR-009: Zram-Only Swap on evo-x2
 
 **Date:** 2026-10-21
-**Status:** Accepted (retroactive — the configuration has been live since before 2026-08; this ADR records the decision, its evidence, and the closed recompression study)
+**Status:** Accepted (retroactive — the configuration has been live since before 2026-08; this ADR records the decision, its evidence, and the closed recompression study). Amended 2026-11-27: `vm.swappiness` 150 → 100 (see "Amendment 2026-11-27")
 **Origin:** stability plan T3.3 + TODO_LIST "ADR: zram-only swap decision" (status report 2026-08-13_15-04 §49, 2026-08-16_06-45 §12); posture decision recorded live 2026-08-18_23-51 §6
 
 ## Context
@@ -17,7 +17,8 @@ docs/agents/stability.md and the 2026-08-13 IO-pressure analysis):
 
 1. Old `vm.swappiness=10` actively preferred page-cache reclaim (QLC disk I/O)
    over the in-RAM zram swap — backwards for zram-only, and a major contributor
-   to the BTRFS I/O-storm freezes (fixed to `150` at `0bd8a272`).
+   to the BTRFS I/O-storm freezes (fixed to `150` at `0bd8a272`; lowered to the
+   neutral `100` on 2026-11-27, see the amendment below).
 2. Kernel-default `vm.page-cluster=3` and `watermark_boost_factor=15000` are
    HDD-era settings that waste zram CPU and amplify reclaim bursts (both fixed
    2026-09-05, `page-cluster=0`, `watermark_boost_factor=0`).
@@ -43,7 +44,8 @@ docs/agents/stability.md and the 2026-08-13 IO-pressure analysis):
   up to 48 % slower compression (boot.nix comment block, kernel-default L3
   comparison). Under memory pressure, swap-out is synchronous on the reclaim
   path, so compress speed compounds.
-- `vm.swappiness = 150`, `vm.page-cluster = 0`, `vm.watermark_boost_factor = 0`
+- `vm.swappiness = 100` (`150` until the 2026-11-27 amendment), `vm.page-cluster = 0`,
+  `vm.watermark_boost_factor = 0`
   (the three sysctls above, each with sourced comments in boot.nix).
 - **Monitor-only posture, no automatic swap relief valve.** Zram fill is watched
   by three independent layers: Gatus "ZRAM Fill" (≥90 % → Discord, the
@@ -100,6 +102,52 @@ they no longer pin, recompression solves a problem we no longer have. The
 follow-up (live study: baseline `mm_stat`, bounded timer, reclaim measured) is
 queued in TODO_LIST; this ADR neither enables nor blocks it beyond the gating
 above.
+
+## Amendment 2026-11-27: `vm.swappiness` 150 → 100 (owner directive)
+
+**Trigger:** "Make swap less aggressive, we have RAM to use it."
+
+**What the number does** (kernel 7.3 `mm/vmscan.c`, `calculate_pressure_balance`, read
+from the 7.3 source tarball in the nix store): anon pressure is `swappiness`, file
+pressure is `200 - swappiness`, each divided by the measured refault cost of its own
+LRU. `150` therefore prices anon pages 3:1 cheaper to evict than file pages; `100`
+prices them equal. `vm.rst`: "At 100, the VM assumes equal IO cost", and for in-memory
+swap "values beyond 100 can be considered", with a ratio rule (swap 2x faster than
+filesystem IO → 133). The earlier wording in this ADR and in boot.nix, kernel docs:
+"for zram, use 100+", was a paraphrase of that paragraph, not a quote.
+
+**Live state at 150** (boot `0737ecd7`, 54.5 h up, read-only probes 17:1x-17:4x):
+
+| Reading                      | Value                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| zram0                        | 100 % full: 60.0 GiB of originals in 23.9 GiB of RAM, `SwapFree` 0.8-60 MiB of 62 GiB          |
+| Memory                       | `MemAvailable` 32-39 GiB, file cache (`Cached`) 29-43 GiB, `AnonPages` 33.5 GiB                  |
+| Swap traffic since boot      | `pswpout` 7.84 TiB, `pswpin` 7.27 TiB; `pgsteal_anon` 19.5 TiB against `pgsteal_file` 14.9 TiB |
+| Where the swapped pages sat  | `user-1000.slice` 48.0 GiB (pinned at its `MemorySwapMax=48G`), `system.slice` 13.6 GiB        |
+
+**Why 100 and not lower:** every value below 100 tells the kernel that swapping is
+dearer than file IO, and the two values this box ran below 100 are the incidents in
+Context 1 (`1` until 2026-05-25, `10` until 2026-08-13). `100` removes the anon bias
+without crossing that line.
+
+**What 100 does not fix:** about 35 GiB of the 60 GiB in zram was tmpfs (`/tmp` is a
+48 GiB tmpfs) charged to one login scope: 5,716 leftover `go-build*` dirs (39 GiB)
+whose sizes line up with that scope's 35.2 GiB swapped plus 2.9 GiB resident shmem.
+Shmem leaves RAM only through swap whatever `vm.swappiness` says, and cgroup caps
+(`memory.high`, `MemorySwapMax`) force their own reclaim. Both are written up in
+`docs/agents/stability.md` "ZRAM & Memory Reclaim"; the `go-build` leak has a
+`[decision]` row in `docs/todo/stability.md`.
+
+**Rollout:** the sysctl is runtime-tunable. It was written to the running kernel on
+2026-11-27 at 17:54:32 CET (`sudo sysctl -w vm.swappiness=100`); `nix eval` of
+`boot.kernel.sysctl."vm.swappiness"` for evo-x2 prints the same 100. The live
+generation (1033) still declares `150`, so a reboot or a `systemd-sysctl` restart
+before the next deploy brings `150` back.
+
+**Reopen when:** file refaults on the QLC root feed an IO storm (IO PSI high while
+`workingset_refault_file` climbs and swap traffic is low): step back toward `150`.
+When zram sits far from full under load and interactive latency still points at
+swap-ins: `60` (the kernel default) is the next step down, on a measured day.
 
 ## Consequences
 
