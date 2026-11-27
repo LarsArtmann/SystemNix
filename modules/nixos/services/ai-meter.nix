@@ -85,9 +85,16 @@
       # history (why: _ai-meter-dashboard.nix). Rendered from the template
       # next to the other dashboards; signoz.nix provisions this file in its
       # place.
+      # The dashboard file is also the one source of the range the page opens
+      # on: a first-time viewer of the dashboard gets its `duration`, and the
+      # viewer page passes the same value as the iframe's `relativeTime`, which
+      # wins over a range the viewer's browser remembers from an earlier visit.
+      dashboardFile = ../../../modules/nixos/services/dashboards/ai-meter.json;
+      dashboardRange = (builtins.fromJSON (builtins.readFile dashboardFile)).spec.duration;
+
       dashboard = pkgs.writeText "ai-meter-dashboard.json" (
         (import ./_ai-meter-dashboard.nix { inherit lib; }).render {
-          template = builtins.readFile ../../../modules/nixos/services/dashboards/ai-meter.json;
+          template = builtins.readFile dashboardFile;
           inherit (cfg) costs;
         }
       );
@@ -105,6 +112,9 @@
       # SigNoz ai-meter dashboard full-viewport (the signoz registry entry
       # allows this origin via vHost.frameAncestors). Layer 2 protected:
       # LAN bypass, external requests pass oauth2-proxy forward-auth first.
+      # The iframe and the link open the dashboard on one fixed range, so the
+      # page looks the same in every browser.
+      dashboardUrl = "https://signoz.${domain}/dashboard/${dashboardId}?relativeTime=${dashboardRange}";
       viewer = pkgs.writeTextDir "index.html" ''
         <!doctype html>
         <html lang="en">
@@ -124,9 +134,9 @@
         <body>
         <header>
           <h1>AI Meter</h1>
-          <a href="https://signoz.${domain}/dashboard/${dashboardId}" target="_top">open in SigNoz</a>
+          <a href="${dashboardUrl}" target="_top">open in SigNoz</a>
         </header>
-        <iframe src="https://signoz.${domain}/dashboard/${dashboardId}"
+        <iframe src="${dashboardUrl}"
                 title="AI Meter dashboard"></iframe>
         </body>
         </html>
@@ -645,9 +655,11 @@
                 interval = "5m";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*signoz.${domain}/dashboard/${dashboardId}*)"
+                  # The range parameter is part of the contract: without it the
+                  # page opens on whatever range each browser last picked.
+                  "[BODY] == pat(*signoz.${domain}/dashboard/${dashboardId}*relativeTime=${dashboardRange}*)"
                 ];
-                alert = "ai-meter viewer page broken - the iframe embed lost its dashboard target. Check: journalctl -u caddy -n 50 and dashboardId in modules/nixos/services/ai-meter.nix";
+                alert = "ai-meter viewer page broken - the iframe embed lost its dashboard target or its time range. Check: journalctl -u caddy -n 50 and dashboardId/dashboardFile in modules/nixos/services/ai-meter.nix";
               }
               {
                 # Drift detector: fails when the provisioned dashboard is

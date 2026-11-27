@@ -16,6 +16,8 @@
 #   bash scripts/crush-rc-test.sh --expect-model zai/glm-5.3-flash
 #                                                       # assert model IDENTITY
 #                                                       # (repeatable, = form works too)
+#   bash scripts/crush-rc-test.sh --expect-live zai      # assert a provider is
+#                                                       # CONFIGURED (repeatable)
 #
 # WHAT IT DOES:
 #   1. bash -n syntax check on the rc
@@ -27,6 +29,14 @@
 #      didn't crash); OPTIONAL --probe runs one trivial completion against
 #      -m provider/model to prove a key end-to-end
 #
+# --expect-model PROVES NOTHING ABOUT A CATALOG PROVIDER: `crush models`
+# lists every model of crush's built-in catalog even when the provider is
+# disabled or has no key (live 2026-11-27: minimax, disabled, still lists
+# its models). "Listed" only means "enabled" for a hand-declared,
+# non-catalog model. For a catalog provider use --expect-live <name>: it
+# lists under a TTY, where an unconfigured provider's header reads
+# "<name> (not configured)", and fails when that marker is present.
+#
 # NOTE: `crush models` load output goes to stderr on rc errors — a failing
 # rc aborts the load and this script exits non-zero with the crush error.
 
@@ -35,11 +45,20 @@ set -euo pipefail
 PROBE=false
 CANDIDATE=""
 EXPECT_MODELS=()
+EXPECT_LIVE=()
 EXPECT_NEXT=false
+LIVE_NEXT=false
 for arg in "$@"; do
   if [[ $EXPECT_NEXT == true ]]; then
     EXPECT_MODELS+=("$arg")
     EXPECT_NEXT=false
+  elif [[ $LIVE_NEXT == true ]]; then
+    EXPECT_LIVE+=("$arg")
+    LIVE_NEXT=false
+  elif [[ $arg == --expect-live=* ]]; then
+    EXPECT_LIVE+=("${arg#--expect-live=}")
+  elif [[ $arg == --expect-live ]]; then
+    LIVE_NEXT=true
   elif [[ $arg == --expect-model=* ]]; then
     EXPECT_MODELS+=("${arg#--expect-model=}")
   elif [[ $arg == --expect-model ]]; then
@@ -48,8 +67,8 @@ for arg in "$@"; do
     CANDIDATE="$arg"
   fi
 done
-if [[ $EXPECT_NEXT == true ]]; then
-  echo "FAIL: --expect-model given without a value" >&2
+if [[ $EXPECT_NEXT == true || $LIVE_NEXT == true ]]; then
+  echo "FAIL: --expect-model or --expect-live given without a value" >&2
   exit 2
 fi
 EXTRA="${EXTRA:-}"
@@ -107,6 +126,23 @@ for m in "${EXPECT_MODELS[@]}"; do
   fi
 done
 grep -E "^(zai|gemini|minimax|synthetic|llamacpp)/" "$T/models.out" | head -8 || true
+
+# Configured-provider assertions, through a TTY: the "(not configured)"
+# marker prints only when stdout is a terminal.
+if [[ ${#EXPECT_LIVE[@]} -gt 0 ]]; then
+  script -qec "crush models" /dev/null 2>/dev/null | tr -d '\r' >"$T/models.tty" || true
+  for provider in "${EXPECT_LIVE[@]}"; do
+    header="$(grep -E "^[^a-zA-Z0-9_-]*${provider}( |$)" "$T/models.tty" | head -1)"
+    if [[ -z $header ]]; then
+      echo "FAIL: provider not listed at all: $provider" >&2
+      exit 1
+    elif [[ $header == *"not configured"* ]]; then
+      echo "FAIL: provider is NOT configured (disabled or without a usable key): $provider" >&2
+      exit 1
+    fi
+    echo "PASS: provider configured: $provider"
+  done
+fi
 
 # 3. optional end-to-end key probe (costs one trivial completion)
 if [[ $PROBE == true && -n ${PROBE_MODEL:-} ]]; then

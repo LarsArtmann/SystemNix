@@ -2733,8 +2733,12 @@ if [ -e "$CRUSH_RC" ]; then
   # 3. Isolated load + model identity (crushrc statement errors abort the
   # ENTIRE config load - all providers/LSPs/MCPs vanish).
   smoke_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  if bash "$smoke_dir/crush-rc-test.sh" --expect-model zai/glm-5.3-flash --expect-model zai/glm-4.7-flash >/tmp/.smoke-crush-rc.log 2>&1; then
-    report_pass "Crush - isolated rc load OK, glm-5.3-flash (model decl) + glm-4.7-flash (small slot) present"
+  # --expect-live, not --expect-model: the catalog lists a disabled
+  # provider's models too, so the old assertion passed with zai disabled
+  # (found 2026-11-27). glm-5.4 is hand-declared (non-catalog), so its
+  # listing does prove the load.
+  if bash "$smoke_dir/crush-rc-test.sh" --expect-live zai --expect-live gemini --expect-model zai/glm-5.4 >/tmp/.smoke-crush-rc.log 2>&1; then
+    report_pass "Crush - isolated rc load OK, zai + gemini configured, glm-5.4 declared"
   else
     report_fail "Crush - isolated rc load FAILED (see /tmp/.smoke-crush-rc.log tail: $(tail -3 /tmp/.smoke-crush-rc.log | tr '\n' ' '))"
   fi
