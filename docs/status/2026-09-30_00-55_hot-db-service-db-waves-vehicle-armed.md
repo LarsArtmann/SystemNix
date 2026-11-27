@@ -141,3 +141,7 @@ probes).
   configuration.nix` (enable + dbBackup), `tests/test-hot-db.nix`
   (collector assertions), `docs/services/hot-db.md` (new runbook),
   `docs/todo/storage.md`, `AGENTS.md`, `CHANGELOG.md`.
+
+## Harvest log
+
+- **HARVESTED 2026-11-27 (annotate wave 1, masterplan v6 T15):** f1 → `docs/todo/storage.md` "Phase 2: hot DBs off the QLC root — agent-side measurement + landmine unblock LANDED 2026-09-21 (task queue); remaining = user migration windows" ([blocked:user], carries the VEHICLE READY 2026-09-30 note); f2 → done: storage.md rows 35/36/157 ticked `[x]` at authoring (verified via `git show b9ab66caf` / `13a378733`), since pruned to CHANGELOG.md (the T14 + fixture-test rows at `79dcbc450`; the vehicle-defects row text sits in CHANGELOG.md too); f3 → done at `658ad4a4a` (AGENTS.md "Hot-DB Service Tier" section + discordsync dump bullet; section later restructured away in `d89029cfd`); f4 → done at `658ad4a4a` (CHANGELOG "Hot-DB service tier armed: five per-service Samsung migration waves").

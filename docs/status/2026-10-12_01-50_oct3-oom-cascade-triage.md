@@ -42,3 +42,7 @@ Guard zones 2/3/4/5 fired ZERO trips in 10:00–11:00 (zone3's combo — PSI avg
 ## Verification
 
 All series read from `signoz_metrics.samples_v4` / `time_series_v4` (ClickHouse, :9000) with 10-03 07:00–11:05 windows; journal absence verified via `journalctl --since 2026-10-03` (no entries) and archive listing (oldest 2026-10-04 03:38). No coredumps for the window (`coredumpctl`).
+
+## Harvest log
+
+- **HARVESTED 2026-11-27 (annotate wave 1, masterplan v6 T15):** f.1 → done at `262ede9e7` (census durability ring; script landed `1571baad0`); residual row `docs/todo/monitoring.md` "Post-deploy live verify of the census durability ring on evo-x2" [blocked:deploy]; f.4 → the crash-autopsy.sh row it pointed at was closed 2026-11-03 as satisfied by extending `scripts/crash-triage.sh` (`30c549200`, CHANGELOG "crash-forensics close-out batch" S-0025); a later row on the same ask is still open: `docs/todo/stability.md` "M11: journal-census.sh + crash-autopsy.sh + selftests"; f.2 and f.3 are findings, not follow-ups (f.3 says no new config work is justified; the f.2 "user-slice caps never engaged" concern got no row from this report — later user.slice rows exist from other reports).

@@ -515,7 +515,7 @@ EOF
     echo active > "$STUB_DIR/active.btrfs-balance-data.service"
     echo active > "$STUB_DIR/active.btrfs-scrub@-.service"
   }
-  expect_trip_stops() { # <expected stop count of the 13 churn units>
+  expect_trip_stops() { # <expected stop count of the 12 churn units>
     # shellcheck disable=SC2034  # n is read by the eval'd test "[ \$n = 0 ]" of the next line
     local n=0 u
     # shellcheck disable=SC2086  # deliberate word split over the baked unit list
@@ -537,7 +537,7 @@ EOF
       check "zone-1 trip logged" "grep -q 'below absolute floor' '$SIM/out'"
       check "trip count 1" "[ \"\$(cat $state/tripped.count)\" = 1 ]"
       expect_trip_stops "trip 1"
-      check "the rc-5 unit did not stop the loop (units after it still stopped)" "has_call 'stop inboxclean-web.service'"
+      check "the rc-5 unit did not stop the loop (units after it still stopped)" "has_call 'stop discordsync-db-heal.service'"
       check "no multi-unit stop call" "! grep -E '^stop [^ ]+ [^ ]+$' $STUB_DIR/calls.log | grep -q ."
       if [ "$HOST" = 1 ]; then
         check "host shape: NO socket or sacrifice unit call on a memory trip" "! grep -q 'fastflowlm' $STUB_DIR/calls.log"
@@ -662,7 +662,7 @@ EOF
       check "slot protection line" "grep -q 'catch-up slot active' '$SIM/out' && grep -q 'keeping btrbk-root.service running' '$SIM/out'"
       check "protected backup NOT stopped by the trip action" "! has_call 'stop btrbk-root.service'"
       check "NO backup unit is stopped inside the protection window" "n=0; for u in $BACKUP_UNITS; do has_call \"stop \$u\" && n=1; done; [ \$n = 0 ]"
-      check "non-backup churn units are still stopped" "has_call 'stop btrfs-balance-data.service' && has_call 'stop inboxclean-web.service'"
+      check "non-backup churn units are still stopped" "has_call 'stop btrfs-balance-data.service' && has_call 'stop discordsync-db-heal.service'"
       ;;
 
     zone6_iopause_host)

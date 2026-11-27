@@ -2125,6 +2125,27 @@ else
   report_fail "Monitor365 - server-watchdog timer NOT active (pool deadlock detection offline)"
 fi
 
+# Monitor365 mic collectors: recording is proven from cycle DURATIONS, never
+# from collector_events_collected (2026-11-27). That counter also counts empty
+# cycles, and for five days a collector whose every capture failed in 3 ms
+# read as green on it. audio_stream records every cycle's duration: a real
+# capture makes a cycle about 10 s, a failed one about 5 ms, so the cumulative
+# average (sum/count) decides in one sample. The first cycle runs one interval
+# (5 min) after an agent start: a deploy that restarted the agent finds no
+# series yet and gets a SKIP with the re-run hint.
+if $m365_enabled && [ -n "$PORT_M365_METRICS" ] && m365_metrics="$(curl -s --max-time 5 "http://localhost:${PORT_M365_METRICS}/metrics" 2>/dev/null)" && grep -q '^collector_collection_duration_count{collector="audio_stream"} ' <<<"$m365_metrics"; then
+  m365_as_count="$(awk '$1 == "collector_collection_duration_count{collector=\"audio_stream\"}" { print int($2); exit }' <<<"$m365_metrics")"
+  m365_as_sum="$(awk '$1 == "collector_collection_duration_sum{collector=\"audio_stream\"}" { print $2; exit }' <<<"$m365_metrics")"
+  m365_as_avg="$(awk -v s="$m365_as_sum" -v c="$m365_as_count" 'BEGIN { printf "%.2f", (c > 0) ? s / c : 0 }')"
+  if awk -v a="$m365_as_avg" 'BEGIN { exit (a >= 1) ? 0 : 1 }'; then
+    report_pass "Monitor365 - audio_stream captures run (avg cycle ${m365_as_avg} s over ${m365_as_count} cycles)"
+  else
+    report_fail "Monitor365 - audio_stream cycles average ${m365_as_avg} s over ${m365_as_count} cycles - no capture is running (parecord failed or only idle cycles ran; see 'Audio stream' lines in the agent journal)"
+  fi
+else
+  report_skip "Monitor365 - audio_stream series absent (agent started less than one interval ago, or collector disabled); re-run in 5 min to prove captures"
+fi
+
 # File Renamer: dashboard must show accumulated history, not a split-brain empty fork.
 # The watcher and health service MUST share the same state files. A 200 with
 # total_operations: 0 on a system that's been renaming for weeks means split-brain

@@ -1167,6 +1167,11 @@
               AS_METRICS=$(curl -sf -m 5 "$AGENT_METRICS" 2>/dev/null || true)
               AS_COUNT=$(printf '%s\n' "$AS_METRICS" | awk '$1 == "collector_collection_duration_count{collector=\"audio_stream\"}" { print int($2) }')
               AS_SUM=$(printf '%s\n' "$AS_METRICS" | awk '$1 == "collector_collection_duration_sum{collector=\"audio_stream\"}" { print $2 }')
+              # Unique tmp per run (mktemp) + rename: the textfile dir is a
+              # sticky 1777 dir, a fixed .tmp name collides with stale
+              # foreign-owned leftovers (textfile-tmp audit class A2).
+              AUDIO_PROM_TMP="$(mktemp "$AUDIO_PROM.XXXXXX")"
+              trap 'rm -f "$AUDIO_PROM_TMP"' EXIT
               if [ -n "$AS_COUNT" ] && [ "$AS_COUNT" -ge 1 ] && [ -d "$AUDIO_PROM_DIR" ]; then
                 awk -v s="$AS_SUM" -v c="$AS_COUNT" -v now="$(date +%s)" 'BEGIN {
                   avg = s / c
@@ -1174,7 +1179,7 @@
                   printf "monitor365_audio_stream_cycle_seconds_avg %.3f\n", avg
                   printf "monitor365_audio_stream_capture_ok %d\n", (avg >= 1) ? 1 : 0
                   printf "monitor365_audio_stream_watchdog_timestamp_seconds %d\n", now
-                }' >"$AUDIO_PROM.tmp" && mv -f "$AUDIO_PROM.tmp" "$AUDIO_PROM"
+                }' >"$AUDIO_PROM_TMP" && chmod 644 "$AUDIO_PROM_TMP" && mv -f "$AUDIO_PROM_TMP" "$AUDIO_PROM"
                 if [ "$AS_COUNT" -ge 2 ] && awk -v s="$AS_SUM" -v c="$AS_COUNT" 'BEGIN { exit (s / c < 1) ? 0 : 1 }'; then
                   echo "monitor365-agent-watchdog: audio_stream cycles average $(awk -v s="$AS_SUM" -v c="$AS_COUNT" 'BEGIN { printf "%.3f", s / c }') s over $AS_COUNT cycles — no capture is running"
                 fi

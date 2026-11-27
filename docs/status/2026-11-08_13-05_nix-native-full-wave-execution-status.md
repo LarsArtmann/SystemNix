@@ -57,3 +57,7 @@ Deferred at time of writing: a PARALLEL session's `nix build .#checks.x86_64-lin
 ## §g Verdict
 
 Every executable task in the plan is DONE, collapsed-with-evidence, or owner-gated by design. The two premise collapses (T8/T10) were verified findings, not skipped work — the plan's own verification-first doctrine working as intended on itself.
+
+## Harvest log
+
+- **HARVESTED 2026-11-27 (annotate wave 1, masterplan v6 T15):** f1 (and §e.1, land the deploy + post-deploy battery) → done (wave deployed; live `/etc/systemnix/integration-manifest.json` confirmed by the 2026-11-25 status report; `docs/todo/pipeline.md` "Nix-native: eval-truth manifest bridge for post-deploy port probes (pareto plan T1-T4)" [x]); f2 (and §e.2, D4 cache-name single-source) → `docs/todo/pipeline.md` "Single-source the blessed-cache name list" [decision] (refreshed 2026-11-08); the §e.3 claim that nothing else is unharvested holds.
