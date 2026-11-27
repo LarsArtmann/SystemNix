@@ -281,10 +281,12 @@ vendor_freshness_receipt_write() {
   } 2>/dev/null || true
 }
 
-# Drop receipts whose drv left the store (GC'd derivations). Only plain
-# 32-char hash names inside the receipt store are ever removed.
+# Drop receipts whose drv is not in `$1` (the drv list of the last fully
+# enumerated closure): GC'd derivations, or packages that left the config.
+# A receipt is only ever an optimisation, so losing one costs one rebuild.
+# Only plain 32-char hash names holding a drv path are ever removed.
 vendor_freshness_receipt_prune() {
-  local file name drv
+  local keep="$1" file name drv
   [ -d "$VENDOR_FRESHNESS_RECEIPT_DIR" ] || return 0
   for file in "$VENDOR_FRESHNESS_RECEIPT_DIR"/*; do
     [ -f "$file" ] || continue
@@ -292,7 +294,7 @@ vendor_freshness_receipt_prune() {
     [[ $name =~ ^[a-z0-9]{32}$ ]] || continue
     drv=$(head -n 1 "$file" 2>/dev/null || true)
     [[ $drv == /nix/store/*.drv ]] || continue
-    [ -e "$drv" ] || rm -f "$file"
+    if ! grep -qxF -- "$drv" <<<"$keep"; then rm -f "$file"; fi
   done
 }
 
@@ -363,7 +365,7 @@ vendor_freshness_audit_cached() {
         ;;
     esac
   done <<<"$fods" || true
-  vendor_freshness_receipt_prune
+  vendor_freshness_receipt_prune "$fods"
   VENDOR_FRESHNESS_AUDIT_SUMMARY="proven=$proven receipted=$receipted verified=$verified failed=$failed"
 }
 

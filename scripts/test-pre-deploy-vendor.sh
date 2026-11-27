@@ -324,13 +324,18 @@ expect_eq "$(cat "$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn")" "$FOD_TQ" 
 # not naming the drv) must not vouch for anything.
 printf '%s\n' "$FOD_JOURNAL" >"$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
 expect_eq "$(vendor_freshness_receipt_valid "$FOD_TQ" && echo yes || echo no)" "no" "receipt whose content names another drv is void"
-# Pruning removes only markers whose drv left the store.
+# Pruning keeps receipts whose drv is in the audited closure and drops the
+# rest (GC'd derivations, packages that left the config).
 vendor_freshness_receipt_write "$FOD_TQ"
-printf '%s\n' /nix/store/00000000000000000000000000000000-gone-go-modules.drv >"$vf_receipt_dir/00000000000000000000000000000000"
+vendor_freshness_receipt_write "$FOD_JOURNAL"
+printf 'not a drv\n' >"$vf_receipt_dir/00000000000000000000000000000000"
 printf 'keep\n' >"$vf_receipt_dir/keep-me"
-vendor_freshness_receipt_prune
-expect_ok "live receipt survives pruning" test -e "$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
-expect_ok "receipt for a gone drv is pruned" test ! -e "$vf_receipt_dir/00000000000000000000000000000000"
+vendor_freshness_receipt_prune "$FIX_TOP_DRV
+$FOD_TQ
+"
+expect_ok "receipt of an audited drv survives pruning" test -e "$vf_receipt_dir/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
+expect_ok "receipt of a drv outside the closure is pruned" test ! -e "$vf_receipt_dir/hvrvr7zzgbxqwissll1zyig6f43c4q9q"
+expect_ok "marker holding no drv path is untouched" test -e "$vf_receipt_dir/00000000000000000000000000000000"
 expect_ok "foreign file in the store is untouched" test -e "$vf_receipt_dir/keep-me"
 rm -rf "$vf_receipt_dir"
 
@@ -485,6 +490,9 @@ vf_fresh_receipts
 vf_proven_and_reused
 VF_STUB_CHECK_OUT="$FIX_CHECK_OK"
 VF_STUB_CHECK_RC=0
+# A receipt for a drv outside this closure (e.g. since GC'd): the audit
+# must drop it.
+vendor_freshness_receipt_write "$FOD_A"
 vf_verdicts=""
 vf_stdout_file=$(mktemp)
 vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
@@ -494,6 +502,7 @@ expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 2 cached FOD(s) verif
 expect_eq "$(vf_check_calls)" "1" "flow: exactly the reused FOD is re-verified (the proven and the uncached one are not)"
 expect_match "$vf_stdout" "*re-verifying cached FOD (the store names another derivation as its builder): audiblesync-0.1.1-go-modules*" "flow: the re-verification is announced"
 expect_ok "flow: PASS writes the receipt" test -s "$VENDOR_FRESHNESS_RECEIPT_DIR/2cm4syk9yzpaarf5d4yllj1v1y7ywhkj"
+expect_ok "flow: a receipt outside the audited closure is pruned" test ! -e "$VENDOR_FRESHNESS_RECEIPT_DIR/kbwg8d2lb5i5jxhbgnkm0g19ib4zpw0n"
 
 # G7 the receipt converges: the next run over the same closure does not
 # rebuild again.
