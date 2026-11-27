@@ -240,10 +240,12 @@ in
         # state (crush load.go resolveSelectedModels — rc slot > store >
         # catalog default), which had drifted to hyper/deepseek-v4.1-flash
         # (charm-cloud OAuth, un-metered). Pinning zai's flash tier keeps
-        # summarization cheap, non-thinking (the slot carries no --think, and
-        # a model declaration's --thinking always does NOT reach the request
-        # in v0.102.0 — see docs/services/crush.md §Default Models), and
-        # inside the ai-meter.
+        # summarization cheap, non-thinking, and inside the ai-meter.
+        # Non-thinking is a wire fact, not a declaration: on v0.102.0 a
+        # request built from the SMALL slot carries neither "thinking" nor
+        # "reasoning_effort", whatever the slot line or the model
+        # declaration says (captured for glm-4.7-flash with and without
+        # --think; crush-config docs/testing.md "Wire capture").
         # Large stays per-project (.crushrc slot lines; picker store elsewhere).
         model small zai/glm-4.7-flash
       fi

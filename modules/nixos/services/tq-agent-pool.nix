@@ -17,9 +17,12 @@
 #     and error tails, hence SSO, never Layer 0
 #   - tq-bootstrap oneshot seeds the dogfood rails per repo (.tq-verify +
 #     .crushrc autonomy block, model pins where the template can express them —
-#     glm-5.3-flash @ xhigh for CV/go-taskqueue; SystemNix's glm-5.4 @ xhigh
-#     line lives in its repo-owned .crushrc so it can carry `--think` —
-#     committed locally, never pushed) — idempotent, runs at deploy
+#     glm-5.3-flash @ xhigh for CV/go-taskqueue — on crush v0.102.0 that
+#     model ships in the catalog with reasoning levels, so the block-written
+#     line sends thinking ENABLED at effort max whatever effort it names;
+#     SystemNix's glm-5.4 @ xhigh line lives in its repo-owned .crushrc so it
+#     can carry `--think` — committed locally, never pushed) — idempotent,
+#     runs at deploy
 #   - Dead letters + budget exhaustion alert via the PapDashboard bridge
 #     (TQ_PAP_API_KEY from the shared papdashboard sops key, dedicated
 #     root-owned template so arbitrary agent payloads never see other

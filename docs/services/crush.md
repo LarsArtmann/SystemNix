@@ -7,9 +7,11 @@ models, LSPs, and the verification workflow for changing any of it.
   crush start) — source: `github:LarsArtmann/crush-config` (PRIVATE) via
   `programs.crush-config` (module `homeManagerModules.crush`). SystemNix's
   `platforms/nixos/users/home.nix` only sets host-coupled values:
-  `golangciLintLspCommand` (the HM wrapper) and the `qmd` MCP entry.
+  `golangciLintLspCommand` (the HM wrapper) and the ai-meter `extraRc` block
+(the `qmd` MCP is project-scoped to CV since 2026-10-09).
   Provider/model/LSP changes happen in the crush-config repo → push →
-  `nix flake lock --update-input crush-config`
+  `nix flake update crush-config` (the old `--update-input` form is a
+  silent no-op on this nix)
 - **Secrets**: sops `platforms/nixos/secrets/crush.yaml` → `/run/secrets/<name>`
   (lars:users 0400), injected at load via the `crush_key` helper rendered by
   the module
@@ -27,7 +29,7 @@ models, LSPs, and the verification workflow for changing any of it.
 | Provider      | Key source              | Notes                                                                                                                                                                                                       |
 | ------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `synthetic`   | sops `crush-daily.yaml` | injected since 2026-08-18                                                                                                                                                                                   |
-| `zai`         | sops `crush.yaml`       | `glm-5.4` (flagship, thinking always, declared via `model add`) + `glm-5.3-flash` — neither is in the upstream catalog                                                                                      |
+| `zai`         | sops `crush.yaml`       | `glm-5.4` (flagship, hand-declared via `model add`, NOT in the catalog; thinks only where the slot says `--think`) + `glm-5.3-flash` (catalog model with reasoning levels)                                                                                      |
 | `gemini`      | sops `crush.yaml`       |                                                                                                                                                                                                             |
 | `minimax`     | sops `crush.yaml`       | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag                                           |
 | `kimi-coding` | sops `crush.yaml`       | **REMOVED** 2026-10-27 (owner: do not use anymore): sops key + ai-meter upstream + extraRc repoint dropped; crush-config provider declaration removal pending push + lock bump (renders keyless until then) |
@@ -43,17 +45,31 @@ catalog default. The rc statements are therefore the only durable pins.
 | ------- | ---------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `small` | host (all repos) | `zai/glm-4.7-flash`                              | Summarization/compaction only; cheap, non-thinking, inside the ai-meter. Pinned in `platforms/nixos/users/home.nix` (`extraRc`, meter-guarded)                                   |
 | `large` | per repo         | SystemNix: `zai/glm-5.4 --think` @ `xhigh`       | The repo every incident-minted fix task targets — flagship tier. Repo-owned line in `.crushrc` (kept out of the tq managed block; see below)                                    |
-| `large` | per repo         | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh` | Backlog harvesting — cheap tier; pinned by the `.crushrc` tq-bootstrap managed block (`tq bootstrap --model …`), which re-renders on every deploy                               |
+| `large` | per repo         | CV + go-taskqueue: `zai/glm-5.3-flash` @ `xhigh` | Backlog harvesting — cheap tier; pinned by the `.crushrc` tq-bootstrap managed block (`tq bootstrap --model …`), which re-renders on every deploy. On the wire: thinking ENABLED, effort max (the catalog's default level; see below)                               |
 
-**Thinking is switched by the SLOT's `--think`, not by the model declaration**
-(probe-verified 2026-11-24/25, crush v0.102.0, z.ai through the ai-meter): a `model
-large zai/glm-5.4 --reasoning-effort xhigh` line with `model add … --thinking
-always` in the global rc still sends `"thinking": {"type": "disabled"}`
-(logged request body); adding `--think` to the slot line flips it to
-`{"type": "enabled"}`. The declaration cannot carry it either: `--can-reason
-true` runs AFTER the flags and rewrites `reasoning.thinking` to `toggleable`
-(`internal/shellconfig/model.go`), so `--thinking always` never survives next
-to it.
+**Thinking and effort are decided by the slot line and the model's reasoning
+levels, never by the `model add` declaration** (wire-captured 2026-11-25,
+crush v0.102.0, mock endpoint; eleven rows in crush-config `docs/testing.md`
+"Wire capture"):
+
+| Model          | Slot  | Slot flags               | Thinking | Effort                            |
+| -------------- | ----- | ------------------------ | -------- | --------------------------------- |
+| glm-5.4        | large | none                     | disabled | absent                            |
+| glm-5.4        | large | `--think`                | enabled  | absent (the model has no levels)  |
+| glm-5.3-flash  | large | none, or `--think`       | enabled  | max                               |
+| glm-5.3-flash  | large | `--reasoning-effort low` | enabled  | low                               |
+| glm-4.7-flash  | small | none, or `--think`       | absent   | absent                            |
+
+- A model WITHOUT reasoning levels (glm-5.4 as declared here) thinks only
+  where the slot line says `--think`; `model add ... --thinking always` is
+  parsed and never applied, and the legacy `--can-reason true` even
+  overwrites an earlier `--thinking` value (`internal/shellconfig/model.go`).
+- A model WITH reasoning levels (glm-5.3-flash, from charm's catalog) always
+  sends thinking enabled; the slot's `--reasoning-effort` picks the level
+  (default max). So the pool line `@ xhigh` above sends effort MAX and
+  thinking ON: `xhigh` is not a level of that model.
+- A request built from the SMALL slot carries neither field, with or without
+  `--think`: the small-slot pin is non-thinking by construction.
 
 Consequence for the tq managed block: its template renders only
 `model large <model> --reasoning-effort <effort>`, so a block-written
@@ -68,8 +84,11 @@ row in `docs/todo/upstream.md`).
 The repo state is live for any session started in the checkout immediately
 (crush reads `.crushrc` at session start). The HOST side needs the deploy: the
 deployed `tq-bootstrap` unit still carries the old `--model` args and would
-rewrite the managed block (glm-5.3, no thinking) at its next run until the
-generation with the trimmed ExecStart is switched in.
+line at its next run until the generation with the
+trimmed ExecStart is switched in. (Before 2026-11-25 that block-written
+flash line sent thinking OFF: every hand declaration of glm-5.3-flash lacked
+reasoning levels. crush-config no longer declares the model, which is why
+the same line now sends thinking on.)
 
 ## Adding a Provider Key
 
@@ -89,12 +108,15 @@ generation with the trimmed ExecStart is switched in.
 3. Declare the provider in the crush-config repo
    (`/home/lars/projects/crush-config`, `modules/home-manager/crush.nix`):
    `providers.<name>.apiKeyFile = "<name>_api_key";` in the module's
-   defaults — then push and `nix flake lock --update-input crush-config`.
+   defaults — then push and `nix flake update crush-config`.
 4. Test WITHOUT a deploy: `bash scripts/crush-rc-test.sh` (loads the rc in an
    isolated `XDG_CONFIG_HOME`; `EXTRA='…'` appends a candidate line;
    `--probe` + `PROBE_MODEL=provider/model` fires one real completion).
-5. Deploy (`nix run .#deploy`), then verify `crush models` lists the provider
-   and restart crush sessions — config loads ONLY at session start.
+5. Deploy (`nix run .#deploy`), then run `bash scripts/crush-rc-test.sh
+   --expect-live <provider>` and restart crush sessions — config loads ONLY
+   at session start. Do not check `crush models` by eye for a catalog
+   provider: it lists the models of a disabled provider exactly like an
+   enabled one.
 
 ## Rotating a Key
 
@@ -134,8 +156,10 @@ makes old plaintext residue in session DBs inert.
   (user gh token in `~/.config/nix/nix.conf` access-tokens) but CI needs
   `NIX_GITHUB_RO_TOKEN` (same pending fix as the other private `github:`
   lock nodes) — until then CI stays dark for this input
-- `nix flake lock --update-input crush-config` is a NO-OP while the repo's
-  default branch ref (`?ref=master`) hasn't moved — push first, then re-lock
+- `nix flake update crush-config` is a NO-OP while the repo's default branch
+  ref (`?ref=master`) hasn't moved: push first, re-lock, then read the `rev`
+  back from `flake.lock` before building (`--update-input`, the deprecated
+  form, never moves the entry at all)
 - `model add` has NO `reasoning_levels` flag (source:
   `internal/shellconfig/model.go`) — tier lists come from the catalog or
   crush's default handling; `--reasoning-effort` is an unvalidated string
@@ -240,7 +264,7 @@ interactively with `crush --continue` when the pass ends — review, ask follow-
   `--yolo` (auto-accept everything), `-` (pipe extra evidence via stdin, e.g.
   `journalctl -u x -n 500 | crush-debug -`).
 - The seeded prompt forbids deploying: fixes land in the flake, you run `nix run .#deploy` after review.
-- Sessions inherit SystemNix's `.crushrc` (glm-5.4 xhigh, thinking from the model declaration, bash/edit allowlisted) — the auto pass
+- Sessions inherit SystemNix's `.crushrc` (glm-5.4 `--think` @ xhigh: thinking comes from the SLOT line, the declaration cannot carry it; bash/edit allowlisted) — the auto pass
   needs no yolo.
 - Evidence dirs may contain log secrets (flm echoes request bodies to journald); user-only perms,
   newest 20 kept.
