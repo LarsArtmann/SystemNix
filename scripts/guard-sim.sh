@@ -708,6 +708,7 @@ EOF
       expect_trip_stops "escalated zone-6 trip"
       check "NEVER a socket or sacrifice stop/start/reset on the escalated IO trip" "! grep -E '^(stop|start|reset-failed) fastflowlm' $STUB_DIR/calls.log | grep -q ."
       check "existing pause kept line" "grep -q 'existing pause kept' '$SIM/out'"
+      check "InboxClean dashboard is a pause pattern, not a churn unit (guard stops took its Gatus checks down until 2026-11-27)" "! has_call 'stop inboxclean-web.service' && grep -q 'patterns: .* inboxclean-web.service)' '$SIM/out'"
       check "churn-stopped lists exactly the 3 live units" \
         "[ \"\$(sort $state/churn-stopped | tail -n +2 | tr '\n' ' ')\" = 'btrbk-root.service btrfs-balance-data.service btrfs-scrub@-.service ' ]"
       check "trip count 1" "[ \"\$(cat $state/tripped.count)\" = 1 ]"
