@@ -141,7 +141,12 @@ print_disarm_list() {
   others=$(pgrep -af 'deploy-when-quiescent' 2>/dev/null | grep -v "^$$ " || true)
   if [ -n "$others" ]; then
     if [ -x "$REPO_ROOT/scripts/redact-argv.sh" ]; then
-      others=$(printf '%s\n' "$others" | "$REPO_ROOT/scripts/redact-argv.sh" 2>/dev/null || true)
+      # Fail closed: when the redactor has no program it prints nothing
+      # and exits 1; the listing is withheld, never shown unredacted.
+      if ! redacted=$(printf '%s\n' "$others" | "$REPO_ROOT/scripts/redact-argv.sh" 2>/dev/null); then
+        redacted="  (listing withheld: the redactor has no program, see scripts/redact-argv.sh)"
+      fi
+      others="$redacted"
     fi
     log "DISARM-LIST — other armed quiescence watchers (verify + kill before arming a replacement):"
     while IFS= read -r watcher_line; do

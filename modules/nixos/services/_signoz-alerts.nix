@@ -915,6 +915,31 @@ in
       interval = "5m";
       severity = "warning";
     };
+    # llama-embeddings on 2026-11-26: the unit was active and its port
+    # listening, and 387 of 424 calls failed in 24 hours (ledger). Each call
+    # hung for minutes until its client gave up, and ai-meter answered 502.
+    # llama-embeddings-down watches the unit and stayed quiet; the failure-rate
+    # rule above keeps a provider this quiet below its floor on purpose. So the
+    # calls themselves are the signal. The denominator is clamped at four calls
+    # a half hour and the line is 49.5 %, which reads: at least two calls
+    # failed, and at least half of the calls did. One failed call in a quiet
+    # half hour does not page (paperless-gpt sends its embeddings in bursts of
+    # four). 49.5 rather than 50 because increase() answers 1.9999997 for two
+    # calls. Pinned by checks.ai-meter-alert-promql.
+    "signoz/rules/ai-embeddings-failing.json".source =
+      let
+        calls = ''sum(increase(ai_meter_requests_total{upstream="llama-embeddings"}[30m]))'';
+        failed = ''sum(increase(ai_meter_requests_total{upstream="llama-embeddings",code=~"4..|5.."}[30m]))'';
+        floorCalls = "4";
+      in
+      mkRule {
+        name = "AI Embeddings Calls Failing (ai-meter)";
+        description = "At least half of the calls to llama-embeddings through ai-meter failed in the last 30 minutes, and at least two: the embeddings server is up but does not answer (a call hangs until its client gives up and gets a 502), or it refuses connections. RAG indexing and semantic search (paperless-gpt) fail. Check the AI Meter dashboard (Error Rate by Provider) and journalctl -u llama-embeddings -n 50.";
+        query = "100 * ${failed} / clamp_min(${calls}, ${floorCalls})";
+        target = 49.5;
+        interval = "5m";
+        severity = "warning";
+      };
 
     # Unit crash-loop consumption (2026-10-25, monitoring.md row: the nsfw
     # 2026-10-20..25 class — 239 restarts over 5 days while every alert layer

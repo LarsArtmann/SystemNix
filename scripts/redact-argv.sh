@@ -6,21 +6,27 @@
 # world-readable via /proc anyway — the mask protects the TRANSCRIPT, not
 # the box; argv-carried secrets are their own upstream-class problem).
 #
-# Covers the two shapes secrets take on argv:
-#   1. flag-with-value:      --jwt-secret s3cr3t   /  -api-token=abc   /  --API-Key xyz
-#   2. env-style assignment: JWT_SECRET=abc MONITOR365_TOKEN=def
-#
-# Deliberately CONSERVATIVE: any flag containing secret/token/password/
-# passphrase/api-key/credential (case-insensitive) masks its value, even
-# when the value is mundane (--max-tokens 4096 masks too). Over-masking is
-# safe; under-masking is the incident class this exists to prevent.
-# Non-matching tokens pass through untouched.
+# ONE redaction program: hooks/redact.sed of the crush-config repo (the
+# same file crush's redact-argv-output and stop-failure-log hooks run).
+# Until 2026-11-27 this script carried its own two expressions; a third
+# copy of a redaction policy drifts, and drift here is a transcript leak.
+# Resolution order: $REDACT_SED, then the sibling checkout
+# (<parent>/crush-config/hooks/redact.sed). Without a program the script
+# FAILS CLOSED (exit 1, nothing printed): unredacted argv must never pass.
 #
 # Usage:
 #   pgrep -af monitor365 | scripts/redact-argv.sh
 #   ss -ltnp 2>/dev/null | scripts/redact-argv.sh
 set -euo pipefail
 
-sed -E \
-  -e 's/(-{1,2}[A-Za-z0-9_.-]*(secret|token|password|passwd|passphrase|api[_-]?key|credential)[A-Za-z0-9_.-]*)([= ][^ ]+)/\1=REDACTED/gI' \
-  -e 's/([A-Za-z0-9_]*(SECRET|TOKEN|PASSWORD|PASSWD|PASSPHRASE|API_KEY|APIKEY|CREDENTIAL)[A-Za-z0-9_]*)=([^ ]+)/\1=REDACTED/gI'
+if [[ -n ${REDACT_SED:-} ]]; then
+  program="$REDACT_SED"
+else
+  program="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/../crush-config/hooks/redact.sed"
+fi
+if [[ ! -r $program ]]; then
+  echo "redact-argv: redaction program not found: $program (set REDACT_SED to hooks/redact.sed of a crush-config checkout); output withheld" >&2
+  exit 1
+fi
+
+sed -E -f "$program"
