@@ -63,7 +63,10 @@ let
       # RE-STALE 2026-11-24 nixpkgs-root float wave: spec KWzSc1U4, got
       # rYGPHPNb (first-hand keep-going,
       # ~/.cache/gtd-pipeline/toplevel-build3.log).
-      hash = "sha256-rYGPHPNbzLrLaQ0snkwktH2QN4myTiV81qAfbbTOd5k=";
+      # RE-STALE 2026-11-27 lock wave to b1f271a: spec rYGPHPNb, got VA/pHhxy
+      # — the frontend lockfile gained @signozhq/ui 0.4.1-rc.2
+      # (ERR_PNPM_NO_OFFLINE_TARBALL), first-hand empty-hash probe.
+      hash = "sha256-VA/pHhxyxFvCbPKjyV5Exe02iNkSeYGsMx5mNcX2OHA=";
     };
 
     nativeBuildInputs = [
@@ -108,22 +111,17 @@ let
   # R0nm9HFa… at locked signoz-otel-collector rev e0c4766,
   # /tmp/toplevel-fix-20261007.log) — the signoz-* sources ride ?ref=main
   # and the lock wave re-vendored both module graphs.
-  collectorVendorHash = "sha256-R0nm9HFaO1CM4uhl3+gS0R+/2odhowDxzOmhEP1s+GI=";
+  # RE-STALE 2026-11-27 lock wave to rev 92583fe: spec R0nm9HFa, got
+  # 7hR35BnA — the regenerated sonic-go126 patch (go.sum context moved)
+  # plus the moved graph, first-hand `nix build .#signoz-otel-collector`.
+  collectorVendorHash = "sha256-7hR35BnA2D9UHyIuGcBfbB9LbxSBfEVZ4fbIRKj7NKQ=";
 
-  schemaMigrator = buildGoModule {
-    pname = "signoz-schema-migrator";
-    version = collectorVersion;
-    src = collectorSrcPatched;
-    vendorHash = collectorVendorHash;
-    proxyVendor = true;
-    subPackages = [ "cmd/signozschemamigrator" ];
-    ldflags = [
-      "-s"
-      "-w"
-    ];
-    postInstall = "mv $out/bin/signozschemamigrator $out/bin/signoz-schema-migrator";
-  };
-
+  # The standalone signoz-schema-migrator binary is GONE upstream (rev
+  # 92583fe): cmd/signozschemamigrator is a library package now and the
+  # migrations run through `signoz-otel-collector migrate …` (which is what
+  # the signoz-collector preStart already invokes). Do not resurrect a
+  # subPackages entry for it — `no Go files in …/cmd/signozschemamigrator`
+  # failed the 2026-11-27 deploy wave.
   otelCollector = buildGoModule {
     pname = "signoz-otel-collector";
     version = collectorVersion;
@@ -193,6 +191,5 @@ in
     signoz
     frontend
     otelCollector
-    schemaMigrator
     ;
 }

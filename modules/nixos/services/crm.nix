@@ -80,7 +80,14 @@
       # buildflow nix-hash-fix with 2/2 nix targets green; the lock-free
       # tip probe built the store path with no override).
       # Re-add ONLY via nix-hash-fix evidence.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # RE-ADDED 2026-11-27 lock wave (first-hand keep-going evidence,
+      # ~/.cache/deploy-fix/toplevel.log): crm@f51f732 spec oIX0rIbn (==
+      # flake.nix:169 at the locked rev), got QwestxHh. The rev-independent
+      # FOD class (module proxy re-resolves dep content): drop only when
+      # upstream bakes QwestxHh (paste-upstream → push → re-lock).
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-QwestxHhJbeLN/89YC8ZbMaS/WTQSTncdpE/3K5J4Qk=";
+      };
       twentyEnabled = config.services.twenty.enable or false;
     in
     {

@@ -64,7 +64,7 @@
         inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
             doCheck = false;
-            vendorHash = "sha256-f4RkGQipeIpxVwUyvlXbuvw2Yb2/Kj6q9NBMGJx97n4=";
+            vendorHash = "sha256-CviRIXQnBQRubHgld3nTYx93tCvxP670mFb6zaRI5P8=";
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
       # Immich lookup key pair (IMMICH_URL/IMMICH_API_KEY), rendered by the

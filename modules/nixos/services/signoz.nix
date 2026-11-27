@@ -27,7 +27,6 @@ in
         inherit (packages) signoz;
         signoz-frontend = packages.frontend;
         signoz-otel-collector = packages.otelCollector;
-        signoz-schema-migrator = packages.schemaMigrator;
       };
     };
 

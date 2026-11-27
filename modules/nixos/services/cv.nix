@@ -258,7 +258,15 @@
       # upstream bake at the locked rev: upstream's own hash governs again.
       # Re-add ONLY via fresh first-hand nix-hash-fix evidence AT THE
       # LOCKED REV, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # RE-ADDED 2026-11-27 lock wave (14th re-stale; first-hand keep-going
+      # evidence, ~/.cache/deploy-fix/toplevel.log): cv@ae784bf spec 9WzfoRd+
+      # (== upstream nix/packages.nix:123 at the locked rev), got ujduA/qF.
+      # Same rev-independent class as the 2026-11-14 entry — the FOD
+      # re-resolves dep content from the module proxy. Drop only when
+      # upstream bakes ujduA/qF (paste-upstream → push → re-lock).
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-ujduA/qFCFGfRxJN6DXS37Ypz84Yf7pso2Ct8RTve18=";
+      };
     in
     {
       imports = [

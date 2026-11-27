@@ -334,7 +334,7 @@ lib.filterAttrs (_: v: v != null) {
   # GhFzV7WG (first-hand keep-going, toplevel-build3.log).
   go-structure-linter =
     flakePkgShim inputs.go-structure-linter "default"
-      "sha256-GhFzV7WG8S7OqfqlLEEq2xprWkRMRMfnIUYMtUnllYw=";
+      "sha256-GN8OK2ZeM9Gts39/L+919pxQp1ri28wjL80KP+jY5Bk=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
   # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
@@ -510,7 +510,7 @@ lib.filterAttrs (_: v: v != null) {
   # vUoNAHNv (first-hand keep-going, toplevel-build3.log).
   md-go-validator =
     flakePkgShim inputs.md-go-validator "default"
-      "sha256-vUoNAHNv5g7epoIUbNT/13qFmX+rD85qP+uhLy8uO6o=";
+      "sha256-CG9ImrlPsFZJ0cU4u7vJ5ud7xYdRsQfv8KKxx8TEa2Q=";
   # depgraph CLI: renders the LarsArtmann Go monorepo dependency graph and
   # answers who-uses/why/update-plan/release-suggestions queries. Rides
   # PATH via base.nix attrValues (both hosts). Upstream repo is PRIVATE
@@ -657,7 +657,7 @@ lib.filterAttrs (_: v: v != null) {
   # Drop when upstream bakes the got hash.
   project-discovery-daemon =
     flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-kEd17MIYFE0ejal3DLAdQY/QUNxWTCMsWGvPHCmslCY=";
+      "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
