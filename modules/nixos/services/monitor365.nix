@@ -128,70 +128,6 @@
       # update this line.
       ssoAdminEmail = "lars@larsartmann.cloud";
 
-      # `parecord --duration=SECONDS` compatibility shim, FIRST on the agent
-      # PATH (makeBinPath keeps list order, so it shadows pkgs.pulseaudio's
-      # parecord below). Why: PulseAudio 17's parecord has no --duration
-      # option, but both mic collectors pass it (mic-monitor's snippet
-      # capture, monitor365's audio_stream). It exits in ~3 ms with
-      # "unrecognized option" and an empty stdout, and both callers treat
-      # empty output as "no data" without logging — so 0 of 76 recording-start
-      # events carried a snippet and audio_stream stored 0 events between its
-      # 2026-11-21 enable and the 2026-11-26 fix. The shim strips --duration,
-      # bounds the real recorder with `timeout`, and maps timeout's 124 to the
-      # success status the callers require. It adds --latency-msec=100 when the
-      # caller picks no fragment size: PipeWire-pulse otherwise delivers in
-      # 2 s fragments and a short capture can end before the first one lands.
-      # LIFT: drop together with the mic-monitor + monitor365 revs that bound
-      # captures themselves (they stop passing --duration).
-      parecordDurationShim = pkgs.writeShellScriptBin "parecord" ''
-        real="${pkgs.pulseaudio}/bin/parecord"
-        timeout_bin="${pkgs.coreutils}/bin/timeout"
-
-        duration=""
-        has_latency_opt=0
-        pass_through=()
-        while [ "$#" -gt 0 ]; do
-          case "$1" in
-            --duration=*)
-              duration="''${1#--duration=}"
-              shift
-              ;;
-            --duration)
-              if [ "$#" -lt 2 ]; then
-                echo "parecord shim: --duration needs a value" >&2
-                exit 2
-              fi
-              duration="$2"
-              shift 2
-              ;;
-            --latency* | --process-time*)
-              has_latency_opt=1
-              pass_through+=("$1")
-              shift
-              ;;
-            *)
-              pass_through+=("$1")
-              shift
-              ;;
-          esac
-        done
-
-        if [ "$has_latency_opt" -eq 0 ]; then
-          pass_through+=(--latency-msec=100)
-        fi
-
-        if [ -z "$duration" ]; then
-          exec "$real" "''${pass_through[@]}"
-        fi
-
-        rc=0
-        "$timeout_bin" --signal=TERM --kill-after=3s "$duration" "$real" "''${pass_through[@]}" || rc=$?
-        if [ "$rc" -eq 124 ]; then
-          exit 0
-        fi
-        exit "$rc"
-      '';
-
       # Runtime deps — CLI tools for system + desktop collectors.
       # Wired into the systemd service PATH by the upstream module.
       # X11 tools (xdotool, xprintidle, scrot, wmctrl) are kept for upstream
@@ -199,8 +135,6 @@
       # Wayland equivalents (grim, slurp, wtype) are provided for the
       # screenshot/keyboard collectors once upstream supports them.
       runtimeDeps = [
-        # Must stay first: shadows pkgs.pulseaudio's bin/parecord.
-        parecordDurationShim
         pkgs.procps
         pkgs.util-linux
         pkgs.coreutils
@@ -1477,7 +1411,7 @@
                   interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*collector_events_collected*)"
+                    "[BODY] == pat(*collector_cycles*)"
                   ];
                   alert = "Monitor365 system agent down — headless device telemetry collector not running";
                 }

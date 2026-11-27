@@ -2369,21 +2369,17 @@ in
           # RMS) sits above the -60 dBFS silence threshold; a snippet adds
           # ~50 KB per microphone recording that starts.
           #
-          # capture_snippets stays off until SystemNix floats mic-monitor
-          # AND monitor365 past their 2026-11-27 capture fix. The deployed
-          # mic-monitor (259d2df2) cannot record (its parecord has no
-          # --duration), names no process, and with the parecord shim live
-          # would attach 5 s of the DEFAULT microphone to every recording
-          # start, including the system-audio taps of DankMaterialShell's
-          # visualizer (cava, 60 stream starts on 2026-11-25 alone). LIFT:
-          # set true in the wave that floats both repos past the fix and
-          # lifts the shim (modules/nixos/services/monitor365.nix); the
-          # fixed engine records microphone sources only and names the
-          # process and the source of each recording.
+          # capture_snippets rides ONLY microphone recordings: the fixed
+          # engine (mic-monitor >= ad248b3) records microphone sources and
+          # names the process and the source of each recording; a sink
+          # monitor (DankMaterialShell's visualizer cava tapping the HDMI
+          # output, 60 stream starts on 2026-11-25 alone) is reported as an
+          # event without a snippet, and a failed capture is an error, not a
+          # silent "no data".
           mic_monitor = {
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 10;
-            capture_snippets = lib.mkDefault false;
+            capture_snippets = lib.mkDefault true;
             snippet_duration_seconds = lib.mkDefault 5;
           };
           audio_stream = {

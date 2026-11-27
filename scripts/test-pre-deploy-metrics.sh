@@ -49,7 +49,7 @@ trap 'rm -f "$METRICS_FILE"' EXIT
 reset_env() {
   KNOWN_NEW_METRICS=""
   METRICS_GATE_STALE_LOAN_NAMES=""
-  MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures"
+  MONITOR365_METRICS="collector_cycles collector_events_collected cloud_sync_consecutive_failures"
   MONITOR365_UP=false
   DISCORDSYNC_METRICS="discordsync_turso_local_only_mode"
   DISCORDSYNC_API_UP=false
