@@ -637,6 +637,11 @@ trap 'rm -f "$SMOKE_FAIL_NAMES"; rm -rf "$PROBE_DIR"' EXIT
 # shellcheck source=scripts/lib/integration-manifest-loader.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/integration-manifest-loader.sh"
 
+# SigNoz dashboard drift (the provisioner's own test, read for real after the
+# switch; fixture-tested by scripts/test-post-deploy-signoz-dashboards.sh).
+# shellcheck source=scripts/lib/signoz-dashboards-drift.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/signoz-dashboards-drift.sh"
+
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
@@ -1947,6 +1952,18 @@ if systemctl list-unit-files 'signoz*' --no-legend 2>/dev/null | grep -q signoz-
     record_fail "signoz-provision.service stale"
     ;;
   esac
+fi
+
+# SigNoz dashboards: Result=success above says the provisioner exited 0, not
+# that the API serves the files. This reads every live dashboard and compares
+# it with its file, as the provisioner does before it skips one: a run that
+# predates its files, or a dashboard edited by hand (the ai-meter dashboard
+# was PUT by hand on 2026-11-26 while the running generation carried the
+# older file), shows here.
+if [ -n "$PORT_SIGNOZ" ]; then
+  systemnix_signoz_dashboards_drift
+else
+  report_skip "SigNoz dashboards - manifest port unavailable (see manifest WARN above)"
 fi
 
 # SigNoz: surface alerts firing longer than 24h. WARN, not FAIL - an ongoing
