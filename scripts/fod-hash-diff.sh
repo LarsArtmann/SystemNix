@@ -70,10 +70,14 @@ fhd_pairs() {
   '
 }
 
-# Site count for one literal across tracked/working *.nix sources.
+# Site list for one literal across tracked/working *.nix sources. Empty
+# (exit 0) when no file carries it: under `set -e -o pipefail` the bare
+# grep's exit 1 once aborted the whole run right after the pair's header —
+# the upstream-hash note never printed and every LATER pair went unreported
+# and unapplied (2026-11-27: journal ended a two-stale report silently).
 fhd_sites() {
   local literal=$1
-  grep -rlF --include='*.nix' -- "$literal" "$REPO_ROOT" 2>/dev/null |
+  { grep -rlF --include='*.nix' -- "$literal" "$REPO_ROOT" 2>/dev/null || true; } |
     sed "s#^$REPO_ROOT/##" | sort
 }
 
@@ -194,6 +198,36 @@ FIXTURE
   check "apply leaves the comment intact" \
     "$(grep -cF 'sha256-HASHONLYHASHONLYHASHONLYHASHONLYHASHONLYHASH=' "$tmp/tree/comment-site.nix")" "1"
   REPO_ROOT=$saved_root
+
+  # End to end (2026-11-27): an UPSTREAM-only stale hash (no *.nix site) is
+  # reported, never fatal — the pair after it must still be reported and,
+  # under --apply, rewritten. Before the fix the bare grep's exit 1 aborted
+  # the run on the first pair.
+  cat >"$tmp/tree/e2e-live.nix" <<'FIXTURE'
+{
+  vendorHash = "sha256-E2ELIVEE2ELIVEE2ELIVEE2ELIVEE2ELIVEE2ELIVEE=";
+}
+FIXTURE
+  cat >"$tmp/e2e.log" <<'FIXTURE'
+error: hash mismatch in fixed-output derivation '/nix/store/cccc-e2e-upstream-go-modules.drv':
+         specified: sha256-E2EUPSTRE2EUPSTRE2EUPSTRE2EUPSTRE2EUPSTR=
+            got:    sha256-E2EUPGOTE2EUPGOTE2EUPGOTE2EUPGOTE2EUPGOTXX=
+error: hash mismatch in fixed-output derivation '/nix/store/dddd-e2e-live-go-modules.drv':
+         specified: sha256-E2ELIVEE2ELIVEE2ELIVEE2ELIVEE2ELIVEE2ELIVEE=
+            got:    sha256-E2ELIVEGOTE2ELIVEGOTE2ELIVEGOTE2ELIVEGOT=
+FIXTURE
+  if FHD_ROOT="$tmp/tree" "$BASH" "$0" "$tmp/e2e.log" --apply >"$tmp/e2e.out" 2>&1; then
+    e2e_rc=0
+  else
+    e2e_rc=$?
+  fi
+  check "upstream-only stale hash is not fatal (apply mode exits 0)" "$e2e_rc" "0"
+  check "upstream-only stale hash is explained" \
+    "$(grep -c 'no \*.nix site carries this literal' "$tmp/e2e.out")" "1"
+  check "the pair after an upstream-only hash is still applied" \
+    "$(grep -c 'applied to 1 file' "$tmp/e2e.out")" "1"
+  check "the live site after an upstream-only hash is rewritten" \
+    "$(grep -cF 'sha256-E2ELIVEGOTE2ELIVEGOTE2ELIVEGOTE2ELIVEGOT=' "$tmp/tree/e2e-live.nix")" "1"
 
   rm -rf "$tmp"
 
