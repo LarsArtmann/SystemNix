@@ -16,7 +16,7 @@
 | check #1's named blocker | `nix build .#checks.x86_64-linux.doc-counts` rc 0 at 23:24:22; FEATURES.md 55 to 54 by another session (`56e15c1dd`) |
 | Queue | five rows closed on both surfaces, three minted (net minus two); `scripts/check-todo-system.sh` rc 0 |
 
-**NOT verified in the follow-up session:** the full toplevel build; `nix flake check --no-build` as a whole (only its doc-counts check); the deploy (no attempt since 16:49, profile still `system-1033` at 23:40); a real stale-hash go-modules FOD on the tree (the tree had none, so the proof used tiny throwaway FODs); cargo and pnpm hashes (outside the gate's scope, queued); a fetched stale-hash FOD against a real substituter (covered by fixtures only).
+**NOT verified in the follow-up session:** the full toplevel build (the current tree's toplevel `r765y33986d…` is not in the store; the one another session built at 23:18, deriver `575cv4j7wrr…`, predates the 23:19 lock wave); `nix flake check --no-build` as a whole (only its doc-counts check); the deploy (no attempt since 16:49, profile still `system-1033` at 23:40); a real stale-hash go-modules FOD on the tree (the tree had none, so the proof used tiny throwaway FODs); cargo and pnpm hashes (outside the gate's scope, queued); a fetched stale-hash FOD against a real substituter (covered by fixtures only).
 
 ## Scope line
 
