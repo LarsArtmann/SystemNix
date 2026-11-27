@@ -11,24 +11,34 @@
 #
 # The oracle: `nixosConfigurations.evo-x2.config.system.build.toplevel
 # --dry-run` is the EXACT preview of what `nh os switch` builds on this
-# commit (deploy.sh line ~435). Any *-go-modules.drv listed there is an
-# uncached FOD the deploy build will attempt; a stale vendorHash fails
-# exactly there — after ~12 minutes of unrelated building. The gate builds
-# those FODs now: clean = vendorHash proven + cache warm; mismatch = the
-# August-2026 deploy-killer caught in seconds with the got-hash in hand.
-# A cached FOD never appears in the preview, and until 2026-11-27 the gate
-# took that as proof ("vendorHash proven by prior builds"). It is not —
-# see the cached-FOD audit below: that claim let go-taskqueue and journal
-# ride a stale module tree into the 12:0x deploy build — a trap
-# documented in that shim's own comments since 2026-10-28.
+# commit (deploy.sh line ~435). The toplevel's derivation closure holds
+# every *-go-modules.drv a compile step of the deploy build consults; a
+# stale vendorHash fails there, after ~12 minutes of unrelated building.
+# The gate realises and proves the whole set now: clean = vendorHash
+# proven + cache warm; mismatch = the August-2026 deploy-killer caught in
+# seconds with the got-hash in hand.
+#
+# rc 0 is not a build (2026-11-27): until that day the preview leg ran
+# `nix build <drv> --keep-going` on the .drv paths the dry-run lists. On
+# this nix that installable is the .drv FILE, which is already valid, so
+# the command returned 0 in about a second and touched nothing. Every
+# "N uncached FODs built clean" line since 2026-10-04 described outputs
+# that were never built (docs/status/2026-11-27_17-07_deploy-stale-cached-
+# fod-fix-landed-section11-leg1-hollow-status.md, section d-1). Two rules
+# follow. The verb that realises is `nix-store --realise`. And a verdict
+# is read off the store's own record of each output afterwards (is it
+# valid, and which derivation built it), never off an exit code.
 #
 # Captured output shapes (verbatim, see test fixtures):
 #   uncached dry-run: "these N derivations will be built:" then
 #     "  /nix/store/<hash>-<pkg>-<rev>-go-modules.drv" lines
 #   cached dry-run:   nix notices only, no .drv lines
+#   realising build:  "this derivation will be built:",
+#                     "building '/nix/store/…-go-modules.drv'...", then
+#                     rc 0 and the output paths; under --keep-going one
+#                     mismatch block per stale FOD and rc 1
 #   FOD mismatch:     "error: hash mismatch in fixed-output derivation" +
 #     "         specified: sha256-…" + "            got:    sha256-…"
-#   FOD clean build:  exit 0
 #   dry-run eval fail: "error:" headline, the message on the indented lines
 #
 # Verdict binding (2026-10-09/10 class): the preview and the FOD builds
@@ -37,8 +47,8 @@
 # mutation; the deploy 5 min later died on an 11th FOD the preview never
 # saw), and a stale pass is unauditable after the fact. run_gate therefore
 # pins the eval-relevant tree state before its nix work, re-checks it
-# before EVERY verdict, FAILs loud on change, and stamps each message
-# with the short rev (+* when dirty) the verdict was computed against.
+# after every leg, FAILs loud on change, and stamps each message with
+# the short rev (+* when dirty) the verdict was computed against.
 #
 # Preview-failure contract (2026-11-25, the 01:35 library-policy deploy): a
 # dry-run that cannot eval used to degrade to a context-free WARN, so the
@@ -60,16 +70,16 @@
 #   fod-hash-diff.sh live-site race). Read to EOF here, or use a
 #   here-string.
 #
-# ---- Cached-FOD audit (2026-11-27) ----
+# ---- One enumeration, two legs (2026-11-27) ----
 # A fixed-output store path is keyed by the hash that is SPECIFIED, not by
 # the content the builder produces. When a lock float moves a package's
 # source but the vendorHash literal stays, the output path is unchanged,
 # nix hands back the OLD module tree, no builder runs, no mismatch is ever
-# printed — and the deploy dies at compile time ("reading …/@v/<ver>.mod:
+# printed, and the deploy dies at compile time ("reading …/@v/<ver>.mod:
 # no such file"). The preview cannot see it: the path is valid, so nothing
 # is "to be built". Per cached FOD the oracle is the store's own record:
+#   output not valid         LEG 1 realises it now (build or fetch)
 #   deriver == current drv   PROVEN — this exact derivation built it
-#   output not valid         UNCACHED — the preview leg owns it
 #   anything else            REUSED — `nix-store --realise --check <drv>`
 #                            rebuilds and re-checks outputHash even though
 #                            the path is already valid
@@ -81,6 +91,10 @@
 # bound to one exact derivation (src, go.sum, toolchain, specified hash),
 # so it cannot go stale while that drv is in the closure; a changed
 # derivation has a new name and is re-verified on sight.
+# Both legs walk the same closure list. Nothing depends on how the dry-run
+# classes a FOD: an output the deploy build would only FETCH is consulted
+# by compile steps exactly like one it would build, and a fetched
+# stale-hash path is the same trap as a cached one.
 
 # Print the go-modules FOD .drv paths a dry-run preview says would be built.
 # Anchor on the .drv suffix: "will be copied" sections list store OUTPUTS
@@ -138,8 +152,8 @@ vendor_freshness_dryrun_has_plan() {
 # substitutes, or prints no plan, consults no FOD.
 vendor_freshness_dryrun_builds() {
   case "$1" in
-    *"will be built"*) return 0 ;;
-    *) return 1 ;;
+  *"will be built"*) return 0 ;;
+  *) return 1 ;;
   esac
 }
 
@@ -298,71 +312,95 @@ vendor_freshness_receipt_prune() {
   done
 }
 
-# Audit the go-modules FODs of the toplevel's derivation closure whose
-# output path is already valid (the preview never lists them). Progress
-# lines go to stdout; every stale or unverifiable FOD is reported through
+# First output path of a derivation. `nix-store -q --outputs` lists one
+# path per output and a go-modules FOD has exactly one. Prints nothing and
+# returns 1 when the query fails or the derivation has no output, so no
+# caller under `set -e` reads an empty string as a store path.
+vendor_freshness_drv_output() {
+  local outs
+  outs=$(nix-store -q --outputs "$1" 2>/dev/null) || return 1
+  [ -n "$outs" ] || return 1
+  printf '%s' "${outs%%$'\n'*}"
+}
+
+# Print the go-modules FODs of `$1` (a drv list) whose output path is not
+# valid: what the deploy build would build or fetch itself, so what leg 1
+# realises ahead of it. A drv whose output cannot be resolved is left out
+# here; the audit reports it.
+vendor_freshness_uncached_fods() {
+  local drv out
+  while IFS= read -r drv; do
+    [ -n "$drv" ] || continue
+    out=$(vendor_freshness_drv_output "$drv") || continue
+    nix-store -q --deriver "$out" >/dev/null 2>&1 || printf '%s\n' "$drv"
+  done <<<"$1"
+  return 0
+}
+
+# Audit the go-modules FODs of `$1` (the toplevel closure's drv list)
+# against the store's own record. `$2` names, one per line in the form
+# scripts/fod-hash-diff.sh reports, the FODs whose failed build leg 1
+# already reported; while such an output is still not valid it is skipped
+# here, so one failure stays one FAIL. Progress lines go to stdout; every
+# stale, unrealised or unverifiable FOD is reported through
 # VENDOR_FRESHNESS_FAIL with its verbatim nix block; the counts land in
 # VENDOR_FRESHNESS_AUDIT_SUMMARY ("proven= receipted= verified= failed=").
-vendor_freshness_audit_cached() {
-  local top_drv="$1"
-  local closure closure_rc=0 fods drv outs outs_rc out deriver deriver_rc state name
+vendor_freshness_audit_fods() {
+  local fods="$1" reported="$2"
+  local drv out_rc=0 out deriver deriver_rc state name
   local proven=0 receipted=0 verified=0 failed=0
   local check_output check_rc got_hash
-  closure=$(nix-store -qR "$top_drv" 2>&1) || closure_rc=$?
-  if [ "$closure_rc" -ne 0 ]; then
-    "$VENDOR_FRESHNESS_FAIL" "cannot enumerate the toplevel derivation closure (nix-store -qR exit $closure_rc) — the cached-FOD audit is unavailable, refusing to deploy blind. Raw output tail follows:"
-    vendor_freshness_print_raw_tail "$closure"
-    VENDOR_FRESHNESS_AUDIT_SUMMARY="proven=0 receipted=0 verified=0 failed=1"
-    return 0
-  fi
-  fods=$(vendor_freshness_extract_fods "$closure" | sort -u)
   while IFS= read -r drv; do
     [ -n "$drv" ] || continue
     name=$(vendor_freshness_drv_name "$drv")
-    outs_rc=0
-    outs=$(nix-store -q --outputs "$drv" 2>/dev/null) || outs_rc=$?
-    out=${outs%%$'\n'*}
-    if [ "$outs_rc" -ne 0 ] || [ -z "$out" ]; then
+    out_rc=0
+    out=$(vendor_freshness_drv_output "$drv") || out_rc=$?
+    if [ "$out_rc" -ne 0 ]; then
       failed=$((failed + 1))
-      "$VENDOR_FRESHNESS_FAIL" "cannot resolve the output path of $name (nix-store -q --outputs exit $outs_rc) — its cached state is unknown, refusing to deploy blind"
+      "$VENDOR_FRESHNESS_FAIL" "cannot resolve the output path of $name (nix-store -q --outputs failed): its state is unknown, refusing to deploy blind"
       continue
     fi
     deriver_rc=0
     deriver=$(nix-store -q --deriver "$out" 2>/dev/null) || deriver_rc=$?
     state=$(vendor_freshness_classify_cached "$deriver" "$deriver_rc" "$drv")
     case "$state" in
-      proven)
-        proven=$((proven + 1))
+    proven)
+      proven=$((proven + 1))
+      ;;
+    uncached)
+      if grep -qxF -- "$name" <<<"$reported"; then
+        continue
+      fi
+      failed=$((failed + 1))
+      "$VENDOR_FRESHNESS_FAIL" "go-modules FOD NOT REALISED: $name: its output path $out is still not valid after the gate's \`nix-store --realise\`, so nothing has proven its vendorHash and the deploy build would build or fetch it unproven. A realise that returns success without building is the 2026-10-04 to 2026-11-27 hollow-leg class; refusing to deploy blind"
+      ;;
+    reused)
+      if vendor_freshness_receipt_valid "$drv"; then
+        receipted=$((receipted + 1))
+        continue
+      fi
+      printf '      re-verifying FOD (the store names another derivation as its builder): %s\n' "$name"
+      check_rc=0
+      check_output=$(nix-store --realise --check "$drv" 2>&1 </dev/null) || check_rc=$?
+      case "$(vendor_freshness_classify_build "$check_output" "$check_rc")" in
+      ok)
+        verified=$((verified + 1))
+        vendor_freshness_receipt_write "$drv"
+        printf '      ✓ re-verified: %s\n' "$name"
         ;;
-      uncached)
+      mismatch)
+        failed=$((failed + 1))
+        got_hash=$(vendor_freshness_parse_got_hash "$check_output")
+        "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE on a REUSED FOD: $name: its store path is keyed by the specified hash, so nix served the module tree another derivation built (an older one, or a substituter's) and no mismatch is printed at deploy; the build dies at compile time instead. got ${got_hash:-<unparsed>}. Batch-repair with \`scripts/fod-hash-diff.sh <this log> --apply\` (upstream repos: \`buildflow -s nix-hash-fix --fix\`), never paste by hand"
+        printf '%s\n' "$check_output" | grep -A 2 'hash mismatch in fixed-output derivation' | sed 's/^/      /'
         ;;
-      reused)
-        if vendor_freshness_receipt_valid "$drv"; then
-          receipted=$((receipted + 1))
-          continue
-        fi
-        printf '      re-verifying cached FOD (the store names another derivation as its builder): %s\n' "$name"
-        check_rc=0
-        check_output=$(nix-store --realise --check "$drv" 2>&1 </dev/null) || check_rc=$?
-        case "$(vendor_freshness_classify_build "$check_output" "$check_rc")" in
-          ok)
-            verified=$((verified + 1))
-            vendor_freshness_receipt_write "$drv"
-            printf '      ✓ re-verified: %s\n' "$name"
-            ;;
-          mismatch)
-            failed=$((failed + 1))
-            got_hash=$(vendor_freshness_parse_got_hash "$check_output")
-            "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE on a CACHED FOD — $name: its store path is keyed by the specified hash, so nix silently reused the module tree of an older derivation; no mismatch is printed at deploy, the build dies at compile time. got ${got_hash:-<unparsed>}. Batch-repair with \`scripts/fod-hash-diff.sh <this log> --apply\` (upstream repos: \`buildflow -s nix-hash-fix --fix\`), never paste by hand"
-            printf '%s\n' "$check_output" | grep -A 2 'hash mismatch in fixed-output derivation' | sed 's/^/      /'
-            ;;
-          *)
-            failed=$((failed + 1))
-            "$VENDOR_FRESHNESS_FAIL" "cached go-modules FOD re-verify FAILED (non-hash error) — $name; the deploy build would fail the same way; last lines:"
-            printf '%s\n' "$check_output" | tail -n 5 | sed 's/^/      /'
-            ;;
-        esac
+      *)
+        failed=$((failed + 1))
+        "$VENDOR_FRESHNESS_FAIL" "go-modules FOD re-verify FAILED (non-hash error): $name; the deploy build would fail the same way; last lines:"
+        printf '%s\n' "$check_output" | tail -n 5 | sed 's/^/      /'
         ;;
+      esac
+      ;;
     esac
   done <<<"$fods" || true
   vendor_freshness_receipt_prune "$fods"
@@ -382,6 +420,7 @@ VENDOR_FRESHNESS_EVAL_PATHS="${VENDOR_FRESHNESS_EVAL_PATHS:-flake.nix flake.lock
 vendor_freshness_tree_pin() {
   local rev st digest
   if rev=$(git rev-parse HEAD 2>/dev/null); then
+    # shellcheck disable=SC2086  # intentional word-split of path list
     st=$(git status --porcelain -- $VENDOR_FRESHNESS_EVAL_PATHS 2>/dev/null | sort)
     if [ -n "$st" ]; then
       digest=$(printf '%s' "$st" | sha256sum | cut -d' ' -f1)
@@ -400,8 +439,8 @@ vendor_freshness_tree_pin() {
 vendor_freshness_tree_stamp() {
   local suffix=""
   case "${1#* }" in
-    clean | -) ;;
-    *) suffix='*' ;;
+  clean | -) ;;
+  *) suffix='*' ;;
   esac
   printf '%s%s' "$(printf '%s' "${1%% *}" | cut -c1-7)" "$suffix"
 }
@@ -425,19 +464,23 @@ vendor_freshness_tree_changed() {
   return 0
 }
 
-# The §11 gate flow, two legs over ONE pinned tree:
-#   1. preview the deploy build and real-build every uncached go-modules
-#      FOD it lists;
-#   2. when anything is built locally, audit the CACHED go-modules FODs of
-#      the toplevel's derivation closure by deriver identity and
-#      re-verify every reused one in check mode.
-# Every stale FOD of either leg is reported with its got-hash (one FAIL
-# each, so one run enumerates the whole wave), then pass/fail goes through
-# the callbacks.
+# The §11 gate flow, two legs over ONE pinned tree and ONE enumeration of
+# the toplevel's derivation closure:
+#   1. realise every go-modules FOD whose output is not valid, which is
+#      what the deploy build would build or fetch itself, so a stale
+#      vendorHash fails here with every got-hash in hand;
+#   2. audit the whole set against the store's own record: an output the
+#      store attributes to the current drv is proven, any other valid one
+#      is re-verified in check mode, and one still not valid after a
+#      "successful" realise FAILs (rc 0 is not a build).
+# Every stale FOD is one FAIL with its got-hash, so one run enumerates the
+# whole wave; then pass/fail goes through the callbacks.
 vendor_freshness_run_gate() {
-  local dryrun_out dryrun_rc fods fod_count build_log build_exit build_output moved
+  local dryrun_out dryrun_rc closure closure_rc fods to_build fod_count
+  local build_log build_exit build_output moved
   local pin_before pin_after stamp noise_note top_drv top_drv_rc=0 summary leg_failed desc
-  local pair_drv pair_spec pair_got pair_count audit_failed audit_proven audit_receipted audit_verified
+  local pair_drv pair_spec pair_got pair_count reported
+  local audit_failed audit_proven audit_receipted audit_verified audit_total
   local audit_summary_re
   VENDOR_FRESHNESS_AUDIT_SUMMARY=""
   pin_before=$(vendor_freshness_tree_pin)
@@ -455,17 +498,44 @@ vendor_freshness_run_gate() {
     return 0
   fi
   noise_note=$(vendor_freshness_noise_note "$dryrun_out")
+  if ! vendor_freshness_dryrun_builds "$dryrun_out"; then
+    "$VENDOR_FRESHNESS_PASS" "vendorHash valid — nothing to build locally (the preview substitutes or is fully cached, so no compile consults a FOD) [tree $stamp$noise_note]"
+    return 0
+  fi
   leg_failed=0
 
-  # Leg 1: the uncached FODs the deploy build would attempt.
-  fods=$(vendor_freshness_extract_fods "$dryrun_out")
+  # Both legs walk the toplevel's derivation closure, so they need its drv.
+  top_drv=$(vendor_freshness_top_drv_from_dryrun "$dryrun_out")
+  if [ -z "$top_drv" ]; then
+    top_drv=$(nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath 2>/dev/null) || top_drv_rc=$?
+  fi
+  if [ "$top_drv_rc" -ne 0 ] || ! [[ $top_drv =~ ^/nix/store/[a-z0-9]+-[^/]+\.drv$ ]]; then
+    "$VENDOR_FRESHNESS_FAIL" "cannot resolve the toplevel derivation (drvPath lookup exit $top_drv_rc) [tree $stamp] — the FOD gate is unavailable, refusing to deploy blind: a stale CACHED FOD is invisible to the preview and dies at compile time"
+    return 0
+  fi
+  closure_rc=0
+  closure=$(nix-store -qR "$top_drv" 2>&1) || closure_rc=$?
+  if [ "$closure_rc" -ne 0 ]; then
+    "$VENDOR_FRESHNESS_FAIL" "cannot enumerate the toplevel derivation closure (nix-store -qR exit $closure_rc) — the FOD gate is unavailable, refusing to deploy blind. Raw output tail follows:"
+    vendor_freshness_print_raw_tail "$closure"
+    return 0
+  fi
+  fods=$(vendor_freshness_extract_fods "$closure" | sort -u)
+
+  # Leg 1: realise what the deploy build would build or fetch itself.
+  to_build=$(vendor_freshness_uncached_fods "$fods")
   fod_count=0
-  if [ -n "$fods" ]; then
-    fod_count=$(printf '%s\n' "$fods" | wc -l)
+  build_exit=0
+  reported=""
+  if [ -n "$to_build" ]; then
+    fod_count=$(printf '%s\n' "$to_build" | wc -l)
     build_log=$(mktemp)
     build_exit=0
+    # `nix build <drv>` returns 0 without touching the output (lib header):
+    # the verb that builds or fetches is `nix-store --realise`. Its exit
+    # status alone is still no verdict; leg 2 reads the store afterwards.
     # shellcheck disable=SC2086  # drv paths are whitespace-free store paths
-    nix build $fods --keep-going >"$build_log" 2>&1 || build_exit=$?
+    nix-store --realise --keep-going $to_build >"$build_log" 2>&1 || build_exit=$?
     pin_after=$(vendor_freshness_tree_pin)
     if vendor_freshness_tree_changed "$pin_before" "$pin_after"; then
       "$VENDOR_FRESHNESS_FAIL" "eval-relevant tree MUTATED during §11 ($(vendor_freshness_tree_stamp "$pin_before") → $(vendor_freshness_tree_stamp "$pin_after")) — the FOD verdict is void for the new tree; re-run §11"
@@ -477,81 +547,70 @@ vendor_freshness_run_gate() {
     else
       leg_failed=1
       build_output=$(cat "$build_log")
-      case "$(vendor_freshness_classify_build "$build_output" "$build_exit")" in
-        mismatch)
-          # One FAIL per stale FOD, each with its OWN got-hash: a
-          # keep-going build fails every independent stale FOD, and quoting
-          # only the first re-creates the one-domino-per-deploy cycle.
-          printf '%s\n' "$build_output" | grep -A 2 'hash mismatch in fixed-output derivation' | sed 's/^/      /'
-          pair_count=0
-          while IFS=$'\t' read -r pair_drv pair_spec pair_got; do
-            [ -n "$pair_drv" ] || continue
-            pair_count=$((pair_count + 1))
-            "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE — FOD hash mismatch in $pair_drv: specified $pair_spec, got ${pair_got:-<unparsed>} (the deploy build would die here). Batch-repair with \`scripts/fod-hash-diff.sh <this log> --apply\` (upstream repos: \`buildflow -s nix-hash-fix --fix\`), never paste by hand [tree $stamp]"
-          done <<<"$(vendor_freshness_mismatch_pairs "$build_output")" || true
-          if [ "$pair_count" -eq 0 ]; then
-            "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE — FOD hash mismatch (the deploy build would die here; got-hash unparsed, raw tail follows) [tree $stamp]"
-            printf '%s\n' "$build_output" | tail -n 5 | sed 's/^/      /'
-          fi
-          ;;
-        *)
-          "$VENDOR_FRESHNESS_FAIL" "go-modules FOD build FAILED (non-hash error) — the deploy build would fail the same way; last lines: [tree $stamp]"
-          printf '%s\n' "$build_output" | tail -n 5 | sed 's/^/      /'
-          ;;
-      esac
       rm -f "$build_log"
+      case "$(vendor_freshness_classify_build "$build_output" "$build_exit")" in
+      mismatch)
+        # One FAIL per stale FOD, each with its OWN got-hash: a
+        # keep-going build fails every independent stale FOD, and quoting
+        # only the first re-creates the one-domino-per-deploy cycle.
+        printf '%s\n' "$build_output" | grep -A 2 'hash mismatch in fixed-output derivation' | sed 's/^/      /'
+        pair_count=0
+        while IFS=$'\t' read -r pair_drv pair_spec pair_got; do
+          [ -n "$pair_drv" ] || continue
+          pair_count=$((pair_count + 1))
+          "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE — FOD hash mismatch in $pair_drv: specified $pair_spec, got ${pair_got:-<unparsed>} (the deploy build would die here). Batch-repair with \`scripts/fod-hash-diff.sh <this log> --apply\` (upstream repos: \`buildflow -s nix-hash-fix --fix\`), never paste by hand [tree $stamp]"
+        done <<<"$(vendor_freshness_mismatch_pairs "$build_output")" || true
+        if [ "$pair_count" -eq 0 ]; then
+          "$VENDOR_FRESHNESS_FAIL" "vendorHash STALE — FOD hash mismatch (the deploy build would die here; got-hash unparsed, raw tail follows) [tree $stamp]"
+          printf '%s\n' "$build_output" | tail -n 5 | sed 's/^/      /'
+        fi
+        # Leg 2 skips these while they stay invalid: one failure, one FAIL.
+        reported=$(vendor_freshness_mismatch_pairs "$build_output" | cut -f1)
+        ;;
+      *)
+        "$VENDOR_FRESHNESS_FAIL" "go-modules FOD build FAILED (non-hash error) — the deploy build would fail the same way; last lines: [tree $stamp]"
+        printf '%s\n' "$build_output" | tail -n 5 | sed 's/^/      /'
+        ;;
+      esac
     fi
   fi
 
-  # Leg 2: the cached FODs the preview cannot see.
+  # Leg 2: the store's own record of every FOD of the closure.
   summary=""
-  if vendor_freshness_dryrun_builds "$dryrun_out"; then
-    top_drv=$(vendor_freshness_top_drv_from_dryrun "$dryrun_out")
-    if [ -z "$top_drv" ]; then
-      top_drv=$(nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath 2>/dev/null) || top_drv_rc=$?
-    fi
-    if [ "$top_drv_rc" -ne 0 ] || ! [[ $top_drv =~ ^/nix/store/[a-z0-9]+-[^/]+\.drv$ ]]; then
-      leg_failed=1
-      "$VENDOR_FRESHNESS_FAIL" "cannot resolve the toplevel derivation (drvPath lookup exit $top_drv_rc) [tree $stamp] — the cached-FOD audit is unavailable, refusing to deploy blind: a stale CACHED FOD is invisible to the preview and dies at compile time"
-      top_drv=""
-    fi
-    if [ -n "$top_drv" ]; then
-      vendor_freshness_audit_cached "$top_drv"
-      pin_after=$(vendor_freshness_tree_pin)
-      if vendor_freshness_tree_changed "$pin_before" "$pin_after"; then
-        leg_failed=1
-        "$VENDOR_FRESHNESS_FAIL" "eval-relevant tree MUTATED during §11 ($(vendor_freshness_tree_stamp "$pin_before") → $(vendor_freshness_tree_stamp "$pin_after")) — the cached-FOD verdict is void for the new tree; re-run §11"
-      fi
-      audit_summary_re='^proven=([0-9]+) receipted=([0-9]+) verified=([0-9]+) failed=([0-9]+)$'
-      if [[ $VENDOR_FRESHNESS_AUDIT_SUMMARY =~ $audit_summary_re ]]; then
-        audit_proven=${BASH_REMATCH[1]}
-        audit_receipted=${BASH_REMATCH[2]}
-        audit_verified=${BASH_REMATCH[3]}
-        audit_failed=${BASH_REMATCH[4]}
-        summary="$((audit_proven + audit_receipted + audit_verified)) cached FOD(s) verified ($audit_proven by deriver identity, $audit_verified re-verified by check-mode rebuild, $audit_receipted by prior receipt)"
-      else
-        audit_failed=1
-        "$VENDOR_FRESHNESS_FAIL" "cached-FOD audit returned an unreadable summary ('$VENDOR_FRESHNESS_AUDIT_SUMMARY') — refusing to deploy blind [tree $stamp]"
-      fi
-      [ "$audit_failed" -eq 0 ] || leg_failed=1
-    fi
+  vendor_freshness_audit_fods "$fods" "$reported"
+  pin_after=$(vendor_freshness_tree_pin)
+  if vendor_freshness_tree_changed "$pin_before" "$pin_after"; then
+    leg_failed=1
+    "$VENDOR_FRESHNESS_FAIL" "eval-relevant tree MUTATED during §11 ($(vendor_freshness_tree_stamp "$pin_before") → $(vendor_freshness_tree_stamp "$pin_after")) — the FOD verdict is void for the new tree; re-run §11"
   fi
+  audit_summary_re='^proven=([0-9]+) receipted=([0-9]+) verified=([0-9]+) failed=([0-9]+)$'
+  if [[ $VENDOR_FRESHNESS_AUDIT_SUMMARY =~ $audit_summary_re ]]; then
+    audit_proven=${BASH_REMATCH[1]}
+    audit_receipted=${BASH_REMATCH[2]}
+    audit_verified=${BASH_REMATCH[3]}
+    audit_failed=${BASH_REMATCH[4]}
+    audit_total=$((audit_proven + audit_receipted + audit_verified + audit_failed))
+    if [ "$audit_total" -gt 0 ]; then
+      summary="$((audit_proven + audit_receipted + audit_verified)) go-modules FOD(s) of the closure verified ($audit_proven by deriver identity, $audit_verified re-verified by check-mode rebuild, $audit_receipted by prior receipt)"
+    fi
+  else
+    audit_failed=1
+    "$VENDOR_FRESHNESS_FAIL" "FOD audit returned an unreadable summary ('$VENDOR_FRESHNESS_AUDIT_SUMMARY') — refusing to deploy blind [tree $stamp]"
+  fi
+  [ "$audit_failed" -eq 0 ] || leg_failed=1
 
   if [ "$leg_failed" -ne 0 ]; then
     return 0
   fi
-  if ! vendor_freshness_dryrun_builds "$dryrun_out"; then
-    "$VENDOR_FRESHNESS_PASS" "vendorHash valid — nothing to build locally (the preview substitutes or is fully cached, so no compile consults a FOD) [tree $stamp$noise_note]"
-    return 0
-  fi
   desc=""
   if [ "$fod_count" -gt 0 ]; then
-    desc="$fod_count uncached go-modules FOD(s) built clean"
+    desc="$fod_count go-modules FOD(s) realised (built or fetched now, output paths valid) + "
   fi
   if [ -n "$summary" ]; then
-    desc="${desc:+$desc + }$summary"
+    desc="$desc$summary"
+  else
+    desc="no go-modules FOD in the build"
   fi
-  [ -n "$desc" ] || desc="no go-modules FOD in the build"
   "$VENDOR_FRESHNESS_PASS" "vendorHash valid — $desc [tree $stamp$noise_note]"
   return 0
 }

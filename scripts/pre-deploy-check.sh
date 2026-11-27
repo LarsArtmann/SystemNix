@@ -85,7 +85,8 @@ echo ""
 # actually blocks deploys is the one that needs the most iterations when its
 # classifiers change. Same summary/exit semantics as a full run.
 # --section-11-only (2026-10-04): same pattern for the §11 vendorHash
-# FOD-preview gate (real-build verdicts; see scripts/lib/vendor-freshness.sh).
+# FOD gate (it realises and proves the FOD set; see
+# scripts/lib/vendor-freshness.sh).
 SECTION10_ONLY=false
 SECTION11_ONLY=false
 SECTION16_ONLY=false
@@ -457,7 +458,7 @@ fi # end of skip-when---section-10-only/---section-11-only (sections 1-9)
 
 if [ "$SECTION11_ONLY" = true ]; then
   echo ""
-  echo "11. vendorHash freshness (deploy FOD preview + cached-FOD audit)"
+  echo "11. vendorHash freshness (deploy FOD set realised + store-record audit)"
   # SC2034: callbacks are read inside the sourced vendor-freshness.sh
   # (same sourced-lib indirection as the OB_PASS producers above).
   # shellcheck disable=SC2034
@@ -1206,33 +1207,33 @@ if [ "$SECTION10_ONLY" = true ]; then
   exit 0
 fi
 
-# 11. vendorHash freshness — real FOD verdicts from the deploy-build preview
-# The toplevel --dry-run is the EXACT list of derivations `nh os switch`
-# would build on this commit. Any *-go-modules.drv listed there is an
-# uncached FOD the deploy build will attempt — a stale vendorHash fails
-# exactly there, AFTER ~12 minutes of unrelated building. The gate builds
-# those FODs NOW: clean = vendorHash proven + cache warm; mismatch = the
-# August-2026 deploy-killer class caught in seconds with the got-hash in
-# hand. (The 2026-08-08 version hardcoded 6 package names and grepped for
-# output nix never produces — it warned "unable to determine status" on
-# every run and missed bank-sync, the one package that then hard-failed
-# the build.) Mechanics + fixtures: scripts/lib/vendor-freshness.sh.
-# A preview that cannot eval FAILs (2026-11-25: it degraded to a
-# context-free WARN, and the 01:35 deploy then died on a stale
-# library-policy vendorHash the gate never previewed); only the known-
-# benign nix error classes are read past.
-# A CACHED FOD is not proof (2026-11-27): a fixed-output store path is keyed
-# by the SPECIFIED hash, so a lock float that moves a package's source while
-# the vendorHash literal stays makes nix reuse the OLD module tree — the
-# preview lists nothing, no builder runs, no mismatch is printed, and the
-# deploy dies at compile time (go-taskqueue + journal, the 12:0x deploy,
-# after this gate printed "20 uncached FODs built clean"). Whenever the
-# preview builds anything, the gate now audits every cached go-modules FOD
-# of the toplevel closure by deriver identity and re-verifies each reused
-# one with `nix-store --realise --check`. One FAIL per stale FOD with its
-# got-hash: feed this log to scripts/fod-hash-diff.sh --apply.
+# 11. vendorHash freshness — the deploy build's FOD set, realised and proven
+# The toplevel --dry-run previews what `nh os switch` builds on this commit
+# (a preview that cannot eval FAILs: 2026-11-25, the 01:35 deploy died on
+# a stale library-policy vendorHash the gate never previewed; only the
+# known-benign nix error classes are read past). When anything is built
+# locally, the gate walks every *-go-modules.drv of the toplevel's
+# derivation closure in two legs over one enumeration:
+#   1. `nix-store --realise --keep-going` on each FOD whose output is not
+#      valid, which is what the deploy build would build or fetch itself,
+#      so a stale vendorHash fails here with every got-hash in hand
+#      instead of ~12 minutes into the build;
+#   2. the store's own record of every FOD: deriver == current drv is
+#      proof, anything else is re-verified with `nix-store --realise
+#      --check`, and an output still not valid after a "successful"
+#      realise FAILs.
+# rc 0 is not a build: until 2026-11-27 leg 1 ran `nix build <drv>`, which
+# returns 0 without touching the output on this nix, so every "N uncached
+# FODs built clean" line since 2026-10-04 was unproven while deploys died
+# on FODs it had called clean. A CACHED FOD is not proof either: a
+# fixed-output path is keyed by the SPECIFIED hash, so a lock float that
+# moves a package's source while the vendorHash literal stays makes nix
+# reuse the OLD module tree and the deploy dies at compile time
+# (go-taskqueue + journal, the 12:0x deploy). One FAIL per stale FOD with
+# its got-hash: feed this log to scripts/fod-hash-diff.sh --apply.
+# Mechanics + fixtures: scripts/lib/vendor-freshness.sh.
 echo ""
-echo "11. vendorHash freshness (deploy FOD preview + cached-FOD audit)"
+echo "11. vendorHash freshness (deploy FOD set realised + store-record audit)"
 # SC2034: callbacks are read inside the sourced vendor-freshness.sh.
 # shellcheck disable=SC2034
 VENDOR_FRESHNESS_PASS=pass VENDOR_FRESHNESS_FAIL=fail

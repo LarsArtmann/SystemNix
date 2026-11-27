@@ -10,13 +10,17 @@
 # toplevel dry-run shapes and a genuine FOD hash mismatch (2026-10-04,
 # bogus outputHash override, wording verbatim); the cached-FOD audit
 # shapes — deriver records, check-mode rebuild pass and mismatch, a
-# derivation-closure excerpt (2026-11-27, the go-taskqueue/journal deploy).
+# derivation-closure excerpt (2026-11-27, the go-taskqueue/journal deploy);
+# the realising build, one keep-going call over three tiny FODs of which
+# two were stale, and a clean single realise (2026-11-27).
 # Run: bash scripts/test-pre-deploy-vendor.sh  (also a flake check)
 set -uo pipefail
 
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+# VF_LIB lets the mutation legs at the end source a mutated copy.
+VF_LIB="${VF_LIB:-$REPO_ROOT/scripts/lib/vendor-freshness.sh}"
 # shellcheck source=scripts/lib/vendor-freshness.sh
-source "$REPO_ROOT/scripts/lib/vendor-freshness.sh"
+source "$VF_LIB"
 
 TEST_FAILURES=0
 expect_eq() {
@@ -37,13 +41,13 @@ expect_match() {
   # Glob match is the point: `want` is a pattern.
   # shellcheck disable=SC2254
   case "$got" in
-    $want) echo "  ok   $desc" ;;
-    *)
-      echo "  FAIL $desc"
-      echo "       want glob: [$want]"
-      echo "       got:       [$got]"
-      TEST_FAILURES=$((TEST_FAILURES + 1))
-      ;;
+  $want) echo "  ok   $desc" ;;
+  *)
+    echo "  FAIL $desc"
+    echo "       want glob: [$want]"
+    echo "       got:       [$got]"
+    TEST_FAILURES=$((TEST_FAILURES + 1))
+    ;;
   esac
 }
 # Assert a command succeeds (file-state checks after a flow).
@@ -133,7 +137,7 @@ error:
 EOF
 )
 FIX_NARINFO_SINGLE="error: unable to download 'https://cache.nixos.org/00000000000000000000000000000000-dummy.narinfo': Timeout was reached"
-FOD_A=/nix/store/kbwg8d2lb5i5jxhbgnkmkg019ib4zpw0n-crush-daily-12bf69f398ab3309f39c54699d6ec34669107c32-go-modules.drv
+FOD_A=/nix/store/kbwg8d2lb5i5jxhbgnkm0g19ib4zpw0n-crush-daily-12bf69f398ab3309f39c54699d6ec34669107c32-go-modules.drv
 FIX_NOISE_UNCACHED="this derivation will be built:
   $FOD_A
 $FIX_NARINFO_SINGLE"
@@ -231,6 +235,44 @@ error: hash mismatch in fixed-output derivation '$FOD_JOURNAL':
          specified: sha256-9M6laArsh7t+0oKDml4cp2wKKaBtkxVLiPditM0D7So=
             got:    sha256-2piQtqwofrGHq5IsRjyH5MFQasYLZikjE50O0+WQV6c="
 
+# --- Fixtures: the realising build (REAL nix output, 2026-11-27 22:5x) ---
+#
+# Tiny throwaway FODs through the real daemon, the live proof of the hollow
+# leg: `nix build <drv> --keep-going` returned 0 on these three and built
+# nothing, `nix-store --realise --keep-going` built the correct one and
+# failed both stale ones in one call. The plan header is the dry-run's own
+# shape; both mismatch blocks and the rc are verbatim.
+FOD_TGOOD=/nix/store/s9cq0w633psw7nhp6s5b91k9gbm6mp20-vf-leg1-225614-good-go-modules.drv
+FOD_TGOOD_OUT=/nix/store/7272ciyj5gy7ih7l821825wf3ji67f4f-vf-leg1-225614-good-go-modules
+FOD_TBAD1=/nix/store/gvdgxc3xhyxh7yc6xq3n2pp7q0iy9jni-vf-leg1-225614-bad1-go-modules.drv
+FOD_TBAD1_OUT=/nix/store/xp5x0s31mwv4n5hzzrxyl7xk7840i46i-vf-leg1-225614-bad1-go-modules
+FOD_TBAD2=/nix/store/j9hw8xahf7cfkyags65mxkxzvlbhmn27-vf-leg1-225614-bad2-go-modules.drv
+FOD_TBAD2_OUT=/nix/store/i36l274537xcggqshq5i2f6a42yihr0h-vf-leg1-225614-bad2-go-modules
+FIX_REALISE_DOUBLE="these 3 derivations will be built:
+  $FOD_TBAD1
+  $FOD_TBAD2
+  $FOD_TGOOD
+building '$FOD_TBAD1'...
+building '$FOD_TBAD2'...
+building '$FOD_TGOOD'...
+error: hash mismatch in fixed-output derivation '$FOD_TBAD2':
+         specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+            got:    sha256-mOpuTyFvL7S2n/+bOkSELDhobKaF8/VdxIxdP7EQe+Q=
+error: hash mismatch in fixed-output derivation '$FOD_TBAD1':
+         specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+            got:    sha256-mOpuTyFvL7S2n/+bOkSELDhobKaF8/VdxIxdP7EQe+Q=
+error: build of '$FOD_TBAD1', '$FOD_TBAD2' failed"
+
+# A clean single realise of a fourth FOD (verbatim, rc 0): after it the
+# store names that drv as the output's deriver.
+FOD_VF=/nix/store/hyc1ib48fqcfjc5fqv2jgknb8bnsk41v-vf-leg1-good2-go-modules.drv
+FOD_VF_OUT=/nix/store/2smyq0zhj5zjg3qn39brl9ji3n1gqbna-vf-leg1-good2-go-modules
+FIX_REALISE_CLEAN="this derivation will be built:
+  $FOD_VF
+building '$FOD_VF'...
+warning: you did not specify '--add-root'; the result might be removed by the garbage collector
+$FOD_VF_OUT"
+
 echo "vendor-freshness fixture tests"
 
 # A uncached preview → exactly the 3 go-modules FODs (never the
@@ -313,6 +355,15 @@ expect_eq "$(vendor_freshness_mismatch_pairs "$FIX_CHECK_OK")" "" "a clean check
 expect_eq "$(vendor_freshness_drv_name "$FOD_TQ")" "go-taskqueue-0.4.2-go-modules" "drv name drops the store hash"
 expect_eq "$(vendor_freshness_drv_name "$FOD_JOURNAL")" "journal-f32e70c2ff4f5c2c2102bd68cce062e26cd09fd6-go-modules" "drv name keeps the embedded rev"
 
+# H2 the realising build's own shapes (2026-11-27 captures).
+expect_eq "$(vendor_freshness_extract_fods "$FIX_REALISE_DOUBLE" | wc -l)" "3" "realise plan: its FOD drvs extract like a dry-run's"
+expect_eq "$(vendor_freshness_mismatch_pairs "$FIX_REALISE_DOUBLE" | wc -l)" "2" "real keep-going log: two stale FODs → two pairs"
+expect_eq "$(vendor_freshness_mismatch_pairs "$FIX_REALISE_DOUBLE" | cut -f1 | sort | tr '\n' ' ')" "vf-leg1-225614-bad1-go-modules vf-leg1-225614-bad2-go-modules " "real keep-going log: pairs name their drvs"
+expect_eq "$(vendor_freshness_mismatch_pairs "$FIX_REALISE_DOUBLE" | cut -f3 | sort -u)" "sha256-mOpuTyFvL7S2n/+bOkSELDhobKaF8/VdxIxdP7EQe+Q=" "real keep-going log: both pairs carry the real got-hash"
+expect_eq "$(vendor_freshness_classify_build "$FIX_REALISE_DOUBLE" 1)" "mismatch" "real keep-going log: mismatch verdict"
+expect_eq "$(vendor_freshness_classify_build "$FIX_REALISE_CLEAN" 0)" "ok" "real clean realise: ok verdict"
+expect_eq "$(vendor_freshness_mismatch_pairs "$FIX_REALISE_CLEAN")" "" "real clean realise: no pair"
+
 vf_receipt_dir=$(mktemp -d)
 VENDOR_FRESHNESS_RECEIPT_DIR="$vf_receipt_dir"
 expect_eq "$(vendor_freshness_receipt_valid "$FOD_TQ" && echo yes || echo no)" "no" "no receipt for an unverified drv"
@@ -339,63 +390,137 @@ expect_ok "marker holding no drv path is untouched" test -e "$vf_receipt_dir/000
 expect_ok "foreign file in the store is untouched" test -e "$vf_receipt_dir/keep-me"
 rm -rf "$vf_receipt_dir"
 
-# G gate flow, end to end, against stubbed `nix` (preview, drvPath eval,
-# FOD build) and `nix-store` (closure, outputs, deriver, check mode), and a
-# pinned tree: the verdict strings are what §11 prints.
-# The callbacks are read inside the sourced gate lib.
-# shellcheck disable=SC2034,SC2329
+# G gate flow, end to end, against stubbed `nix` (preview, drvPath eval)
+# and `nix-store` (closure, outputs, deriver, realising build, check
+# mode), and a pinned tree: the verdict strings are what §11 prints.
+# The callbacks are read inside the sourced gate lib (so shellcheck sees the
+# two variables and the two functions as unused here).
 vf_verdicts=""
+# shellcheck disable=SC2329
 vf_pass() { vf_verdicts="$vf_verdicts|PASS $1"; }
+# shellcheck disable=SC2329
 vf_fail() { vf_verdicts="$vf_verdicts|FAIL $1"; }
+# shellcheck disable=SC2034
 VENDOR_FRESHNESS_PASS=vf_pass
+# shellcheck disable=SC2034
 VENDOR_FRESHNESS_FAIL=vf_fail
 vendor_freshness_tree_pin() { printf 'deadbee deadbee'; }
 VF_STUB_TOP_DRV="$FIX_TOP_DRV"
 VF_STUB_TOP_RC=0
+VF_STUB_DRYRUN_OUT=""
+VF_STUB_DRYRUN_RC=0
 VF_STUB_CLOSURE=""
 VF_STUB_CLOSURE_RC=0
-VF_STUB_CLOSURE_CALLS=0
-declare -A VF_STUB_OUTPUTS=() VF_STUB_OUTPUTS_RC=() VF_STUB_DERIVERS=() VF_STUB_DERIVERS_RC=()
+declare -A VF_STUB_OUTPUTS=() VF_STUB_OUTPUTS_RC=() VF_STUB_VALID=() VF_STUB_DERIVERS=()
 VF_STUB_CHECK_OUT=""
 VF_STUB_CHECK_RC=0
+# Leg 1's build, as the stub store answers `nix-store --realise --keep-going`:
+# VF_STUB_BUILD_RC is its exit status, VF_STUB_BUILD_OUT its log, and what
+# it did to the requested outputs is one of
+#   VF_STUB_BUILD_MODE=hollow   a success that changes nothing (the
+#                              `nix build <drv>` class: rc 0, no build)
+#   otherwise, a keep-going build: every requested drv whose NAME is not
+#   in VF_STUB_BUILD_FAILED becomes valid, and VF_STUB_BUILD_DERIVER (the
+#   drv itself unless set) is recorded as its builder, whatever the rc.
+VF_STUB_BUILD_OUT=""
+VF_STUB_BUILD_RC=0
+VF_STUB_BUILD_MODE=build
+VF_STUB_BUILD_DERIVER=""
+VF_STUB_BUILD_FAILED=""
 vf_receipt_root=$(mktemp -d)
 vf_receipt_runs=0
 # Counters live in FILES: the stubs run inside $(…) subshells, where a
 # shell-variable increment is lost.
 vf_check_log="$vf_receipt_root/check-calls"
-: >"$vf_check_log"
+vf_realise_log="$vf_receipt_root/realise-calls"
+vf_closure_log="$vf_receipt_root/closure-calls"
+vf_stray_log="$vf_receipt_root/stray-calls"
+# One redirection per command (several on one `:` line trip SC2261).
+vf_truncate() {
+  local file
+  for file in "$@"; do : >"$file"; done
+}
+vf_truncate "$vf_check_log" "$vf_realise_log" "$vf_closure_log" "$vf_stray_log"
 vf_check_calls() { wc -l <"$vf_check_log" | tr -d ' '; }
+vf_closure_calls() { wc -l <"$vf_closure_log" | tr -d ' '; }
+vf_receipt_name() {
+  local base="${1##*/}"
+  printf '%s' "${base%%-*}"
+}
+vf_realised() { sort "$vf_realise_log"; }
+vf_stray_calls() { wc -l <"$vf_stray_log" | tr -d ' '; }
+vf_fail_count() { printf '%s' "$vf_verdicts" | grep -o '|FAIL ' | wc -l; }
 nix() {
   case " $* " in
-    *" --dry-run "*) printf '%s\n' "$VF_STUB_DRYRUN_OUT"; return "$VF_STUB_DRYRUN_RC" ;;
-    *" eval --raw "*) printf '%s' "$VF_STUB_TOP_DRV"; return "$VF_STUB_TOP_RC" ;;
-    *) printf '%s\n' "$VF_STUB_BUILD_OUT"; return "$VF_STUB_BUILD_RC" ;;
+  *" --dry-run "*)
+    printf '%s\n' "$VF_STUB_DRYRUN_OUT"
+    return "$VF_STUB_DRYRUN_RC"
+    ;;
+  *" eval --raw "*)
+    printf '%s' "$VF_STUB_TOP_DRV"
+    return "$VF_STUB_TOP_RC"
+    ;;
+  *)
+    # Any other nix call inside the gate is a regression: the verb that
+    # realises is `nix-store --realise`, and a raw .drv installable is
+    # exactly what made leg 1 hollow for 54 days.
+    printf 'nix %s\n' "$*" >>"$vf_stray_log"
+    return 99
+    ;;
   esac
 }
 nix-store() {
+  local drv out
   case "${1-} ${2-}" in
-    "-qR "*)
-      VF_STUB_CLOSURE_CALLS=$((VF_STUB_CLOSURE_CALLS + 1))
-      printf '%s\n' "$VF_STUB_CLOSURE"
-      return "$VF_STUB_CLOSURE_RC"
-      ;;
-    "-q --outputs")
-      printf '%s\n' "${VF_STUB_OUTPUTS[$3]-}"
-      return "${VF_STUB_OUTPUTS_RC[$3]-0}"
-      ;;
-    "-q --deriver")
+  "-qR "*)
+    printf 'x\n' >>"$vf_closure_log"
+    printf '%s\n' "$VF_STUB_CLOSURE"
+    return "$VF_STUB_CLOSURE_RC"
+    ;;
+  "-q --outputs")
+    printf '%s\n' "${VF_STUB_OUTPUTS[$3]-}"
+    return "${VF_STUB_OUTPUTS_RC[$3]-0}"
+    ;;
+  "-q --deriver")
+    if [ -n "${VF_STUB_VALID[$3]-}" ]; then
       printf '%s\n' "${VF_STUB_DERIVERS[$3]-}"
-      return "${VF_STUB_DERIVERS_RC[$3]-0}"
-      ;;
-    "--realise --check")
-      printf 'x\n' >>"$vf_check_log"
-      printf '%s\n' "$VF_STUB_CHECK_OUT"
-      return "$VF_STUB_CHECK_RC"
-      ;;
-    *)
-      echo "nix-store stub: unexpected call: $*" >&2
-      return 99
-      ;;
+      return 0
+    fi
+    printf '%s\n' "$FIX_DERIVER_INVALID" >&2
+    return 1
+    ;;
+  "--realise --keep-going")
+    for drv in "$@"; do
+      case "$drv" in *.drv) printf '%s\n' "$drv" >>"$vf_realise_log" ;; esac
+    done
+    printf '%s\n' "$VF_STUB_BUILD_OUT"
+    if [ "$VF_STUB_BUILD_MODE" != hollow ] && [ "$VF_STUB_BUILD_RC" -ne 0 ]; then
+      :
+    fi
+    if [ "$VF_STUB_BUILD_MODE" != hollow ]; then
+      for drv in "$@"; do
+        case "$drv" in
+        *.drv) ;;
+        *) continue ;;
+        esac
+        out=${VF_STUB_OUTPUTS[$drv]-}
+        [ -n "$out" ] || continue
+        if grep -qxF -- "$(vendor_freshness_drv_name "$drv")" <<<"$VF_STUB_BUILD_FAILED"; then continue; fi
+        VF_STUB_VALID[$out]=1
+        VF_STUB_DERIVERS[$out]=${VF_STUB_BUILD_DERIVER:-$drv}
+      done
+    fi
+    return "$VF_STUB_BUILD_RC"
+    ;;
+  "--realise --check")
+    printf 'x\n' >>"$vf_check_log"
+    printf '%s\n' "$VF_STUB_CHECK_OUT"
+    return "$VF_STUB_CHECK_RC"
+    ;;
+  *)
+    echo "nix-store stub: unexpected call: $*" >&2
+    return 99
+    ;;
   esac
 }
 # A fresh receipt store per flow (the real one is a per-user cache dir).
@@ -403,41 +528,72 @@ vf_fresh_receipts() {
   vf_receipt_runs=$((vf_receipt_runs + 1))
   VENDOR_FRESHNESS_RECEIPT_DIR="$vf_receipt_root/run$vf_receipt_runs"
 }
+# Reset the stub store and the gate's knobs before a flow: no output is
+# valid, a build succeeds and builds, check mode reproduces. The stray-call
+# log is NOT reset: it is asserted empty once, over all flows.
+vf_empty_store() {
+  VF_STUB_VALID=()
+  VF_STUB_DERIVERS=()
+  VF_STUB_BUILD_OUT=""
+  VF_STUB_BUILD_RC=0
+  VF_STUB_BUILD_MODE=build
+  VF_STUB_BUILD_DERIVER=""
+  VF_STUB_BUILD_FAILED=""
+  VF_STUB_CHECK_OUT=""
+  VF_STUB_CHECK_RC=0
+  VF_STUB_TOP_DRV="$FIX_TOP_DRV"
+  VF_STUB_TOP_RC=0
+  VF_STUB_CLOSURE_RC=0
+  VF_STUB_DRYRUN_RC=0
+  vf_truncate "$vf_check_log" "$vf_realise_log" "$vf_closure_log"
+  vf_verdicts=""
+}
+vf_valid() {
+  VF_STUB_VALID[$1]=1
+  VF_STUB_DERIVERS[$1]=$2
+}
+# Every FOD the stub store knows, with its output path.
 VF_STUB_OUTPUTS=([$FOD_AB]=$FOD_AB_OUT [$FOD_TQ]=$FOD_TQ_OUT [$FOD_JOURNAL]=$FOD_JOURNAL_OUT)
-# Audit inputs: go-taskqueue built by its own derivation (PROVEN),
+VF_STUB_OUTPUTS+=([$FOD_VF]=$FOD_VF_OUT [$FOD_TGOOD]=$FOD_TGOOD_OUT [$FOD_TBAD1]=$FOD_TBAD1_OUT [$FOD_TBAD2]=$FOD_TBAD2_OUT)
+# Audit input: go-taskqueue built by its own derivation (PROVEN),
 # audiblesync's valid output naming an older derivation (REUSED, no
-# receipt yet), journal's output not in the store (UNCACHED — the preview
-# leg owns it).
+# receipt yet), journal's output not in the store.
 vf_proven_and_reused() {
   VF_STUB_CLOSURE="$FIX_CLOSURE"
-  VF_STUB_DERIVERS=([$FOD_AB_OUT]=/nix/store/f24fbri7k5r3nsxdmx490gjz2d5xi0zi-audiblesync-0.1.1-go-modules.drv [$FOD_TQ_OUT]=$FOD_TQ [$FOD_JOURNAL_OUT]="$FIX_DERIVER_INVALID")
-  VF_STUB_DERIVERS_RC=([$FOD_JOURNAL_OUT]=1)
+  vf_valid "$FOD_AB_OUT" /nix/store/f24fbri7k5r3nsxdmx490gjz2d5xi0zi-audiblesync-0.1.1-go-modules.drv
+  vf_valid "$FOD_TQ_OUT" "$FOD_TQ"
 }
 # Audit input: only go-taskqueue, REUSED across the lock float (its output
-# names the previous rev's derivation) — the stale-FOD shape.
+# names the previous rev's derivation): the stale-FOD shape.
 vf_reused_tq() {
   VF_STUB_CLOSURE="$FIX_TOP_DRV
 $FOD_TQ
 "
-  VF_STUB_DERIVERS=([$FOD_TQ_OUT]=$FOD_TQ_OLD_DERIVER)
+  vf_valid "$FOD_TQ_OUT" "$FOD_TQ_OLD_DERIVER"
 }
 
-# G1 noise + plan + clean FOD build: PASS, the noise disclosed.
-VF_STUB_DRYRUN_OUT="$FIX_NOISE_UNCACHED"
-VF_STUB_DRYRUN_RC=0
-VF_STUB_BUILD_OUT=""
-VF_STUB_BUILD_RC=0
+# G1 noise + plan + one FOD that is not valid: the gate realises exactly
+# that FOD (the deploy build's own work, done now), the store names its
+# derivation as the builder, and the audit counts every FOD of the closure:
+# PASS, the noise disclosed.
+vf_empty_store
 vf_fresh_receipts
-VF_STUB_CLOSURE_CALLS=0
+vf_valid "$FOD_AB_OUT" "$FOD_AB"
+vf_valid "$FOD_TQ_OUT" "$FOD_TQ"
 VF_STUB_CLOSURE="$FIX_TOP_DRV
 $FOD_AB
 $FOD_TQ
+$FOD_VF
 "
-VF_STUB_DERIVERS=([$FOD_AB_OUT]=$FOD_AB [$FOD_TQ_OUT]=$FOD_TQ)
-vf_verdicts=""
+VF_STUB_DRYRUN_OUT="this derivation will be built:
+  $FOD_VF
+$FIX_NARINFO_SINGLE"
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 1 uncached go-modules FOD(s) built clean + 2 cached FOD(s) verified (2 by deriver identity, 0 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\* (1 benign nix error line(s) ignored)\]" "flow: benign noise read past, FOD built clean, cached FODs verified, noise disclosed"
+expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 1 go-modules FOD(s) realised (built or fetched now, output paths valid) + 3 go-modules FOD(s) of the closure verified (3 by deriver identity, 0 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\* (1 benign nix error line(s) ignored)\]" "flow: benign noise read past, the FOD that was not valid is realised, every closure FOD verified, noise disclosed"
+expect_eq "$(vf_realised)" "$FOD_VF" "flow: leg 1 realises exactly the FOD whose output was not valid"
+expect_eq "$(vf_closure_calls)" "1" "flow: the closure is enumerated once for both legs"
 expect_eq "$(vf_check_calls)" "0" "flow: FODs built by their own derivation are not re-verified"
+expect_eq "$(vf_stray_calls)" "0" "flow: the gate never calls nix build (a raw .drv installable builds nothing)"
 
 # G2 real eval failure: FAIL (never a blind WARN), raw error shown.
 VF_STUB_DRYRUN_OUT="$FIX_EVAL_ERROR_BLOCK"
@@ -451,28 +607,51 @@ expect_match "${vf_verdicts#|}" "FAIL toplevel --dry-run FAILED (exit 1) \[tree 
 expect_match "$vf_stdout" "*error: evaluation aborted with the following error message: 'vf-probe real eval error'" "flow: failed preview prints the raw error"
 
 # G3 fully cached preview carrying noise: PASS without consulting the
-# store — nothing is built, so no compile can hit a stale FOD. (Until
+# store: nothing is built, so no compile can hit a stale FOD. (Until
 # 2026-11-27 this verdict read "vendorHash proven by prior builds".)
+vf_empty_store
+vf_fresh_receipts
 VF_STUB_DRYRUN_OUT="$FIX_NOISE_CACHED"
 VF_STUB_DRYRUN_RC=0
-vf_fresh_receipts
-vf_verdicts=""
-VF_STUB_CLOSURE_CALLS=0
 vendor_freshness_run_gate >/dev/null
 expect_match "${vf_verdicts#|}" "PASS vendorHash valid — nothing to build locally (the preview substitutes or is fully cached, so no compile consults a FOD) \[tree deadbee\* (1 benign nix error line(s) ignored)\]" "flow: cached preview with noise passes"
-expect_eq "$VF_STUB_CLOSURE_CALLS" "0" "flow: a non-building preview skips the audit"
+expect_eq "$(vf_closure_calls)" "0" "flow: a non-building preview skips both legs"
+expect_eq "$(vf_realised)" "" "flow: a non-building preview realises nothing"
 
-# G4 stale vendorHash on an UNCACHED FOD: FAIL with the got-hash.
-VF_STUB_DRYRUN_OUT="this derivation will be built:
-  $FOD_A"
-VF_STUB_DRYRUN_RC=0
-VF_STUB_BUILD_OUT="$FIX_MISMATCH"
-VF_STUB_BUILD_RC=1
+# G4 THE REAL 2026-11-27 CAPTURE: one keep-going realise of three FODs,
+# two stale. One FAIL per stale FOD with its own got-hash, and no second
+# verdict for the two the failed build already reported.
+vf_empty_store
 vf_fresh_receipts
-VF_STUB_CLOSURE=""
-vf_verdicts=""
-vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "FAIL vendorHash STALE — FOD hash mismatch in dnsblockd-1ffa8ff-go-modules: specified sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, got sha256-hod8/GFv8EN8FkWzs3sKxA4jb4k234/rMKqT1DzK1TQ=*\[tree deadbee\*\]" "flow: stale vendorHash FAILs with specified and got"
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_TGOOD
+$FOD_TBAD1
+$FOD_TBAD2
+"
+VF_STUB_DRYRUN_OUT="these 4 derivations will be built:
+  $FOD_TBAD1
+  $FOD_TBAD2
+  $FOD_TGOOD
+$FIX_TOP_DRV"
+VF_STUB_BUILD_OUT="$FIX_REALISE_DOUBLE"
+VF_STUB_BUILD_RC=1
+VF_STUB_BUILD_FAILED="vf-leg1-225614-bad1-go-modules
+vf-leg1-225614-bad2-go-modules"
+vf_stdout_file=$(mktemp)
+vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
+vf_stdout=$(cat "$vf_stdout_file")
+rm -f "$vf_stdout_file"
+vf_stale_names() {
+  printf '%s' "$vf_verdicts" | grep -o 'FAIL vendorHash STALE — FOD hash mismatch in [^:]*' | sort | tr '\n' ';'
+}
+expect_eq "$(vf_stale_names)" \
+  "FAIL vendorHash STALE — FOD hash mismatch in vf-leg1-225614-bad1-go-modules;FAIL vendorHash STALE — FOD hash mismatch in vf-leg1-225614-bad2-go-modules;" \
+  "flow: every stale FOD of the real log is reported, whatever order the daemon failed them in"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'specified sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=, got sha256-mOpuTyFvL7S2n/+bOkSELDhobKaF8/VdxIxdP7EQe+Q=' | wc -l)" "2" "flow: each FAIL carries specified and got verbatim"
+expect_eq "$(vf_fail_count)" "2" "flow: two stale FODs are two FAILs, no third for the outputs left invalid"
+expect_eq "$(printf '%s' "$vf_stdout" | grep -c 'hash mismatch in fixed-output derivation')" "2" "flow: the gate output carries both verbatim blocks fod-hash-diff parses"
+expect_eq "$(vendor_freshness_mismatch_pairs "$vf_stdout" | wc -l)" "2" "flow: the §11 log is a batch-repair input as-is"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -c 'NOT REALISED')" "0" "flow: a FOD whose failed build was reported is not reported twice"
 
 # G5 noise alone, non-zero exit, no plan: fail closed.
 VF_STUB_DRYRUN_OUT="$FIX_NOISE_CACHED"
@@ -481,118 +660,255 @@ vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
 expect_match "${vf_verdicts#|}" "FAIL toplevel --dry-run FAILED (exit 1) \[tree deadbee\*\]*" "flow: unattributable non-zero exit fails closed"
 
-# G6 THE 2026-11-27 SHAPE: the preview lists no go-modules FOD (every FOD
-# is cached), one cached FOD names another derivation, and its check-mode
-# rebuild reproduces → re-verified once, PASS, receipt written.
-VF_STUB_DRYRUN_OUT="$FIX_PREVIEW_NO_FOD"
-VF_STUB_DRYRUN_RC=0
+# G6 THE 2026-11-27 SHAPE: the preview lists no go-modules FOD as "will be
+# built", one FOD of the closure is not valid, one cached FOD names another
+# derivation, and its check-mode rebuild reproduces: the FOD is realised,
+# the reused one re-verified once, PASS, receipt written.
+vf_empty_store
 vf_fresh_receipts
 vf_proven_and_reused
+VF_STUB_DRYRUN_OUT="$FIX_PREVIEW_NO_FOD"
 VF_STUB_CHECK_OUT="$FIX_CHECK_OK"
 VF_STUB_CHECK_RC=0
 # A receipt for a drv outside this closure (e.g. since GC'd): the audit
-# must drop it.
+# must drop it. Asserted present first: until 2026-11-27 this check named
+# a file that had never been written (the fixture drv carried a 33-char
+# hash, which the receipt store wrote and the prune step, rightly, skips).
 vendor_freshness_receipt_write "$FOD_A"
-vf_verdicts=""
+expect_ok "setup: the out-of-closure receipt exists before the gate runs" test -s "$VENDOR_FRESHNESS_RECEIPT_DIR/$(vf_receipt_name "$FOD_A")"
 vf_stdout_file=$(mktemp)
 vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
 vf_stdout=$(cat "$vf_stdout_file")
 rm -f "$vf_stdout_file"
-expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 2 cached FOD(s) verified (1 by deriver identity, 1 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\*\]" "flow: reused FOD that reproduces is re-verified and passes"
-expect_eq "$(vf_check_calls)" "1" "flow: exactly the reused FOD is re-verified (the proven and the uncached one are not)"
-expect_match "$vf_stdout" "*re-verifying cached FOD (the store names another derivation as its builder): audiblesync-0.1.1-go-modules*" "flow: the re-verification is announced"
+expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 1 go-modules FOD(s) realised (built or fetched now, output paths valid) + 3 go-modules FOD(s) of the closure verified (2 by deriver identity, 1 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\*\]" "flow: the FOD that was not valid is realised, the reused FOD that reproduces is re-verified, PASS"
+expect_eq "$(vf_realised)" "$FOD_JOURNAL" "flow: only the FOD without a valid output is realised"
+expect_eq "$(vf_check_calls)" "1" "flow: exactly the reused FOD is re-verified (the proven and the just-built one are not)"
+expect_match "$vf_stdout" "*re-verifying FOD (the store names another derivation as its builder): audiblesync-0.1.1-go-modules*" "flow: the re-verification is announced"
 expect_ok "flow: PASS writes the receipt" test -s "$VENDOR_FRESHNESS_RECEIPT_DIR/2cm4syk9yzpaarf5d4yllj1v1y7ywhkj"
-expect_ok "flow: a receipt outside the audited closure is pruned" test ! -e "$VENDOR_FRESHNESS_RECEIPT_DIR/kbwg8d2lb5i5jxhbgnkm0g19ib4zpw0n"
+expect_ok "flow: a receipt outside the audited closure is pruned" test ! -e "$VENDOR_FRESHNESS_RECEIPT_DIR/$(vf_receipt_name "$FOD_A")"
 
-# G7 the receipt converges: the next run over the same closure does not
-# rebuild again.
-: >"$vf_check_log"
+# G7 the receipt converges: the next run over the same closure neither
+# builds nor re-verifies.
+vf_truncate "$vf_check_log" "$vf_realise_log"
 vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 2 cached FOD(s) verified (1 by deriver identity, 0 re-verified by check-mode rebuild, 1 by prior receipt) \[tree deadbee\*\]" "flow: a receipted FOD is not re-verified"
+expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 3 go-modules FOD(s) of the closure verified (2 by deriver identity, 0 re-verified by check-mode rebuild, 1 by prior receipt) \[tree deadbee\*\]" "flow: a receipted FOD is not re-verified"
 expect_eq "$(vf_check_calls)" "0" "flow: receipted FOD costs no rebuild"
+expect_eq "$(vf_realised)" "" "flow: a closure of valid outputs realises nothing"
 
-# G8 the deploy-killer: the reused FOD is STALE → FAIL naming the drv and
+# G8 the deploy-killer: the reused FOD is STALE: FAIL naming the drv and
 # the got-hash, with the verbatim mismatch block in the gate's output (a
 # §11 log is a scripts/fod-hash-diff.sh input as-is).
+vf_empty_store
 vf_fresh_receipts
 vf_reused_tq
 VF_STUB_CHECK_OUT="$FIX_CHECK_MISMATCH"
 VF_STUB_CHECK_RC=1
-vf_verdicts=""
 vf_stdout_file=$(mktemp)
 vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
 vf_stdout=$(cat "$vf_stdout_file")
 rm -f "$vf_stdout_file"
-expect_match "${vf_verdicts#|}" "FAIL vendorHash STALE on a CACHED FOD — go-taskqueue-0.4.2-go-modules:*sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=*fod-hash-diff.sh*" "flow: a stale CACHED FOD FAILs with its got-hash"
+expect_match "${vf_verdicts#|}" "FAIL vendorHash STALE on a REUSED FOD: go-taskqueue-0.4.2-go-modules:*got sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=*fod-hash-diff.sh*" "flow: a stale REUSED FOD FAILs with its got-hash"
 expect_eq "$(vendor_freshness_mismatch_pairs "$vf_stdout" | cut -f3)" "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=" "flow: the gate output carries the verbatim block fod-hash-diff parses"
 expect_ok "flow: a mismatch writes no receipt" test ! -e "$VENDOR_FRESHNESS_RECEIPT_DIR/3pgfc344wpwh7d9az7kmnil3x1xfj2bn"
 
 # G9 a reused FOD whose rebuild fails for a non-hash reason blocks too.
+vf_empty_store
 vf_fresh_receipts
 vf_proven_and_reused
 VF_STUB_CHECK_OUT="error: cannot connect to nix daemon"
 VF_STUB_CHECK_RC=100
-vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "FAIL cached go-modules FOD re-verify FAILED (non-hash error) — audiblesync-0.1.1-go-modules;*" "flow: non-hash re-verify failure FAILs"
+expect_match "${vf_verdicts#|}" "FAIL go-modules FOD re-verify FAILED (non-hash error): audiblesync-0.1.1-go-modules;*" "flow: non-hash re-verify failure FAILs"
 
-# G10 the audit itself failing fails closed.
+# G10 the closure query failing fails closed: nothing is built, nothing
+# passes.
+vf_empty_store
 vf_fresh_receipts
 VF_STUB_CLOSURE="error: path '…' is not valid"
 VF_STUB_CLOSURE_RC=1
-vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "FAIL cannot enumerate the toplevel derivation closure (nix-store -qR exit 1)*refusing to deploy blind*" "flow: a failed closure query FAILs closed"
+expect_match "${vf_verdicts#|}" "FAIL cannot enumerate the toplevel derivation closure (nix-store -qR exit 1)*the FOD gate is unavailable*refusing to deploy blind*" "flow: a failed closure query FAILs closed"
+expect_eq "$(vf_fail_count)" "1" "flow: a failed closure query yields exactly one FAIL"
+expect_eq "$(vf_realised)" "" "flow: nothing is built on a failed closure query"
 
 # G11 no toplevel drv in the preview and the eval fallback fails: FAIL.
-VF_STUB_CLOSURE_RC=0
+vf_empty_store
 VF_STUB_DRYRUN_OUT="this derivation will be built:
   /nix/store/0kdlh4w3c3j0nhs0d5calqri7wy436az-go-taskqueue-0.4.2.drv"
 VF_STUB_TOP_DRV="error: attribute 'system' missing"
 VF_STUB_TOP_RC=1
-vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
-expect_match "${vf_verdicts#|}" "FAIL cannot resolve the toplevel derivation (drvPath lookup exit 1) \[tree deadbee\*\]*a stale CACHED FOD is invisible to the preview*" "flow: unresolvable toplevel drv FAILs closed"
+expect_match "${vf_verdicts#|}" "FAIL cannot resolve the toplevel derivation (drvPath lookup exit 1) \[tree deadbee\*\]*the FOD gate is unavailable*a stale CACHED FOD is invisible to the preview*" "flow: unresolvable toplevel drv FAILs closed"
 
-# G12 two independent stale UNCACHED FODs in one keep-going build: one
-# FAIL each, each with its OWN got-hash.
-VF_STUB_TOP_DRV="$FIX_TOP_DRV"
-VF_STUB_DRYRUN_OUT="these 2 derivations will be built:
+# G12 two independent stale FODs of the 10:34 lock wave in one keep-going
+# build: one FAIL each, each with its OWN got-hash.
+vf_empty_store
+vf_fresh_receipts
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_TQ
+$FOD_JOURNAL
+"
+VF_STUB_DRYRUN_OUT="these 3 derivations will be built:
   $FOD_TQ
   $FOD_JOURNAL
 $FIX_TOP_DRV"
 VF_STUB_BUILD_OUT="$FIX_MISMATCH_DOUBLE"
 VF_STUB_BUILD_RC=1
-VF_STUB_CLOSURE=""
-vf_verdicts=""
+VF_STUB_BUILD_FAILED="$(vendor_freshness_mismatch_pairs "$FIX_MISMATCH_DOUBLE" | cut -f1)"
 vendor_freshness_run_gate >/dev/null
-expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'FAIL vendorHash STALE — FOD hash mismatch in [^:]*' | tr '\n' ';')" "FAIL vendorHash STALE — FOD hash mismatch in go-taskqueue-0.4.2-go-modules;FAIL vendorHash STALE — FOD hash mismatch in journal-f32e70c2ff4f5c2c2102bd68cce062e26cd09fd6-go-modules;" "flow: every stale uncached FOD is reported"
-expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'got sha256-' | wc -l)" "2" "flow: two stale FODs carry two got-hashes"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'FAIL vendorHash STALE — FOD hash mismatch in [^:]*' | tr '\n' ';')" "FAIL vendorHash STALE — FOD hash mismatch in go-taskqueue-0.4.2-go-modules;FAIL vendorHash STALE — FOD hash mismatch in journal-f32e70c2ff4f5c2c2102bd68cce062e26cd09fd6-go-modules;" "flow: every stale FOD is reported"
+expect_eq "$(vf_fail_count)" "2" "flow: exactly one FAIL per stale FOD"
 expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=' | wc -l)" "1" "flow: first got-hash appears once"
 expect_eq "$(printf '%s' "$vf_verdicts" | grep -o 'sha256-2piQtqwofrGHq5IsRjyH5MFQasYLZikjE50O0+WQV6c=' | wc -l)" "1" "flow: second got-hash appears once"
 
-# G13 the tree moving during the audit voids the verdict (the 2026-10-09
-# 22:31 class): no PASS on a tree that changed under the gate.
+# G13 THE HOLLOW LEG (2026-10-04 to 2026-11-27): the realising command
+# returns success and changes nothing, the `nix build <drv>` class. The
+# exit code says built; the store says otherwise, and the gate blocks.
+vf_empty_store
 vf_fresh_receipts
-VF_STUB_DRYRUN_OUT="$FIX_PREVIEW_NO_FOD"
-VF_STUB_TOP_DRV="$FIX_TOP_DRV"
 vf_proven_and_reused
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_AB
+$FOD_TQ
+$FOD_VF
+"
+VF_STUB_DRYRUN_OUT="this derivation will be built:
+  $FOD_VF
+$FIX_TOP_DRV"
+VF_STUB_BUILD_OUT="$FOD_VF"
+VF_STUB_BUILD_RC=0
+VF_STUB_BUILD_MODE=hollow
+vendor_freshness_run_gate >/dev/null
+expect_match "${vf_verdicts#|}" "FAIL go-modules FOD NOT REALISED: vf-leg1-good2-go-modules:*still not valid after the gate's \`nix-store --realise\`*refusing to deploy blind*" "flow: a realise that returns success without building FAILs"
+expect_eq "$(vf_fail_count)" "1" "flow: the unrealised FOD is exactly one FAIL"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -c '|PASS ')" "0" "flow: no PASS is printed over an output that was never built"
+
+# G14 a FOD the realising command FETCHED (a substituter built it): the
+# output is valid, the store names another derivation, so the audit
+# re-verifies it in check mode before the gate passes.
+vf_empty_store
+vf_fresh_receipts
+vf_valid "$FOD_AB_OUT" "$FOD_AB"
+vf_valid "$FOD_TQ_OUT" "$FOD_TQ"
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_AB
+$FOD_TQ
+$FOD_VF
+"
 VF_STUB_CHECK_OUT="$FIX_CHECK_OK"
-VF_STUB_CHECK_RC=0
+VF_STUB_BUILD_DERIVER="$FOD_TQ_OLD_DERIVER"
+vendor_freshness_run_gate >/dev/null
+expect_match "${vf_verdicts#|}" "PASS vendorHash valid — 1 go-modules FOD(s) realised (built or fetched now, output paths valid) + 3 go-modules FOD(s) of the closure verified (2 by deriver identity, 1 re-verified by check-mode rebuild, 0 by prior receipt) \[tree deadbee\*\]" "flow: a fetched FOD passes only after its check-mode rebuild"
+expect_eq "$(vf_check_calls)" "1" "flow: exactly the fetched FOD is re-verified"
+
+# G15 the build itself fails for a non-hash reason: the gate blocks, names
+# the error, and names the FOD that did not get built.
+vf_empty_store
+vf_fresh_receipts
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_VF
+"
+VF_STUB_DRYRUN_OUT="this derivation will be built:
+  $FOD_VF
+$FIX_TOP_DRV"
+VF_STUB_BUILD_OUT="error: cannot connect to nix daemon"
+VF_STUB_BUILD_RC=100
+VF_STUB_BUILD_FAILED="vf-leg1-good2-go-modules"
+vf_stdout_file=$(mktemp)
+vendor_freshness_run_gate >"$vf_stdout_file" 2>&1
+vf_stdout=$(cat "$vf_stdout_file")
+rm -f "$vf_stdout_file"
+expect_match "${vf_verdicts#|}" "FAIL go-modules FOD build FAILED (non-hash error)*last lines: \[tree deadbee\*\]*" "flow: a non-hash build failure FAILs"
+expect_match "$vf_stdout" "*error: cannot connect to nix daemon*" "flow: the build error is shown"
+expect_match "${vf_verdicts#|}" "*NOT REALISED: vf-leg1-good2-go-modules*" "flow: the FOD the failed build left invalid is named"
+
+# G16 the tree moving under the gate voids the verdict (the 2026-10-09
+# 22:31 class): no PASS on a tree that changed, whether the move is seen
+# after the build or after the audit.
+vf_empty_store
+vf_fresh_receipts
+vf_valid "$FOD_JOURNAL_OUT" "$FOD_JOURNAL"
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_AB
+$FOD_TQ
+$FOD_VF
+"
+VF_STUB_CHECK_OUT="$FIX_CHECK_OK"
+VF_STUB_DRYRUN_OUT="this derivation will be built:
+  $FOD_VF
+$FIX_TOP_DRV"
 vf_pins="$vf_receipt_root/pins"
 : >"$vf_pins"
 vendor_freshness_tree_pin() {
   printf 'x\n' >>"$vf_pins"
   if [ "$(wc -l <"$vf_pins")" -lt 2 ]; then printf 'deadbee deadbee'; else printf 'cafe cafe'; fi
 }
-vf_verdicts=""
 vendor_freshness_run_gate >/dev/null
+expect_match "${vf_verdicts#|}" "FAIL eval-relevant tree MUTATED during §11 (deadbee\* → cafe\*)*the FOD verdict is void for the new tree*" "flow: a tree mutation after the build voids the verdict"
+expect_eq "$(vf_fail_count)" "1" "flow: the mutation is reported once"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -c '|PASS ')" "0" "flow: no PASS on a moved tree"
+vf_truncate "$vf_pins" "$vf_realise_log"
+vf_verdicts=""
+VF_STUB_CLOSURE="$FIX_CLOSURE"
+vendor_freshness_run_gate >/dev/null
+expect_match "${vf_verdicts#|}" "FAIL eval-relevant tree MUTATED during §11 (deadbee\* → cafe\*)*the FOD verdict is void for the new tree*" "flow: a tree mutation after the audit voids the verdict"
+expect_eq "$(vf_realised)" "" "flow: the audit-only run had nothing to build"
 vendor_freshness_tree_pin() { printf 'deadbee deadbee'; }
-expect_match "${vf_verdicts#|}" "FAIL eval-relevant tree MUTATED during §11 (deadbee\* → cafe\*)*cached-FOD verdict is void*" "flow: tree mutation during the audit voids the PASS"
+
+# G17 a closure FOD whose output path cannot be resolved is unknown
+# state: FAIL, never skipped.
+vf_empty_store
+vf_fresh_receipts
+VF_STUB_CLOSURE="$FIX_TOP_DRV
+$FOD_A
+"
+VF_STUB_CHECK_OUT="$FIX_CHECK_OK"
+VF_STUB_DRYRUN_OUT="this derivation will be built:
+  $FOD_A
+$FIX_TOP_DRV"
+VF_STUB_OUTPUTS_RC=([$FOD_A]=1)
+vendor_freshness_run_gate >/dev/null
+expect_match "${vf_verdicts#|}" "FAIL cannot resolve the output path of crush-daily-12bf69f398ab3309f39c54699d6ec34669107c32-go-modules (nix-store -q --outputs failed): its state is unknown*refusing to deploy blind*" "flow: an unresolvable output path FAILs closed"
+expect_eq "$(vf_fail_count)" "1" "flow: an unresolvable output path is exactly one FAIL"
+expect_eq "$(printf '%s' "$vf_verdicts" | grep -c '|PASS ')" "0" "flow: no PASS over an unknown FOD"
+
+# Over every flow above: the gate asked `nix` for the preview and the
+# drvPath eval only.
+expect_eq "$(vf_stray_calls)" "0" "flow: across all flows the gate never calls nix build or any other nix verb"
 
 unset -f nix nix-store
 rm -rf "$vf_receipt_root"
+
+# --- M Mutation legs (2026-11-27) ---
+# Each regression this gate already lived through is re-applied to a copy
+# of the lib, and this suite must FAIL against it (the copy is sourced by
+# a child run of this script). A suite that passes against the bug it
+# exists for is the hollow-leg lesson: these fixtures were green for 54
+# days while the gate built nothing.
+vf_mut_dir=$(mktemp -d)
+if [ "${VF_MUTATION_CHILD:-0}" = 0 ] && [ "$TEST_FAILURES" -eq 0 ]; then
+  while IFS=$'\t' read -r vf_mut_name vf_mut_sed; do
+    [ -n "$vf_mut_name" ] || continue
+    vf_mut_lib="$vf_mut_dir/$vf_mut_name.sh"
+    sed "$vf_mut_sed" "$VF_LIB" >"$vf_mut_lib"
+    if [ "$(sha256sum <"$VF_LIB")" = "$(sha256sum <"$vf_mut_lib")" ]; then
+      echo "  FAIL mutation $vf_mut_name did not apply (its sed matched nothing in the lib)"
+      TEST_FAILURES=$((TEST_FAILURES + 1))
+    elif VF_MUTATION_CHILD=1 VF_LIB="$vf_mut_lib" bash "${BASH_SOURCE[0]}" >/dev/null 2>&1; then
+      echo "  FAIL mutation $vf_mut_name SURVIVED: this suite passes against the regression"
+      TEST_FAILURES=$((TEST_FAILURES + 1))
+    else
+      echo "  ok   mutation $vf_mut_name is caught"
+    fi
+  done <<'EOF'
+hollow-verb	s|nix-store --realise --keep-going \$to_build|nix build $to_build --keep-going|
+audit-skips-unrealised	/go-modules FOD NOT REALISED/d
+preview-only-input	s|to_build=\$(vendor_freshness_uncached_fods "\$fods")|to_build=$(printf '%s\\n' "$dryrun_out" \| grep -E -- '-go-modules\\.drv$' \| sort -u \|\| true)|
+reported-fod-reported-twice	s|if grep -qxF -- "\$name" <<<"\$reported"; then|if false; then|
+EOF
+fi
+rm -rf "$vf_mut_dir"
 
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then

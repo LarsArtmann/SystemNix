@@ -9209,16 +9209,16 @@
     "mic-monitor": {
       "flake": false,
       "locked": {
-        "lastModified": 1795741102,
-        "narHash": "sha256-1OhlMx/wKF/mkJCDSc34YrdWXc9NAr1y0VWkU3XfSxE=",
+        "lastModified": 1795817538,
+        "narHash": "sha256-4bhV32Cwq6w+1ad6pO5Qejeedo1Fqhaf53DqdnjdNL4=",
         "ref": "refs/heads/master",
-        "rev": "ad248b38da36e5266db985833b07e9e7e9c348d3",
-        "revCount": 141,
+        "rev": "87af313131ad9a9db44f012b14169c88a703ce34",
+        "revCount": 145,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mic-monitor"
       },
       "original": {
-        "rev": "ad248b38da36e5266db985833b07e9e7e9c348d3",
+        "rev": "87af313131ad9a9db44f012b14169c88a703ce34",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mic-monitor"
       }
@@ -9248,11 +9248,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1795793500,
-        "narHash": "sha256-ebjNyLX8b53weEtCo4Uak2hoKLmogsbp1EZxeQmR/J0=",
+        "lastModified": 1795817609,
+        "narHash": "sha256-2REer7g4CWIVPkMQflUIPE5WDsRFenicVhSXoCS0FhI=",
         "ref": "refs/heads/master",
-        "rev": "dabef8a3421040c2ac28e999bbb4b6212186acd0",
-        "revCount": 4921,
+        "rev": "9040947c7f024f7d3cb5e787a0fdba0966431f81",
+        "revCount": 4939,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
