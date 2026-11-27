@@ -896,22 +896,22 @@ if nix run .#pre-deploy-check; then
   cur_system="$(readlink /run/current-system 2>/dev/null)"
   boot_entry_status=$(boot_entry_anchor_status "$cur_system")
   case "$boot_entry_status" in
-    ok) echo "✓ Boot-entry anchored: the loader's preferred entry boots the running system" ;;
-    unanchored:*)
-      echo "⚠ $boot_entry_status — self-repairing: re-arming the boot entries for the running system"
-      if sudo "$cur_system/bin/switch-to-configuration" boot; then
-        boot_entry_status=$(boot_entry_anchor_status "$cur_system")
-        case "$boot_entry_status" in
-          ok) echo "✓ Boot-entry anchor repaired (the activation had not added this generation to the bootloader)" ;;
-          *) echo "❌ Boot-entry self-repair did not take ($boot_entry_status) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline" ;;
-        esac
-      else
-        echo "❌ Boot-entry self-repair FAILED (switch-to-configuration boot) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline"
-      fi
-      ;;
-    unknown:*)
-      echo "⚠ Boot-entry anchor NOT verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check"
-      ;;
+  ok) echo "✓ Boot-entry anchored: the loader's preferred entry boots the running system" ;;
+  unanchored:*)
+    echo "⚠ $boot_entry_status — self-repairing: re-arming the boot entries for the running system"
+    if sudo "$cur_system/bin/switch-to-configuration" boot; then
+      boot_entry_status=$(boot_entry_anchor_status "$cur_system")
+      case "$boot_entry_status" in
+      ok) echo "✓ Boot-entry anchor repaired (the activation had not added this generation to the bootloader)" ;;
+      *) echo "❌ Boot-entry self-repair did not take ($boot_entry_status) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline" ;;
+      esac
+    else
+      echo "❌ Boot-entry self-repair FAILED (switch-to-configuration boot) — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline"
+    fi
+    ;;
+  unknown:*)
+    echo "⚠ Boot-entry anchor NOT verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check"
+    ;;
   esac
 
   # Start critical services that deploy may have left in inactive/dead state.
@@ -1417,12 +1417,12 @@ if nix run .#pre-deploy-check; then
   cur_system="$(readlink /run/current-system 2>/dev/null)"
   boot_entry_status=$(boot_entry_anchor_status "$cur_system")
   case "$boot_entry_status" in
-    ok) ;;
-    unanchored:*)
-      echo "❌ UNANCHORED (boot entry): $boot_entry_status — a REBOOT WILL REVERT. Repair: sudo $cur_system/bin/switch-to-configuration boot && sudo systemctl restart boot-mirror-sync, then re-verify: nix run .#pre-reboot-check"
-      exit 14
-      ;;
-    *) echo "⚠ Boot-entry anchor not verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check" ;;
+  ok) ;;
+  unanchored:*)
+    echo "❌ UNANCHORED (boot entry): $boot_entry_status — a REBOOT WILL REVERT. Repair: sudo $cur_system/bin/switch-to-configuration boot && sudo systemctl restart boot-mirror-sync, then re-verify: nix run .#pre-reboot-check"
+    exit 14
+    ;;
+  *) echo "⚠ Boot-entry anchor not verified ($boot_entry_status) — before any planned reboot run: nix run .#pre-reboot-check" ;;
   esac
 
   if [ "$smoke_rc" -eq 3 ]; then
