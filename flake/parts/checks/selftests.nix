@@ -508,9 +508,10 @@
               name: value: renderedEnvironment.${name} or null != value
             ) expectedEnvironment;
             wrapper =
-              lib.assertMsg (missingOrWrong == { })
-                "signoz-retention.service environment does not match services.signoz: ${builtins.toJSON missingOrWrong}"
-                unit.serviceConfig.ExecStart;
+              if missingOrWrong == { } then
+                unit.serviceConfig.ExecStart
+              else
+                throw "signoz-retention.service environment does not match services.signoz: ${builtins.toJSON missingOrWrong}";
           in
           pkgs.runCommand "signoz-retention-rendered" { } ''
             export PATH="${pkgs.jq}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"

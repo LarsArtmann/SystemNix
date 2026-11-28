@@ -74,12 +74,15 @@ posture (the socket IS the convergence).
 
 ## Model
 
-**Abliterated/uncensored is a HARD requirement for this brain** (owner
-directive 2026-10-12: "gpt-oss-120b is OLD and NOT Abliterated so fucking
-no!") — mainstream-safety-tuned models are disqualified regardless of
-benchmarks or tool-calling reputation; model swaps stay within the
-abliterated Qwen3.6-35B-A3B family (HauhauCS tunes / distills /
-better quants of the same architecture).
+**Abliterated/uncensored is a PREFERENCE, not a hard requirement** (owner
+revision 2026-11-28: "make this into a soft prefer/bonus points instead of
+HARD requirement"; this retires the 2026-10-12 directive that disqualified
+safety-tuned models). An abliterated build wins when quality, tool-calling
+and footprint are otherwise close, and a better mid-size model with intact
+tool calls is allowed. The gates that DO bind are the ones below: real
+OpenAI `tool_calls`, a full InboxClean turn inside its 3-minute budget,
+logprobs for the paperless-triage verdict, and a >=64k context at an
+acceptable residency footprint (GPU soak first, module header).
 
 `/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/
 Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf` (23.4 GB,
@@ -156,6 +159,22 @@ pressure evicted experts.
     elsewhere (configuration.nix etc., leaving this module's default stale)
     is INVISIBLE to that derive — pass `MODEL=<gguf>` to the bench
     explicitly in that case.
+- Context and thinking (2026-11-28): `ctxSize` defaults to 65536. Qwen3.6-35B-A3B
+  is a hybrid linear-attention MoE (3 of 4 layers are linear), so only 10 of 40
+  layers keep a KV cache (~20 KiB/token): 64k costs ~1.3 GiB and the native max
+  is 262144 — the old 32k default was a leftover from the CPU era. Thinking is
+  OFF server-side by default (`thinkingDefault = false`) because the InboxClean
+  turn budget cannot absorb a 600-token think block; every consumer can override
+  per request with `chat_template_kwargs: {"enable_thinking": true}` on
+  /v1/chat/completions (llama-server accepts the field — 1.0.0 README + binary
+  param table). `thinkingDefault = null` omits the flag and lets the template
+  decide.
+- Dashboard tiles must not warm the backend: the tile probes
+  `https://llama.<domain>/healthz`, which Caddy answers itself
+  (`vHost.probePaths`, 2026-11-28). Before that, PapDashboard's 30 s probe to
+  `/` spawned a bridge every sweep, the idle check counted it as traffic, and
+  the 60-min TTL never fired. A probe that reaches :8850 is a load, not a
+  health check.
 - Verify: `curl :8850/v1/models` must list the alias (first request after
   an idle unload pays the cold load — watch `systemctl status
   llama-chat@*.service` for live bridges and `journalctl -u llama-chat -n 50`

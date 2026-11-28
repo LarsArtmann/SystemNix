@@ -102,10 +102,13 @@
 #
 # Model: Lars's own abliterated Qwen3.6 MoE tune from the Jan model tree
 # (the April download was interrupted; completed + sha256-verified
-# 2026-10-08). ABLITERATED IS A HARD REQUIREMENT (owner directive
-# 2026-10-12: gpt-oss-120b rejected — "OLD and NOT Abliterated"); swaps
-# stay within the abliterated Qwen3.6-35B-A3B family (quants/distills/
-# newer HauhauCS-class tunes of the same 3B-active architecture).
+# 2026-10-08). Abliteration is a PREFERENCE, not a hard gate (owner
+# revision 2026-11-28: "soft prefer/bonus points" — the 2026-10-12
+# directive that disqualified safety-tuned models is retired): an
+# abliterated build wins when quality, tool-calling and footprint are
+# otherwise close, and a better mid-size model with intact tool calls is
+# allowed. The old family preference keeps abliterated Qwen3.6-35B-A3B
+# tunes (quants/distills/newer HauhauCS-class) in the candidate set.
 # Qwen3.6 ships a native tool-call chat template, which --jinja
 # enables — the InboxClean agent drives its Gmail tools through OpenAI-format
 # tool calls (round-trip verified live 2026-10-08 on the sibling qwen3:4b:
@@ -122,8 +125,11 @@
 # finished thinking inside the app's 3-minute turn budget — 4/4 turns died
 # with "context deadline exceeded" since the brain landed. With
 # enable_thinking=false the same probe returns converging JSON in 80 tokens
-# (finish=stop). Server-side (not per-request) so every OpenAI-compatible
-# consumer — InboxClean included, which sends no template kwargs — gets it.
+# (finish=stop). The default is applied SERVER-side (config option
+# `thinkingDefault`) so consumers that send no template kwargs — InboxClean
+# included — get it; any consumer may override it PER REQUEST with
+# `chat_template_kwargs: {"enable_thinking": true}` (llama-server 1.0.0
+# accepts the field on /v1/chat/completions).
 #
 # No fetch unit: the GGUF is part of the Jan-managed model tree
 # (/data/ai/models/jan/llamacpp, ~92 G, backed by the ai-models backup
@@ -160,8 +166,13 @@ _: {
       # --jinja makes llama-server apply the GGUF's embedded chat template,
       # which is what turns OpenAI-format `tools` into native Qwen3.6
       # tool-call responses.
-      # The template-kwargs kill the template's default <think> phase —
-      # see the header narrative (2026-10-10 deadline-exceeded class).
+      # The template-kwargs default the template's thinking phase OFF — see
+      # the header narrative (2026-10-10 deadline-exceeded class). This is a
+      # SERVER-SIDE DEFAULT only: every consumer can override it per request
+      # with `chat_template_kwargs: {"enable_thinking": true}` (llama-server
+      # accepts that field on /v1/chat/completions; 1.0.0 README + the
+      # binary's param table). `thinkingDefault = null` omits the flag and
+      # leaves the template's own default in charge.
       execStart =
         "${llamaServer}"
         + " -m ${cfg.modelPath}"
@@ -307,6 +318,30 @@ _: {
           type = lib.types.int;
           default = 65536;
           description = "Context window (tokens). Qwen3.6-35B-A3B is a hybrid linear-attention MoE: only 10 of 40 layers keep a KV cache (2 kv heads x 256 dim -> ~20 KiB/token), so 64k costs ~1.3 GiB of KV; native max is 262144. 64k covers long email threads with tool-call history at ~13x the measured real turn (4.9k tokens). Verify the live cgroup after any bump: llama.cpp's buffer plan decides, not this arithmetic.";
+        };
+
+        thinkingDefault = lib.mkOption {
+          type = lib.types.nullOr lib.types.bool;
+          default = false;
+          description = ''
+            Server-side default for the template's thinking/reasoning phase.
+            false (default): every request starts with thinking OFF — the
+            InboxClean turn budget cannot absorb a 600-token think block
+            (2026-10-10). Consumers override PER REQUEST with
+            `chat_template_kwargs: {"enable_thinking": true}` (llama-server
+            accepts it on /v1/chat/completions). true: thinking on by
+            default. null: omit the flag and let the template decide.
+          '';
+        };
+
+        extraArgs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Extra llama-server arguments appended verbatim (shell-quoted).
+            For build- or model-specific tuning without a module change
+            (e.g. [ "--cache-type-k" "q8_0" "-ctv" "q8_0" ]).
+          '';
         };
 
         threads = lib.mkOption {
