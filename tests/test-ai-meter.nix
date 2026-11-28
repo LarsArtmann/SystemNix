@@ -23,6 +23,12 @@
 #      replayed from the ledger at every start, and nothing else is.
 #   7. A price row that lands after a call was made restates that call: the
 #      same binary, user and ledger with only the price table changed.
+#   8. The module's own renderer: every optional proxy field it can set
+#      (client priority, priority_aging_seconds, interactive_reserve,
+#      quota_source, quota_provider) is absent at the defaults — the
+#      default render is pinned byte for byte — and lands exactly where the
+#      proxy reads it once set, with nothing else moving. The real binary
+#      then boots on the part of that render the locked proxy knows.
 {
   pkgs,
   inputs,
@@ -127,6 +133,193 @@ let
       cached_input = 0.5;
     };
   };
+
+  # --- The module's own renderer -------------------------------------------
+  # proxyConfig is not an option; the content of the sops template is the
+  # one place the rendered JSON shows up. Evaluated in isolation with the
+  # same stubs the VM node below uses (mock-sops placeholders, catalog
+  # module). The module's own assertions are NOT checked here: they fire in
+  # the VM node's system build, which is what the negative legs
+  # (scripts/negative-test-lints.sh, group aimeter) build.
+  renderModule =
+    settings:
+    (pkgs.lib.evalModules {
+      modules = [
+        aiMeterModule
+        catalogModule
+        (
+          { lib, config, ... }:
+          {
+            options.sops.placeholder = lib.mkOption {
+              type = lib.types.attrsOf lib.types.str;
+              default = { };
+            };
+            options.assertions = lib.mkOption {
+              type = lib.types.listOf lib.types.attrs;
+              default = [ ];
+            };
+            config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
+          }
+        )
+        {
+          users.primaryUser = "root";
+          services.ai-meter = {
+            enable = true;
+            clients.vmtest.user = "root";
+          } // settings;
+        }
+      ];
+    }).config.sops.templates."ai-meter-config".content;
+
+  defaultRender = renderModule { };
+  defaultConfig = builtins.fromJSON defaultRender;
+
+  # Every optional field the module can set, at values that differ from the
+  # proxy's own defaults so a dropped field cannot pass as a default. The VM
+  # node sets the same options, so the module's assertions hold them too.
+  newOptions = {
+    clients.vmtest.priority = "interactive";
+    priorityAgingSeconds = 45;
+    interactiveReserve = 2;
+    quotaSource = {
+      enable = true;
+      pollSeconds = 20;
+      staleSeconds = 400;
+    };
+    upstreams.zai.quotaProvider = "zai";
+  };
+  fullConfig = builtins.fromJSON (renderModule newOptions);
+  upstreamByName = builtins.listToAttrs (
+    map (up: {
+      name = up.name;
+      value = up;
+    }) fullConfig.upstreams
+  );
+
+  # The full render with the new fields lifted back out, serialized the way
+  # the module serializes: must equal the default render byte for byte.
+  strippedRender = builtins.toJSON (
+    removeAttrs fullConfig [ "quota_source" ]
+    // {
+      clients = map (client: removeAttrs client [ "priority" ]) fullConfig.clients;
+      upstreams = map (
+        up:
+        removeAttrs up [ "quota_provider" ]
+        // lib.optionalAttrs (up ? admission) {
+          admission = removeAttrs up.admission [
+            "priority_aging_seconds"
+            "interactive_reserve"
+          ];
+        }
+      ) fullConfig.upstreams;
+    }
+  );
+
+  # sha256 of defaultRender as the module rendered it BEFORE these options
+  # existed (2026-11-28: `git show HEAD:modules/nixos/services/ai-meter.nix`,
+  # evaluated through the same renderModule with the same stubs). Any
+  # intended change to the rendered defaults (an upstream, a client field, a
+  # price) updates it; an unintended one fails here, before the VM boots.
+  defaultRenderHash = "__HASH__";
+
+  renderChecks =
+    (map (
+      a:
+      if a.assertion then
+        null
+      else
+        throw "ai-meter module render: ${a.message}"
+    ) [
+      {
+        assertion = strippedRender == defaultRender;
+        message = "the new fields must be the only difference between the default and the full render";
+      }
+      {
+        assertion = builtins.hashString "sha256" defaultRender == defaultRenderHash;
+        message = "the default render is no longer byte-identical to the pre-options render";
+      }
+      {
+        assertion = !lib.hasInfix "quota_source" defaultRender && !lib.hasInfix "quota_provider" defaultRender;
+        message = "the default render must carry no quota_source and no quota_provider";
+      }
+      {
+        assertion = builtins.all (
+          up: !(up ? quota_provider) && (!(up ? admission) || (!(up.admission ? priority_aging_seconds) && !(up.admission ? interactive_reserve)))
+        ) defaultConfig.upstreams;
+        message = "no default upstream may carry quota_provider, priority_aging_seconds or interactive_reserve";
+      }
+      {
+        assertion = builtins.all (client: !(client ? priority)) defaultConfig.clients;
+        message = "no default client may carry a priority";
+      }
+      {
+        assertion = defaultConfig.clients == [
+          {
+            name = "vmtest";
+            key_file = "/run/ai-meter-keys/config/vmtest";
+          }
+        ];
+        message = "the default client entry must be exactly name and key_file";
+      }
+      {
+        assertion = builtins.listToAttrs (
+          map (client: {
+            name = client.name;
+            value = removeAttrs client [ "name" "key_file" ];
+          }) fullConfig.clients
+        ) == {
+          vmtest.priority = "interactive";
+        } || builtins.length fullConfig.clients == 1;
+        message = "unreachable length guard";
+      }
+      {
+        assertion = fullConfig.clients == [
+          {
+            name = "vmtest";
+            key_file = "/run/ai-meter-keys/config/vmtest";
+            priority = "interactive";
+          }
+        ];
+        message = "a client with priority set must render it third, after name and key_file";
+      }
+      {
+        assertion = upstreamByName.zai.quota_provider == "zai";
+        message = "upstreams.zai.quotaProvider must render as quota_provider on the zai upstream";
+      }
+      {
+        assertion = upstreamByName.zai.admission.priority_aging_seconds == 45
+        && upstreamByName.zai.admission.interactive_reserve == 2
+        && upstreamByName.zai.admission.max_concurrency == 8
+        && upstreamByName.zai.admission.quota_reset_utc_offset_hours == 8;
+        message = "priorityAgingSeconds and interactiveReserve must land inside the zai admission block beside its existing keys";
+      }
+      {
+        assertion = !builtins.any (name: upstreamByName.${name} ? quota_provider) (
+          builtins.attrNames (removeAttrs upstreamByName [ "zai" ])
+        );
+        message = "no other upstream may carry a quota_provider";
+      }
+      {
+        assertion = fullConfig.quota_source == {
+          url = "http://127.0.0.1:8791";
+          poll_seconds = 20;
+          stale_seconds = 400;
+        };
+        message = "quota_source must render url (the quotaboard default), poll_seconds and stale_seconds";
+      }
+    ]);
+
+  # The full render minus what the proxy input locked in flake.lock does not
+  # know yet (quota_source and quota_provider: uncommitted in the ai-meter
+  # repository on 2026-11-28). The real binary boots on this in the VM.
+  bootableConfig = pkgs.writeText "ai-meter-module-config.json" (
+    renderModule (
+      removeAttrs newOptions [
+        "quotaSource"
+        "upstreams"
+      ]
+    )
+  );
 in
 {
   name = "ai-meter";
@@ -167,7 +360,7 @@ in
         # chown-to-ROOT target is a kernel no-op that would mask a
         # missing capability (exactly how the first mint draft slipped).
         clients.vmtest2.user = "nobody";
-      };
+      } // newOptions;
 
       # Point the template at the store-rendered config (mock-sops cannot
       # decrypt anything; the module's readOnly configFile follows).
@@ -348,5 +541,26 @@ in
         assert abs(cost_of(metrics, "fake") - 0.00074) < 1e-12, metrics
         ledger_lines = machine.succeed("wc -l < /var/lib/ai-meter/usage.jsonl").strip()
         assert ledger_lines == "3", f"the ledger must hold exactly the three calls made, has {ledger_lines}"
+
+    with subtest("the proxy boots on the module's own render"):
+        # Rendered by the module (not hand-written): the client priority and
+        # the zai admission block's priority_aging_seconds and
+        # interactive_reserve, as the eval-time checks above pinned them.
+        # Both ports have to be free, so the hand-started unit of the previous
+        # leg stops first.
+        machine.systemctl("stop ai-meter-priced.service")
+        machine.succeed(
+            "systemd-run --unit=ai-meter-module --uid=ai-meter ${aiMeterExe} -config ${bootableConfig}"
+        )
+        machine.wait_for_unit("ai-meter-module.service")
+        machine.wait_for_open_port(8107)
+        machine.wait_for_open_port(8108)
+        machine.succeed("curl -sf http://127.0.0.1:8107/health | grep ok")
+        # The key files the render names are the ones the module's mint wrote.
+        machine.succeed(
+            "curl -s -o /dev/null -w '%{http_code}' -XPOST http://127.0.0.1:8107/v1/nope/chat/completions"
+            + " -H 'Authorization: Bearer '$(cat /run/ai-meter-keys/vmtest)"
+            + " -H 'Content-Type: application/json' -d '{\"model\":\"m\"}'"
+        )
   '';
 }
