@@ -142,11 +142,11 @@ TRACE_API_TABLES=(signoz_index_v3 traces_v3_resource signoz_error_index_v2 usage
 LOGS_DEFAULT_TABLES=(logs_v2 logs_v2_resource distributed_logs_v2 distributed_logs_v2_resource)
 
 case "$method:${url#"$SIGNOZ_URL"}" in
-  "GET:/api/v1/settings/ttl?type=metrics)")
+  "GET:/api/v1/settings/ttl?type=metrics")
     respond 200 "{\"metrics_ttl_duration_hrs\":$(cat "$STUB_STATE/api-metrics-hrs"),\"status\":\"success\"}" ;;
-  "GET:/api/v1/settings/ttl?type=traces)")
+  "GET:/api/v1/settings/ttl?type=traces")
     respond 200 "{\"traces_ttl_duration_hrs\":$(cat "$STUB_STATE/api-traces-hrs"),\"status\":\"success\"}" ;;
-  "GET:/api/v2/settings/ttl)")
+  "GET:/api/v2/settings/ttl")
     respond 200 "{\"version\":\"v2\",\"status\":\"success\",\"default_ttl_days\":$(cat "$STUB_STATE/api-logs-days"),\"ttl_conditions\":[]}" ;;
   "POST:/api/v1/settings/ttl?type=metrics&duration="*h | "POST:/api/v1/settings/ttl?type=traces&duration="*h)
     signal=${url#*type=}; signal=${signal%%&*}
@@ -169,7 +169,7 @@ case "$method:${url#"$SIGNOZ_URL"}" in
     else
       for table in "${TRACE_API_TABLES[@]}"; do stub_set_seconds signoz_traces "$table" "$((hours * 3600))"; done
     fi ;;
-  "POST:/api/v2/settings/ttl)")
+  "POST:/api/v2/settings/ttl")
     if [ -f "$STUB_STATE/post-fails" ]; then
       respond 500 '{"error":"boom"}'
       exit 0
