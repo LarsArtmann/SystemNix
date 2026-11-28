@@ -37,7 +37,9 @@
 #   SIGNOZ_URL             query service base URL
 #   DB_METRICS DB_TRACES DB_LOGS   ClickHouse database names
 #   RETENTION_DAYS_METRICS RETENTION_DAYS_TRACES RETENTION_DAYS_LOGS
-# Optional: SIGNOZ_RETENTION_POLL_SECONDS (API poll interval, default 2)
+# Optional: SIGNOZ_RETENTION_POLL_SECONDS  API poll interval while SigNoz applies a
+#            change (default 2); SIGNOZ_RETENTION_WAIT_SECONDS the budget
+#            for that wait (default 120).
 # Needs: curl, jq, clickhouse-client on PATH (writeShellApplication
 # runtimeInputs in production; the fixture provides stubs).
 #
@@ -52,6 +54,7 @@ DAYS_METRICS=${RETENTION_DAYS_METRICS:?RETENTION_DAYS_METRICS is required}
 DAYS_TRACES=${RETENTION_DAYS_TRACES:?RETENTION_DAYS_TRACES is required}
 DAYS_LOGS=${RETENTION_DAYS_LOGS:?RETENTION_DAYS_LOGS is required}
 POLL_SECONDS=${SIGNOZ_RETENTION_POLL_SECONDS:-2}
+WAIT_SECONDS=${SIGNOZ_RETENTION_WAIT_SECONDS:-120}
 
 for days in "$DAYS_METRICS" "$DAYS_TRACES" "$DAYS_LOGS"; do
   if ! [[ "$days" =~ ^[1-9][0-9]*$ ]]; then
@@ -59,10 +62,12 @@ for days in "$DAYS_METRICS" "$DAYS_TRACES" "$DAYS_LOGS"; do
     exit 1
   fi
 done
-if ! [[ "$POLL_SECONDS" =~ ^[0-9]+$ ]]; then
-  echo "signoz-retention: FAIL: SIGNOZ_RETENTION_POLL_SECONDS must be an integer, got '$POLL_SECONDS'" >&2
-  exit 1
-fi
+for seconds in "$POLL_SECONDS" "$WAIT_SECONDS"; do
+  if ! [[ "$seconds" =~ ^[0-9]+$ ]]; then
+    echo "signoz-retention: FAIL: poll and wait seconds must be integers, got '$seconds'" >&2
+    exit 1
+  fi
+done
 
 RESP=$(mktemp)
 trap 'rm -f "$RESP"' EXIT
@@ -120,7 +125,7 @@ converge_v1() {
     # HTTP 409 = "TTL is already running": a ttl_setting row is still pending.
     echo "signoz-retention: $signal: another TTL change is running (HTTP 409) — waiting for it"
   fi
-  deadline=$((SECONDS + 120))
+  deadline=$((SECONDS + WAIT_SECONDS))
   while :; do
     sleep "$POLL_SECONDS"
     http GET "$path"
@@ -135,7 +140,7 @@ converge_v1() {
       break
     fi
   done
-  die "$signal: SigNoz still reports '${have_h:-?}' h 120s after POST settings/ttl"
+  die "$signal: SigNoz still reports '${have_h:-?}' h ${WAIT_SECONDS}s after POST settings/ttl"
 }
 
 # converge_logs DAYS FORCE(0|1) — logs through the v2 API: moves the
