@@ -153,6 +153,7 @@ let
         # sees no services.integration and emits an EMPTY mkIf'd definition,
         # which evalModules' check rejects ("option does not exist").
         integrationModule
+        ../tests/mock-sops.nix
         (
           { lib, config, ... }:
           {

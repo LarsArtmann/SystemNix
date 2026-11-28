@@ -2343,10 +2343,18 @@ in
             interval_seconds = lib.mkDefault 60;
             watch_paths = lib.mkDefault [ "~/Documents" ];
           };
-          # ON (owner decision 2026-11-28: every collector runs). The old
-          # "zbus::blocking panics inside tokio" note predates the lazy
-          # D-Bus connection handling upstream; if the agent logs a panic
-          # here again, this is the first line to turn off.
+          # ON (owner decision 2026-11-28: every collector runs). History,
+          # verified 2026-11-28: this line was OFF since 2026-07-04 because
+          # the agent aborted with "Cannot start a runtime from within a
+          # runtime" (the Linux provider called zbus's blocking API on a
+          # tokio worker). Even with the panic gone the collector stayed
+          # dark: it asked BlueZ for the wrong reply signature, swallowed
+          # the error and fell back to a sysfs scan that found nothing.
+          # Both are fixed upstream in the 2026-11-28 Bluetooth commits;
+          # the pin must include them (check `git log` of the monitor365
+          # input for "Bluetooth scan"). Live proof after a deploy: the
+          # journal shows "BluetoothCollector initialized devices_found=3"
+          # and no per-cycle errors.
           bluetooth.enabled = lib.mkDefault true;
           # Desktop collectors (skip gracefully if no graphical session)
           screenshots.enabled = lib.mkDefault true;
