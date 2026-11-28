@@ -189,3 +189,4 @@ Harvest state per item. Tag and location are named where it is in the TODO syste
 - `docs/agents/stability.md` row #66
 - `docs/todo/stability.md` rows updated + 1 decision row; `TODO_LIST.md` NOW 5 and 8, queue lines
 - `~/.cache/crash-20261128/` (triage, pstore copies, JSON dump, thermal and idle-check reads, TODO gate output)
+- TODO gate after the edits (14:33): rc 0, `OK: TODO queue/library structure clean`; ratchet WARN 3559 open queue rows against a cap of 3555 (+4; the 12:12 baseline read 3557, one of the two new rows is this session's idle-fix line, none closed), pairing-drift WARN 133 (unchanged), unharvested-report WARN 96 (unchanged).

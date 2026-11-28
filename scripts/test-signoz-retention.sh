@@ -147,7 +147,7 @@ case "$method:${url#"$SIGNOZ_URL"}" in
   GET:/api/v1/settings/ttl?type=traces)
     respond 200 "{\"traces_ttl_duration_hrs\":$(cat "$STUB_STATE/api-traces-hrs"),\"status\":\"success\"}" ;;
   "GET:/api/v2/settings/ttl)")
-    respond 200 "{\"version\":\"v2\",\"status\":\"success\",\"default_ttl_days\":$(cat "$STUB_STATE/api-logs-days\"),\"ttl_conditions\":[]}" ;;
+    respond 200 "{\"version\":\"v2\",\"status\":\"success\",\"default_ttl_days\":$(cat "$STUB_STATE/api-logs-days"),\"ttl_conditions\":[]}" ;;
   POST:/api/v1/settings/ttl?type=metrics&duration=*h | POST:/api/v1/settings/ttl?type=traces&duration=*h)
     signal=${url#*type=}; signal=${signal%%&*}
     hours=${url##*duration=}; hours=${hours%h}
