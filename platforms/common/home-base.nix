@@ -60,6 +60,7 @@ in
     # Session variables (available to all shells and applications)
     sessionVariables = {
       MANPAGER = "sh -c 'col -bx | bat -l man -p'";
+      MANROFFOPT = "-P -c";
       VISUAL = "code --wait";
 
       # Go development

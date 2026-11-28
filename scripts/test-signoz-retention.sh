@@ -235,9 +235,9 @@ run_retention() {
     PATH="$STUB_DIR/bin:$PATH" "$@" bash "$SCRIPT" 2>&1 || RUN_RC=$?
 }
 
-# store_exec STATE <shell snippet> — edit a fake store through the lib helpers
+# store_exec STATE SNIPPET — edit a fake store through the lib helpers
 store_exec() {
-  env STUB_STATE="$1" bash -c '. "${STUB_LIB:?}'; "$2"' _ "$STUB_DIR/lib.sh"
+  env STUB_STATE="$1" STUB_LIB="$STUB_DIR/lib.sh" bash -c '. "$STUB_LIB"; eval "$1"' _ "$2"
 }
 
 new_state() {
