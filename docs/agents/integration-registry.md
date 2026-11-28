@@ -224,7 +224,7 @@ drift red. Regenerate after any registry change:
 | lan-nic-watchdog | — | — | none | lan-nic-watchdog | — | — |
 | llama-chat | llama | 8850 | protected | llama-chat | — | — |
 | llama-embeddings | — | — | none | llama-embeddings | — | — |
-| llama-rag | — | — | none | llama-rag | 2 | — |
+| llama-rag | — | — | none | llama-rag | 3 | — |
 | mail-relay | — | — | none | postfix | 3 | — |
 | mail-server | — | — | — | — | — | — |
 | media-atlas | map | 8493 | plain | media-atlas | 4 | /mnt/pool/backups/media-atlas |
@@ -251,7 +251,7 @@ drift red. Regenerate after any registry change:
 | pbx | — | — | — | — | — | — |
 | pbx-backup-pull | — | — | none | pbx-backup-pull | — | /mnt/pool/backups/pbx |
 | pbx-lens | — | — | — | — | — | — |
-| pim-sync | — | — | — | — | — | — |
+| pim-sync | — | — | none | pim-sync.service | — | — |
 | pocket-id | auth | — | none | pocket-id | 2 | /mnt/pool/backups/pocket-id |
 | pool-recovery | — | — | none | pool-recovery | 1 | — |
 | pool-smart-metrics | — | — | none | pool-smart-metrics | 3 | — |
@@ -259,6 +259,7 @@ drift red. Regenerate after any registry change:
 | projects-management-automation | — | — | none | projects-management-automation | 2 | — |
 | projects-subvol | — | — | none | projects-subvol | 1 | — |
 | quotaboard | quotaboard | 8791 | protected | quotaboard | 2 | — |
+| reports-system | reports | 8113 | protected | reports-system | 3 | /mnt/pool/backups/reports-system |
 | restic-app-dumps | — | — | none | restic-app-dumps | — | /mnt/pool/backups/restic-app-dumps |
 | rust-cache | — | — | none | rust-cache | 3 | — |
 | searxng | search | 8889 | protected | searxng | 1 | — |

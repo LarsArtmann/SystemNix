@@ -2200,6 +2200,15 @@ in
         enable = true;
       };
 
+      # Reports web app (reports-system server, github:LarsArtmann/testing)
+      # with its own login and no OIDC, loopback 8113 behind the protected
+      # registry vHost reports.home.lan. Registration is bootstrap: the
+      # first account becomes the administrator, then registration closes.
+      # Runbook: docs/services/reports-system.md.
+      reports-system = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
