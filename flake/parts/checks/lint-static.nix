@@ -732,6 +732,20 @@
                     fillLessThan = "15m";
                   };
                 } [ promqlQuery ];
+              # The same chart with another gap setting (a `//` on the panel would
+              # replace the whole plugin).
+              chartWithGaps =
+                unit: fillOnlyBelow: fillLessThan:
+                panel {
+                  kind = "signoz/TimeSeriesPanel";
+                  spec.formatting.unit = unit;
+                  spec.chartAppearance.spanGaps = {
+                    inherit
+                      fillOnlyBelow
+                      fillLessThan
+                      ;
+                  };
+                } [ promqlQuery ];
               # A dashboard of one section. `panels` maps a key to a panel
               # spec; the file wraps each as { kind = "Panel"; spec = ... }.
               doc = panels: items: {
@@ -933,22 +947,12 @@
                 # calls (ai-meter, 2026-11-28). Threshold mode breaks the line.
                 lineChartSpansEveryGap = flagged (
                   doc {
-                    p = (chart "percent") // {
-                      spec.chartAppearance.spanGaps = {
-                        fillOnlyBelow = false;
-                        fillLessThan = "";
-                      };
-                    };
+                    p = chartWithGaps "percent" false "";
                   } [ (item 0 0 12 4 "p") ]
                 ) "line chart spans every gap";
                 lineChartThresholdWithoutDuration = flagged (
                   doc {
-                    p = (chart "percent") // {
-                      spec.chartAppearance.spanGaps = {
-                        fillOnlyBelow = true;
-                        fillLessThan = "";
-                      };
-                    };
+                    p = chartWithGaps "percent" true "";
                   } [ (item 0 0 12 4 "p") ]
                 ) "line chart spans every gap";
                 lineChartWithoutAppearance = flagged (
