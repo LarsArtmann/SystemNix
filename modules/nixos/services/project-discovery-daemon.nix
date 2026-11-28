@@ -133,7 +133,9 @@
             # above and lib/lars-packages.nix — same evidence (got 7VswA7CM ==
             # the upstream bake at 5cbc99c). Re-add ONLY via nix-hash-fix
             # evidence, never by hand.
-            package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
+            package =
+              lib.mkDefault
+                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };

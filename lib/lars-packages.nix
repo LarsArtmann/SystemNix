@@ -162,7 +162,9 @@ lib.filterAttrs (_: v: v != null) {
   # DROP when upstream re-measures vendorHash.nix at 0e3622de (or a later rev
   # the lock floats to) and that value equals the build's got hash — push is the
   # owner's; see docs/todo/pipeline.md (buildflow float row) for the handoff.
-  buildflow = flakePkgShim inputs.buildflow "default" "sha256-WnSBXpNXpx+pCyvVfCU4XV/dQfDgKhRUC7mc7zpbKEU=";
+  buildflow =
+    flakePkgShim inputs.buildflow "default"
+      "sha256-WnSBXpNXpx+pCyvVfCU4XV/dQfDgKhRUC7mc7zpbKEU=";
   # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
   # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
   # packages.default with its own baked vendorHash (no follows into it).
