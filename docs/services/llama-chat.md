@@ -1,8 +1,9 @@
 # llama-chat — InboxClean's chat agent brain
 
-Socket-activated CPU llama-server (llama.cpp) serving Lars's abliterated
+Socket-activated llama-server (llama.cpp) serving Lars's abliterated
 Qwen3.6 35B-A3B MoE with native tool calls, OpenAI-compatible at
-`127.0.0.1:8850/v1`. On-demand since 2026-11-18 (freeze-41 report item 30,
+`127.0.0.1:8850/v1` — on the iGPU (HIP build, all 41 layers in GTT) since
+2026-11-28, CPU before that. On-demand since 2026-11-18 (freeze-41 report item 30,
 the module's sanctioned return path after the Nov 2-3 freeze chain retired
 the always-on posture): a public systemd socket (`llama-chat.socket`,
 Accept=true) owns :8850, each client connection spawns a per-connection
@@ -29,10 +30,23 @@ posture (the socket IS the convergence).
   REMOVED the same day (service, gatus check, dashboard tile, SigNoz rule,
   DMS widget, port 11434, ai-models paths); `/data/ai/models/ollama` (~15 G)
   is owner-reclaim residue.
-- **CPU, not GPU**: the llama.cpp/ROCm path wedges under systemd units on
-  gfx1150 (freeze #5, 2026-09-18 — even the rev-pinned 0.3.0 build; see
-  llama-rag.nix). The CPU build (0.6.0 at the 2026-10-10 deploy; 0.5.0 proven earlier) is in production
-  llama-vlm. A 3B-active MoE keeps CPU tokens interactive-fast.
+- **iGPU, with CPU as the escape hatch** (`services.llama-chat.accelerator`,
+  owner directive 2026-11-27: "ALL AI models should be ran on iGPU or NPU and
+  NEVER on the CPU"): the HIP/ROCm build from the root nixpkgs
+  (`lib/rocm.nix` `llamaCppHip`, the derivation behind ai-stack's
+  `llama-server-rocm`), `--gpu-layers all --load-mode none --parallel 1`.
+  It was CPU from 2026-10-05 because the llama.cpp/ROCm path wedged under
+  systemd units on gfx1150 (freeze #5, 2026-09-18 — even the rev-pinned
+  0.3.0 build; see llama-rag.nix). That wedge was attributed upstream to the
+  MMAP load path (llama.cpp #19482, ROCr userptr registration;
+  docs/status/2026-11-14_07-59_llama-cpp-spin-upstream-attribution.md) and
+  llama.cpp ≥0.9 leaves that path on iGPUs (`--load-mode auto` → none). The
+  flip was verified under the unit-shaped sandbox BEFORE the config changed —
+  numbers, method and the open risks:
+  docs/status/2026-11-28_03-20_llama-chat-igpu-flip-hip-build-verified.md.
+  Rollback = `accelerator = "cpu"` in configuration.nix + deploy. The module
+  header carries the guardrails (start contract, one slot, device cgroup,
+  re-soak-before-deploy).
 - **Native tool calls**: `--jinja` applies the GGUF's Qwen3.6 chat template,
   so OpenAI-format `tools` produce real `tool_calls` responses (verified
   live 2026-10-08). The InboxClean agent drives Gmail tools through this.
@@ -94,6 +108,23 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 - Tools: `finish_reason: tool_calls` with parsed arguments in auto mode —
   the abliterated tune keeps the Qwen3.6 tool template intact.
 
+## Measured on the iGPU (2026-11-28, HIP 1.0.0 build under the unit-shaped sandbox)
+
+Box under io pressure throughout (io PSI some 28-60%), so these are
+storm-window numbers, not a calm-box best case:
+
+| Probe | CPU (before) | iGPU (after) |
+| ----- | ------------ | ------------ |
+| Prompt processing | 5-18 tok/s under IO pressure (the 2026-11-27 browser-history summary timeout: 4,678 of 5,190 tokens in 600 s); calm-box figure never measured | **1,245 tok/s** (6,120-token prompt in 4.9 s) |
+| Generation | ~17 tok/s (2026-10-08, calm) | **53-56 tok/s** |
+| 6k-token chat request, 200 output tokens | did not finish in 10 min on 2026-11-27 | **8.8 s** wall |
+| Cold load of the 23.4 GB model | ~8 min (2026-11-28 02:37→02:44, storm) | **2m29s** (`load_mode = none`, 41/41 layers, 22.1 GiB ROCm0 model buffer) |
+| 4 parallel chat requests | interleaved on 12 threads | all 4 done in 9.4 s (default 4 slots; production pins `--parallel 1`) |
+
+The iGPU numbers do not depend on page-cache hits — the weights are
+resident in GTT — which is the point: the CPU posture collapsed whenever IO
+pressure evicted experts.
+
 ## Consumers
 
 - **InboxClean** (`modules/nixos/services/inboxclean.nix`):
@@ -117,7 +148,7 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
   not a health signal.
 - Swap the brain: change `services.llama-chat.modelPath` + `alias` (the
   inboxclean `LLM_MODEL` follows automatically) — e.g. the dense 27B
-  sibling, or a future GPU re-enable once the ROCm wedge is fixed upstream.
+  sibling. A new model re-runs the GPU soak first (module header).
   - Bench sync-check (modelPath split-brain guard, 2026-11-05):
     `scripts/bench-cold-load.sh` derives its default model from THIS
     module's `modelPath` option default at runtime — a swap via the module
@@ -144,3 +175,20 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
   — a nonzero `high` counter = throttling since start (resets on restart).
   If the memory-emergency-guard ever trips BECAUSE of this residency, add
   `llama-chat.service` to its churn list — do not silence the guard.
+- **The iGPU residency is INVISIBLE to the cgroup** (measured 2026-11-28):
+  GPUVM (GTT) allocations are not charged to the unit's memcg — the soak's
+  cgroup peaked at 5.2 GB while ~27 GB sat in GTT. `memoryMax`, `MemoryHigh`
+  and every cgroup-based reading UNDER-report this unit by the weight size,
+  and unlike page cache the GTT copy is PINNED: a memory cliff cannot evict
+  it, only the kernel's OOM preference (`OOMScoreAdjust = 300`) or a stop
+  frees it. Residency is bounded in time by the on-demand posture + idle
+  TTL. If the guard needs to reclaim it, stopping `llama-chat.service` is
+  the lever (owner decision — guard zones are owner-gated).
+- **Idle-check bug fixed 2026-11-28**: the shared activity probe
+  (`_llama-idle-activity.nix`) was spliced as its store DIRECTORY, every
+  check read that as "no activity", and llama-chat + both llama-vlm
+  backends unloaded at the first check after 10 min — the 60-min keep-alive
+  was never honored (live 02:57:39: llama-chat unloaded mid-request). The
+  helper now exports the executable path; `tests/test-llama-chat-accelerator.nix`
+  pins it. Symptom to recognise: `llama-chat-idle.service` FAILED with
+  `Is a directory` in its journal line.
