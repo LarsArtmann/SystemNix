@@ -266,11 +266,18 @@
         inject_stream_usage = true;
         # Daemon reads the ai-meter-owned mirror copies (see mintScript) —
         # never the consumer-owned 0400 originals.
-        clients = lib.mapAttrsToList (name: _client: {
-          inherit name;
-          key_file = "${keysDir}/config/${name}";
-        }) cfg.clients;
-        inherit upstreams;
+        clients = lib.mapAttrsToList (
+          name: client:
+          {
+            inherit name;
+            key_file = "${keysDir}/config/${name}";
+          }
+          # The proxy defaults an absent priority to background.
+          // lib.optionalAttrs (client.priority != null) {
+            inherit (client) priority;
+          }
+        ) cfg.clients;
+        upstreams = upstreamsRendered;
         costs = lib.mapAttrs (_: cost: {
           inherit (cost) input;
           inherit (cost) output;
@@ -282,7 +289,7 @@
         # spans stop landing).
         otlp_endpoint = "http://127.0.0.1:${toString ports.signoz-otlp-http}";
         deployment_environment = "production";
-      };
+      } // quotaSource;
 
       clientList = lib.mapAttrsToList (name: client: {
         inherit name;
@@ -334,8 +341,78 @@
           ''
         ) clientList
       );
+      # Per-upstream extras the host may set on the upstream list above
+      # (keyed by name; an unknown name fails the assertions below). Only
+      # quota_provider exists today.
+      upstreamExtras = cfg.upstreams;
+
+      # The upstream list with every optional field the host set. Each new
+      # field is absent at the module's defaults, so the rendered config is
+      # byte-identical to the one before these options existed.
+      upstreamsRendered = map (
+        up:
+        up
+        // lib.optionalAttrs ((upstreamExtras.${up.name}.quotaProvider or null) != null) {
+          quota_provider = upstreamExtras.${up.name}.quotaProvider;
+        }
+        // lib.optionalAttrs (up ? admission && (cfg.priorityAgingSeconds != null || cfg.interactiveReserve != null)) {
+          admission = up.admission // lib.optionalAttrs (cfg.priorityAgingSeconds != null) {
+            priority_aging_seconds = cfg.priorityAgingSeconds;
+          } // lib.optionalAttrs (cfg.interactiveReserve != null) {
+            interactive_reserve = cfg.interactiveReserve;
+          };
+        }
+      ) upstreams;
+
+      # Off by default: rendered (and so read by the proxy) only when the
+      # host enables it.
+      quotaSource = lib.optionalAttrs cfg.quotaSource.enable {
+        quota_source = {
+          inherit (cfg.quotaSource) url;
+          poll_seconds = cfg.quotaSource.pollSeconds;
+          stale_seconds = cfg.quotaSource.staleSeconds;
+        };
+      };
+
+      # The upstreams that carry an admission block (today: zai). The proxy's
+      # class-queue settings live inside that block, so they apply to exactly
+      # these.
+      gatedUpstreams = builtins.filter (up: up ? admission) upstreams;
+      gatedNames = map (up: up.name) gatedUpstreams;
+      providerUpstreams = builtins.attrNames (
+        lib.filterAttrs (_: extra: extra.quotaProvider != null) upstreamExtras
+      );
+
+      # The proxy refuses each of these at start; a module assertion refuses
+      # them at eval, before the unit is ever built.
+      assertions = [
+        {
+          assertion = cfg.interactiveReserve == null
+            || builtins.all (up: cfg.interactiveReserve >= 0 && cfg.interactiveReserve < up.admission.max_concurrency) gatedUpstreams;
+          message = "services.ai-meter.interactiveReserve (${toString cfg.interactiveReserve}) must be between 0 and max_concurrency-1 of every gated upstream (${lib.concatMapStringsSep ", " (up: "${up.name}: ${toString (up.admission.max_concurrency - 1)}") gatedUpstreams}); the proxy refuses to start otherwise";
+        }
+        {
+          assertion = !cfg.quotaSource.enable
+            || cfg.quotaSource.staleSeconds >= cfg.quotaSource.pollSeconds;
+          message = "services.ai-meter.quotaSource.staleSeconds (${toString cfg.quotaSource.staleSeconds}) must be at least pollSeconds (${toString cfg.quotaSource.pollSeconds}); the proxy refuses to start otherwise";
+        }
+        {
+          assertion = cfg.quotaSource.enable || providerUpstreams == [ ];
+          message = "services.ai-meter.upstreams.<name>.quotaProvider (${lib.concatStringsSep ", " providerUpstreams}) needs services.ai-meter.quotaSource.enable = true; the proxy refuses to start otherwise";
+        }
+        {
+          assertion = builtins.all (name: builtins.elem name gatedNames) providerUpstreams;
+          message = "services.ai-meter.upstreams.<name>.quotaProvider is only allowed on an upstream with an admission block (${lib.concatStringsSep ", " gatedNames}); set on: ${lib.concatStringsSep ", " providerUpstreams}";
+        }
+        {
+          assertion = builtins.all (name: builtins.elem name (map (up: up.name) upstreams)) (builtins.attrNames upstreamExtras);
+          message = "services.ai-meter.upstreams.<name> names an upstream this module does not render; known: ${lib.concatStringsSep ", " (map (up: up.name) upstreams)}";
+        }
+      ];
     in
     {
+      inherit assertions;
+
       # Platform-truth catalog entry (ADR-008): unconditional — describes what
       # EXISTS platform-wide. Hosts/VMs importing this module MUST co-import
       # nixosModules.catalog (loud eval failure otherwise).
@@ -393,6 +470,19 @@
                     raw key file (crush reads it via $(cat) in the crushrc).
                   '';
                 };
+                priority = lib.mkOption {
+                  type = lib.types.nullOr (lib.types.enum [
+                    "interactive"
+                    "background"
+                  ]);
+                  default = null;
+                  description = ''
+                    The client's class at a crowded gate: "interactive" (a
+                    person is waiting: served before background work, may use
+                    every slot) or "background". null leaves the field out of
+                    the config: the proxy then treats the client as background.
+                  '';
+                };
               };
             }
           );
@@ -400,6 +490,87 @@
             crush.user = primaryUser;
           };
           description = "Consuming apps. Each gets a runtime-minted proxy key keyed to its name for attribution.";
+        };
+
+        priorityAgingSeconds = lib.mkOption {
+          type = lib.types.nullOr lib.types.ints.unsigned;
+          default = null;
+          description = ''
+            How long a background call may wait at a gated upstream (one with
+            an admission block) before it is served ahead of interactive
+            calls, so a steady stream of interactive work cannot starve it.
+            null leaves the field out of the config: the proxy then uses 60.
+          '';
+        };
+
+        interactiveReserve = lib.mkOption {
+          type = lib.types.nullOr lib.types.ints.unsigned;
+          default = null;
+          description = ''
+            How many slots of each gated upstream's max_concurrency
+            background calls may not take, keeping room for interactive
+            work. null leaves the field out of the config: the proxy then
+            uses 0 (off). Must be below max_concurrency (asserted).
+          '';
+        };
+
+        quotaSource = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              enable = lib.mkEnableOption "reading provider quota windows from quotaboard";
+
+              url = lib.mkOption {
+                type = lib.types.strMatching "^https?://.+$";
+                default = "http://127.0.0.1:${toString ports.quotaboard}";
+                description = ''
+                  quotaboard's JSON API (http or https). The default is this
+                  host's quotaboard listener.
+                '';
+              };
+
+              pollSeconds = lib.mkOption {
+                type = lib.types.ints.positive;
+                default = 30;
+                description = "How often the proxy polls quotaboard.";
+              };
+
+              staleSeconds = lib.mkOption {
+                type = lib.types.ints.positive;
+                default = 300;
+                description = ''
+                  How old a poll result may be before the proxy stops
+                  trusting it. Must be at least pollSeconds (asserted).
+                '';
+              };
+            };
+          };
+          default = { };
+          description = ''
+            Provider quota windows from quotaboard. Off by default: nothing
+            is rendered into the proxy config unless enabled.
+          '';
+        };
+
+        upstreams = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.submodule {
+            options = {
+              quotaProvider = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = ''
+                  The provider id quotaboard tracks for this upstream.
+                  Needs quotaSource.enable and an upstream with an admission
+                  block (both asserted). null renders nothing.
+                '';
+              };
+            };
+          });
+          default = { };
+          description = ''
+            Per-upstream settings on top of the upstream list the module
+            renders, keyed by upstream name (e.g. upstreams.zai.quotaProvider).
+            An unknown name fails evaluation (asserted).
+          '';
         };
 
         costs = lib.mkOption {
