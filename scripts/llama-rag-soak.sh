@@ -108,6 +108,10 @@ while [ $# -gt 0 ]; do
     SERVER_ARGS+=("${2:-}")
     shift 2
     ;;
+  --server-arg=*)
+    SERVER_ARGS+=("${1#--server-arg=}")
+    shift
+    ;;
   --warmup-max)
     WARMUP_MAX="${2:-}"
     shift 2
@@ -145,17 +149,17 @@ done
   exit 2
 }
 case "$MODE" in
-  embedding | chat) ;;
-  *)
-    echo -e "${RED}FAIL:${NC} --mode must be 'embedding' or 'chat', got '$MODE'" >&2
-    exit 2
-    ;;
+embedding | chat) ;;
+*)
+  echo -e "${RED}FAIL:${NC} --mode must be 'embedding' or 'chat', got '$MODE'" >&2
+  exit 2
+  ;;
 esac
 case "$WARMUP_MAX" in
-  '' | *[!0-9]*)
-    echo -e "${RED}FAIL:${NC} --warmup-max must be a whole number of seconds, got '$WARMUP_MAX'" >&2
-    exit 2
-    ;;
+'' | *[!0-9]*)
+  echo -e "${RED}FAIL:${NC} --warmup-max must be a whole number of seconds, got '$WARMUP_MAX'" >&2
+  exit 2
+  ;;
 esac
 
 # Guard: llama-rag must be config-disabled while soaking. systemd-run under
@@ -225,7 +229,7 @@ get_pid() {
   local pid
   pid="$(systemctl show "$SCOPE.service" -p MainPID --value 2>/dev/null)" || return 0
   case "$pid" in
-    '' | 0 | *[!0-9]*) return 0 ;;
+  '' | 0 | *[!0-9]*) return 0 ;;
   esac
   printf '%s\n' "$pid"
 }
