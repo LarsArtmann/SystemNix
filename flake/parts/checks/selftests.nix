@@ -470,7 +470,7 @@
         # signoz-retention (2026-11-28): the metrics/traces/logs TTL converger
         # against stubbed curl + clickhouse-client. Leg 1: the repo text.
         signoz-retention-selftest = pkgs.runCommand "signoz-retention-selftest" { } ''
-          export PATH="${pkgs.jq}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+          export PATH="${pkgs.jq}/bin:${pkgs.gawk}/bin:${pkgs.gnused}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
           scratch=$(mktemp -d)
           cp ${root}/scripts/signoz-retention.sh "$scratch/signoz-retention.sh"
           cp ${root}/scripts/test-signoz-retention.sh "$scratch/test-signoz-retention.sh"
@@ -514,7 +514,7 @@
                 throw "signoz-retention.service environment does not match services.signoz: ${builtins.toJSON missingOrWrong}";
           in
           pkgs.runCommand "signoz-retention-rendered" { } ''
-            export PATH="${pkgs.jq}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+            export PATH="${pkgs.jq}/bin:${pkgs.gawk}/bin:${pkgs.gnused}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
             wrapper=${lib.escapeShellArg wrapper}
             [ -x "$wrapper" ] || { echo "FAIL: unit ExecStart is not an executable wrapper: $wrapper"; exit 1; }
             for tool in curl jq clickhouse; do
