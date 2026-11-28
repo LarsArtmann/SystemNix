@@ -16,7 +16,15 @@
 
 **2026-11-27 ENABLED dry-run — why that is safe with placeholders:** upstream has NO idle no-op (`discoverAccounts` errors on an empty tokensDir, `cmd/pim-sync/sync.go:359`), so a plain `enable = true` would fail every 5 min, ride OnFailure into a Discord storm and trip the failed-unit exit-4 deploy trap. The wrapper therefore adds an **ExecCondition secret gate** (`pim-sync-secret-gate`): exit 1-254 makes systemd SKIP the unit (inactive, no failure state, OnFailure does not fire) while any material still says PLACEHOLDER, while a MISSING rendered sops file exits 255 as a real failure (a render defect must never read as "waiting for the owner"). Shape validation stays in the config-check ExecStartPre, which only runs once the gate passes. Two more pieces of the same posture: `SuccessExitStatus = [ 3 ]` while `live = false` (a dry-run cap abort is informational — the guard stops before any write and the run's value is its projected-change report; the flag default cap is 50 and a first projection against a fresh book exceeds it by design), and the dry-run ExecStart passes no `--max-changes` at all (upstream only adds it with `--live`).
 
-**Upstream defect surfaced by the first real enable (2026-11-27):** upstream sets `users.users.pim-sync.description = "pim-sync bot account (bot:pim-sync machine actor)"` — NixOS rejects `:` in user descriptions (GECOS), so `enable = true` failed eval until the wrapper added a `lib.mkForce` with the colon removed. Inert for 3 weeks only because the whole upstream config is `mkIf cfg.enable`. One-line upstream fix pending (owner push; TODO row in `docs/todo/upstream.md`); the mkForce is the documented interim.
+**Three upstream defects surfaced by the first real enable (2026-11-27), all invisible while the module stayed disabled** (`enable = true` is simply never evaluated). Fixed locally in `~/projects/pim-sync` at commit `0d9dfeb` — **not pushed** (agent rule); the SystemNix input still points at the GitHub rev, so the wrapper carries three documented interim shims until the input floats:
+
+| Defect | Symptom | SystemNix shim |
+|---|---|---|
+| `users.users.pim-sync.description` contained `:` | eval abort (NixOS rejects `:` in GECOS descriptions) | `lib.mkForce` with the colon removed |
+| seed script rendered `[ -n "/var/lib/pim-sync-seed" ]` | SC2157 is fatal in `writeShellApplication` → `pim-sync-seed-tokens.drv` failed to BUILD | `seedTokens` replacement (same semantics, creates every dir) |
+| `ReadWritePaths` without `-` prefixes | first start on a fresh host dies **226/NAMESPACE** before `ExecStartPre` can create the dirs (live-proven with `systemd-run`; the receipt writer `MkdirAll`s its dir, the tokens/state dirs need the seed script) | `lib.mkForce` with `-` prefixes |
+
+Verify the upstream fix locally with a throwaway `nixosSystem` and `systemd.units."pim-sync.service".unit` — that build pulls the seed script, so a green build proves both the SC2157 and the namespace fixes.
 
 ## Flip ladder (owner-gated — plan: docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md)
 

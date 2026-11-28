@@ -26,7 +26,7 @@ let
 
   primaryUserStub = {
     options.users.primaryUser = lib.mkOption { type = lib.types.str; };
-    users.primaryUser = "lars";
+    config.users.primaryUser = "lars";
   };
 
   eval =
@@ -62,6 +62,10 @@ let
     {
       name = "igpu: ExecStart lost --load-mode none (the #19482 mmap escape)";
       pass = lib.hasInfix " --load-mode none " igpuExec;
+    }
+    {
+      name = "igpu: ExecStart lost --parallel 1 (the 2026-11-25 request-time wedge mitigation)";
+      pass = lib.hasInfix " --parallel 1 " igpuExec;
     }
     {
       name = "igpu: no render group — /dev/kfd is unreachable for a non-root unit";
