@@ -50,7 +50,9 @@ services.signoz-coverage.expected.my-unit = {
 ## Flip procedure (upstream instrumentation lands)
 
 1. Push + tag the upstream repo (user-owned step — agents never push).
-2. `nix flake lock --update-input <repo>` (expect a go-modules FOD vendorHash
+2. `nix flake update <repo>` (NOT `nix flake lock --update-input`, which
+   silently no-ops on this nix, live 2026-11-15; re-read the lock rev after)
+   (expect a go-modules FOD vendorHash
    mismatch — paste the `got:` hash; SystemNix-side overrides live in the
    service module when upstream's own hash is stale).
 3. Flip the registry entry `wiring = "upstream"` → `"env"` (or `"config"` for
@@ -103,15 +105,27 @@ WHERE timestamp > toUnixTimestamp(now() - INTERVAL 1 DAY) * 1000000000;
 | `signoz_logs_pipeline_{age_seconds,stale}`     | journald pipeline freshness (stale > 30 min)                                    |
 | `signoz_coverage_scrape_errors`                | collector ClickHouse queries failed (fail-closed pair with forced-high missing) |
 
-## Known gaps (2026-08-31, post bank-sync flip)
+## Known gaps (refreshed 2026-11-28 against the live collector textfile)
 
-- **dnsblockd** — upstream fix (scheme-aware transport, `WithInsecure`) applied
-  in the dnsblockd checkout but not pushed; `otlp_endpoint` config key already
-  live. Flip to `wiring = "config"` after push + input bump.
-- **overview, projects-management-automation** — TracerProvider initialized,
-  zero `tracer.Start` sites upstream (perfect noops).
-- **papdashboard** — OTel metrics only, no trace SDK.
+Four, matching `maxUpstreamGaps = 4`. Each reads
+`signoz_traces_expected{service="…"} 1` with `signoz_traces_reporting{service="…"} 0`
+in `signoz-coverage.prom`; the other 12 registered services read `reporting 1`.
+
+- **projects-management-automation** — TracerProvider initialized, zero
+  `tracer.Start` sites upstream (a perfect noop until instrumentation lands).
+- **papdashboard** — OTel metrics only, no trace SDK upstream.
 - **hermes** — Python, opentelemetry-sdk not wired.
+- **monitor365-server** — moved here from enforced 2026-10-29: the server
+  process cannot initialise a tracer (evidence in monitor365.nix at the
+  registry entry).
+
+Closed since the 2026-08-31 list: **dnsblockd** (upstream 70ca2ea pushed,
+flipped to `wiring = "config"` 2026-09-13) and **overview** (upstream
+traceMiddleware fff1035, flipped to enforced 2026-09-29).
+
+Span emitters with no registry entry on 2026-11-28 (1 to 72 spans in the
+15-day window, no `signoz_traces_expected` series for them): `stalwart`,
+`dnsblockd-test`, `ai-meter-selftest`.
 
 Docker containers (twenty) and config-wired services are invisible
 to the reverse assertion (env not eval-visible) — extend `untrackedOtelUnits`

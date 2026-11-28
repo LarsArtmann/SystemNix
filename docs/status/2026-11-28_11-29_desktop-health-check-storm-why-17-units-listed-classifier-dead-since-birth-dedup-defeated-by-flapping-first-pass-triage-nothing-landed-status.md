@@ -1,7 +1,7 @@
 # Desktop health-check storm: why the popup lists 17 units and re-pops every ~20 minutes; the acute/chronic classifier has been dead since birth; first-pass triage of every listed unit; NOTHING landed in the tree
 
 **Written:** 2026-11-28 11:29 CET (`date`; the write itself finished ~11:55). Session ran ~09:31–11:55 CET. Boot `56ba232e`.
-**Repo:** SystemNix @ `e2c0063d5` (HEAD at 11:49:34; it moved more than 60 times during the session, every move a daemon "heuristic" commit from parallel sessions). **This session changed NOTHING in the tree.** The only file it produced is this report.
+**Repo:** SystemNix @ `e2c0063d5` (HEAD at 11:49:34; it moved repeatedly during the session, every move a daemon "heuristic" commit from parallel sessions). **This session changed NOTHING in the tree.** The only file it produced is this report.
 **Trigger:** owner: "Desktop Health check notifications seem like a lot is broken, why? fix".
 **Live system at report time:** gen-1033 (`/run/current-system` = profile), io PSI some avg10 37.9 %, load 29.2 at 11:45.
 
@@ -11,7 +11,7 @@
 
 ## §0 The answer: WHY the notification looks like "a lot is broken"
 
-1. **None of the 17 units in the 09:34 popup was a down service.** All 14 system units and all 3 user units are timer-driven jobs and checks (13 system ones have `TriggeredBy=…timer` in `systemctl show`; the 14th is a throwaway `systemd-run` test unit). systemd's `failed` state is a latch that holds from one failed run until the next successful one: up to 24 h for a daily job, 30 min for a half-hourly one, forever for a unit that never runs again. The popup therefore shows a 24-hour history of "something failed at some point", formatted as "services down".
+1. **None of the 17 units in the 09:34 popup was a down service.** All 14 system units are timer-driven jobs and checks (13 have `TriggeredBy=…timer` in `systemctl show`; the 14th is a throwaway `systemd-run` test unit), and the 3 user units are described as daily, nightly and 15-minute timers (their `TriggeredBy` was not queried; only `nextd-refresh.timer` was seen active). systemd's `failed` state is a latch that holds from one failed run until the next successful one: up to 24 h for a daily job, 30 min for a half-hourly one, forever for a unit that never runs again. The popup therefore shows a 24-hour history of "something failed at some point", formatted as "services down".
 2. **The designed separation between acute and chronic failures has never worked.** `is_pending_retry` (`scheduled-tasks.nix:558-588`, introduced 2026-10-17 in `ecc8996f9`) asks `systemctl is-active --quiet "$1.timer"` with `$1` already equal to `foo.service`, so it asks for `foo.service.timer`, which does not exist (rc=4) and returns "chronic" for every unit, always. PENDING lines in the retained journal: 0 of 744 runs since 2026-11-20 17:45. A second defect sits behind it: after a retry both `LastTriggerUSec` and `InactiveEnterTimestamp` belong to the newest run, so `lt < fa` (`:584`) is true for every refailer that runs longer than one second (`nix-optimise` at 11:0x: trigger 03:48:26, failure 04:10:04), and false for every sub-second check because trigger and failure share the second (`disk-growth-check`: both 00:55:42). The timestamps cannot rebuild a failure count at all.
 3. **The desktop dedup is keyed on the hash of the whole set, and the set flaps.** `crm-alarm-byphone` alternates PASS/ALARM every 10 minutes (9 additions, 8 removals in the window); `nextd-refresh` fails or passes every 15 minutes (8 additions, 21 removals); `inboxclean-sync`, `catalog-inventory-sync` and `system-health-metrics` also toggle. Result in 35.5 hours: **99 critical popups in 143 runs** (one every 21.5 minutes on average), 42 dedup skips, and **20 of the 99 popups fired only because a member recovered** (good news, critical urgency).
 4. **Under the noise there is real breakage.** First-pass count for the 17 units: 6 config bugs in this repo, 4 alert-by-design checks whose condition is real (one serious: root snapshots and root pool backups are 12 days old), 2 owner gates (a Borg key, a Gmail consent), 4 upstream or other-repo items, 2 noise. Details in §d.
@@ -24,7 +24,7 @@ What the owner saw at 09:34 was the union of everything that had failed since th
 
 ### What did you forget?
 
-1. **The fix.** Two hours twenty-four minutes in, the tree is untouched and the popups continue (11:19 and 11:31 still NOTIFIED). No mitigation was applied live either: I never even tried `systemctl reset-failed pimtest-rw-27356.service` (a foreign reset removed it at 10:47).
+1. **The fix.** Two hours twenty-four minutes in, the tree is untouched and the popups continue (11:19 and 11:31 still NOTIFIED). No mitigation was applied live either: I never even tried `systemctl reset-failed pimtest-rw-27356.service` (a foreign run emptied the set at 10:47; nothing I did).
 2. **An interim answer.** By 09:45 I held the failure line of all 17 units. The owner's "why" was answerable then, in six lines; I sent no progress text at all.
 3. **The NOW block.** Session discipline says read `TODO_LIST.md`'s NOW block before claiming work. I did not read it.
 4. **`docs/agents/monitoring.md`.** The routing table sends monitoring work there; I grepped it for three terms and read nothing else. I read only the head of `docs/agents/systemd.md` plus two bullets.
@@ -135,13 +135,13 @@ Class: **A** config bug in this repo · **B** upstream / other repo · **C** own
 | `cv-backup` | sys | 11-28 03:22:02 | timeout, SIGTERM | `start operation timed out` after 5 min; 900 ms CPU over 5 min | **A**: `TimeoutStartSec` too tight for an IO-bound online `.backup` | `lib/default.nix` (declaration site not located) |
 | `monitor365-pool-copy` | sys | 11-28 03:29:34 | 1 | `cp: cannot stat '/mnt/pool/services/monitor365/backups/monitor365.duckdb.backup_20261128T020247Z.db': Permission denied` | **A**: mode or owner of the newest backup file | `modules/nixos/services/monitor365.nix` (edited by another session at 09:48) |
 | `media-atlas-poll-embeddings` | sys | 11-28 03:12:13 | timeout, SIGTERM | `embedding walk: immich: smart_search walk rows: context canceled` after 10 min; one run read 10.9G, wrote 7.4G | **A/B**: walk does not finish in 10 min | `modules/nixos/services/media-atlas.nix` |
-| `nix-optimise` | sys | 11-28 04:10:04 | 1 | `error: getting status of "/nix/store/…-source": No such file or directory`, after ~14.6k lines `… has maximum number of links` | **E/A**: looks like a race with a concurrent GC (inferred); optimise is idempotent, no data lost | `platforms/common/nix-settings.nix` |
+| `nix-optimise` | sys | 11-28 04:10:04 | 1 | `error: getting status of "/nix/store/…-source": No such file or directory`, in a 14,607-line journal since 2026-11-27 12:00 dominated by `… has maximum number of links` | **E/A**: looks like a race with a concurrent GC (inferred); optimise is idempotent, no data lost | `platforms/common/nix-settings.nix` |
 | `disk-growth-check` | sys | 11-28 00:55:42 | 1 | `WARNING: /data grew 22GB in 24h (threshold: 5G)`, `/data usage: 661GB` | **D**: threshold alert; what grew is unknown | `platforms/nixos/system/scheduled-tasks.nix` |
 | `crm-alarm-byphone` | sys | 11-28 09:37:09 | 2 | `ALARM by-phone 10min window: 1189 requests, 13 5xx (max 5)` … `handler fell back to full contact-views scans` | **D**: designed alarm; CRM 5xx storm real; PASS at 09:17, ALARM at 09:27 and 09:37 | `modules/nixos/services/crm.nix` |
 | `inboxclean-sync` | sys | 11-28 09:16:55 | 75 | main: `OAuth grant revoked (invalid_grant), run 'inboxclean auth'`; work: `Error 429: User-rate limit exceeded` | **C** (main) + **B** (work): present in 131 of 143 runs | not located |
 | `borgbackup-job-hetzner` | sys | 11-28 06:30:00 | pre-start check exit 1 | `the sops secret borg_ssh_key is not a loadable private key. No archive leaves this host until it is replaced` | **C**: owner must create the key; gate is deliberate | `platforms/nixos/system/backup.nix` |
 | `catalog-inventory-sync` | sys | 11-28 08:57:34 | 1 | `error: attribute 'reports-system' missing at modules/nixos/services/reports-system.nix:62:9` | **E**: evaluates the LIVE tree; a parallel session's half-landed integration (flake.lock updated 09:34); current tree state not evaluated by me | `platforms/nixos/system/configuration.nix` |
-| `pimtest-rw-27356` | sys | 11-28 02:44:46 | 226/NAMESPACE | `[systemd-run] /run/current-system/sw/bin/true`; `Failed to set up mount namespacing: /var/lib/pim-sync-nonexistent-xyz` | **E**: leftover negative test, creator unknown; 32 runs in the popup, gone since a foreign reset at 10:47 | none (transient) |
+| `pimtest-rw-27356` | sys | 11-28 02:44:46 | 226/NAMESPACE | `[systemd-run] /run/current-system/sw/bin/true`; `Failed to set up mount namespacing: /var/lib/pim-sync-nonexistent-xyz` | **E**: leftover negative test, creator unknown; 32 runs in the popup, gone since the 10:47 run found an empty set | none (transient) |
 | `nextd-refresh` | user | every 15 min | 1 | `trigger daemon at …/nextd.sock: Post "http://localhost/refresh": context deadline exceeded` after 30 s | **B**: 125 of 143 runs, left the set 21 times | not in this repo |
 | `gdd-crtsh` | user | 11-28 04:54:52 | 1 | `crtsh-daily.sh: curl: (22) The requested URL returned error: 502` | **B**: an upstream 5xx is fatal | not in this repo |
 | `go-cqrs-nightly-bench` | user | 11-28 06:09:32 | 3 | exited after 3 h 04 min with 2.25 s CPU, no output in the tail | **unknown**: not diagnosed | `platforms/nixos/users/home.nix` |
@@ -165,7 +165,7 @@ Seen in the data, NOT triaged: `hermes-perms-heal.service` (new at 11:19 today, 
 5. **"Alert by exit code" units** (`disk-growth-check`, `crm-alarm-byphone`, the two `btrfs-verify-*`) conflate "check fired" with "unit broken". An open `[decision]` row exists (§g Q2).
 6. **The 02:00–05:00 window is overloaded**: `media-atlas-poll-embeddings` 02:28 and 03:02, `clickhouse-db-backup` 03:01, `go-cqrs-nightly-bench` 03:09, `cv-backup` 03:17, `monitor365-pool-copy` 03:29, `nix-optimise` 03:45, `btrbk-forgejo-clean` 04:16, `gdd-crtsh` 04:54, on a box with a documented nightly IO storm. Four of the six config bugs above are timeouts in that window (inference: I did not correlate against PSI).
 7. **Units that evaluate the live tree** (`catalog-inventory-sync`) fail on any half-landed parallel edit. Pin the revision (HEAD commit, or skip when the tree is dirty).
-8. **Negative tests that create transient units must reset them in the same step** (doctrine candidate for `docs/agents/nix-flakes.md` / `systemd.md`); `pimtest-rw-27356` sat in the popup for 7.6 hours.
+8. **Negative tests that create transient units must reset them in the same step** (doctrine candidate for `docs/agents/nix-flakes.md` / `systemd.md`); `pimtest-rw-27356` sat in the popup for nearly eight hours.
 9. **Two desktop alerting paths with different policies**: `notify-failure@` (normal urgency, 1/h per unit) and the health check (critical, set-hash). One policy should own both (§g Q1).
 10. **Ghost systems found:** `is_pending_retry` (dead since birth; the value it was meant to deliver is exactly what the storm fix needs, so integrate it, do not delete it) and `check_user_service` (dead, delete). **Split brains found:** none created by this session (no repo changes). **Removed something useful:** no.
 11. **Process, my side:** when the evidence is already on disk, read it inline; reserve fan-out for reading-heavy deep dives and keep it at two when other sessions are running.
@@ -236,3 +236,269 @@ Candidates to mint after verification, one per line in both `TODO_LIST.md` and t
 ## Appendix A: draft checker body (never executed)
 
 Byte-identical copy of `~/.cache/healthcheck/new/body.sh` as written at 10:40, so the work survives a cache reap. To land it: paste into `text = ''…''` of the `healthCheck` `writeShellApplication` in `platforms/nixos/system/scheduled-tasks.nix`, escape the one shell expansion that Nix would read (`${trigger%% *}` becomes `''${trigger%% *}`), and replace the literal pattern `session-* | user@*` in `sweep_failed` with the Nix interpolation `${ignorePattern}`. Header lines `export DISPLAY=:0` through the final `fi` inclusive; `check_service caddy || true` … `sweep_failed user "user, failed"` replace the four generated blocks between the function definitions and the report.
+
+<details>
+<summary>Draft body (bash, 250 lines)</summary>
+
+```bash
+export DISPLAY=:0
+export WAYLAND_DISPLAY=wayland-1
+XDG_RUNTIME_DIR=/run/user/$(id -u)
+export XDG_RUNTIME_DIR
+
+STATE_DIR="$HOME/.cache/service-health-check"
+# Failure ledger: one file per failed unit, "<strikes> <failure epoch>".
+LEDGER_DIR="$STATE_DIR/failures"
+NOTIFY_STATE="$STATE_DIR/last-notified-failed"
+# A first failure older than this is FAILED without a second run: its
+# trigger stopped firing, so no retry is coming.
+ACUTE_MAX_AGE_SECONDS=86400
+mkdir -p "$LEDGER_DIR"
+
+FAILED=""
+# Space-delimited unit ids already in FAILED (exact-token membership test).
+FAILED_UNITS=""
+PENDING=""
+# Space-delimited "<scope>:<unit>" keys examined this run; a ledger file
+# whose key is absent here belongs to a unit that is no longer failed.
+OBSERVED=""
+GATED=""
+TOTAL=0
+NOW_EPOCH="$(date +%s)"
+
+fail() {
+    FAILED="$FAILED\n  $1"
+}
+
+pend() {
+    PENDING="$PENDING\n  $1"
+}
+
+# "$1" is the manager that owns the unit: "system" or "user".
+unit_prop() {
+    if [ "$1" = "user" ]; then
+        systemctl --user show "$2" -p "$3" --value 2>/dev/null || true
+    else
+        systemctl show "$2" -p "$3" --value 2>/dev/null || true
+    fi
+}
+
+# shellcheck disable=SC2317
+unit_active() {
+    if [ "$1" = "user" ]; then
+        systemctl --user is-active --quiet "$2" 2>/dev/null
+    else
+        systemctl is-active --quiet "$2" 2>/dev/null
+    fi
+}
+
+# shellcheck disable=SC2317
+list_failed() {
+    if [ "$1" = "user" ]; then
+        systemctl --user --failed --no-legend --no-pager --plain --type=service 2>/dev/null | awk '{print $1}'
+    else
+        systemctl --failed --no-legend --no-pager --plain --type=service 2>/dev/null | awk '{print $1}'
+    fi
+}
+
+check_service() {
+    TOTAL=$((TOTAL + 1))
+    # Retry up to 3 times with 2s sleep: services may be restarting during a
+    # deploy (activating/reloading state).
+    for _attempt in 1 2 3; do
+        if systemctl is-active --quiet "$1" 2>/dev/null; then
+            return 0
+        fi
+        sleep 2
+    done
+    FAILED_UNITS="$FAILED_UNITS $1.service"
+    fail "$1.service"
+    return 1
+}
+
+# Gated critical service: down + condition marker absent = expected-by-design
+# (report in GATED, never fail); marker present + down = genuine regression
+# (fail like any other).
+# shellcheck disable=SC2329
+check_gated_service() {
+    TOTAL=$((TOTAL + 1))
+    if systemctl is-active --quiet "$1" 2>/dev/null; then
+        return 0
+    fi
+    if [ ! -e "$2" ]; then
+        GATED="$GATED\n  $1 (gated: $2 absent)"
+        return 0
+    fi
+    FAILED_UNITS="$FAILED_UNITS $1.service"
+    fail "$1.service"
+    return 1
+}
+
+# systemd's failed state is a latch, not a severity: a oneshot that exited
+# non-zero once looks exactly like one that has failed for weeks, and the
+# latch holds until a run succeeds. What separates the two is whether
+# anything retries the unit on its own.
+#   - No trigger (a daemon, an activation-only oneshot) or a trigger that
+#     is not active: nothing retries it, so it is FAILED at once.
+#   - An active trigger (timer, path): the FIRST failure is acute, reported
+#     as PENDING in the journal only. The unit's own OnFailure= hook already
+#     alerted for it and its next run may heal it. Found failed again after
+#     the trigger re-fired, the retry did not help: FAILED, until a run
+#     succeeds.
+# systemd keeps no failure count, and its timestamps cannot rebuild one:
+# after a retry both LastTriggerUSec and InactiveEnterTimestamp belong to
+# the newest run, and a sub-second run shares the trigger's second. So the
+# count lives in the ledger: a failure epoch not seen before is one more
+# strike.
+# shellcheck disable=SC2329
+classify_failure() {
+    local scope="$1" unit="$2" label="$3"
+    local trigger failed_at failed_epoch ledger strikes seen_epoch
+    OBSERVED="$OBSERVED $scope:$unit"
+    FAILED_UNITS="$FAILED_UNITS $unit"
+    trigger="$(unit_prop "$scope" "$unit" TriggeredBy)"
+    if [ -z "$trigger" ]; then
+        fail "$unit ($label)"
+        return 0
+    fi
+    if ! unit_active "$scope" "${trigger%% *}"; then
+        fail "$unit ($label)"
+        return 0
+    fi
+    failed_at="$(unit_prop "$scope" "$unit" InactiveEnterTimestamp)"
+    failed_epoch=""
+    if [ -n "$failed_at" ]; then
+        failed_epoch="$(date -d "$failed_at" +%s 2>/dev/null || true)"
+    fi
+    if [ -z "$failed_epoch" ]; then
+        fail "$unit ($label)"
+        return 0
+    fi
+    ledger="$LEDGER_DIR/$scope:$unit"
+    strikes=0
+    seen_epoch=""
+    if [ -f "$ledger" ]; then
+        read -r strikes seen_epoch < "$ledger" || {
+            strikes=0
+            seen_epoch=""
+        }
+    fi
+    case "$strikes" in
+        ''|*[!0-9]*)
+            strikes=0
+            seen_epoch=""
+            ;;
+    esac
+    if [ "$failed_epoch" != "$seen_epoch" ]; then
+        strikes=$((strikes + 1))
+        printf '%s %s\n' "$strikes" "$failed_epoch" > "$ledger.tmp"
+        mv -f "$ledger.tmp" "$ledger"
+    fi
+    if [ "$strikes" -eq 1 ] && [ "$NOW_EPOCH" -lt $((failed_epoch + ACUTE_MAX_AGE_SECONDS)) ]; then
+        pend "$unit ($label, first failure, retry owed)"
+    else
+        fail "$unit ($label)"
+    fi
+}
+
+# Every failed service of one manager that no check above already covered.
+# Transient units (systemd-run: tests, soaks, one-off probes) belong to
+# whoever ran them, not to the declared system, and never run again: a
+# failed one is debris for its creator to reset, not a service down.
+# shellcheck disable=SC2329
+sweep_failed() {
+    local scope="$1" label="$2" unit
+    while IFS= read -r unit; do
+        [ -n "$unit" ] || continue
+        case "$unit" in
+            session-* | user@*)
+                ;;
+            *)
+                case " $FAILED_UNITS " in
+                    *" $unit "*) ;;
+                    *)
+                        if [ "$(unit_prop "$scope" "$unit" Transient)" != "yes" ]; then
+                            classify_failure "$scope" "$unit" "$label"
+                        fi
+                        ;;
+                esac
+                ;;
+        esac
+    done < <(list_failed "$scope")
+}
+
+# === Critical system services: must be running ===
+check_service caddy || true
+check_service dnsblockd || true
+check_service postgresql || true
+
+# === Gated critical services: down is expected while the gate holds ===
+check_gated_service forgejo /var/lib/forgejo/.subvol-migrated || true
+
+# === Dynamic: every other failed system service ===
+sweep_failed system "failed"
+
+# === Dynamic: every failed user service ===
+sweep_failed user "user, failed"
+
+# A ledger entry whose unit is no longer failed had a successful run: its
+# next failure starts a new episode.
+for ledger in "$LEDGER_DIR"/*; do
+    [ -e "$ledger" ] || continue
+    case " $OBSERVED " in
+        *" ${ledger##*/} "*) ;;
+        *) rm -f "$ledger" ;;
+    esac
+done
+
+# === Report ===
+# Desktop notification, once per distinct set of FAILED units (owner
+# directive 2026-11-24: never the same "Health Check: services down"
+# notification stacked). The state file holds the member lines of the last
+# notified set, which tells a NEW failure (popup, listing the whole current
+# set) from a member recovering (journal only: good news is not a critical
+# popup). The unit still exits 1 on every failing tick (journal + OnFailure
+# + deploy exit-4 semantics unchanged).
+if [ -n "$FAILED" ]; then
+    current="$(echo -e "$FAILED" | sort)"
+    notified="$(cat "$NOTIFY_STATE" 2>/dev/null || true)"
+    new_failure=false
+    while IFS= read -r member; do
+        [ -n "$member" ] || continue
+        if ! grep -qxF -- "$member" <<< "$notified"; then
+            new_failure=true
+        fi
+    done <<< "$current"
+    if [ "$new_failure" = true ]; then
+        notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
+        echo "NOTIFIED: a failed unit that was not notified before"
+    else
+        echo "NOTIFY-SKIPPED: every failed unit was already notified (desktop dedup)"
+    fi
+    printf '%s\n' "$current" > "$NOTIFY_STATE"
+    echo "FAILED:$(echo -e "$FAILED")"
+    if [ -n "$PENDING" ]; then
+        echo -e "PENDING (first failure, retry owed; the unit's own OnFailure hook alerted):$PENDING"
+    fi
+    if [ -n "$GATED" ]; then
+        echo -e "GATED (expected down):$GATED"
+    fi
+    exit 1
+else
+    if [ -f "$NOTIFY_STATE" ]; then
+        rm -f "$NOTIFY_STATE"
+        echo "RECOVERED: failure set cleared (dedup state reset)"
+    fi
+    echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
+    if [ -n "$PENDING" ]; then
+        echo -e "PENDING (first failure, retry owed; the unit's own OnFailure hook alerted):$PENDING"
+    fi
+    if [ -n "$GATED" ]; then
+        echo -e "GATED (expected down):$GATED"
+    fi
+    exit 0
+fi
+
+```
+
+</details>

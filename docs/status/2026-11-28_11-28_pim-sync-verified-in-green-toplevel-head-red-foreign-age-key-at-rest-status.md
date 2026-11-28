@@ -1,11 +1,15 @@
-# pim-sync dry-run gate verified inside a green toplevel (`6ad1f8253`): skip, exit-3 and silent OnFailure proven live; HEAD red on three other sessions' work since 06:09; the box reset at 10:43; one age identity sits at rest in the session DB (status)
+# pim-sync dry-run gate verified inside a green toplevel (`6ad1f8253`): skip, exit-3 and silent OnFailure proven live; HEAD red on three other sessions' work from 06:09 to about 11:30 and green again at 11:48; the box reset at 10:43; one age identity sits at rest in the session DB (status)
 
 **Date:** 2026-11-28 11:28 CET, written 11:28-11:50 (Saturday). `date` at the start of this report pass: `2026-11-28 11:06 CET`.
-**Repo:** SystemNix, HEAD `e6e051a3c` at 11:06 (already `3f9d214` by 11:35; the tree moves every few minutes). One foreign uncommitted edit on disk at 11:06: `modules/nixos/services/ai-meter.nix`.
+**Repo:** SystemNix, HEAD `e6e051a3c` at 11:06 and `e2c0063d5` at 11:48 (the tree moves every few minutes). Tree clean at 11:51 except one foreign edit (`AGENTS.md`). Every edit of this report pass rode the auto-commit daemon: `e8d744257` (the report) and `e2c0063d5` (the harvest).
 **Scope:** the pim-sync enablement, plus what this session noticed on the way. **Nothing was deployed, nothing was pushed, nothing was committed by hand.** No live state changed in this continuation.
 **Trigger:** owner "make it work" after the 03:47 handoff, then this status request (report, then wait).
 **Session span:** the continuation ran from about 04:45 to 11:50. The handoff summary labels its earlier part "~02:10-03:50", but its own artifacts are stamped 2026-11-27 22:50 (`24a3ea2be`, the ui-token write) to 2026-11-28 03:52 (`cb50142aa`).
 **Boot:** this session started in boot `0737ecd7` (up since 2026-11-25 11:06:51) and is ending in boot `56ba232e` (started 2026-11-28 10:46:06). The box reset at 10:43:28 while the session was open. See §b.7 and §f.22.
+**Late update (11:48):**
+- HEAD `e2c0063d5` evaluates again: toplevel drvPath `/nix/store/hg50f0hpkc471pv6gdvi2dirv7dfjm7n-nixos-system-evo-x2-26.11.20261124.58d0d3e.drv` (rc 0, throwaway worktree). Sibling reports written 11:32 to 11:38 say the same ("three eval breaks fixed", "reports-system … eval green", "wdt reset mid purge"); I read their titles, not their bodies. The root nixpkgs also moved (`2786a2a` → `58d0d3e`).
+- The live system is unchanged: `/run/current-system` = the profile = the newest generation = the booted `init=`, all `system-1033-link` (generation 1033, deployed 2026-11-27 10:27). Nothing from today's tree is live, pim-sync's enable included. A deploy attempt at 11:26:54 was refused at once by the pressure gate (`deploy exited code=12 … after 1s`).
+- So f.2, f.3 and f.4 are unblocked. I did not start them: the instruction was report, then wait.
 
 ---
 
@@ -51,7 +55,7 @@
 | a.7 | **sops gate legs 2 and 3 PASS** at `87504d9ef`: the live host key maps to the `.sops.yaml` recipient, and all 40 repo sops files decrypt with it (pim-sync.yaml included). | `~/.cache/pim/sops-gate.log` | Leg 1 (manifest check-mode) failed on the foreign eval break (§b.1). |
 | a.8 | **Docs landed in HEAD:** the CHANGELOG entry for the pim-sync enable and the live-proof sentence in the runbook. | `f97fd95f4`, both files; content re-read from HEAD at 11:06 | Runbook now also carries the OnFailure control (edit at authoring). |
 | a.9 | **FOD cluster closed.** Repaired by a sibling session (pdd shim dropped, pma + tq re-pinned, timesheets shimmed; its report: `docs/status/2026-11-28_06-14_five-stale-fods-repaired-toplevel-green-in-frozen-worktree-deploy-not-fired-status.md`). First-hand here: the toplevel at `6ad1f8253` is valid in the store and the flake check passes there. | a.5, a.6 | I edited no hash. |
-| a.10 | **HEAD's redness attributed.** Walking every commit from `6ad1f8253`: `c0467b1bf` and `0c35832dd` eval, first red is `0a8106116` (`modules/nixos/services/ai-meter.nix`, a module with a top-level `assertions` attribute). Later probes: `302b7981e` "cannot coerce a list to a string", `d7b483887` `services.monitor365-graphical-helper.enableClipboard` declared twice, `e6e051a` `io-tier-coverage-audit: boot-gated unit(s) without an IO tier: reports-system-backup-dir`. | `~/.cache/pim/bisect.log`, `~/.cache/pim/head-eval.log` | None of these files are mine. I changed none of them. |
+| a.10 | **HEAD's redness attributed.** Walking every commit from `6ad1f8253`: `c0467b1bf` and `0c35832dd` eval, first red is `0a8106116` (`modules/nixos/services/ai-meter.nix`, a module with a top-level `assertions` attribute). Later probes: `302b7981e` "cannot coerce a list to a string", `d7b483887` `services.monitor365-graphical-helper.enableClipboard` declared twice, `e6e051a` `io-tier-coverage-audit: boot-gated unit(s) without an IO tier: reports-system-backup-dir`. | `~/.cache/pim/bisect.log`, `~/.cache/pim/head-eval.log` | None of these files are mine. I changed none of them. Siblings fixed all three by about 11:30; my 11:48 probe at `e2c0063d5` is green. |
 | a.11 | **pim-sync still renders correctly at the current lock.** At `3f9d214` with `pim-sync` at `0d9dfeb`: user description without the colon, gate, `ExecStartPre = [pim-sync-seed-tokens pim-sync-config-check]`, `-`-prefixed `ReadWritePaths`, `SuccessExitStatus = [ 3 ]`, the a.4 ordering. | `~/.cache/pim/pim-at-head.json` | Unit eval only; the toplevel is red for the foreign reasons in a.10. |
 | a.12 | **Upstream fix is on the remote.** `git ls-remote origin refs/heads/master` in `~/projects/pim-sync` returns `0d9dfeb5…`; the SystemNix lock already holds `0d9dfeb` (read 11:28). | 11:15 and 11:28 reads | I did not push; who did is not recorded in what I read. |
 | a.13 | **`/run` residue gone:** `/run/pim-identity.txt`, `/run/pim-ui-token`, `/run/pim-ui-token.json` do not exist (tmpfs, wiped by the 10:46 boot). | `ls` at 11:1x | |
@@ -62,7 +66,7 @@
 
 1. **sops pre-deploy gate: 2 of 3 legs.** Leg 1 (the manifest's own `sops-install-secrets -check-mode` build) failed at `87504d9ef` on the foreign eval break and was not rerun on the green tree I had. The gate's overall verdict for `pim-sync.yaml` is therefore still unproven (f.2).
 2. **Gate proof covers systemd, not the script.** The three legs of `pim-sync-secret-gate` (placeholder → 1, missing rendered path → 255, real → 0) have never run against a fixture, and the proof is user-manager only (f.1).
-3. **Deploy: not fired.** HEAD was red at all six commits I probed between 06:06 and 11:06, each time on another session's in-flight file (a.10). A deploy evaluates the live tree, so there was nothing to fire.
+3. **Deploy: not fired.** HEAD was red at all six commits I probed between 06:06 and 11:06, each time on another session's in-flight file (a.10). A deploy evaluates the live tree, so there was nothing to fire. **Resolved by siblings around 11:30:** my 11:48 probe at `e2c0063d5` is green. The live system is still generation 1033. Not fired by me; that is now the owner's call (§g.2).
 4. **pim-sync after the upstream float: rendered, not re-proven.** The lock moved to `0d9dfeb` at 09:34. Since then upstream carries the fixed seed script, the `-`-prefixed `ReadWritePaths` and the colon-free description, and my three `lib.mkForce` shims merely override like with like: my `ExecStartPre` override replaces upstream's fixed seed script with my replacement script. The units eval correctly (a.11); a toplevel build after the float does not exist (f.1, f.3).
 5. **Upstream follow-through: half.** `0d9dfeb` is pushed and floated (a.12). The shims are not dropped, the `docs/todo/upstream.md` row still says "unpushed" (fixed at authoring, §h), and the buildflow `vendorHash.nix` re-measure upstream is untouched.
 6. **Owner handover: machine side staged, owner side 0 of 3.** Not done by the owner: the GCP Desktop client JSON, the four consent clicks, and an answer to the consent-mode question (§g.3). Secret state (from the earlier part's hash-only read, **not re-read in this continuation**): 3 of 8 materials real (DAV user, DAV pass, ui token), 5 placeholders (`pim_sync_oauth_client_secret`, 4 `pim_sync_token_*`).
@@ -119,9 +123,9 @@ Only the first item is a real exposure. The rest are process failures with no da
 **A. pim-sync, agent, ready**
 
 1. **f.1** Drop the three redundant `lib.mkForce` shims and the dead `seedTokens` script (keep the config-check appended), fixture-test the gate's three legs, run the system-manager skip/OnFailure leg with a positive control, then eval + unit build + `--keep-going` toplevel on a green tree. HARVESTED (queue + `docs/todo/services.md`).
-2. **f.2** Run `scripts/sops-predeploy-gate.sh` on a green tree so leg 1 covers `pim-sync.yaml`.
-3. **f.3** Re-prove pim-sync in a toplevel after the 09:34 float (the a.5 proof predates it).
-4. **f.4** Deploy when HEAD is green and the tree is quiescent (`scripts/deploy-when-quiescent.sh --fire`), then verify live: timer active, unit skipped with `Result=condition`, no failed unit, no alert, `pim-sync-ui` on `100.112.252.86:8111` after netbird, seed dirs owned by `pim-sync`.
+2. **f.2** Run `scripts/sops-predeploy-gate.sh` on a green tree so leg 1 covers `pim-sync.yaml` (unblocked 11:48).
+3. **f.3** Re-prove pim-sync in a toplevel after the 09:34 float (the a.5 proof predates it; unblocked 11:48).
+4. **f.4** Deploy when HEAD is green and the tree is quiescent (`scripts/deploy-when-quiescent.sh --fire`), then verify live: timer active, unit skipped with `Result=condition`, no failed unit, no alert, `pim-sync-ui` on `100.112.252.86:8111` after netbird, seed dirs owned by `pim-sync` (unblocked 11:48, owner's call, §g.2).
 5. **f.5** Write the deploy outcome into `docs/services/pim-sync.md` and the flip rows.
 6. **f.6** Ingest `pim_sync_oauth_client_secret` from the owner's JSON path (`sops set --value-file`, JSON value file), hash-only verify.
 7. **f.7** Run or assist the four consent flows in the mode the owner picks (§g.3), validate `.refresh_token` per file, ingest the four token JSONs.
@@ -139,16 +143,16 @@ Only the first item is a real exposure. The rest are process failures with no da
 
 **C. Tree and deploy (other sessions' work)**
 
-16. **f.16** reports-system: `reports-system-backup-dir` needs an `ioTier.*` fragment (red at `e6e051a`).
-17. **f.17** monitor365: the `enableClipboard` existence guard now collides with upstream's own declaration (red at `d7b483887`); confirm resolved.
-18. **f.18** ai-meter: confirm the `0a8106116` assertion shape is fixed for good.
+16. **f.16** reports-system: `reports-system-backup-dir` needs an `ioTier.*` fragment (red at `e6e051a`; reported fixed by a sibling at 11:32).
+17. **f.17** monitor365: the `enableClipboard` existence guard now collides with upstream's own declaration (red at `d7b483887`); reported fixed, eval green in my 11:48 probe.
+18. **f.18** ai-meter: confirm the `0a8106116` assertion shape is fixed for good (reported fixed, eval green in my 11:48 probe).
 19. **f.19** Write the CHANGELOG entry "Five stale FODs behind the 2026-11-28 deploys" before the ticked FOD rows are pruned (the FOD session's open forget).
 20. **f.20** Ruling on who may fix foreign in-flight eval breaks (§g.2).
 21. **f.21** Tick the flip pair (queue + library) when f.8 has happened.
 
 **D. Box health**
 
-22. **f.22** Classify the 10:43:28 → 10:46:06 reset (`scripts/crash-triage.sh --boots 6`, then `scripts/boot-evidence-pull.sh`).
+22. **f.22** Classify the 10:43:28 → 10:46:06 reset (`scripts/crash-triage.sh --boots 6`, then `scripts/boot-evidence-pull.sh`). A sibling report written 11:38 titles it a watchdog reset mid purge; I did not read it.
 23. **f.23** After the reset, compare the booted `init=` with the profile before trusting any "deployed" claim.
 24. **f.24** Pre-deploy §15: the reset exposes a boot without a committed evidence file; the next deploy may block until it is pulled.
 25. **f.25** Check the boot mirror is level after the reset.
@@ -177,7 +181,8 @@ Only the first item is a real exposure. The rest are process failures with no da
 ## §g Three questions I cannot answer myself
 
 1. **The at-rest age identity.** One full age secret key sits in plaintext in this project's session DB: 5 messages in 4 sessions, 2026-03-31 to 2026-11-28 04:33 (a.14). Do you want (a) those 5 messages purged from `.crush/crush.db` and nothing else, (b) a purge plus a rotation of the identity, or (c) accepted as is? For (b) I need you to name the identity, because establishing which one it is means deriving it again. I cannot accept a risk for you, and the purge is a destructive edit of your tool's database.
-2. **Foreign red HEAD.** HEAD has been red at every probe since 06:09, each time on another session's in-flight file. May I fix such breaks myself when they are small and obvious (an `ioTier` fragment on one unit), or do I leave them to their sessions and hold every deploy, pim-sync's included, until they finish?
+2. **The deploy.** HEAD is green again (`e2c0063d5`, 11:48), the live system is still generation 1033, and three sibling sessions also ended with "deploy not fired". One deploy carries everything in today's tree at once: pim-sync's inert dry-run gate, the llama-chat iGPU flip, the ai-meter, monitor365 and reports-system work, on a root nixpkgs that moved to `58d0d3e` an hour after a watchdog reset. Do you want me to fire it now (after f.1 to f.3 and the §11 gate, on a quiescent tree), or do you hold it until you have looked at what else it carries? And when HEAD goes red on someone else's file again, may I fix small obvious breaks myself?
+
 3. **Consent mode.** Once the GCP Desktop client exists: should I start the four `pim-sync auth` flows from this session so a browser opens on your desktop and you only click (never tried from an agent shell), or do you run the four commands yourself and drop the token JSONs in a directory you name? I cannot know how you want an agent to touch your logged-in browser.
 
 Defaults I will use unless you say otherwise (not asked): the upstream push counts as done (`0d9dfeb` is on `origin/master`, the lock floats it); the dashboard bearer stays sops-only, no local copy; "make it work" resumes with f.1 to f.3 when you say go.
@@ -188,8 +193,8 @@ Defaults I will use unless you say otherwise (not asked): the upstream push coun
 - **HARVESTED f.13** → `TODO_LIST.md` (security) + `docs/todo/security.md`: "Script the sops single-key write (JSON value file, 0600 temp, ownership restore) and document it".
 - **HARVESTED f.12** → `docs/todo/security.md` only, `[blocked:user]`: "Age identity at rest in the session DB: decide on purge and rotation".
 - **CLOSED (ticked) 3 rows:** the FOD cluster pair (`TODO_LIST.md` + `docs/todo/pipeline.md`, ask met at `6ad1f8253`, a.9) and `docs/todo/upstream.md` "pim-sync upstream: three fresh-host defects …" (fixed, on the remote, floated; its shim-drop remainder moved into the f.1 row).
-- **FIXED 1 drift:** the flip pair's titles now match (`TODO_LIST.md` aligned to `docs/todo/services.md`), both carry the 2026-11-28 progress.
+- **FIXED 1 drift:** the flip pair's titles now match (`TODO_LIST.md` aligned to `docs/todo/services.md`), both carry the 2026-11-28 progress. The gate's drift count stayed at 133; whether that pair was ever counted I did not check.
 - **NOT HARVESTED, on purpose:** f.2 to f.11 are continuations of rows that exist (the flip pair) or owner-gated; f.16 to f.21 belong to other sessions' work and are flagged, not touched; f.22 to f.25 are stability and storage domain and wait for a classification I did not make; f.26 and f.27 likely have rows already (not verified, so nothing minted); f.28 to f.35 are process lessons for AGENTS.md and the agent docs, below the intake cap of this session (2 queue rows minted, 3 closed); f.36 to f.40 are upstream and undecided.
 - **Intake:** minted 2 queue rows + 1 library-only row, closed 3.
-- **Gate:** before my edits rc 0, "WARN: 95 unharvested §f-bearing report(s)"; after: GATE_AFTER_PLACEHOLDER.
-- **Commits:** none by hand. The edits ride the auto-commit daemon.
+- **Gate:** before my edits rc 0 and structure OK; after the same. Open queue rows 3557 against the ratchet cap 3555, before 3556: this session's net is **+1 in the queue** (2 minted, 1 closed there; the two other closes are library rows). Title drifts 133 before and after. Unharvested §f reports 96, before 95: the new one is a sibling's 11:36 report; this report is not flagged.
+- **Commits:** none by hand. The edits landed in the daemon's `e8d744257` (report) and `e2c0063d5` (harvest). The locked formatter reports 0 changes on all seven edited files.
