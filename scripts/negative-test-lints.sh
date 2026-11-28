@@ -499,6 +499,13 @@ run_case signozdash tile-title-cut signoz-query-lint fail 'the header cuts it wi
   'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Failures \/ min"/"name": "Failures per minute today"/'
 run_case signozdash selftest-tile-title-rule-dropped signoz-dashboard-lint-selftest fail 'leg narrowTileTitleCut is false' \
   'sed:lib/signoz-dashboard-lint.nix:s/maxNarrowTileTitle = 17;/maxNarrowTileTitle = 400;/'
+# A line chart spans every gap unless it is in threshold mode: the default drew
+# an hour-long ramp where a model had no calls (2026-11-28), in every dashboard.
+# The first chart of caddy.json loses the duration of its threshold.
+run_case signozdash chart-spans-every-gap signoz-query-lint fail 'line chart spans every gap' \
+  'sed:modules/nixos/services/dashboards/caddy.json:0,/"fillLessThan": "15m"/s//"fillLessThan": ""/'
+run_case signozdash selftest-gap-rule-dropped signoz-dashboard-lint-selftest fail 'leg lineChartSpansEveryGap is false' \
+  'sed:lib/signoz-dashboard-lint.nix:s/!(thresholdMode && duration != "")/false/'
 # The post-deploy dashboard drift verdict must stay able to fail: a comparison
 # blind to what the API serves, or to a dashboard it does not serve at all,
 # is the green it exists to disprove (the hand-edited ai-meter dashboard of

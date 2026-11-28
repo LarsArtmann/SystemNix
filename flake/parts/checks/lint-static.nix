@@ -727,6 +727,10 @@
                 panel {
                   kind = "signoz/TimeSeriesPanel";
                   spec.formatting.unit = unit;
+                  spec.plugin.spec.chartAppearance.spanGaps = {
+                    fillOnlyBelow = true;
+                    fillLessThan = "15m";
+                  };
                 } [ promqlQuery ];
               # A dashboard of one section. `panels` maps a key to a panel
               # spec; the file wraps each as { kind = "Panel"; spec = ... }.
@@ -922,6 +926,45 @@
                     p = (chart "percent") // {
                       display.name = "a title that is far longer than twenty-two characters";
                     };
+                  } [ (item 0 0 6 4 "p") ]
+                );
+                # A line chart joins whatever two points it has: the chart default
+                # spans every gap and drew an hour-long ramp where a model had no
+                # calls (ai-meter, 2026-11-28). Threshold mode breaks the line.
+                lineChartSpansEveryGap = flagged (
+                  doc {
+                    p = (chart "percent") // {
+                      spec.plugin.spec.chartAppearance.spanGaps = {
+                        fillOnlyBelow = false;
+                        fillLessThan = "";
+                      };
+                    };
+                  } [ (item 0 0 12 4 "p") ]
+                ) "line chart spans every gap";
+                lineChartThresholdWithoutDuration = flagged (
+                  doc {
+                    p = (chart "percent") // {
+                      spec.plugin.spec.chartAppearance.spanGaps = {
+                        fillOnlyBelow = true;
+                        fillLessThan = "";
+                      };
+                    };
+                  } [ (item 0 0 12 4 "p") ]
+                ) "line chart spans every gap";
+                lineChartWithoutAppearance = flagged (
+                  doc {
+                    p = panel {
+                      kind = "signoz/TimeSeriesPanel";
+                      spec.formatting.unit = "percent";
+                    } [ promqlQuery ];
+                  } [ (item 0 0 12 4 "p") ]
+                ) "line chart spans every gap";
+                numberTileHasNoGapToBreak = clean (
+                  doc {
+                    p = panel {
+                      kind = "signoz/NumberPanel";
+                      spec.formatting.unit = "percent";
+                    } [ promqlQuery ];
                   } [ (item 0 0 6 4 "p") ]
                 );
                 malformedFile = flagged 42 "not a JSON object";

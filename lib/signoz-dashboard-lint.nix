@@ -7,10 +7,10 @@
 # a table passes every other gate and surfaces at deploy time (2026-09-16
 # overview; the first ai-meter rewrite, 2026-11-25, spent a deploy on it).
 # This validator encodes the API's rules, read from its source
-# (pkg/types/dashboardtypes, pinned rev da35d997), plus four rules of our
+# (pkg/types/dashboardtypes, pinned rev da35d997), plus five rules of our
 # own that the API does not enforce: no orphan panels, known unit ids, the
-# server-default keys the provisioner's unchanged-check needs, and titles that
-# fit their tile.
+# server-default keys the provisioner's unchanged-check needs, titles that
+# fit their tile, and line charts that break at empty intervals.
 #
 # It is a pure function: the signoz-query-lint check feeds it the real files,
 # signoz-dashboard-lint-selftest feeds it fixtures.
@@ -220,6 +220,25 @@ let
           "${where}: unit id '${toString thresholdUnit}' of a threshold is unknown (lib/signoz-unit-ids.txt)"
     ) thresholds;
 
+  # ── gaps of a line chart ──────────────────────────────────────────────────
+  # A line chart joins whatever two points it has. With the chart's default
+  # ("When data is missing: Never") a series with a sample at 00:25 and the
+  # next at 01:20 gets a straight ramp across an hour without data (every
+  # dashboard until 2026-11-28). Threshold mode breaks the line where two
+  # samples are further apart than the duration. A missing chartAppearance
+  # spans every gap as well: the frontend defaults to it.
+  gapFindings =
+    where: kind: plugin:
+    let
+      appearance = sub (key plugin "spec") "chartAppearance";
+      spanGaps = sub appearance "spanGaps";
+      thresholdMode = key spanGaps "fillOnlyBelow" == true;
+      duration = text (key spanGaps "fillLessThan");
+    in
+    optional (
+      kind == "signoz/TimeSeriesPanel" && !(thresholdMode && duration != "")
+    ) "${where}: line chart spans every gap; chartAppearance.spanGaps needs fillOnlyBelow true and a fillLessThan duration (\"15m\"), or the chart draws a straight line across every interval without data";
+
   # ── one panel ──────────────────────────────────────────────────────────────
   validatePanel =
     file: panelKey: panel:
@@ -267,7 +286,7 @@ let
               type: "${where}: composite sub-query type '${type}' is not supported by panel kind '${kind}'"
             ) unsupportedSubs;
       in
-      queryFindings ++ unitFindings where kind (sub spec "plugin");
+      queryFindings ++ unitFindings where kind (sub spec "plugin") ++ gapFindings where kind (sub spec "plugin");
 
   # ── layouts ────────────────────────────────────────────────────────────────
   rectanglesOverlap =
