@@ -993,7 +993,7 @@ if nix run .#pre-deploy-check; then
   # re-runs converge after DB restores; a FRESH mint try-restarts the
   # declared consumer units.
   phase "Provisioner convergence (restart oneshots) ==="
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup bank-sync-storage-dir google-sync-dirs audible-sync-dirs audiblesync-backup-dir cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir crush-daily-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys opencloud-storage-dir media-atlas-archive-perms media-atlas-backup-dir rust-cache-projects-links dnsblockd-allowlist-backup-dir timesheets-backup-dir invoices-dashboard-backup-dir summit-planner-backup-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup bank-sync-storage-dir google-sync-dirs audible-sync-dirs audiblesync-backup-dir cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir crush-daily-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys opencloud-storage-dir media-atlas-archive-perms media-atlas-backup-dir rust-cache-projects-links dnsblockd-allowlist-backup-dir timesheets-backup-dir invoices-dashboard-backup-dir summit-planner-backup-dir reports-system-backup-dir; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
@@ -1030,6 +1030,8 @@ if nix run .#pre-deploy-check; then
     # Kith journal snapshot dir (cv-backup-dir pattern).
     # timesheets-backup-dir + invoices-dashboard-backup-dir: same pattern —
     # pool leaf dirs for the two new 2026-11-10 services' nightly backups.
+    # reports-system-backup-dir: same pattern — pool leaf dir for the
+    # reports-system nightly backup (docs/services/reports-system.md).
     # (netbird-evox2-login lives in the explicit block below — indirect
     # pull + is-enabled flake mid-switch.)
     # timeout 10 (2026-10-17, M13): during a wedged boot transaction

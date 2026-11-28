@@ -128,6 +128,9 @@
             "miniflux-backup-dir"
             "miniflux-oidc-setup"
             "paperless-db-backup-dir"
+            # reports-system-backup-dir: mkPoolDirUnit mkdir + chown leaf
+            # creator on the HDD pool (summit-planner-backup-dir class).
+            "reports-system-backup-dir"
             "restic-app-dumps-setup"
             "restic-storage-history-setup"
             "rust-cache-init"
