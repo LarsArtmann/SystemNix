@@ -40,17 +40,21 @@ stub_put_engine() {
 # the interval. A table named in $STUB_STATE/stub-stuck refuses (the
 # read-only-leftover class).
 stub_rewrite_interval() {
-  local db=$1 table=$2 interval=$3 engine replacement
+  local db=$1 table=$2 interval=$3 engine clause new_clause
   if [ "$db.$table" = "$(cat "$STUB_STATE/stub-stuck" 2>/dev/null)" ]; then return 0; fi
   engine=$(stub_engine "$db" "$table") || return 1
   if [ -z "$engine" ]; then return 0; fi
-  replacement=$(printf '%s\n' "$engine" |
-    sed -E "s/( TTL .+)[[:space:]]+[+]toInterval[A-Za-z]+[(][0-9]+[)]([[:space:]]+DELETE)?( SETTINGS .*)\$/\1 $interval\3/")
-  if [ "$replacement" = "$engine" ]; then
-    echo "stub: no fixed TTL interval in $db.$table: $engine" >&2
+  if ! [[ "$engine" =~ .*" TTL "(.*)" SETTINGS ".* ]]; then
+    echo "stub: no table-level TTL in $db.$table: $engine" >&2
     return 1
   fi
-  stub_put_engine "$db" "$table" "$replacement"
+  clause=${BASH_REMATCH[1]}
+  if [[ "$clause" != *" + toInterval"* ]]; then
+    echo "stub: no fixed TTL interval in $db.$table: $clause" >&2
+    return 1
+  fi
+  new_clause=${clause% + toInterval*}$interval
+  stub_put_engine "$db" "$table" "${engine/"$clause"/"$new_clause"}"
 }
 
 stub_set_seconds() { stub_rewrite_interval "$1" "$2" "+ toIntervalSecond($3)"; }
