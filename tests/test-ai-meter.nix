@@ -380,7 +380,9 @@ in
       system.stateVersion = "25.11";
     };
 
-  testScript = ''
+  # renderChecks is a list of nulls once every check passed and a throw at
+  # the first failed one; prepending its (empty) text forces it at eval.
+  testScript = lib.concatStringsSep "" (map (_: "") renderChecks) + ''
     import json
 
     def cost_of(metrics, upstream):
