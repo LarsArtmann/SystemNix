@@ -57,6 +57,14 @@
       serviceUnit = "reports-system.service";
       secretsFile = ../../../platforms/nixos/secrets/reports-system.yaml;
     in
+    # INERT until the `reports-system` flake input is registered in
+    # flake.nix. This module landed on 2026-11-28 at 06:08 without that
+    # input, and the missing `inputs.reports-system` broke EVERY evo-x2 eval
+    # for every session plus the 08:07 deploy ("attribute 'reports-system'
+    # missing"). An empty module is the neutral shape: nothing is declared,
+    # nothing is enabled. Drop this guard in the SAME change that registers
+    # the input.
+    lib.optionalAttrs (inputs ? reports-system)
     {
       imports = [
         inputs.reports-system.nixosModules.reports-system
