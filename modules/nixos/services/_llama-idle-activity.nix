@@ -39,7 +39,15 @@ in
   # Exit 0 when any instance of the template logged a lifecycle line inside the
   # window ("<since> ago"), exit 1 when none did. An unreadable journal is
   # treated as activity: the caller keeps a model it cannot prove idle.
-  templateActivity = pkgs.writeShellApplication {
+  #
+  # Exported as the EXECUTABLE PATH, never the derivation: the callers
+  # splice it as `if ${templateActivity} ...`. Until 2026-11-28 this was the
+  # bare writeShellApplication derivation, so every idle check ran the store
+  # DIRECTORY ("Is a directory", exit 126), the `if` took its false branch,
+  # and the backend was stopped at the first check after 10 min — the
+  # keep-alive window was never honored (live 02:57:39: llama-chat unloaded
+  # mid-request). Pinned by tests/test-llama-chat-accelerator.nix.
+  templateActivity = lib.getExe (pkgs.writeShellApplication {
     name = "template-activity-since";
     runtimeInputs = [
       pkgs.systemd
@@ -54,5 +62,5 @@ in
       [ "$rc" -eq 0 ] || exit 0
       [ "''${count:-0}" -gt 0 ]
     '';
-  };
+  });
 }
