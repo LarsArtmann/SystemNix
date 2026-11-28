@@ -147,7 +147,22 @@ lib.filterAttrs (_: v: v != null) {
   # SECOND buildflow derivation in the closure (raw 7F+fM3 vs shim SRdpoBO+),
   # doubling the go-modules FOD build on every deploy.
   # Re-add ONLY via nix-hash-fix evidence taken at the SAME rev you apply it to.
-  buildflow = flakePkg inputs.buildflow;
+  # SHIM RE-ADDED 2026-11-27 (drop-protocol, evidence at the SAME rev): the
+  # 02:28 lock wave (ba3437f5b) floated buildflow d974f200 → 0e3622de without a
+  # toplevel proof. At 0e3622de upstream's own vendorHash.nix still declares
+  # sha256-/tZCpXjujgYvpxLFGAuD5CfdzsmIYxoGSYWU2+9BflA=, but the FOD builds to
+  # sha256-WnSBXpNXpx+pCyvVfCU4XV/dQfDgKhRUC7mc7zpbKEU= (first-hand: toplevel
+  # --keep-going died on buildflow-0e3622d-go-modules, taking system-path +
+  # man-paths + overview-compliance-evidence with it, which blocked EVERY
+  # deploy); the overrideAttrs at the got hash then built clean (same session).
+  # Single consumer surface: modules/nixos/services/overview.nix via
+  # larsPackages.buildflow — the raw inputs.buildflow.packages default entry was
+  # removed from platforms/nixos/system/configuration.nix (2026-11-06), so this
+  # shim does NOT create a second buildflow derivation.
+  # DROP when upstream re-measures vendorHash.nix at 0e3622de (or a later rev
+  # the lock floats to) and that value equals the build's got hash — push is the
+  # owner's; see docs/todo/pipeline.md (buildflow float row) for the handoff.
+  buildflow = flakePkgShim inputs.buildflow "default" "sha256-WnSBXpNXpx+pCyvVfCU4XV/dQfDgKhRUC7mc7zpbKEU=";
   # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
   # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
   # packages.default with its own baked vendorHash (no follows into it).

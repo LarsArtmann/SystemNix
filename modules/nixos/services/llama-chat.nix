@@ -24,18 +24,64 @@
 # memory-emergency-guard ioPause cgroupPatterns += llama-chat.service
 # (2026-11-03, "the re-enable-day guard") and the psi-wait-gate below.
 #
-# Why CPU and NOT the GPU: the llama.cpp/ROCm path on gfx1150 WEDGES under
-# systemd units regardless of version — freeze #5 (2026-09-18) proved the
-# rev-pinned 0.3.0 build spins identically to 0.4.0 (94% single-thread CPU
-# right after the vocab warning; see llama-rag.nix's ESCAPE CONDITION
-# narrative). Direct-run verification outside the unit context is
-# insufficient evidence there. The CPU llama.cpp build (0.6.0 from root
-# nixpkgs as of the 2026-10-10 thinking-fix deploy; 0.5.0 when this
-# module first landed) is the proven-in-production path on this host — llama-vlm's
-# caption/verdict servers run it under systemd daily. CPU is not a
-# compromise here: the model is a Qwen3.6 35B-A3B MoE (3B active params),
-# so CPU inference still streams interactive-fast tokens while the full
-# 23.4 GB expert pool sits in page cache (128 GB host).
+# Where the model runs — `accelerator` (owner directive 2026-11-27: "ALL
+# AI models should be ran on iGPU or NPU and NEVER on the CPU"):
+#
+#   igpu  (evo-x2, 2026-11-28): the HIP/ROCm build of llama.cpp from the root
+#          nixpkgs (lib/rocm.nix llamaCppHip — the same derivation ai-stack's
+#          llama-server-rocm runs) with all 41 layers in GTT on the Radeon
+#          8060S. The expert pool is RESIDENT for as long as the backend is
+#          up, so inference no longer rides on page-cache hits: the cpu
+#          posture's prompt processing fell to 5-18 tok/s whenever IO
+#          pressure evicted experts (the 2026-11-27 browser-history summary
+#          timeout). Measured under the unit-shaped sandbox on 2026-11-28:
+#          load_mode none, 41/41 layers offloaded, 22.1 GiB ROCm0 model
+#          buffer, ~1,245 tok/s prompt processing, 53-56 tok/s decode, cold
+#          load 2m29s — table + method:
+#          docs/status/2026-11-28_03-20_llama-chat-igpu-flip-hip-build-verified.md
+#
+#   cpu   the escape hatch and this host's posture 2026-10-05..2026-11-27:
+#          the plain llama.cpp build, experts in page cache. One line in
+#          configuration.nix rolls the flip back.
+#
+# WHY IT WAS CPU, AND WHAT CHANGED. The llama.cpp/ROCm path on gfx1150 WEDGED
+# under systemd units regardless of llama.cpp version — freeze #5
+# (2026-09-18) saw the rev-pinned 0.3.0 build spin identically to 0.4.0 (94%
+# single-thread CPU right after the vocab warning; llama-rag.nix's ESCAPE
+# CONDITION narrative), and a shell direct-run had looked healthy, so
+# direct-run verification outside the unit context was ruled insufficient
+# evidence. Upstream attribution (2026-11-14,
+# docs/status/2026-11-14_07-59_llama-cpp-spin-upstream-attribution.md):
+# llama.cpp #19482 — a ROCr userptr-registration spin on the MMAP upload of
+# a large model; llama.cpp is only the trigger, so no llama.cpp version ever
+# "fixed" it. What changed is the trigger: llama.cpp >=0.9 resolves
+# `--load-mode auto` to `none` on iGPUs (ggml-cuda.cu: mmap_support is false
+# for IGPU-type devices), leaving the mmap upload path entirely, and the
+# 1.0.0 build loads the 23.4 GB chat model cleanly under the unit sandbox.
+# This module PINS `--load-mode none` so the escape does not ride on HIP's
+# integrated-flag detection.
+#
+# Guardrails that came out of that history, all load-bearing:
+#   - the start contract judges the load: ExecStartPost /health under
+#     TimeoutStartSec, so a spin fails the unit and Restart backoff heals
+#     instead of active-but-dead;
+#   - `--parallel 1` serializes inference. The 2026-11-25 request-time wedge
+#     on the pinned embeddings build spun in
+#     amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu with four slots taken at once
+#     while /health stayed 200 — liveness cannot see that class;
+#   - the render group + strict device cgroup (lib/rocm.nix deviceCgroup):
+#     /dev/kfd and renderD128 only, so libdrm's device enumeration cannot
+#     open the NPU node (the 2026-09-04 D-state corpse class);
+#   - a shell direct-run is NOT evidence. Re-soak every new llama.cpp or
+#     ROCm build BEFORE deploying it:
+#       sudo ./scripts/llama-rag-soak.sh --mode chat --force --as-user lars \
+#         --memory-max 48G --warmup-max 1500 --minutes 15 \
+#         --server <hip llama-server> --model <gguf> --port <scratch port> \
+#         --server-arg=--jinja --server-arg=-ngl --server-arg=all \
+#         --server-arg=--load-mode --server-arg=none \
+#         --server-arg=--parallel --server-arg=1
+#     then probe a real completion against the scratch port: the harness
+#     judges the LOAD, the request-time wedge needs a request.
 #
 # Why a dedicated server and NOT the existing options (posture note
 # 2026-11-18: llama-chat itself is now ALSO socket-activated — the on-demand

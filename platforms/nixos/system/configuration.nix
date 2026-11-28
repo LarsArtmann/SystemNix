@@ -1663,7 +1663,8 @@ in
 
       # llama.cpp chat server — the interactive brain for InboxClean's
       # dashboard /chat (see modules/nixos/services/llama-chat.nix for why
-      # CPU MoE + always-on and not FastFlowLM/Ollama/GPU; runbook:
+      # it is socket-activated, runs on the iGPU since 2026-11-28, and is
+      # not FastFlowLM/Ollama; runbook:
       # docs/services/llama-chat.md). Serves the qwen3.6-35b-a3b abliterated
       # tune with native tool calls at 127.0.0.1:8850/v1.
       #
@@ -1695,6 +1696,16 @@ in
       # activation design (freeze-41 report item 30) so it never
       # cold-loads into a storm again. [Both halves landed — see above.]
       llama-chat.enable = true;
+
+      # iGPU (2026-11-28, owner directive 2026-11-27: "ALL AI models should
+      # be ran on iGPU or NPU and NEVER on the CPU"): the HIP llama.cpp build
+      # with every layer resident in GTT. The freeze-#5 ROCm wedge was
+      # attributed upstream to the mmap load path (llama.cpp #19482) and the
+      # 1.0.0 build escapes it (load_mode none) — verified under the
+      # unit-shaped sandbox BEFORE this flip:
+      # docs/status/2026-11-28_03-20_llama-chat-igpu-flip-hip-build-verified.md.
+      # Rollback = "cpu".
+      llama-chat.accelerator = "igpu";
 
       file-and-image-renamer = {
         enable = true;
