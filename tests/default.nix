@@ -85,6 +85,7 @@ in
   niri-session = makeTest (import ./test-niri-session.nix { inherit pkgs; });
   tmp-cleanup = makeTest (import ./test-tmp-cleanup.nix { inherit pkgs; });
   tmp-cleaner-audit = import ./test-tmp-cleaner-audit.nix { inherit pkgs inputs system; };
+  service-health-check = import ./test-service-health-check.nix { inherit pkgs inputs system; };
   sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
   sops-recipient-audit = import ./test-sops-recipient-audit.nix { inherit pkgs inputs system; };
   integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };

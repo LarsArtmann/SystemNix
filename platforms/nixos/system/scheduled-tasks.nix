@@ -492,29 +492,78 @@ in
                   XDG_RUNTIME_DIR=/run/user/$(id -u)
                   export XDG_RUNTIME_DIR
 
+                  STATE_DIR="$HOME/.cache/service-health-check"
+                  # Failure ledger: one file per failed unit, "<strikes> <failure epoch>".
+                  LEDGER_DIR="$STATE_DIR/failures"
+                  NOTIFY_STATE="$STATE_DIR/last-notified-failed"
+                  # A first failure older than this is FAILED without a second run: nothing
+                  # retried it for a day, so its retry is not what the next hours bring.
+                  ACUTE_MAX_AGE_SECONDS=86400
+                  mkdir -p "$LEDGER_DIR"
+
                   FAILED=""
-                  GATED=""
+                  # Space-delimited unit ids already in FAILED (exact-token membership test).
+                  FAILED_UNITS=""
                   PENDING=""
+                  # Space-delimited "<scope>:<unit>" keys examined this run; a ledger file
+                  # whose key is absent here belongs to a unit that is no longer failed.
+                  OBSERVED=""
+                  GATED=""
                   TOTAL=0
+                  NOW_EPOCH="$(date +%s)"
+
+                  fail() {
+                      FAILED="$FAILED\n  $1"
+                  }
+
+                  pend() {
+                      PENDING="$PENDING\n  $1"
+                  }
+
+                  # "$1" is the manager that owns the unit: "system" or "user".
+                  unit_prop() {
+                      if [ "$1" = "user" ]; then
+                          systemctl --user show "$2" -p "$3" --value 2>/dev/null || true
+                      else
+                          systemctl show "$2" -p "$3" --value 2>/dev/null || true
+                      fi
+                  }
+
+                  unit_active() {
+                      if [ "$1" = "user" ]; then
+                          systemctl --user is-active --quiet "$2" 2>/dev/null
+                      else
+                          systemctl is-active --quiet "$2" 2>/dev/null
+                      fi
+                  }
+
+                  # One unit id per line, of every failed service of the given manager.
+                  list_failed() {
+                      if [ "$1" = "user" ]; then
+                          systemctl --user --failed --no-legend --no-pager --plain --type=service 2>/dev/null | awk '{print $1}'
+                      else
+                          systemctl --failed --no-legend --no-pager --plain --type=service 2>/dev/null | awk '{print $1}'
+                      fi
+                  }
 
                   check_service() {
                       TOTAL=$((TOTAL + 1))
-                      # Retry up to 3 times with 2s sleep — services may be
-                      # restarting during a deploy (activating/reloading state).
+                      # Retry up to 3 times with 2s pauses: services may be restarting during
+                      # a deploy (activating/reloading state).
                       for _attempt in 1 2 3; do
                           if systemctl is-active --quiet "$1" 2>/dev/null; then
                               return 0
                           fi
                           sleep 2
                       done
-                      FAILED="$FAILED\n  $1"
+                      FAILED_UNITS="$FAILED_UNITS $1.service"
+                      fail "$1.service"
                       return 1
                   }
 
-                  # shellcheck disable=SC2329
-                  # Gated critical service: down + condition marker absent =
-                  # expected-by-design (report in GATED, never fail); marker
-                  # present + down = genuine regression (fail like any other).
+                  # Gated critical service: down + condition marker absent = expected-by-design
+                  # (report in GATED, never fail); marker present + down = genuine regression
+                  # (fail like any other).
                   check_gated_service() {
                       TOTAL=$((TOTAL + 1))
                       if systemctl is-active --quiet "$1" 2>/dev/null; then
@@ -524,150 +573,183 @@ in
                           GATED="$GATED\n  $1 (gated: $2 absent)"
                           return 0
                       fi
-                      FAILED="$FAILED\n  $1"
+                      FAILED_UNITS="$FAILED_UNITS $1.service"
+                      fail "$1.service"
                       return 1
                   }
 
-                  # shellcheck disable=SC2329
-                  check_user_service() {
-                      TOTAL=$((TOTAL + 1))
-                      for _attempt in 1 2 3; do
-                          if systemctl --user is-active --quiet "$1" 2>/dev/null; then
-                              return 0
-                          fi
-                          sleep 2
-                      done
-                      FAILED="$FAILED\n  $1 (user)"
-                      return 1
-                  }
-
-                  # Acute vs chronic (2026-10-17 boot-race class): a failed
-                  # oneshot whose timer has NOT re-fired since the failure is
-                  # simply waiting for its own scheduled retry — the boot-
-                  # order races (architecture-catalog-sync, cv-scan, …) self-
-                  # heal on the next tick. Report those as PENDING (journal
-                  # only), not FAILED: per-failure alerting already rides each
-                  # unit's own OnFailure= hook and outcome-level coverage
-                  # lives in Gatus. Chronic (FAIL) = no timer, timer not
-                  # active, timestamps that refuse to parse (fail closed — a
-                  # real breakage must never be silenced), or the failure is
-                  # older than 24h (a refailer that never clears escalates;
-                  # 24h > the widest timer interval in play, cv-scan 6h).
-                  # $2 = "user" classifies against the user manager.
-                  # shellcheck disable=SC2317
-                  is_pending_retry() {
-                      # nounset-safe: callers may omit $2 (system manager)
-                      mode="''${2:-system}"
-                      if [ "$mode" = "user" ]; then
-                          systemctl --user is-active --quiet "$1.timer" 2>/dev/null || return 1
-                          last_trigger="$(systemctl --user show "$1.timer" -p LastTriggerUSec --value 2>/dev/null)"
-                          failed_at="$(systemctl --user show "$1" -p InactiveEnterTimestamp --value 2>/dev/null)"
-                      else
-                          systemctl is-active --quiet "$1.timer" 2>/dev/null || return 1
-                          last_trigger="$(systemctl show "$1.timer" -p LastTriggerUSec --value 2>/dev/null)"
-                          failed_at="$(systemctl show "$1" -p InactiveEnterTimestamp --value 2>/dev/null)"
+                  # systemd's failed state is a latch, not a severity: a oneshot that exited
+                  # non-zero once looks exactly like one that has failed for weeks, and the
+                  # latch holds until a run succeeds. What separates the two is whether
+                  # anything retries the unit on its own.
+                  #   - No trigger (a daemon, an activation-only oneshot) or no trigger that
+                  #     is active: nothing retries it, so it is FAILED at once.
+                  #   - An active trigger (timer, path): the FIRST failure is acute, reported
+                  #     as PENDING in the journal only. The unit's own OnFailure hook already
+                  #     alerted for it and its next run may heal it. Found failed again after
+                  #     the trigger re-fired, the retry did not help: FAILED, until a run
+                  #     succeeds.
+                  # systemd keeps no failure count, and its timestamps cannot rebuild one:
+                  # after a retry both LastTriggerUSec and InactiveEnterTimestamp belong to
+                  # the newest run, and a sub-second run shares the trigger's second. So the
+                  # count lives here: a failure epoch not seen before is one more strike.
+                  classify_failure() {
+                      local scope="$1" unit="$2" label="$3"
+                      local trigger failed_at failed_epoch ledger strikes seen_epoch retry_owed trigger_unit
+                      OBSERVED="$OBSERVED $scope:$unit"
+                      FAILED_UNITS="$FAILED_UNITS $unit"
+                      trigger="$(unit_prop "$scope" "$unit" TriggeredBy)" || true
+                      if [ -z "$trigger" ]; then
+                          fail "$unit ($label)"
+                          return 0
                       fi
-                      [ -n "$failed_at" ] || return 1
-                      case "$last_trigger" in
-                          ""|"n/a")
-                              # Timer armed but never fired since: retry owed.
-                              lt=0
-                              ;;
-                          *)
-                              lt="$(date -d "$last_trigger" +%s 2>/dev/null)" || return 1
+                      retry_owed=false
+                      # TriggeredBy is a space-separated list: any active trigger owes a retry.
+                      while IFS= read -r trigger_unit; do
+                          if [ -n "$trigger_unit" ] && unit_active "$scope" "$trigger_unit"; then
+                              retry_owed=true
+                              break
+                          fi
+                      done <<< "$(printf '%s' "$trigger" | tr ' ' '\n')"
+                      if [ "$retry_owed" = false ]; then
+                          fail "$unit ($label)"
+                          return 0
+                      fi
+                      failed_at="$(unit_prop "$scope" "$unit" InactiveEnterTimestamp)" || true
+                      # An empty timestamp parses as midnight today, which is a plausible
+                      # lie: fail closed instead.
+                      if [ -z "$failed_at" ]; then
+                          fail "$unit ($label)"
+                          return 0
+                      fi
+                      failed_epoch="$(date -d "$failed_at" +%s 2>/dev/null)" || true
+                      if [ -z "$failed_epoch" ]; then
+                          fail "$unit ($label)"
+                          return 0
+                      fi
+                      ledger="$LEDGER_DIR/$scope:$unit"
+                      strikes=0
+                      seen_epoch=""
+                      if [ -f "$ledger" ]; then
+                          read -r strikes seen_epoch < "$ledger" || {
+                              strikes=0
+                              seen_epoch=""
+                          }
+                      fi
+                      case "$strikes" in
+                          "" | *[!0-9]*)
+                              strikes=0
+                              seen_epoch=""
                               ;;
                       esac
-                      fa="$(date -d "$failed_at" +%s 2>/dev/null)" || return 1
-                      # A trigger AT/AFTER the failure timestamp means the
-                      # retry already ran and the unit failed AGAIN (or never
-                      # cleared) — chronic.
-                      [ "$lt" -lt "$fa" ] || return 1
-                      # Age cap: older than 24h escalates to chronic.
-                      now_epoch="$(date +%s)"
-                      [ "$now_epoch" -lt "$((fa + 86400))" ]
+                      if [ "$failed_epoch" != "$seen_epoch" ]; then
+                          strikes=$((strikes + 1))
+                          ledger_write "$ledger" "$strikes $failed_epoch"
+                      fi
+                      if [ "$strikes" -eq 1 ] && [ "$NOW_EPOCH" -lt $((failed_epoch + ACUTE_MAX_AGE_SECONDS)) ]; then
+                          pend "$unit ($label, timer retry pending)"
+                      else
+                          fail "$unit ($label)"
+                      fi
                   }
 
-                  # === Critical system services — must be running ===
+                  # A ledger that cannot be written costs one check cycle of classification
+                  # (the next run starts from the stale file), never the report.
+                  ledger_write() {
+                      if printf '%s\n' "$2" > "$1.tmp" && mv -f "$1.tmp" "$1"; then
+                          return 0
+                      fi
+                      echo "WARN: could not update the failure ledger for $1" >&2
+                  }
+
+                  # Every failed service of one manager that no check above already covered.
+                  # Transient units (systemd-run: tests, soaks, one-off probes) belong to
+                  # whoever ran them, not to the declared system, and never run again: a
+                  # failed one is debris for its creator to reset, not a service down.
+                  sweep_failed() {
+                      local scope="$1" label="$2" unit
+                      while IFS= read -r unit; do
+                          [ -n "$unit" ] || continue
+                          case "$unit" in
+                              ${ignorePattern})
+                                  ;;
+                              *)
+                                  case " $FAILED_UNITS " in
+                                      *" $unit "*) ;;
+                                      *)
+                                          if [ "$(unit_prop "$scope" "$unit" Transient)" != "yes" ]; then
+                                              classify_failure "$scope" "$unit" "$label"
+                                          fi
+                                          ;;
+                                  esac
+                                  ;;
+                          esac
+                      done < <(list_failed "$scope")
+                  }
+
+                  # === Critical system services: must be running ===
                   ${builtins.concatStringsSep "\n" (map checkBlock criticalSystemServices)}
 
-                  # === Gated critical services — down is expected while the gate holds ===
+                  # === Gated critical services: down is expected while the gate holds ===
                   ${builtins.concatStringsSep "\n" (map gatedBlock gatedSystemServices)}
 
-                  # === Dynamic: catch any other failed system services ===
-                  while IFS= read -r svc; do
-                      case "$svc" in
-                          ${ignorePattern})
-                              ;;
-                          *)
-                              if ! echo -e "$FAILED" | grep -qF "  $svc" && ! echo -e "$PENDING" | grep -qF "  $svc"; then
-                                  TOTAL=$((TOTAL + 1))
-                                  if is_pending_retry "$svc"; then
-                                      PENDING="$PENDING\n  $svc (failed, timer retry pending)"
-                                  else
-                                      FAILED="$FAILED\n  $svc (failed)"
-                                  fi
-                              fi
-                              ;;
-                      esac
-                  done < <(systemctl --failed --no-legend --type=service 2>/dev/null | awk '{print $2}')
+                  # === Dynamic: every other failed system service ===
+                  sweep_failed system "failed"
 
-                  # === Dynamic: catch any failed user services ===
-                  while IFS= read -r svc; do
-                      case "$svc" in
-                          ${ignorePattern})
-                              ;;
-                          *)
-                              if ! echo -e "$FAILED" | grep -qF "  $svc (user)" && ! echo -e "$PENDING" | grep -qF "  $svc (user)"; then
-                                  TOTAL=$((TOTAL + 1))
-                                  if is_pending_retry "$svc" user; then
-                                      PENDING="$PENDING\n  $svc (user, failed, timer retry pending)"
-                                  else
-                                      FAILED="$FAILED\n  $svc (user, failed)"
-                                  fi
-                              fi
-                              ;;
+                  # === Dynamic: every failed user service ===
+                  sweep_failed user "user, failed"
+
+                  # A ledger entry whose unit is no longer failed had a successful run: its
+                  # next failure starts a new episode.
+                  for ledger in "$LEDGER_DIR"/*; do
+                      [ -e "$ledger" ] || continue
+                      case " $OBSERVED " in
+                          *" $(basename "$ledger") "*) ;;
+                          *) rm -f "$ledger" || true ;;
                       esac
-                  done < <(systemctl --user --failed --no-legend --type=service 2>/dev/null | awk '{print $2}')
+                  done
 
                   # === Report ===
-                  # Desktop-notify dedup (owner directive 2026-11-24: never the
-                  # same "Health Check: services down" notification stacked).
-                  # The timer fires every 15 min; a persistent outage used to
-                  # stack one identical critical notification per tick (4
-                  # copies after one hour away from the desk). Notify ONCE per
-                  # DISTINCT failure set: an unchanged set stays silent, a
-                  # changed set (new service down) notifies once more, and a
-                  # fully green run clears the state so the next outage is a
-                  # fresh episode. The unit still exits 1 every failing tick
-                  # (journal + OnFailure + deploy exit-4 semantics unchanged).
-                  STATE_FILE="$HOME/.cache/service-health-check/last-notified-failed"
+                  # Desktop notification, once per distinct set of FAILED units (owner
+                  # directive 2026-11-24: never the same "Health Check: services down"
+                  # notification stacked). The state file holds the member lines of the last
+                  # notified set, which tells a NEW failure (popup, listing the whole current
+                  # set) from a member recovering (journal only: good news is not a critical
+                  # popup). The unit still exits 1 on every failing tick (journal + OnFailure
+                  # + deploy exit-4 semantics unchanged).
                   if [ -n "$FAILED" ]; then
-                      mkdir -p "$(dirname "$STATE_FILE")"
-                      failed_sig="$(echo -e "$FAILED" | sort | sha256sum | cut -d' ' -f1)"
-                      last_sig="$(cat "$STATE_FILE" 2>/dev/null || true)"
-                      if [ "$failed_sig" != "$last_sig" ]; then
+                      current="$(echo -e "$FAILED" | sort)"
+                      notified="$(cat "$NOTIFY_STATE" 2>/dev/null || true)"
+                      new_failure=false
+                      while IFS= read -r member; do
+                          [ -n "$member" ] || continue
+                          if ! grep -qxF -- "$member" <<< "$notified"; then
+                              new_failure=true
+                          fi
+                      done <<< "$current"
+                      if [ "$new_failure" = true ]; then
                           notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
-                          printf '%s' "$failed_sig" > "$STATE_FILE"
-                          echo "NOTIFIED: failure set changed since last desktop notification"
+                          echo "NOTIFIED: a failed unit that was not notified before"
                       else
-                          echo "NOTIFY-SKIPPED: identical failure set already notified (desktop dedup)"
+                          echo "NOTIFY-SKIPPED: every failed unit was already notified (desktop dedup)"
                       fi
+                      printf '%s\n' "$current" > "$NOTIFY_STATE"
                       echo "FAILED:$(echo -e "$FAILED")"
                       if [ -n "$PENDING" ]; then
-                          echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
+                          echo -e "PENDING (first failure, retry owed on its trigger, its own OnFailure hook alerted):$PENDING"
                       fi
                       if [ -n "$GATED" ]; then
                           echo -e "GATED (expected down):$GATED"
                       fi
                       exit 1
                   else
-                      if [ -f "$STATE_FILE" ]; then
-                          rm -f "$STATE_FILE"
+                      if [ -f "$NOTIFY_STATE" ]; then
+                          rm -f "$NOTIFY_STATE"
                           echo "RECOVERED: failure set cleared (dedup state reset)"
                       fi
                       echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
                       if [ -n "$PENDING" ]; then
-                          echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
+                          echo -e "PENDING (first failure, retry owed on its trigger, its own OnFailure hook alerted):$PENDING"
                       fi
                       if [ -n "$GATED" ]; then
                           echo -e "GATED (expected down):$GATED"
