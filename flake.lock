@@ -9230,11 +9230,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1795817609,
-        "narHash": "sha256-2REer7g4CWIVPkMQflUIPE5WDsRFenicVhSXoCS0FhI=",
+        "lastModified": 1795836515,
+        "narHash": "sha256-SnJbLadr6Du9wu34ayRWpW2gntRjrsr64/YHXEUjM4Y=",
         "ref": "refs/heads/master",
-        "rev": "9040947c7f024f7d3cb5e787a0fdba0966431f81",
-        "revCount": 4939,
+        "rev": "4bd78837af10aff682fa1117154e7129d0183077",
+        "revCount": 4942,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
