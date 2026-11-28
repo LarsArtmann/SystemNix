@@ -48,12 +48,13 @@ Backup: `reports-system-backup.timer` fires nightly at 03:25 local time plus up 
 
 Retention 14 days. The registry entry declares backup freshness (pattern `*-db-*.db.gz`, max age 25 h). The directory is created by `reports-system-backup-dir` (owned by `reports-system`, mode 0750) and the backup unit requires the pool mount (`RequiresMountsFor`).
 
-Restore procedure:
+Restore procedure (as root):
 
 1. `systemctl stop reports-system`
-2. `gunzip -c /mnt/pool/backups/reports-system/reports-db-<date>.db.gz > /var/lib/reports-system/reports.db` and likewise `cqrs-db-<date>.db.gz` into `/var/lib/reports-system/cqrs.db`
-3. `chown reports-system:reports-system` both files, `chmod 0600`
-4. `systemctl start reports-system`
+2. Remove leftover sidecars of the old stores (`/var/lib/reports-system/*.db-wal`, `*.db-shm`) if present, so none of them is applied to the restored files
+3. `gunzip -c /mnt/pool/backups/reports-system/reports-db-<date>.db.gz > /var/lib/reports-system/reports.db` and likewise `cqrs-db-<date>.db.gz` into `/var/lib/reports-system/cqrs.db` (same backup date for both)
+4. `chown reports-system:reports-system` both files, `chmod 0600`
+5. `systemctl start reports-system`, then confirm `/ready` answers 200
 
 ## Monitoring
 
@@ -68,7 +69,7 @@ Restore procedure:
 - `journalctl -u reports-system -n 50` is the first look.
 - "session secret must be at least 32 characters": the sops secrets are missing or short. Check the rendered template and the two keys in the sops file; rotating/fixing them restarts the unit automatically.
 - Missing `REPORTS_SECURITY_*` variables (the environment file did not render): same look, same fix.
-- 403 `REGISTRATION_CLOSED` on register (and a 303 from `/auth/register` to the login page) is NOT an error: registration is closed because the administrator account already exists. If the admin account exists and you still need a change, that is an app-level operation, not a module knob.
+- 403 `REGISTRATION_CLOSED` on register (and a 303 from `/auth/register` to the login page) is NOT an error: registration is closed because the administrator account already exists. To admit further accounts set the upstream option `services.reports-system.registration` to `open` (new accounts are viewers) and deploy; `closed` admits nobody.
 - For application bugs: fix UPSTREAM in `/home/lars/projects/testing` with tests, never patched in SystemNix (see `docs/agents/integration-registry.md`, section "Consuming LarsArtmann Flakes").
 
 ## Ownership and doctrine
