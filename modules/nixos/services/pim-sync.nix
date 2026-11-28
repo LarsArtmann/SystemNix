@@ -336,6 +336,12 @@
                 # (multi-user.target), so io-tier-coverage-audit demands a
                 # fragment — the dashboard reads small textfiles on 15s pollers,
                 # textbook background class.
+                # Bind address is the NetBird IP: start after the daemon so
+                # the first start does not fail on a missing address and lean
+                # on Restart=on-failure. wants (not requires): a detached
+                # NetBird degrades to bind retries, never a dead dependency.
+                after = [ "netbird-evox2.service" ];
+                wants = [ "netbird-evox2.service" ];
                 serviceConfig = lib.mkMerge [
                   ioTier.background
                   { ExecStartPre = [ (lib.getExe uiTokenCheck) ]; }
