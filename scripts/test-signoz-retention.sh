@@ -169,7 +169,7 @@ case "$method:${url#"$SIGNOZ_URL"}" in
     else
       for table in "${TRACE_API_TABLES[@]}"; do stub_set_seconds signoz_traces "$table" "$((hours * 3600))"; done
     fi ;;
-  POST:/api/v2/settings/ttl)
+  "POST:/api/v2/settings/ttl)")
     if [ -f "$STUB_STATE/post-fails" ]; then
       respond 500 '{"error":"boom"}'
       exit 0
