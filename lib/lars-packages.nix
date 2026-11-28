@@ -394,13 +394,11 @@ lib.filterAttrs (_: v: v != null) {
   # deployed as the invoices-dashboard unit since 2026-11-10: loopback
   # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
   # runbook docs/services/invoices-dashboard.md). NON-FOLLOWER input (own
-  # nixpkgs lock, no follows): upstream-baked vendorHash staled under the
-  # 2026-11-24 nixpkgs-root float — NEW shim, got /OE8Z7by (first-hand
-  # keep-going, ~/.cache/gtd-pipeline/toplevel-build3.log). Drop when
-  # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
-  invoices =
-    flakePkgShim inputs.invoices "default"
-      "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8=";
+  # nixpkgs lock, no follows). The consumer-side vendorHash shim is DROPPED
+  # (2026-11-28): upstream bakes the true hash since 1175354c
+  # (sha256-/OE8Z7by…, via its own buildflow nix-hash-fix). Re-add ONLY via
+  # nix-hash-fix evidence.
+  invoices = flakePkg inputs.invoices;
   # io-surface: the I/O surface manifest gate CLI (init/check/render/lint;
   # fleet I/O-BOM gate, InboxClean pilot consumer). NON-FOLLOWER input (own
   # nixpkgs lock, no follows): upstream-baked vendorHash staled under the

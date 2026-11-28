@@ -638,8 +638,9 @@
     # unit: loopback 127.0.0.1:8110 by upstream design — single-user CLI
     # dashboard, never LAN-exposed — behind the protected registry vHost
     # invoices.home.lan). NON-FOLLOWER class: upstream packages.default
-    # bakes a vendorHash that reproduces under its own lock (first-hand
-    # path: probe 2026-11-10); the dashboard REQUIRES config.yaml in the
+    # bakes a vendorHash that reproduces under its own lock (re-proved
+    # 2026-11-28 after upstream's own nix-hash-fix at 1175354c — the
+    # consumer shim is dropped); the dashboard REQUIRES config.yaml in the
     # CWD (viper ".", no --config flag), so the unit's WorkingDirectory
     # is the data dir ~/invoices holding the production config of record.
     invoices = {
