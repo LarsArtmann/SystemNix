@@ -195,6 +195,16 @@
         }
 
         (lib.mkIf cfg.enable {
+          # Upstream eval defect, surfaced 2026-11-27 by the first real
+          # enable: upstream sets users.users.pim-sync.description to a
+          # string CONTAINING A COLON ("bot:pim-sync"), and NixOS rejects
+          # ":" in user descriptions (GECOS field — the option type is
+          # "string, not containing newlines or colons"). Inert while the
+          # unit was disabled, undeployable the moment it is not. The
+          # upstream fix is a one-liner; this mkForce is the documented
+          # interim until the input floats to a rev carrying it (owner
+          # directive: fix upstream, never pin — TODO row tracks the push).
+          users.users.pim-sync.description = lib.mkForce "pim-sync bot account (bot pim-sync machine actor)";
           # sops materialization (flip scaffold, 2026-11-10): the rendered
           # values are PLACEHOLDER until the owner paste — the config-check
           # ExecStartPre below turns that into a loud, actionable failure

@@ -2,9 +2,9 @@
 
 > Module: `modules/nixos/services/pim-sync.nix` (thin wrapper around upstream `inputs.pim-sync.nixosModules.default`). Upstream repo: `github:LarsArtmann/pim-sync` (PRIVATE, git+ssh input, ref-tracked `refs/heads/master`, lock-pinned — monitor365/media-atlas pattern).
 
-## State: flip-ready DISABLED (2026-11-04); sops scaffold LANDED (2026-11-10); Stalwart leg LIVE (2026-11-18); dashboard fleet rows LANDED (2026-11-19); ui token REAL (2026-11-27)
+## State: ENABLED dry-run with a secret gate (2026-11-27); sops scaffold LANDED (2026-11-10); Stalwart leg LIVE (2026-11-18); dashboard fleet rows LANDED (2026-11-19); ui token REAL (2026-11-27)
 
-`services.pim-sync.enable = false` in `platforms/nixos/system/configuration.nix` (dormant cluster, audible-sync precedent). The wrapper pre-wires everything that is safe to pre-wire: the package pin, OnFailure routing, the integration entry (`monitored`, headless — no vHost/subdomain/port/tile), and the unconditional catalog entry. Nothing else exists at enable=false (upstream config is entirely `mkIf cfg.enable` — zero eval footprint).
+`services.pim-sync.enable = true` + `service.pim-sync.live = false` in `platforms/nixos/system/configuration.nix` (2026-11-27). The wrapper pre-wires the package pin, the secret gate, OnFailure routing, the integration entry (`monitored`, headless — no vHost/subdomain/port/tile) and the unconditional catalog entry.
 
 **2026-11-10 sops scaffold:** the full secret wiring landed as PLACEHOLDER (audible-sync precedent) — `platforms/nixos/secrets/pim-sync.yaml` holds 8 keys (`pim_sync_oauth_client_secret`, `pim_sync_token_{personal,work}{,_calendar}`, `pim_sync_stalwart_dav_{user,pass}`, `pim_sync_ui_token`); the wrapper renders the DAV env template, points `secretFile`/`environmentFile`/`tokenSeedDir` (`/var/lib/pim-sync-seed`, per-secret rendered paths in sops.nix) and adds a config-check ExecStartPre that fails loudly with this checklist while any placeholder remains. **Enabling with placeholders is still forbidden** (alert storm) — the owner paste below is the gate.
 
@@ -14,7 +14,9 @@
 
 **2026-11-27 secret state (verified by decrypting the file with the host age identity; no value printed):** `pim_sync_stalwart_dav_{user,pass}` (2026-11-18) and `pim_sync_ui_token` (2026-11-27) are REAL; the five Google-side keys — `pim_sync_oauth_client_secret` + the four `pim_sync_token_*` — remain PLACEHOLDER, so the flip stays blocked on the console/consent gates. The five are not interchangeable: the client secret is a Google-issued Desktop-client JSON (unforgeable, `.installed.client_id` + `.client_secret`), and each consent writes its OWN token file because one scope set rides one token (`<account>.json` for contacts, `<account>-calendar.json` for calendar → 2 accounts × 2 legs = 4).
 
-**Why disabled:** upstream has NO idle no-op — `discoverAccounts` errors on an empty tokensDir (`cmd/pim-sync/sync.go:359`), so an enabled unit without token files fails every 5 min and rides OnFailure into an alert storm (plus the failed-unit exit-4 deploy trap, dmarc-monitor class).
+**2026-11-27 ENABLED dry-run — why that is safe with placeholders:** upstream has NO idle no-op (`discoverAccounts` errors on an empty tokensDir, `cmd/pim-sync/sync.go:359`), so a plain `enable = true` would fail every 5 min, ride OnFailure into a Discord storm and trip the failed-unit exit-4 deploy trap. The wrapper therefore adds an **ExecCondition secret gate** (`pim-sync-secret-gate`): exit 1-254 makes systemd SKIP the unit (inactive, no failure state, OnFailure does not fire) while any material still says PLACEHOLDER, while a MISSING rendered sops file exits 255 as a real failure (a render defect must never read as "waiting for the owner"). Shape validation stays in the config-check ExecStartPre, which only runs once the gate passes. Two more pieces of the same posture: `SuccessExitStatus = [ 3 ]` while `live = false` (a dry-run cap abort is informational — the guard stops before any write and the run's value is its projected-change report; the flag default cap is 50 and a first projection against a fresh book exceeds it by design), and the dry-run ExecStart passes no `--max-changes` at all (upstream only adds it with `--live`).
+
+**Upstream defect surfaced by the first real enable (2026-11-27):** upstream sets `users.users.pim-sync.description = "pim-sync bot account (bot:pim-sync machine actor)"` — NixOS rejects `:` in user descriptions (GECOS), so `enable = true` failed eval until the wrapper added a `lib.mkForce` with the colon removed. Inert for 3 weeks only because the whole upstream config is `mkIf cfg.enable`. One-line upstream fix pending (owner push; TODO row in `docs/todo/upstream.md`); the mkForce is the documented interim.
 
 ## Flip ladder (owner-gated — plan: docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md)
 
@@ -25,9 +27,28 @@
    - Per-account consents (client JSON must land first): run in the owner's terminal
      `mkdir -p ~/.config/pim-sync-tokens && PIMSYNC_SECRET=<downloaded-client-json> PIMSYNC_TOKENS_DIR=~/.config/pim-sync-tokens nix run ~/projects/pim-sync#pim-sync -- auth --account personal` (repeat `work`, plus `--calendar` variants) → the agent ingests the 4 token JSONs into `pim_sync_token_*` (runtime-variable expansion, never inline). The agent can launch these — the browser opens on the owner's desktop session; the owner just clicks Google's consent screens.
      **Account mapping (owner-confirmed 2026-11-18): `personal` = `lartyhd@gmail.com`, `work` = `lars@helpless.ai`** — each consent click must pick the matching account (mirror: pim-sync repo `docs/oauth-setup.md` §4 table).
-2. **agent**: wire sops — DONE 2026-11-10 as the placeholder scaffold (environmentFile template / secretFile / tokenSeedDir + config-check). Remaining at flip: set `enable = true`, keep `live = false` (dry-run timer) → deploy → first dry-run journal review 🧑 (Stalwart-single-truth plan §7.5 gate).
+2. **agent**: wire sops — DONE 2026-11-10 as the placeholder scaffold (environmentFile template / secretFile / tokenSeedDir + config-check). Flip mechanics — DONE 2026-11-27: `enable = true`, `live = false`, the ExecCondition secret gate, and the dry-run exit-3 tolerance are in tree and eval-verified. Remaining: ingest the client JSON + 4 consent tokens into sops (agent, on your handover), then `nix run .#deploy` and the first dry-run journal review 🧑 (Stalwart-single-truth plan §7.5 gate).
 3. 🧑 **GO** → **agent**: `live = true` + `maxChanges` cap + `metricsFile` textfile wiring + Gatus freshness check on `pimsync_leg_last_success_unix{leg,account}` (anchored-pat doctrine; dry-run never settles it — 0 = never — hence deferred to this step). Textfile dir precedent: `btrfs-health.nix` (`/var/lib/prometheus-node-exporter/textfile_collectors`); metrics file is mode 0600 owned by the service user — collector readability needs the shared-group pattern from that precedent.
 4. Real Twenty import stays its own owner gate (docs/todo/services.md).
+
+## Owner side: the least possible steps (2026-11-27)
+
+Everything that needs no human is already done: the flip (`enable = true`, `live = false`), the secret gate, the sops scaffold, the dashboard bearer token, the Stalwart DAV credential, the registry/catalog rows, and the eval + toplevel build proof. What remains is console and browser only:
+
+1. **GCP console** (`console.cloud.google.com`, project `pim-sync-prod-larsartmann` — created 2026-11-18, People + Calendar APIs already enabled): OAuth consent screen (User type External, app `pim-sync`, scopes `.../auth/contacts.readonly` + `.../auth/calendar.readonly`) → Credentials → Create credentials → OAuth client ID → **Desktop app** → **Publish app → In production** → Download JSON. Full walkthrough: `~/projects/pim-sync/docs/oauth-setup.md` §2.
+2. **Hand over the JSON** — say the path (or drop it at `~/.config/pim-sync/client-secret.json`). The agent ingests it into `pim_sync_oauth_client_secret` with `sops set --value-file` (JSON-encoded value file: never on a command line, never echoed).
+3. **Click four consent screens** — the agent launches the four flows (`personal`, `work`, `personal --calendar`, `work --calendar`); the browser opens on your desktop and each flow is one click plus the matching account (`personal` = lartyhd@gmail.com, `work` = lars@helpless.ai). The agent then ingests the four token files into sops.
+4. **Say GO** after reading the first dry-run reports; the agent flips `live = true` + the maxChanges cap + metricsFile + the Gatus freshness check.
+
+Prepared for you: `~/.config/pim-sync-tokens/` exists (0700) for the consent flow. The dashboard bearer token now lives only in sops — read it when you need it:
+
+```bash
+export SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
+sops -d --extract '["pim_sync_ui_token"]' platforms/nixos/secrets/pim-sync.yaml
+unset SOPS_AGE_KEY
+```
+
+The dashboard is `http://100.112.252.86:8111` over the NetBird mesh (no LAN/WAN vHost by design).
 
 ## Mesh invariants (2026-11-13 review)
 

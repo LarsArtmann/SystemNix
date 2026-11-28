@@ -103,12 +103,17 @@ _: {
         ;
       inherit (config.users) primaryUser;
 
+      # ROCm helpers. Lazy: only forced while accelerator == "igpu", so the
+      # cpu posture and the standalone-module tests never instantiate the
+      # HIP build.
+      rocm = libHelpers.rocm { inherit pkgs; };
+      onIgpu = cfg.accelerator == "igpu";
+
       llamaServer = lib.getExe' cfg.package "llama-server";
 
       # --jinja makes llama-server apply the GGUF's embedded chat template,
       # which is what turns OpenAI-format `tools` into native Qwen3.6
-      # tool-call responses. No --n-gpu-layers: the ROCm path is wedged on
-      # this host (freeze #5); CPU + MoE is the deliberate posture above.
+      # tool-call responses.
       # The template-kwargs kill the template's default <think> phase —
       # see the header narrative (2026-10-10 deadline-exceeded class).
       execStart =
@@ -122,6 +127,12 @@ _: {
         + " --port ${toString cfg.backendPort}"
         + " --ctx-size ${toString cfg.ctxSize}"
         + " --threads ${toString cfg.threads}"
+        # iGPU offload (header narrative): every layer resident in GTT, and
+        # the load path pinned away from the mmap upload that carries the
+        # llama.cpp #19482 ROCr spin — `--load-mode auto` already resolves
+        # to none on iGPUs, but that resolution rides on HIP's integrated
+        # flag, so it is spelled out here.
+        + lib.optionalString onIgpu " --gpu-layers ${cfg.gpuLayers} --load-mode none"
         + " --jinja"
         # Single-quoted for systemd: the unit parser strips bare double
         # quotes and word-splits the JSON into separate argv entries
@@ -201,9 +212,28 @@ _: {
     in
     {
       options.services.llama-chat = {
-        enable = lib.mkEnableOption "llama.cpp chat server (CPU, always-on, OpenAI-compatible with native tool calls)";
+        enable = lib.mkEnableOption "llama.cpp chat server (socket-activated, OpenAI-compatible with native tool calls)";
 
-        package = lib.mkPackageOption pkgs "llama-cpp" { };
+        accelerator = lib.mkOption {
+          type = lib.types.enum [
+            "cpu"
+            "igpu"
+          ];
+          default = "cpu";
+          description = "Where the model runs. cpu: the plain llama.cpp build, MoE experts in page cache (this host's posture 2026-10-05..2026-11-27). igpu: the HIP/ROCm build with every layer resident in GTT on the Strix Halo iGPU.";
+        };
+
+        package = lib.mkOption {
+          type = lib.types.package;
+          default = if onIgpu then rocm.llamaCppHip else pkgs.llama-cpp;
+          description = "llama.cpp package. Defaults to the build that matches accelerator; set only to pin a specific build.";
+        };
+
+        gpuLayers = lib.mkOption {
+          type = lib.types.str;
+          default = "all";
+          description = "accelerator = \"igpu\" only: the --gpu-layers value (a layer count, \"auto\", or \"all\").";
+        };
 
         modelPath = lib.mkOption {
           type = lib.types.str;
@@ -282,7 +312,7 @@ _: {
           ];
 
           systemd.services.llama-chat = {
-            description = "llama.cpp chat server (${cfg.alias}, CPU MoE, native tool calls — backend, socket-activated)";
+            description = "llama.cpp chat server (${cfg.alias}, ${if onIgpu then "iGPU" else "CPU"} MoE, native tool calls — backend, socket-activated)";
             # ON-DEMAND (2026-11-18, freeze-41 item 30): deliberately NOT
             # wantedBy anything — the public socket owns activation. History:
             # the always-on posture rode late-applications.target (itself the
@@ -298,7 +328,15 @@ _: {
             # with no network gating).
             unitConfig.ConditionPathExists = cfg.modelPath;
 
-            serviceConfig = lib.mkMerge [
+            # ROCm runtime env for the HIP build — the llama-rag unit shape:
+            # the HSA vars plus the path of the dlopen'ed ROCm libs.
+            environment = lib.mkIf onIgpu (
+              rocm.env // {
+                LD_LIBRARY_PATH = rocm.makeLdLibraryPath lib;
+              }
+            );
+
+            serviceConfig = lib.mkMerge ([
               {
                 Type = "exec";
                 User = cfg.user;
@@ -362,7 +400,17 @@ _: {
               # checkpoint writes; serving itself is anon-memory (KV cache),
               # barely any IO.
               ioTier.heavyDB
-            ];
+            ]
+            ++ lib.optionals onIgpu [
+              # GPU device access (llama-rag unit shape): the render group
+              # owns /dev/kfd and /dev/dri/renderD128, and the strict device
+              # cgroup keeps libdrm's device enumeration away from the NPU
+              # node (lib/rocm.nix deviceCgroup).
+              rocm.deviceCgroup
+              {
+                SupplementaryGroups = [ "render" ];
+              }
+            ]);
 
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
