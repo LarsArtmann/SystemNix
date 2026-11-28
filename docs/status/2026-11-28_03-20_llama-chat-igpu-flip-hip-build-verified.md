@@ -21,7 +21,7 @@ Three findings the owner did not have when saying yes:
 | HIP build already present | `llama-server-rocm` → `/nix/store/1qgjmvkrsp11003m9k0wsvkj6lrszshv-llama-cpp-1.0.0`; `libggml-hip.so` in `bin/`; rocblas/hipblas 7.2.4; drv targets include `gfx1151` | no build needed |
 | GPU identity | `gfx_target_version 110501`, `STRXLGEN`, 80 SIMDs, card `1002:1586` | native gfx1151 |
 | Small model, unit-shaped sandbox | `sudo ./scripts/llama-rag-soak.sh --server <hip> --model bge-m3.gguf --minutes 1 --port 18849 --force --as-user lars` | **PASS VERDICT** (23 samples, 0-1 ticks/sample, health 200) |
-| Chat model, same sandbox | harness `--mode chat`, `--as-user lars --memory-max 48G`, flags `--jinja -ngl all --parallel ...` (see §Probe) | loaded in **2m29s**: `load_mode = none`, `offloaded 41/41 layers`, `ROCm0 model buffer size = 22056.09 MiB`, `KV 160 MiB`; 125 samples health=200, idle CPU between probes |
+| Chat model, same sandbox | harness `--mode chat`, `--as-user lars --memory-max 48G`, flags `--jinja -ngl all -lv 4` on the default 4 slots | loaded in **2m29s**: `load_mode = none`, `offloaded 41/41 layers`, `ROCm0 model buffer size = 22056.09 MiB`, `KV 160 MiB`; 125 samples health=200, idle CPU between probes |
 | Inference probes against the soak server | `/completion` + `/v1/chat/completions`, 1.2k and 6.1k-token prompts | table below |
 | Host-level eval | `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` at `98a16648` + this change | rc=0, no new llama-chat warning |
 | Rendered production unit | targeted `nix eval` of `systemd.services.llama-chat` | ExecStart = HIP build + `--gpu-layers all --load-mode none --parallel 1`, `SupplementaryGroups = ["render"]`, `DevicePolicy = strict`, HSA env |
@@ -56,7 +56,7 @@ A CPU baseline on the live unit the same night was attempted and **failed for a 
 | `lib/rocm.nix`, `modules/nixos/services/ai-stack.nix` | `llamaCppHip` single-sourced (one derivation for the system wrapper and the unit) |
 | `platforms/nixos/system/configuration.nix` | `llama-chat.accelerator = "igpu"` + rationale |
 | `scripts/llama-rag-soak.sh` | harness fix + chat mode (Findings 4) |
-| `tests/test-llama-chat-accelerator.nix`, `tests/default.nix` | new render test (17 cases) |
+| `tests/test-llama-chat-accelerator.nix`, `tests/default.nix` | new render test (18 cases) |
 | `docs/services/llama-chat.md`, `AGENTS.md`, `docs/todo/ai-stack.md`, `CHANGELOG.md` | runbook, GPU-section correction, queue rows, entry |
 
 ## Not done (deliberate)
