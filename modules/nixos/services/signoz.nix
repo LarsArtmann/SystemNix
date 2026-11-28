@@ -418,6 +418,26 @@ in
           fi
         '';
       };
+
+      # Converges metrics/traces/logs retention to cfg.retentionDays through
+      # SigNoz's settings API (repo file: fixture-tested by
+      # checks.signoz-retention-selftest, no deploy is its first run).
+      retentionScript = pkgs.writeShellApplication {
+        name = "signoz-retention";
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.jq
+          pkgs.clickhouse
+        ];
+        text = builtins.readFile ../../../scripts/signoz-retention.sh;
+      };
+      retentionDaysOption =
+        signal:
+        lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 90;
+          description = "Days of ${signal} to keep in ClickHouse";
+        };
     in
     {
       options.services.signoz = {
@@ -544,6 +564,18 @@ in
           };
           default = { };
           description = "GCP Cloud Monitoring integration for the SigNoz collector";
+        };
+
+        retentionDays = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              logs = retentionDaysOption "logs";
+              traces = retentionDaysOption "traces";
+              metrics = retentionDaysOption "metrics";
+            };
+          };
+          default = { };
+          description = "Retention per signal, in days. Applied by signoz-retention.service through SigNoz's settings API and verified against the ClickHouse table TTLs; existing data ramps to the new value instead of being rewritten";
         };
       };
 
@@ -1096,6 +1128,54 @@ in
                 ];
                 preStart = lib.getExe waitReadyScript;
                 script = lib.getExe provisionScript;
+              };
+
+              # Retention converger: metrics/traces/logs TTL -> cfg.retentionDays
+              # through SigNoz's settings API plus the tables that API does not
+              # know. Runs with signoz (wantedBy) and daily (drift from a
+              # SigNoz upgrade re-seeding a migrator default).
+              systemd.services.signoz-retention = {
+                description = "SigNoz retention convergence (metrics/traces/logs to services.signoz.retentionDays)";
+                after = [
+                  "signoz.service"
+                  "signoz-collector.service"
+                ];
+                wants = [ "signoz.service" ];
+                partOf = [ "signoz.service" ];
+                inherit onFailure;
+                wantedBy = [ "signoz.service" ];
+                restartTriggers = [ (lib.getExe retentionScript) ];
+                # NO RemainAfterExit: an active (exited) oneshot ignores its
+                # timer, so the daily pass below would never run.
+                serviceConfig = lib.mkMerge [
+                  (harden { MemoryMax = "256M"; })
+                  {
+                    Type = "oneshot";
+                    Environment = [
+                      "SIGNOZ_URL=http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
+                      "DB_METRICS=${cfg.settings.clickhouse.database}"
+                      "DB_TRACES=${cfg.settings.clickhouse.tracesDatabase}"
+                      "DB_LOGS=${cfg.settings.clickhouse.logsDatabase}"
+                      "RETENTION_DAYS_METRICS=${toString cfg.retentionDays.metrics}"
+                      "RETENTION_DAYS_TRACES=${toString cfg.retentionDays.traces}"
+                      "RETENTION_DAYS_LOGS=${toString cfg.retentionDays.logs}"
+                    ];
+                  }
+                  (serviceOneshotDefaults { })
+                  ioTier.background
+                ];
+                preStart = lib.getExe waitReadyScript;
+                script = lib.getExe retentionScript;
+              };
+
+              systemd.timers.signoz-retention = {
+                description = "Daily SigNoz retention convergence pass";
+                wantedBy = [ "timers.target" ];
+                timerConfig = {
+                  OnCalendar = "04:35";
+                  Persistent = true;
+                  Unit = "signoz-retention.service";
+                };
               };
 
               environment.etc =

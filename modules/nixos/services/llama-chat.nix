@@ -189,7 +189,11 @@ _: {
         # Single-quoted for systemd: the unit parser strips bare double
         # quotes and word-splits the JSON into separate argv entries
         # (2026-10-10 deploy: llama-server received "{e" and exited 1).
-        + " --chat-template-kwargs '{\"enable_thinking\":false}'";
+        + lib.optionalString (cfg.thinkingDefault != null)
+          " --chat-template-kwargs '{\"enable_thinking\":${if cfg.thinkingDefault then "true" else "false"}}'"
+        + lib.optionalString (cfg.extraArgs != [ ]) (
+          " " + lib.concatMapStringsSep " " lib.escapeShellArg cfg.extraArgs
+        );
 
       # Per-connection bridge (llama-vlm pattern): the public socket hands
       # each accepted connection's fd to one of these; it waits for the
@@ -301,8 +305,8 @@ _: {
 
         ctxSize = lib.mkOption {
           type = lib.types.int;
-          default = 32768;
-          description = "Context window (tokens). 32k covers long email threads with tool-call history.";
+          default = 65536;
+          description = "Context window (tokens). Qwen3.6-35B-A3B is a hybrid linear-attention MoE: only 10 of 40 layers keep a KV cache (2 kv heads x 256 dim -> ~20 KiB/token), so 64k costs ~1.3 GiB of KV; native max is 262144. 64k covers long email threads with tool-call history at ~13x the measured real turn (4.9k tokens). Verify the live cgroup after any bump: llama.cpp's buffer plan decides, not this arithmetic.";
         };
 
         threads = lib.mkOption {
@@ -570,6 +574,11 @@ _: {
                 ;
               subdomain = "llama";
               vHost.layer = "protected";
+              # A tile probe must never wake the backend (2026-11-28: the
+              # dashboard's 30 s probe to `/` started a bridge every sweep,
+              # which the idle check counts as traffic — the 60-min TTL
+              # never fired and the model was permanently resident).
+              vHost.probePaths = [ "/healthz" ];
               monitored = false;
               checks = [ ];
               homepage = {
@@ -577,6 +586,9 @@ _: {
                 group = "AI";
                 description = "Qwen3.6 35B-A3B brain — OpenAI-compatible, native tool calls (on-demand: first request may wait for the model load)";
                 icon = "open-webui.png";
+                # Probe the Caddy-answered path, not the model: the dot means
+                # "the vHost is up", not "the model is warm".
+                checkUrl = "https://llama.${config.networking.domain}/healthz";
               };
             };
           };

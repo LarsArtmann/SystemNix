@@ -294,6 +294,20 @@ _: {
                 '';
               };
 
+              vHost.probePaths = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                description = ''
+                  Paths answered by Caddy itself with 200 "ok", ahead of every
+                  auth/proxy handle. For on-demand / socket-activated backends
+                  whose tile probe would otherwise wake the backend on every
+                  sweep: point `homepage.checkUrl` at one of these instead of
+                  the proxied root (llama-chat, 2026-11-28 — the 30 s tile
+                  probe to `/` kept the 23.4 GB model resident forever and the
+                  idle TTL never expired).
+                '';
+              };
+
               checks = lib.mkOption {
                 type = lib.types.listOf (
                   lib.types.submodule {
@@ -715,6 +729,7 @@ _: {
                 root
                 hostOverride
                 frameAncestors
+                probePaths
                 ;
             }
           ) vhostEntries;

@@ -466,47 +466,71 @@ _: {
           '';
         };
 
+      # Synthetic probe paths: answered by Caddy itself, ahead of every
+      # auth/proxy handle. An on-demand backend must not be woken by a
+      # machine probe — 2026-11-28: PapDashboard's 30 s tile probe to `/`
+      # started the llama-chat socket backend every sweep, so the 60-min
+      # idle TTL could never expire and the 23.4 GB model stayed resident.
+      syntheticProbeBlock =
+        paths:
+        lib.optionalString (paths != [ ]) ''
+          # synthetic-probe (answered here, never proxied)
+          @syntheticProbe path ${lib.concatStringsSep " " paths}
+          handle @syntheticProbe {
+            respond "ok" 200
+          }
+        '';
+
       renderVHost =
         v:
-        # Static-root entries (registry vHost.root): serve a directory tree
-        # via file_server instead of proxying. Layer semantics still apply —
-        # "protected" wraps the file_server in the external forward-auth /
-        # LAN-bypass split, "plain" serves TLS-only (timers vHost precedent).
-        if v.root != null then
-          (
-            if v.layer == "protected" then
-              {
-                extraConfig = ''
-                  ${tlsConfig}
-                  ${commonConfig}
-                  ${frameHeadersFor v}
-                  # proxy-port:-
-                  @external not remote_ip 127.0.0.1/8 ${lanSubnet}
-                  handle @external {
-                    ${forwardAuth}
-                    root * ${v.root}
-                    file_server
+        let
+          base =
+            # Static-root entries (registry vHost.root): serve a directory tree
+            # via file_server instead of proxying. Layer semantics still apply —
+            # "protected" wraps the file_server in the external forward-auth /
+            # LAN-bypass split, "plain" serves TLS-only (timers vHost precedent).
+            if v.root != null then
+              (
+                if v.layer == "protected" then
+                  {
+                    extraConfig = ''
+                      ${tlsConfig}
+                      ${commonConfig}
+                      ${frameHeadersFor v}
+                      # proxy-port:-
+                      @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                      handle @external {
+                        ${forwardAuth}
+                        root * ${v.root}
+                        file_server
+                      }
+                      handle {
+                        root * ${v.root}
+                        file_server
+                      }
+                    '';
                   }
-                  handle {
-                    root * ${v.root}
-                    file_server
-                  }
-                '';
+                else
+                  staticVHost v.root (frameHeadersFor v)
+              )
+            else if v.layer == "protected" then
+              protectedVHost {
+                inherit (v) port;
+                inherit (v) hostOverride;
+                frameExtra = frameHeadersFor v;
               }
             else
-              staticVHost v.root (frameHeadersFor v)
-          )
-        else if v.layer == "protected" then
-          protectedVHost {
-            inherit (v) port;
-            inherit (v) hostOverride;
-            frameExtra = frameHeadersFor v;
-          }
+              plainVHost {
+                inherit (v) port;
+                inherit (v) hostOverride;
+                frameExtra = frameHeadersFor v;
+              };
+        in
+        if (v.probePaths or [ ]) == [ ] then
+          base
         else
-          plainVHost {
-            inherit (v) port;
-            inherit (v) hostOverride;
-            frameExtra = frameHeadersFor v;
+          {
+            extraConfig = syntheticProbeBlock v.probePaths + base.extraConfig;
           };
 
       dnsLocalSubdomains = (import ../../../platforms/common/dns-local.nix).localSubdomains;
@@ -677,6 +701,15 @@ _: {
                     vHost in an iframe: drops the global X-Frame-Options
                     SAMEORIGIN and defaults a CSP frame-ancestors allowlist
                     ('self' + the origins).
+                  '';
+                };
+                probePaths = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [ ];
+                  description = ''
+                    Paths answered with 200 "ok" by Caddy before any
+                    auth/proxy handle (on-demand backends: a tile probe must
+                    not activate the backend).
                   '';
                 };
               };
