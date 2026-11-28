@@ -495,24 +495,16 @@
                 };
               };
 
-              # 2026-11-23 live-fix session: graphical-session collectors are
-              # OFF agent-side. The agent runs as the monitor365 system user
-              # and cannot read the Wayland socket (/run/user/<uid> is 0700)
-              # even with the correct display-env snapshot — grim,
-              # wl-clipboard and xprintidle all fail there. Screenshots are
-              # owned by the graphical helper (below) running inside the
-              # user session; clipboard/afk have no helper counterpart yet
-              # and logged an error every cycle. fs_event watches nothing
-              # (empty watch_paths are refused at registration — pure warn
-              # noise, live TOML had watch_paths = []); camera stays off on
-              # this host (privacy default; /dev/video* is the OBS OUTPUT
-              # node, which cannot capture — 2026-11-12 incident).
+              # The agent runs as the monitor365 system user and cannot read
+              # the Wayland socket (/run/user/<uid> is 0700) even with the
+              # correct display-env snapshot: grim and the clipboard both
+              # fail there. Screenshots and clipboard are therefore owned by
+              # the graphical helper (below) inside the user session. afk
+              # (evdev input tracking, `input` group), fs_event and camera
+              # run agent-side like every other collector.
               collectors = {
                 screenshots.enabled = false;
                 clipboard.enabled = false;
-                afk_status.enabled = false;
-                fs_event.enabled = false;
-                camera.enabled = false;
               };
             };
           };
@@ -526,10 +518,27 @@
           # agent-side screenshots collector is disabled (the three-way arm
           # in the agent's sse_sync). deviceId must equal the agent's
           # settings.device.id — both default to the hostname.
-          services.monitor365-graphical-helper = {
-            enable = true;
-            deviceId = config.networking.hostName;
-          };
+          services.monitor365-graphical-helper =
+            {
+              enable = true;
+              deviceId = config.networking.hostName;
+            }
+            # Clipboard runs inside the session (the agent cannot reach the
+            # Wayland socket). The option exists only on monitor365 revs that
+            # ship the helper clipboard; older pins fall back to screenshots
+            # and window titles only.
+            // lib.optionalAttrs (
+              options ? services.monitor365-graphical-helper
+              && options.services.monitor365-graphical-helper ? enableClipboard
+            ) {
+              enableClipboard = true;
+            };
+          # The upstream helper unit declares PartOf= but no WantedBy, so it
+          # never started (observed inactive since 2026-11-23). Harmless once
+          # the pinned monitor365 rev carries the same fix.
+          systemd.user.services.monitor365-graphical-helper.wantedBy = [
+            "graphical-session.target"
+          ];
         })
 
         # ── Server defaults ────────────────────────────────────────

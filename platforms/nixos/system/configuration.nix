@@ -2332,23 +2332,27 @@ in
           fs_event = {
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 60;
+            watch_paths = lib.mkDefault [ "~/Documents" ];
           };
-          # bluetooth disabled (zbus::blocking panics inside tokio)
-          bluetooth.enabled = lib.mkDefault false;
+          # ON (owner decision 2026-11-28: every collector runs). The old
+          # "zbus::blocking panics inside tokio" note predates the lazy
+          # D-Bus connection handling upstream; if the agent logs a panic
+          # here again, this is the first line to turn off.
+          bluetooth.enabled = lib.mkDefault true;
           # Desktop collectors (skip gracefully if no graphical session)
           screenshots.enabled = lib.mkDefault true;
           camera = {
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 3600; # 1h minimum enforced by validation
           };
-          # Volume-engine cuts (2026-10-23): mouse + keystrokes are
-          # REALTIME per-event streams (~10-100 ev/s while active) that
-          # dominated the 61 events/sec collection-era average behind the
-          # 597M backlog; afk_status already covers idle detection.
-          # OFF until someone misses them — flipping back is a one-line
-          # change + agent restart.
-          keystrokes.enabled = lib.mkDefault false;
-          mouse.enabled = lib.mkDefault false;
+          # ON again (owner decision 2026-11-28: every collector runs). These
+          # are REALTIME per-event streams (~10-100 ev/s while active) that
+          # led the 61 events/sec average behind the 597M-event backlog; the
+          # server-side tenant daily cap is what bounds them now.
+          # keystrokes.capture_content defaults to true: the typed
+          # characters themselves are recorded.
+          keystrokes.enabled = lib.mkDefault true;
+          mouse.enabled = lib.mkDefault true;
           # clipboard/notifications/afk_status: realtime BY DECISION —
           # event-driven, human-paced (tens of events/day), so the event
           # itself IS the right granularity; forcing intervals here would
