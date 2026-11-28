@@ -171,6 +171,45 @@
           done
         '';
       };
+
+      # Seed replacement (2026-11-27) — upstream's own seedScript does not
+      # BUILD under the current shellcheck: it renders
+      # `[ -n "/var/lib/pim-sync-seed" ]`, which is SC2157 (error severity,
+      # fatal inside writeShellApplication), so the unit's ExecStartPre
+      # dependency failed and the first real enable could not even build.
+      # It also creates only tokensDir/stateDir — not receiptsDir, and the
+      # upstream ReadWritePaths entries for all three dirs make systemd
+      # kill the unit with 226/NAMESPACE on a fresh host, because a
+      # ReadWritePaths path that does not exist yet is a hard failure
+      # (verified live 2026-11-27 with systemd-run).
+      # This replacement is behaviour-identical (copy seed tokens into
+      # EMPTY slots only — state owns rotation after first start) and
+      # creates every dir the unit declares writable. Both defects are
+      # fixed in the upstream repo; delete this shim once the input floats
+      # to a rev carrying the fix (TODO: docs/todo/upstream.md).
+      seedTokens = pkgs.writeShellApplication {
+        name = "pim-sync-seed-tokens";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          set -euo pipefail
+          mkdir -p "${toString cfg.tokensDir}" "${toString cfg.stateDir}"
+          ${lib.optionalString (cfg.receiptsDir != "") ''
+            mkdir -p "${cfg.receiptsDir}"
+          ''}
+          ${lib.optionalString (cfg.tokenSeedDir != null) ''
+            if [ -d "${toString cfg.tokenSeedDir}" ]; then
+              for src in "${toString cfg.tokenSeedDir}"/*.json; do
+                [ -e "$src" ] || continue
+                dst="${toString cfg.tokensDir}/$(basename "$src")"
+                if [ ! -e "$dst" ]; then
+                  install -m 600 "$src" "$dst"
+                  echo "seeded $dst"
+                fi
+              done
+            fi
+          ''}
+        '';
+      };
     in
     {
       imports = [
@@ -250,9 +289,28 @@
             inherit onFailure;
             serviceConfig = {
               # Order matters: the ExecCondition gate runs FIRST (skip
-              # while placeholders remain), the shape check only after it.
+              # while placeholders remain), then seed, then the shape
+              # check (which only passes once real material exists).
               ExecCondition = [ (lib.getExe secretGate) ];
-              ExecStartPre = [ (lib.getExe configCheck) ];
+              # mkForce replaces upstream's two items (its seedScript is
+              # replaced by seedTokens above, and its ExecStartPre list
+              # carries that broken derivation).
+              ExecStartPre = lib.mkForce [
+                (lib.getExe seedTokens)
+                (lib.getExe configCheck)
+              ];
+              # "-" prefixes tolerate the three data dirs not existing on
+              # the FIRST start (they are created by seedTokens before
+              # ExecStart; a bare missing ReadWritePaths path kills the
+              # unit with 226/NAMESPACE — live-proven 2026-11-27). Upstream
+              # fix pending; see the seedTokens comment.
+              ReadWritePaths = lib.mkForce (
+                [
+                  "-${toString cfg.tokensDir}"
+                  "-${toString cfg.stateDir}"
+                ]
+                ++ lib.optional (cfg.receiptsDir != "") "-${cfg.receiptsDir}"
+              );
               # Dry-run cap aborts (exit 3) are INFORMATIONAL: the guard
               # stops before any write and the run's whole value is its
               # projected-change report. The flag default is 50 and a

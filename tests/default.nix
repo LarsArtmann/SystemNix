@@ -112,6 +112,7 @@ in
   tq-agent-pool = import ./test-tq-agent-pool.nix { inherit pkgs inputs system; };
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   bank-sync-paperless = import ./test-bank-sync-paperless.nix { inherit pkgs inputs system; };
+  llama-chat-accelerator = import ./test-llama-chat-accelerator.nix { inherit pkgs inputs system; };
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
   wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit inputs; });
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });

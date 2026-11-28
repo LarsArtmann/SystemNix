@@ -21,7 +21,8 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  llamaChatModule = (import ../modules/nixos/services/llama-chat.nix { }).flake.nixosModules.llama-chat;
+  llamaChatModule =
+    (import ../modules/nixos/services/llama-chat.nix { }).flake.nixosModules.llama-chat;
 
   primaryUserStub = {
     options.users.primaryUser = lib.mkOption { type = lib.types.str; };
@@ -92,8 +93,9 @@ let
     }
     {
       name = "igpu: package is not the HIP build ai-stack ships (two surfaces forked)";
-      pass = igpu.services.llama-chat.package.outPath
-        == (pkgs.llama-cpp.override { rocmSupport = true; }).outPath;
+      pass =
+        igpu.services.llama-chat.package.outPath == (pkgs.llama-cpp.override { rocmSupport = true; })
+        .outPath;
     }
     {
       name = "igpu: unit description no longer names the iGPU posture";

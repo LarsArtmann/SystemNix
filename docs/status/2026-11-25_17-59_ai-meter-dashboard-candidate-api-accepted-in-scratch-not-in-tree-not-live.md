@@ -75,21 +75,21 @@
 
 ## f) NEXT (ordered)
 
-1. Emit the candidate in server-normalized form (defaults included, the two spend placeholders restored, real display name) and write it to `modules/nixos/services/dashboards/ai-meter.json`.
-2. `signoz-query-lint`: overlap + bounds (`x + width ≤ 12`, `y ≥ 0`) over every Grid layout; unit ids must be Grafana ids, SigNoz universal ids or `prefix:`/`suffix:`/`time:`/`si:`/`count:`/`currency:`/`bool:` forms; Table/Pie panels carry no PromQL (top-level or inside a CompositeQuery); `underscoreLive` += `ai_meter_admission_wait_seconds_sum|count`; negative legs in `scripts/negative-test-lints.sh`.
-3. `gcp.json`: unit `req` → `none`.
-4. Gates on the touched files: `nix build .#checks.x86_64-linux.signoz-query-lint .#checks.x86_64-linux.ai-meter-spend-promql .#checks.x86_64-linux.ai-meter-vm`, `nix fmt -- --fail-on-change -- <files>`, `nix flake check --no-build`, `buildflow -s test-race`.
-5. Rollout (question 2): direct `PUT /api/v2/dashboards/01a148a8-…` with the rendered file, or the deploy.
-6. Verify live: units on every panel, sections, tables, `journalctl -u signoz-provision` ("Unchanged … skipping" on the run after the first), gatus "ai-meter dashboard".
-7. Docs: `docs/services/ai-meter.md` (panel/query matrix, the Table/Pie rule, the spend-source rule), `docs/agents/monitoring.md` (unit ids, server-side variables, `/api/v5/query_range` envelope and `data.data.results`, builder step trap, provisioner skip vs server defaults), `docs/DOMAIN_LANGUAGE.md`, `CHANGELOG.md`, TODO rows 3952 / 2531 / 2529 / 1625.
-8. Run the three alert rules' PromQL once against the live API.
-9. Optional: spend per model over 24 h as a third renderer placeholder (`@@spend24hByModel@@`) with a promtool case in `ai-meter-guards.nix`.
-10. Optional: filter variables (decision below stands until you object).
-11. Optional: a traces panel (List or Text) linking the native AI trace explorer.
-12. Tell the admission session about `metrics.go:452` (`\\n`) and confirm the family names at their T07.4 hand-off.
-13. Queue the `llama-embeddings` 502 observation for the owner of that service.
-14. Check the provisioner-skip hypothesis on `caddy.json` / `gcp.json` (read back, diff against the files).
-15. Replace the stale "exact next steps" of the 06-25 report with a pointer to this one.
+1. ~~Emit the candidate in server-normalized form (defaults included, the two spend placeholders restored, real display name) and write it to `modules/nixos/services/dashboards/ai-meter.json`.~~ done at `d774f5589`
+2. ~~`signoz-query-lint`: overlap + bounds (`x + width ≤ 12`, `y ≥ 0`) over every Grid layout; unit ids must be Grafana ids, SigNoz universal ids or `prefix:`/`suffix:`/`time:`/`si:`/`count:`/`currency:`/`bool:` forms; Table/Pie panels carry no PromQL (top-level or inside a CompositeQuery); `underscoreLive` += `ai_meter_admission_wait_seconds_sum|count`; negative legs in `scripts/negative-test-lints.sh`.~~ done at `d774f5589`
+3. ~~`gcp.json`: unit `req` → `none`.~~ done — as the unit short, not none (gcp.json at d774f5589)
+4. ~~Gates on the touched files: `nix build .#checks.x86_64-linux.signoz-query-lint .#checks.x86_64-linux.ai-meter-spend-promql .#checks.x86_64-linux.ai-meter-vm`, `nix fmt -- --fail-on-change -- <files>`, `nix flake check --no-build`, `buildflow -s test-race`.~~ done — gates green on the final tree on 2026-11-28 (the five dashboard and ai-meter checks, 44 of 44 negative legs, the all-systems flake check at 02:32); buildflow test-race was not run by the dashboard sessions
+5. ~~Rollout (question 2): direct `PUT /api/v2/dashboards/01a148a8-…` with the rendered file, or the deploy.~~ done — rolled out: v3 was PUT by hand on 2026-11-26 at 01:40 and carried by every deploy since (generation 1033 on 2026-11-27)
+6. ~~Verify live: units on every panel, sections, tables, `journalctl -u signoz-provision` ("Unchanged … skipping" on the run after the first), gatus "ai-meter dashboard".~~ done — verified live 2026-11-26 to 2026-11-28: units on every panel, the provisioner skip lines (06:48 on 2026-11-26, 10:28 on 2026-11-27), both gatus conditions read by hand on 2026-11-28
+7. Docs: `docs/services/ai-meter.md` (panel/query matrix, the Table/Pie rule, the spend-source rule), `docs/agents/monitoring.md` (unit ids, server-side variables, `/api/v5/query_range` envelope and `data.data.results`, builder step trap, provisioner skip vs server defaults), `docs/DOMAIN_LANGUAGE.md`, `CHANGELOG.md`, TODO rows 3952 / 2531 / 2529 / 1625. **→ the docs half is done at 7e04a5fa2 and e0913aef8; the four queue rows were cited by line number and cannot be resolved today (the queue moved), so they stay open**
+8. ~~Run the three alert rules' PromQL once against the live API.~~ done — the rules PromQL ran against the live API (23-28 report)
+9. Optional: spend per model over 24 h as a third renderer placeholder (`@@spend24hByModel@@`) with a promtool case in `ai-meter-guards.nix`. **→ routed to docs/todo/monitoring.md "A 24-hour spend per model on the ai-meter dashboard" (optional)**
+10. ~~Optional: filter variables (decision below stands until you object).~~ **Won't implement — no filter variables (decided in this report; the dashboard carries none).**
+11. ~~Optional: a traces panel (List or Text) linking the native AI trace explorer.~~ done at `0779937ac`
+12. ~~Tell the admission session about `metrics.go:452` (`\\n`) and confirm the family names at their T07.4 hand-off.~~ done — verified: the TYPE line of ai_meter_admission_kept_arrival_total is a counter on the live endpoint (23-28 report)
+13. ~~Queue the `llama-embeddings` 502 observation for the owner of that service.~~ **NOT-DO — a duplicate, the queue already carries rows on llama-embeddings.**
+14. ~~Check the provisioner-skip hypothesis on `caddy.json` / `gcp.json` (read back, diff against the files).~~ done — verified: caddy and gcp lacked the server-default keys, were PUT once and skipped from then on (2026-11-26 06:17 and 06:48)
+15. ~~Replace the stale "exact next steps" of the 06-25 report with a pointer to this one.~~ done (docs-health pass 2026-11-28)
 
 **Harvest: deliberately not harvested** (`TODO_LIST.md` + domain libraries untouched) — items 1–8 are in flight in this session and a `[ready]` row would hand the same dashboard JSON to a parallel session.
 

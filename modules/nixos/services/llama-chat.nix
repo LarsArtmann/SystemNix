@@ -312,7 +312,9 @@ _: {
           ];
 
           systemd.services.llama-chat = {
-            description = "llama.cpp chat server (${cfg.alias}, ${if onIgpu then "iGPU" else "CPU"} MoE, native tool calls — backend, socket-activated)";
+            description = "llama.cpp chat server (${cfg.alias}, ${
+              if onIgpu then "iGPU" else "CPU"
+            } MoE, native tool calls — backend, socket-activated)";
             # ON-DEMAND (2026-11-18, freeze-41 item 30): deliberately NOT
             # wantedBy anything — the public socket owns activation. History:
             # the always-on posture rode late-applications.target (itself the
@@ -331,86 +333,89 @@ _: {
             # ROCm runtime env for the HIP build — the llama-rag unit shape:
             # the HSA vars plus the path of the dlopen'ed ROCm libs.
             environment = lib.mkIf onIgpu (
-              rocm.env // {
+              rocm.env
+              // {
                 LD_LIBRARY_PATH = rocm.makeLdLibraryPath lib;
               }
             );
 
-            serviceConfig = lib.mkMerge ([
-              {
-                Type = "exec";
-                User = cfg.user;
-                Group = cfg.group;
-                Restart = "on-failure";
-                RestartSec = "10";
-                # Crash-loop backoff (2026-11-14, the flm ×5 SIGABRT pile-driver
-                # class; documented OOM→restart→re-OOM loop 2026-11-02): a fixed
-                # RestartSec=10 lets a crash-loop re-fire the FULL 23.4 GB model
-                # page-in every 10s under an IO storm. RestartSteps raises the
-                # delay exponentially (10s→…→15min cap) over 5 consecutive
-                # restarts; a stable run resets the step counter. Matches the
-                # fastflowlm / llama-vlm / llama-rag 5-step/15min pattern; no
-                # RestartRandomizedDelaySec jitter to keep restart timing
-                # deterministic for probes (same choice flm/vlm/rag made).
-                RestartSteps = 5;
-                RestartMaxDelaySec = "15min";
-                OOMScoreAdjust = 300;
-                # Quota matches threads (12 of 16 cores): threads share the CPU
-                # time the quota grants, so a 400% quota would silently quarter
-                # the measured ~17 tok/s interactive throughput.
-                CPUQuota = "1200%";
-                # psi-wait-gate (M10.3 pattern, llama-vlm form): holds the
-                # 23.4 GB GGUF cold page-in until io-PSI calms — the freeze
-                # #40/#43 class was exactly a cold load landing inside an IO
-                # storm. --on-exhausted refuse (freeze #56): an exhausted
-                # proceed admitted a 9 G read 7 s before that cut; exhaustion
-                # fails the unit, restart backoff retries, bridges keep
-                # queuing in the socket backlog. 15-min gate.
-                ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-chat --psi-max 30 --max-wait-sec 900 --on-exhausted refuse";
-                # Gate budget (15 min) + cold page-in + probe budget below:
-                # the 23.4 GB load measured ~8.3 min cold under concurrent IO.
-                TimeoutStartSec = "35min";
-                TimeoutStopSec = "2min";
-                ExecStart = execStart;
-                # Start contract (2026-10-08, same doctrine as the daemon
-                # socket contract): "started" means /health serves 200, not
-                # just that execve succeeded. llama-server binds its listener
-                # early and 503s while the 23.4 GB model maps, so -f +
-                # --retry-all-errors retries through the whole load; a load
-                # that wedges (freeze-#5 class) FAILS the unit and
-                # Restart=on-failure heals instead of active-but-dead.
-                # 400 retries (~13min at 2s/iter, attempts return instantly
-                # while 503ing) keeps the probe budget inside the 15min
-                # TimeoutStartSec: 240 exhausted at exactly 8min on the
-                # 2026-10-12 boot (page-in starved by the IO storm), wasting
-                # the 8min load and forcing a full remap on the restart.
-                ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 400 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.backendPort}/health";
-              }
-              # harden derives MemoryHigh (the throttle watermark) as 80% of
-              # the MemoryMax ARGUMENT — calling `harden {}` bare merges its
-              # phantom 512M default: the standalone MemoryMax won at 32G but
-              # MemoryHigh stayed at 410M and strangled the first deployment
-              # (443 MB peak, 10.7 GB swapped, 1h53m stuck load; a 16-token
-              # reply timed out at 45s with 46k throttle events). The ceiling
-              # MUST flow into harden so both watermarks agree.
-              (harden { MemoryMax = cfg.memoryMax; })
-              # BE/5 (heavyDB tier, session row 8): user-facing inference —
-              # ahead of the BE/6 background daemons (rag/enrichers), behind
-              # desktop BE/3. Only shapes the cold-load window + steady-state
-              # checkpoint writes; serving itself is anon-memory (KV cache),
-              # barely any IO.
-              ioTier.heavyDB
-            ]
-            ++ lib.optionals onIgpu [
-              # GPU device access (llama-rag unit shape): the render group
-              # owns /dev/kfd and /dev/dri/renderD128, and the strict device
-              # cgroup keeps libdrm's device enumeration away from the NPU
-              # node (lib/rocm.nix deviceCgroup).
-              rocm.deviceCgroup
-              {
-                SupplementaryGroups = [ "render" ];
-              }
-            ]);
+            serviceConfig = lib.mkMerge (
+              [
+                {
+                  Type = "exec";
+                  User = cfg.user;
+                  Group = cfg.group;
+                  Restart = "on-failure";
+                  RestartSec = "10";
+                  # Crash-loop backoff (2026-11-14, the flm ×5 SIGABRT pile-driver
+                  # class; documented OOM→restart→re-OOM loop 2026-11-02): a fixed
+                  # RestartSec=10 lets a crash-loop re-fire the FULL 23.4 GB model
+                  # page-in every 10s under an IO storm. RestartSteps raises the
+                  # delay exponentially (10s→…→15min cap) over 5 consecutive
+                  # restarts; a stable run resets the step counter. Matches the
+                  # fastflowlm / llama-vlm / llama-rag 5-step/15min pattern; no
+                  # RestartRandomizedDelaySec jitter to keep restart timing
+                  # deterministic for probes (same choice flm/vlm/rag made).
+                  RestartSteps = 5;
+                  RestartMaxDelaySec = "15min";
+                  OOMScoreAdjust = 300;
+                  # Quota matches threads (12 of 16 cores): threads share the CPU
+                  # time the quota grants, so a 400% quota would silently quarter
+                  # the measured ~17 tok/s interactive throughput.
+                  CPUQuota = "1200%";
+                  # psi-wait-gate (M10.3 pattern, llama-vlm form): holds the
+                  # 23.4 GB GGUF cold page-in until io-PSI calms — the freeze
+                  # #40/#43 class was exactly a cold load landing inside an IO
+                  # storm. --on-exhausted refuse (freeze #56): an exhausted
+                  # proceed admitted a 9 G read 7 s before that cut; exhaustion
+                  # fails the unit, restart backoff retries, bridges keep
+                  # queuing in the socket backlog. 15-min gate.
+                  ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-chat --psi-max 30 --max-wait-sec 900 --on-exhausted refuse";
+                  # Gate budget (15 min) + cold page-in + probe budget below:
+                  # the 23.4 GB load measured ~8.3 min cold under concurrent IO.
+                  TimeoutStartSec = "35min";
+                  TimeoutStopSec = "2min";
+                  ExecStart = execStart;
+                  # Start contract (2026-10-08, same doctrine as the daemon
+                  # socket contract): "started" means /health serves 200, not
+                  # just that execve succeeded. llama-server binds its listener
+                  # early and 503s while the 23.4 GB model maps, so -f +
+                  # --retry-all-errors retries through the whole load; a load
+                  # that wedges (freeze-#5 class) FAILS the unit and
+                  # Restart=on-failure heals instead of active-but-dead.
+                  # 400 retries (~13min at 2s/iter, attempts return instantly
+                  # while 503ing) keeps the probe budget inside the 15min
+                  # TimeoutStartSec: 240 exhausted at exactly 8min on the
+                  # 2026-10-12 boot (page-in starved by the IO storm), wasting
+                  # the 8min load and forcing a full remap on the restart.
+                  ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 400 --retry-delay 2 --retry-all-errors http://${cfg.host}:${toString cfg.backendPort}/health";
+                }
+                # harden derives MemoryHigh (the throttle watermark) as 80% of
+                # the MemoryMax ARGUMENT — calling `harden {}` bare merges its
+                # phantom 512M default: the standalone MemoryMax won at 32G but
+                # MemoryHigh stayed at 410M and strangled the first deployment
+                # (443 MB peak, 10.7 GB swapped, 1h53m stuck load; a 16-token
+                # reply timed out at 45s with 46k throttle events). The ceiling
+                # MUST flow into harden so both watermarks agree.
+                (harden { MemoryMax = cfg.memoryMax; })
+                # BE/5 (heavyDB tier, session row 8): user-facing inference —
+                # ahead of the BE/6 background daemons (rag/enrichers), behind
+                # desktop BE/3. Only shapes the cold-load window + steady-state
+                # checkpoint writes; serving itself is anon-memory (KV cache),
+                # barely any IO.
+                ioTier.heavyDB
+              ]
+              ++ lib.optionals onIgpu [
+                # GPU device access (llama-rag unit shape): the render group
+                # owns /dev/kfd and /dev/dri/renderD128, and the strict device
+                # cgroup keeps libdrm's device enumeration away from the NPU
+                # node (lib/rocm.nix deviceCgroup).
+                rocm.deviceCgroup
+                {
+                  SupplementaryGroups = [ "render" ];
+                }
+              ]
+            );
 
             startLimitBurst = 5;
             startLimitIntervalSec = 300;

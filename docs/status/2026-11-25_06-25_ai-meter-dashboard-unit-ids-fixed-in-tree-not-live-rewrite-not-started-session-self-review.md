@@ -124,6 +124,8 @@ All of it is the owner's original ask. After four loop instructions the user-vis
 
 Owner: **this session** (in flight, deliberately not harvested), **plan executor** (the session running the 06:04 plan), **owner** (decision).
 
+**Pointer (2026-11-28, written by a later session):** this table is the plan the next reports executed; read them for what became of each item, in order: the [17-59 report](./2026-11-25_17-59_ai-meter-dashboard-candidate-api-accepted-in-scratch-not-in-tree-not-live.md) (the rewrite landed in the tree as v3 at `d774f5589`), the [05-39 report](./2026-11-26_05-39_ai-meter-dashboard-rewrite-live-validator-landed-not-deployed.md) (v3 live, validator), the [23-28 report](./2026-11-26_23-28_ai-meter-dashboard-v4-live-delay-vs-failure-alert-repaired-in-tree-tile-title-lint-native-ai-views-opened.md) (v4, repaired failure-rate rule) and the [16-54 report](./2026-11-27_16-54_ai-meter-follow-ups-landed-by-the-1027-deploy-embeddings-alert-viewer-range-drift-check-table-claim-refuted-boot-mirror-one-generation-behind.md). No row below is struck on purpose: per-item verdicts were never written against this table, and a strike without one would be noise. Two rows are known to have ended elsewhere: item 27 (bootloader entry after an exit-4 deploy) is the standing anchor rule in AGENTS.md, and item 28 (caddy and gcp differ from the tree) was the missing server-default keys, fixed and linted since.
+
 | # | Task | Impact | Effort | Category | Owner |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Get the unit fix live: a deploy from any tree at or after `ba2536b48`, then read the units back from the live dashboard API. | High | S | Bug | this session, or rides the plan's T04 deploy |
