@@ -159,6 +159,7 @@ case "$method:${url#"$SIGNOZ_URL"}" in
       # Another change to the SAME target is running: 409 now, applied anyway.
       rm -f "$STUB_STATE/post-409-once"
       respond 409 '{"error":"TTL is already running"}'
+      echo "$hours" >"$STUB_STATE/api-$signal-hrs"
     else
       echo "$hours" >"$STUB_STATE/api-$signal-hrs"
       respond 200 '{"message":"move ttl has been successfully set up"}'
@@ -284,7 +285,7 @@ grep -qxF 'POST /api/v2/settings/ttl BODY={"type":"logs","defaultTTLDays":90,"tt
 [ "$(alter_count "$S1")" -eq 12 ] && pass "leg1 twelve ALTERs" || fail "leg1 ALTER count $(alter_count "$S1")"
 if grep -qx 'ALTER TABLE signoz_traces.top_level_operations MODIFY TTL time + toIntervalSecond(7776000) DELETE SETTINGS materialize_ttl_after_modify = 0' "$S1/queries.log" &&
   grep -q '^ALTER TABLE signoz_metrics\.metadata MODIFY TTL toDateTime(last_reported_unix_milli / 1000) + toIntervalSecond(7776000) ' "$S1/queries.log" &&
-  grep -q '^ALTER TABLE signoz_logs\.tag_attributes_v2 MODIFY TTL toDateTime(unix_milli / 1000) + toIntervalSecond(7776000) '; then
+  grep -q '^ALTER TABLE signoz_logs\.tag_attributes_v2 MODIFY TTL toDateTime(unix_milli / 1000) + toIntervalSecond(7776000) ' "$S1/queries.log"; then
   pass "leg1 ALTERs keep each time expression"
 else
   fail "leg1 ALTER time expressions wrong: $(grep '^ALTER' "$S1/queries.log" | head -4)"
@@ -349,7 +350,7 @@ touch "$S4/post-fails"
 run_retention "$S4"
 OUT=$(out)
 [ "$RUN_RC" -ne 0 ] && pass "leg4a non-zero on failing POST" || fail "leg4a exit 0 despite failing POST: $OUT"
-echo "$OUT" | grep -q 'metrics: POST /api/v1/settings/ttl failed (HTTP 500)' ||
+echo "$OUT" | grep -q 'metrics: POST /api/v1/settings/ttl?type=metrics failed (HTTP 500)' ||
   fail "leg4a POST failure not named: $OUT"
 
 S4B=$(new_state)

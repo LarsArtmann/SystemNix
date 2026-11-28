@@ -143,6 +143,19 @@
       # rendered file FAILS — a sops-nix render defect must never be
       # mistaken for "waiting for the owner". The shape check stays in
       # configCheck (ExecStartPre), which only runs once this passes.
+      # The unit hands the gate its file list as arguments, so the built
+      # gate runs against fixtures (checks.pim-sync-secret-gate-selftest).
+      # Every path is checked for existence BEFORE any placeholder is
+      # read: a render defect hiding behind a pending placeholder must
+      # still fail loudly.
+      gateFiles = [
+        config.sops.secrets.pim_sync_oauth_client_secret.path
+        config.sops.templates."pim-sync-dav-env".path
+        config.sops.secrets.pim_sync_token_personal.path
+        config.sops.secrets.pim_sync_token_work.path
+        config.sops.secrets.pim_sync_token_personal_calendar.path
+        config.sops.secrets.pim_sync_token_work_calendar.path
+      ];
       secretGate = pkgs.writeShellApplication {
         name = "pim-sync-secret-gate";
         runtimeInputs = [
@@ -151,19 +164,15 @@
         ];
         text = ''
           set -euo pipefail
-          files=(
-            ${config.sops.secrets.pim_sync_oauth_client_secret.path}
-            ${config.sops.templates."pim-sync-dav-env".path}
-            ${config.sops.secrets.pim_sync_token_personal.path}
-            ${config.sops.secrets.pim_sync_token_work.path}
-            ${config.sops.secrets.pim_sync_token_personal_calendar.path}
-            ${config.sops.secrets.pim_sync_token_work_calendar.path}
-          )
-          for f in "''${files[@]}"; do
+          missing=0
+          for f in "$@"; do
             if [ ! -f "$f" ]; then
               echo "pim-sync: sops material MISSING: $f (render defect, not an owner gate)" >&2
-              exit 255
+              missing=1
             fi
+          done
+          [ "$missing" -eq 0 ] || exit 255
+          for f in "$@"; do
             if grep -q PLACEHOLDER "$f"; then
               echo "pim-sync: owner material pending ($f is PLACEHOLDER) — skipping this run"
               exit 1
@@ -172,44 +181,6 @@
         '';
       };
 
-      # Seed replacement (2026-11-27) — upstream's own seedScript does not
-      # BUILD under the current shellcheck: it renders
-      # `[ -n "/var/lib/pim-sync-seed" ]`, which is SC2157 (error severity,
-      # fatal inside writeShellApplication), so the unit's ExecStartPre
-      # dependency failed and the first real enable could not even build.
-      # It also creates only tokensDir/stateDir — not receiptsDir, and the
-      # upstream ReadWritePaths entries for all three dirs make systemd
-      # kill the unit with 226/NAMESPACE on a fresh host, because a
-      # ReadWritePaths path that does not exist yet is a hard failure
-      # (verified live 2026-11-27 with systemd-run).
-      # This replacement is behaviour-identical (copy seed tokens into
-      # EMPTY slots only — state owns rotation after first start) and
-      # creates every dir the unit declares writable. Both defects are
-      # fixed in the upstream repo; delete this shim once the input floats
-      # to a rev carrying the fix (TODO: docs/todo/upstream.md).
-      seedTokens = pkgs.writeShellApplication {
-        name = "pim-sync-seed-tokens";
-        runtimeInputs = [ pkgs.coreutils ];
-        text = ''
-          set -euo pipefail
-          mkdir -p "${toString cfg.tokensDir}" "${toString cfg.stateDir}"
-          ${lib.optionalString (cfg.receiptsDir != "") ''
-            mkdir -p "${cfg.receiptsDir}"
-          ''}
-          ${lib.optionalString (cfg.tokenSeedDir != null) ''
-            if [ -d "${toString cfg.tokenSeedDir}" ]; then
-              for src in "${toString cfg.tokenSeedDir}"/*.json; do
-                [ -e "$src" ] || continue
-                dst="${toString cfg.tokensDir}/$(basename "$src")"
-                if [ ! -e "$dst" ]; then
-                  install -m 600 "$src" "$dst"
-                  echo "seeded $dst"
-                fi
-              done
-            fi
-          ''}
-        '';
-      };
     in
     {
       imports = [
@@ -234,16 +205,6 @@
         }
 
         (lib.mkIf cfg.enable {
-          # Upstream eval defect, surfaced 2026-11-27 by the first real
-          # enable: upstream sets users.users.pim-sync.description to a
-          # string CONTAINING A COLON ("bot:pim-sync"), and NixOS rejects
-          # ":" in user descriptions (GECOS field — the option type is
-          # "string, not containing newlines or colons"). Inert while the
-          # unit was disabled, undeployable the moment it is not. The
-          # upstream fix is a one-liner; this mkForce is the documented
-          # interim until the input floats to a rev carrying it (owner
-          # directive: fix upstream, never pin — TODO row tracks the push).
-          users.users.pim-sync.description = lib.mkForce "pim-sync bot account (bot pim-sync machine actor)";
           # sops materialization (flip scaffold, 2026-11-10): the rendered
           # values are PLACEHOLDER until the owner paste — the config-check
           # ExecStartPre below turns that into a loud, actionable failure
@@ -291,26 +252,12 @@
               # Order matters: the ExecCondition gate runs FIRST (skip
               # while placeholders remain), then seed, then the shape
               # check (which only passes once real material exists).
-              ExecCondition = [ (lib.getExe secretGate) ];
-              # mkForce replaces upstream's two items (its seedScript is
-              # replaced by seedTokens above, and its ExecStartPre list
-              # carries that broken derivation).
-              ExecStartPre = lib.mkForce [
-                (lib.getExe seedTokens)
-                (lib.getExe configCheck)
-              ];
-              # "-" prefixes tolerate the three data dirs not existing on
-              # the FIRST start (they are created by seedTokens before
-              # ExecStart; a bare missing ReadWritePaths path kills the
-              # unit with 226/NAMESPACE — live-proven 2026-11-27). Upstream
-              # fix pending; see the seedTokens comment.
-              ReadWritePaths = lib.mkForce (
-                [
-                  "-${toString cfg.tokensDir}"
-                  "-${toString cfg.stateDir}"
-                ]
-                ++ lib.optional (cfg.receiptsDir != "") "-${cfg.receiptsDir}"
-              );
+              ExecCondition = [ "${lib.getExe secretGate} ${lib.concatStringsSep " " gateFiles}" ];
+              # mkAfter, not a plain definition: this file's config sorts
+              # BEFORE the module it imports, so a plain list lands the
+              # shape check ahead of upstream's seed script (caught by
+              # checks.pim-sync-secret-gate-selftest).
+              ExecStartPre = lib.mkAfter [ (lib.getExe configCheck) ];
               # Dry-run cap aborts (exit 3) are INFORMATIONAL: the guard
               # stops before any write and the run's whole value is its
               # projected-change report. The flag default is 50 and a

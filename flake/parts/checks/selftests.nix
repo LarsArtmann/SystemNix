@@ -2276,6 +2276,90 @@
               touch $out
             '';
 
+        # pim-sync secret gate (2026-11-28). The dry-run timer may run with
+        # PLACEHOLDER material only while this contract holds: the gate is
+        # the unit's single ExecCondition, it gates all six Google/DAV
+        # materials, and it keeps its three outcomes — 0 run, 1 skip (a
+        # placeholder), 255 fail (a rendered sops path is missing: a render
+        # defect must never read as "waiting for the owner"). The gate takes
+        # its file list as arguments, so the REAL store binary runs against
+        # fixtures here. The exit-3 tolerance must stay dry-run only: live,
+        # a cap abort means writes were refused.
+        pim-sync-secret-gate-selftest =
+          let
+            host = inputs.self.nixosConfigurations.evo-x2.config;
+            svc = host.systemd.services.pim-sync.serviceConfig;
+            condWords = lib.splitString " " (lib.head svc.ExecCondition);
+            gate = lib.head condWords;
+            gateArgs = lib.tail condWords;
+            expectedArgs = [
+              host.sops.secrets.pim_sync_oauth_client_secret.path
+              host.sops.templates."pim-sync-dav-env".path
+              host.sops.secrets.pim_sync_token_personal.path
+              host.sops.secrets.pim_sync_token_work.path
+              host.sops.secrets.pim_sync_token_personal_calendar.path
+              host.sops.secrets.pim_sync_token_work_calendar.path
+            ];
+            live = host.services.pim-sync.live;
+            contractGuards =
+              lib.throwIfNot (lib.length svc.ExecCondition == 1)
+                "pim-sync-secret-gate-selftest: the secret gate must stay the unit's only ExecCondition"
+                (
+                  lib.throwIfNot (lib.hasSuffix "/bin/pim-sync-secret-gate" gate)
+                    "pim-sync-secret-gate-selftest: ExecCondition must run pim-sync-secret-gate"
+                    (
+                      lib.throwIfNot (gateArgs == expectedArgs)
+                        "pim-sync-secret-gate-selftest: the gate must receive all six materials (client JSON, DAV env, four tokens)"
+                        (
+                          lib.throwIfNot
+                            (
+                              lib.length svc.ExecStartPre == 2
+                              && lib.hasSuffix "/bin/pim-sync-seed-tokens" (lib.elemAt svc.ExecStartPre 0)
+                              && lib.hasSuffix "/bin/pim-sync-config-check" (lib.elemAt svc.ExecStartPre 1)
+                            )
+                            "pim-sync-secret-gate-selftest: ExecStartPre must be upstream's seed script, then the config check"
+                            (
+                              lib.throwIfNot (svc.SuccessExitStatus == lib.optionals (!live) [ 3 ])
+                                "pim-sync-secret-gate-selftest: SuccessExitStatus must be [ 3 ] under dry-run and empty when live"
+                                true
+                            )
+                        )
+                    )
+                );
+          in
+          builtins.deepSeq contractGuards (
+            pkgs.runCommand "pim-sync-secret-gate-selftest" { nativeBuildInputs = [ pkgs.coreutils ]; } ''
+              gate=${gate}
+              fail() { echo "FAIL: pim-sync-secret-gate-selftest: $*" >&2; exit 1; }
+              run() { local rc; "$gate" "$@" >"$fx/out" 2>&1 && rc=0 || rc=$?; echo "$rc"; }
+              fx=$(mktemp -d)
+              for n in client dav tok1 tok2 tok3 tok4; do printf '{"ok":true}\n' > "$fx/$n"; done
+              real=( "$fx/client" "$fx/dav" "$fx/tok1" "$fx/tok2" "$fx/tok3" "$fx/tok4" )
+
+              [ "$(run "''${real[@]}")" -eq 0 ] || fail "real material must run (exit 0)"
+
+              printf 'PLACEHOLDER\n' > "$fx/client"
+              [ "$(run "''${real[@]}")" -eq 1 ] || fail "a placeholder in the first file must skip (exit 1)"
+              grep -q "owner material pending ($fx/client is PLACEHOLDER)" "$fx/out" || fail "the skip must name the pending file"
+
+              printf 'x PLACEHOLDER\n' > "$fx/tok4"
+              [ "$(run "''${real[@]}")" -eq 1 ] || fail "a placeholder in the last file must skip (exit 1)"
+
+              [ "$(run "$fx/client" "$fx/absent")" -eq 255 ] || fail "a missing file behind a placeholder must fail (exit 255), not skip"
+              grep -q "sops material MISSING: $fx/absent" "$fx/out" || fail "the failure must name the missing file"
+
+              printf '{"ok":true}\n' > "$fx/client"
+              printf '{"ok":true}\n' > "$fx/tok4"
+              [ "$(run "$fx/absent" "$fx/nowhere")" -eq 255 ] || fail "missing files must fail (exit 255)"
+              [ "$(grep -c 'sops material MISSING' "$fx/out")" -eq 2 ] || fail "every missing file must be named"
+
+              [ "$(run)" -eq 0 ] || fail "an empty file list is vacuously fine (exit 0)"
+
+              echo "pim-sync secret gate OK (0 run, 1 skip, 255 fail; six materials gated; exit-3 tolerance dry-run only)"
+              touch $out
+            ''
+          );
+
       };
     };
 }
