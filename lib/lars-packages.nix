@@ -43,17 +43,15 @@ lib.filterAttrs (_: v: v != null) {
   # hand-written actionability_templ.go → actionability_templ_idioms.go
   # (out of bare `templ generate`'s output namespace; pushed this session).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  # RE-STALE 2026-11-06 lock float (no shim until now): the locked art-dupl
-  # rev's baked hash no longer reproduces under the refreshed graph — the
-  # build died "reading …/xo/terminfo/@v/v1.3.0.zip: no such file" because
-  # the stale fixed-output path is keyed by the SPECIFIED hash (class
-  # comment at flakePkgShim). Fresh fakeHash probe got iCINPEzo (first-hand,
-  # drv g4i7z32v1rqr60qwsk13ii54c6zk6vjz-art-dupl-0.9.0-go-modules).
-  # RE-STALE 2026-11-24 (deploy-gap catch-up float): spec AFkwR+cz, got
-  # 47Cw5cIU (first-hand, drv art-dupl-0.10.0-go-modules, 15:5x deploy).
-  art-dupl =
-    flakePkgShim inputs.art-dupl "default"
-      "sha256-47Cw5cIUE5xkLGQju3AVu/zXCKqY7nyS8VrLnAfGtXA=";
+  # art-dupl shim DROPPED (2026-11-28): the fork tip 3b2e70c1 pins templ
+  # generation to the go.mod version (build-tagged tools.go + `go run
+  # github.com/a-h/templ/cmd/templ generate` in preBuild — the floating
+  # nixpkgs templ CLI 1118 emitted code the 1070 runtime cannot compile,
+  # printer/report_templ.go NewAttributeExpression, 13:07 deploy) and bakes
+  # the matching vendorHash qRCC6gNs upstream (flake check green there,
+  # ~16:1x). Drop protocol, docs/agents/nix-flakes.md. Re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  art-dupl = flakePkg inputs.art-dupl;
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
   # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2
