@@ -766,8 +766,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -829,8 +829,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1159,8 +1159,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1279,8 +1279,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1349,8 +1349,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1511,8 +1511,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1574,8 +1574,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1637,8 +1637,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -1847,8 +1847,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2245,8 +2245,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2566,8 +2566,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2629,8 +2629,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2692,8 +2692,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2755,8 +2755,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -2952,8 +2952,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3015,8 +3015,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3162,8 +3162,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3225,8 +3225,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3394,8 +3394,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3457,8 +3457,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {
@@ -3619,8 +3619,8 @@
                 "lineStyle": "solid",
                 "showPoints": false,
                 "spanGaps": {
-                  "fillLessThan": "",
-                  "fillOnlyBelow": false
+                  "fillLessThan": "15m",
+                  "fillOnlyBelow": true
                 }
               },
               "formatting": {

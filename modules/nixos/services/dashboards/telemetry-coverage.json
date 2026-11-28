@@ -248,8 +248,8 @@
                 "lineStyle": "solid",
                 "fillMode": "none",
                 "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
+                  "fillOnlyBelow": true,
+                  "fillLessThan": "15m"
                 }
               },
               "axes": {
@@ -353,8 +353,8 @@
                 "lineStyle": "solid",
                 "fillMode": "none",
                 "spanGaps": {
-                  "fillOnlyBelow": false,
-                  "fillLessThan": ""
+                  "fillOnlyBelow": true,
+                  "fillLessThan": "15m"
                 }
               },
               "axes": {
