@@ -1744,7 +1744,7 @@ in
                     "[STATUS] == 200"
                     "[BODY] == pat(*clickhouse_xfs_usage_over_threshold 0*)"
                   ];
-                  alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and telemetry retention grows unboundedly. Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and tighten TTLs in signoz.nix (clickhouseInternalLogs / signoz_logs / signoz_traces retention).";
+                  alert = "ClickHouse XFS data filesystem exceeds 85% — XFS cannot shrink and the 90-day retention is filling it (services.signoz.retentionDays, ~37 GiB at steady state). Check per-table sizes (clickhouse-client 'SELECT database, formatReadableSize(sum(bytes_on_disk)) FROM system.parts GROUP BY database') and lower services.signoz.retentionDays in signoz.nix, or grow the partition; if a table sits far above its share, read the signoz-retention.service journal.";
                 }
               ]
               ++ lib.optionals gcpMonitoringEnabled [

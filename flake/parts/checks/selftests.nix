@@ -467,7 +467,62 @@
             touch $out
           '';
 
-        # flake-lock-audit selftest (2026-10-23): pins the running-vs-pinned
+        # signoz-retention (2026-11-28): the metrics/traces/logs TTL converger
+        # against stubbed curl + clickhouse-client. Leg 1: the repo text.
+        signoz-retention-selftest = pkgs.runCommand "signoz-retention-selftest" { } ''
+          export PATH="${pkgs.jq}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+          scratch=$(mktemp -d)
+          cp ${root}/scripts/signoz-retention.sh "$scratch/signoz-retention.sh"
+          cp ${root}/scripts/test-signoz-retention.sh "$scratch/test-signoz-retention.sh"
+          bash "$scratch/test-signoz-retention.sh"
+          touch $out
+        '';
+
+        # Leg 2: the RENDERED wrapper the unit execs. The unit's environment
+        # is checked here at eval time (every key the script requires, each
+        # equal to the declared value); the wrapper must carry its own
+        # curl/jq/clickhouse runtimeInputs and pass the same legs (the
+        # harness' stubs shadow the PATH the wrapper prepends).
+        signoz-retention-rendered =
+          let
+            host = inputs.self.nixosConfigurations.evo-x2.config;
+            unit = host.systemd.services.signoz-retention;
+            retention = host.services.signoz.retentionDays;
+            clickhouse = host.services.signoz.settings.clickhouse;
+            expectedEnvironment = {
+              SIGNOZ_URL = "http://${host.services.signoz.settings.queryService.host}:${toString host.services.signoz.settings.queryService.port}";
+              DB_METRICS = clickhouse.database;
+              DB_TRACES = clickhouse.tracesDatabase;
+              DB_LOGS = clickhouse.logsDatabase;
+              RETENTION_DAYS_METRICS = toString retention.metrics;
+              RETENTION_DAYS_TRACES = toString retention.traces;
+              RETENTION_DAYS_LOGS = toString retention.logs;
+            };
+            splitEntry =
+              entry:
+              lib.nameValuePair (builtins.head (lib.splitString "=" entry)) (
+                lib.concatStringsSep "=" (builtins.tail (lib.splitString "=" entry))
+              );
+            renderedEnvironment = builtins.listToAttrs (map splitEntry unit.serviceConfig.Environment);
+            missingOrWrong = lib.filterAttrs (
+              name: value: renderedEnvironment.${name} or null != value
+            ) expectedEnvironment;
+            wrapper =
+              lib.assertMsg (missingOrWrong == { })
+                "signoz-retention.service environment does not match services.signoz: ${builtins.toJSON missingOrWrong}"
+                unit.serviceConfig.ExecStart;
+          in
+          pkgs.runCommand "signoz-retention-rendered" { } ''
+            export PATH="${pkgs.jq}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+            wrapper=${lib.escapeShellArg wrapper}
+            [ -x "$wrapper" ] || { echo "FAIL: unit ExecStart is not an executable wrapper: $wrapper"; exit 1; }
+            for tool in curl jq clickhouse; do
+              grep -qE "/nix/store/[a-z0-9]+-[a-z0-9.-]*$tool[a-z0-9.-]*/bin" "$wrapper" \
+                || { echo "FAIL: rendered wrapper lacks its $tool runtimeInput"; exit 1; }
+            done
+            SIGNOZ_RETENTION_SCRIPT="$wrapper" bash ${root}/scripts/test-signoz-retention.sh
+            touch $out
+          '';
         # comparison contract — match, mismatch, and the two unknown
         # branches (empty running rev, empty locked rev) plus nixos-version
         # JSON field extraction. The LIVE probe needs /run/current-system, so

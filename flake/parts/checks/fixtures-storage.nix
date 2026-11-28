@@ -520,6 +520,153 @@
               ''
           );
 
+        # 2026-11-28 (the eight-night btrbk-root starvation): the first
+        # ExecCondition leg of btrbk-root.service decides whether an offer
+        # from btrbk-root-catchup.timer is owed. A night is served when a
+        # root snapshot AND a received pool backup are stamped at or after
+        # the most recent nightly slot. Pure filesystem plus a pinned clock
+        # (--now): no stubs. Covers both legs served, a pool send that died
+        # after the snapshot, nothing there, an unparseable name, a catch-up
+        # that served the night, the slot boundary from both sides (23:30
+        # with and without tonight's run, 00:20 next day), the usage exit,
+        # and a MUTATION NEGATIVE: a copy with the pool leg dropped must
+        # SKIP the pool-died case the real script reports as owed, while a
+        # comment-only control reports it like the real script. The
+        # let-guards pin the WIRING on evo-x2: both ExecCondition legs in
+        # order on btrbk-root.service, and the catch-up timer aiming at it
+        # (the stray-attrname class: an unwired leg guards nothing).
+        btrbk-root-freshness-fixture =
+          let
+            cfg = inputs.self.nixosConfigurations.evo-x2.config;
+            legs = lib.toList (cfg.systemd.services.btrbk-root.serviceConfig.ExecCondition or [ ]);
+            catchup = cfg.systemd.timers.btrbk-root-catchup or null;
+            wiringGuards =
+              lib.throwIfNot
+                (
+                  builtins.length legs == 2
+                  && lib.hasInfix "btrbk-root-freshness" (builtins.elemAt legs 0)
+                  && lib.hasInfix "btrbk-admission" (builtins.elemAt legs 1)
+                )
+                "btrbk-root-freshness-fixture: btrbk-root.service must run two ExecCondition legs in this order: btrbk-root-freshness, then btrbk-admission"
+                (
+                  lib.throwIfNot
+                    (
+                      catchup != null
+                      && catchup.timerConfig.Unit or null == "btrbk-root.service"
+                      && builtins.elem "timers.target" (catchup.wantedBy or [ ])
+                    )
+                    "btrbk-root-freshness-fixture: btrbk-root-catchup.timer must exist, trigger btrbk-root.service and be wanted by timers.target"
+                    true
+                );
+          in
+          builtins.deepSeq wiringGuards (
+            pkgs.runCommand "btrbk-root-freshness-fixture"
+              {
+                nativeBuildInputs = with pkgs; [
+                  bash
+                  coreutils-full
+                  findutils
+                ];
+              }
+              ''
+                set -euo pipefail
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/snap" "$scratch/pool"
+                GATE=${root}/scripts/btrbk-root-freshness.sh
+
+                # One shared clock for the fixture and the gate: the gate's
+                # slot arithmetic runs in the builder's zone, the pinned
+                # instants are built in the same zone.
+                NOW_MORNING=$(date -d "2026-11-28 10:00" +%s)
+                NOW_AFTER_SLOT=$(date -d "2026-11-28 23:30" +%s)
+                NOW_PAST_MIDNIGHT=$(date -d "2026-11-29 00:20" +%s)
+
+                reset() {
+                  find "$scratch/snap" "$scratch/pool" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+                }
+                # serve <snapshot name> <pool backup name>
+                serve() {
+                  mkdir -p "$scratch/snap/$1" "$scratch/pool/$2"
+                }
+                # run_leg <label> <now> <want-rc> <script> <line the output must carry>
+                run_leg() {
+                  rc=0
+                  capt=$(bash "$4" --now "$2" --snapshot-dir "$scratch/snap" --target-dir "$scratch/pool" 2>&1) || rc=$?
+                  if [ "$rc" -ne "$3" ]; then
+                    echo "FAIL $1: rc=$rc (want $3): $capt"
+                    exit 1
+                  fi
+                  if ! grep -qF -- "$5" <<< "$capt"; then
+                    echo "FAIL $1: output lacks [$5]: $capt"
+                    exit 1
+                  fi
+                  echo "PASS $1"
+                }
+
+                reset
+                serve "@.20261127T2300" "@.20261127T2300"
+                run_leg both-served "$NOW_MORNING" 1 "$GATE" "the nightly slot 2026-11-27 23:00 is served"
+
+                reset
+                serve "@.20261127T2300" "@.20261126T2300"
+                run_leg pool-send-died "$NOW_MORNING" 0 "$GATE" "RUN OWED: btrbk-root - root snapshot 2026-11-27 23:00, pool backup 2026-11-26 23:00"
+
+                reset
+                run_leg nothing-there "$NOW_MORNING" 0 "$GATE" "root snapshot none, pool backup none"
+
+                reset
+                mkdir -p "$scratch/snap/@.manual" "$scratch/pool/@.20261127T2300"
+                run_leg unparseable-name "$NOW_MORNING" 0 "$GATE" "root snapshot none, pool backup 2026-11-27 23:00"
+
+                reset
+                serve "@.20261128T0315" "@.20261128T0315"
+                run_leg catchup-served-the-night "$NOW_MORNING" 1 "$GATE" "root snapshot 2026-11-28 03:15"
+
+                reset
+                serve "@.20261127T2300" "@.20261127T2300"
+                run_leg tonight-not-served "$NOW_AFTER_SLOT" 0 "$GATE" "the nightly slot 2026-11-28 23:00 is not served"
+                run_leg past-midnight-tonight-missed "$NOW_PAST_MIDNIGHT" 0 "$GATE" "the nightly slot 2026-11-28 23:00 is not served"
+
+                reset
+                serve "@.20261128T2307" "@.20261128T2307"
+                run_leg nightly-ran-late "$NOW_AFTER_SLOT" 1 "$GATE" "the nightly slot 2026-11-28 23:00 is served"
+                run_leg past-midnight-same-state "$NOW_PAST_MIDNIGHT" 1 "$GATE" "the nightly slot 2026-11-28 23:00 is served"
+
+                rc=0
+                bash "$GATE" --now abc --snapshot-dir "$scratch/snap" --target-dir "$scratch/pool" > /dev/null 2>&1 || rc=$?
+                if [ "$rc" -ne 64 ]; then
+                  echo "FAIL usage: rc=$rc (want 64)"
+                  exit 1
+                fi
+                echo "PASS usage"
+
+                # Mutation negative: a copy that no longer looks at the
+                # pool leg must SKIP the pool-died state (rc 1) the real
+                # script reports as owed. Anchor-guarded: the copy must
+                # differ from the gate, or the leg says nothing.
+                mutated="$scratch/freshness-pool-leg-dropped.sh"
+                sed 's/served "[$]target_epoch"/true/' "$GATE" > "$mutated"
+                if ! grep -qF '&& true; then' "$mutated"; then
+                  echo "FAIL mutation-negative: the sed anchor did not hit"
+                  exit 1
+                fi
+                reset
+                serve "@.20261127T2300" "@.20261126T2300"
+                run_leg mutation-pool-leg-dropped-skips "$NOW_MORNING" 1 "$mutated" "is served"
+
+                # Comment-only control: same case, real verdict.
+                control="$scratch/freshness-comment-control.sh"
+                sed 's|^# btrbk-root-freshness: first ExecCondition leg|# btrbk-root-freshness (comment-only control): first ExecCondition leg|' "$GATE" > "$control"
+                if ! grep -qF '(comment-only control)' "$control"; then
+                  echo "FAIL control: the comment sed anchor did not hit"
+                  exit 1
+                fi
+                run_leg comment-control-owes "$NOW_MORNING" 0 "$control" "RUN OWED"
+
+                echo "PASS: btrbk-root-freshness fixture (served, pool died, empty, unparseable, catch-up, slot boundary, usage, mutation-negative, control, ExecCondition + timer wiring)" > $out
+              ''
+          );
+
         # 2026-10-01 plan P2 #5: the scrub-staleness gauges parse
         # `btrfs scrub status` text — a format that CHANGED across
         # btrfs-progs eras (7.1 prints "Scrub started:    %s" AND

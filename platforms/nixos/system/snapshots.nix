@@ -437,6 +437,33 @@ let
     '';
   };
 
+  # btrbk-root freshness leg (2026-11-28): the nightly slot of the root
+  # snapshot + pool send, once per timer fire. The NixOS btrbk timer keeps
+  # this slot; the catch-up timer below offers the same service between
+  # slots, and this leg decides whether an offer is owed.
+  btrbkRootSlot = "23:00";
+  # In-tree script (btrbkDataGate precedent) so the fixture executes the
+  # same bytes the unit runs. Full contract in the script header
+  # (scripts/btrbk-root-freshness.sh): exit 0 = the most recent nightly slot
+  # is not served (no root snapshot or no received pool backup stamped at
+  # or after it), exit 1 = served, skip the run.
+  btrbkRootFreshness = pkgs.writeShellApplication {
+    name = "btrbk-root-freshness";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+    ];
+    text = builtins.readFile ../../../scripts/btrbk-root-freshness.sh;
+  };
+
+  # One unit's ExecCondition text, whether it is a single command or a
+  # list of legs (the audits in lib/default.nix read Exec* the same way).
+  unitExecConditions =
+    unit:
+    lib.concatStringsSep "\n" (
+      lib.toList (config.systemd.services.${unit}.serviceConfig.ExecCondition or "")
+    );
+
   # The send units the admission gate must cover — pinned by the assertion
   # below (a unit churn that drops the ExecCondition silently re-opens the
   # storm-churn class; the drift guard makes that an eval error).
@@ -480,7 +507,9 @@ in
       # This closes the #1 data-loss risk: all snapshots used to live on the
       # single QLC NVMe that dies with the machine. Offsite leg is covered by
       # the user's Google Photos/Drive (see the 3-drive repurposing plan doc).
-      onCalendar = "23:00";
+      # The slot is shared with the catch-up timer's freshness leg
+      # (btrbkRootSlot): move the night here and both follow.
+      onCalendar = btrbkRootSlot;
       snapshotOnly = false;
       settings = {
         # LOCAL retention ~1/4 of the old policy (was 14d 4w, user decision
@@ -805,9 +834,23 @@ in
           ioTier.background
           {
             TimeoutStartSec = "24h";
-            # PSI/memory admission (see btrbkAdmission): refuse during a storm
-            # or inside the guard-trip recency window — skip, don't fail.
-            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-root";
+            # Two legs, in this order; every leg must pass for the run to
+            # start and any non-zero exit skips the run cleanly.
+            #   1. btrbk-root-freshness: is the most recent nightly slot
+            #      served (root snapshot AND received pool backup stamped at
+            #      or after it)? The nightly fire is owed unless a catch-up
+            #      already served that night; the catch-up timer's slots
+            #      (btrbk-root-catchup, every 30 min) are owed only while a
+            #      night went unserved. One slot a night was refused eight
+            #      nights in a row (2026-11-20..27) and nothing retried
+            #      until the next 23:00: root snapshot and pool copy went 12
+            #      days stale.
+            #   2. PSI/memory admission (see btrbkAdmission): refuse during a
+            #      storm or inside the guard-trip recency window.
+            ExecCondition = [
+              "${lib.getExe btrbkRootFreshness} --slot ${btrbkRootSlot}"
+              "${lib.getExe btrbkAdmission} --name btrbk-root"
+            ];
             # btrbk-data oom lesson (2026-08-21): a full-tree send charges its
             # page cache to this unit's cgroup — root re-sends are live since
             # the 2026-09-12 snapshot-loss scenario, so the same 20.6G class
@@ -1638,6 +1681,27 @@ in
       };
     };
 
+    # 2026-11-28: the root snapshot + pool send had one slot a night, and
+    # the admission gate refused it eight nights in a row (storms and guard
+    # trips cluster on the 23:00 maintenance pile-up). A refusal is a clean
+    # skip, so nothing retried until the next 23:00. The catch-up timer
+    # offers the same service every 30 minutes: btrbk-root-freshness
+    # (ExecCondition leg 1) turns an offer into a no-op once the night is
+    # served, and the admission gate (leg 2) still decides every run.
+    # 00..22 keeps the offers out of the nightly btrbk cluster (23:00-23:50
+    # and pool-clean's After= hold); Persistent=false keeps a boot from
+    # firing into the boot storm, the next half hour offers again.
+    timers.btrbk-root-catchup = {
+      description = "Offer btrbk-root a run every 30 minutes while the last nightly slot went unserved";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*-*-* 00..22:15/30:00";
+        AccuracySec = "1min";
+        Persistent = false;
+        Unit = "btrbk-root.service";
+      };
+    };
+
     # Root-space floor sweep (10-02 outage class): 5-min cadence keeps the
     # >90% -> prune latency far below the growth rates that produced two
     # 100% events in 24h; below threshold a run is a df parse + a metrics
@@ -1713,9 +1777,7 @@ in
     ++ [
       {
         assertion = builtins.all (
-          u:
-          !(config.systemd.services ? ${u})
-          || lib.hasInfix "btrbk-admission" (config.systemd.services.${u}.serviceConfig.ExecCondition or "")
+          u: !(config.systemd.services ? ${u}) || lib.hasInfix "btrbk-admission" (unitExecConditions u)
         ) btrbkSendUnits;
         message = ''
           snapshots.nix: a btrbk send unit lost its PSI/memory admission gate
@@ -1723,6 +1785,33 @@ in
           ungated-churn freeze class this wiring exists for; re-add
             ExecCondition = "${btrbkAdmission}/bin/btrbk-admission --name <unit>";
           or extend the exception list here WITH the reason.
+        '';
+      }
+      {
+        assertion =
+          let
+            legs = lib.toList (config.systemd.services.btrbk-root.serviceConfig.ExecCondition or [ ]);
+          in
+          builtins.length legs == 2
+          && lib.hasInfix "btrbk-root-freshness" (builtins.elemAt legs 0)
+          && lib.hasInfix "btrbk-admission" (builtins.elemAt legs 1);
+        message = ''
+          snapshots.nix: btrbk-root.service must run exactly two ExecCondition legs in this order:
+          btrbk-root-freshness (is the nightly slot served?), then btrbk-admission.
+          Without the freshness leg every btrbk-root-catchup offer makes a second
+          snapshot (each one pins extents for two days); without the admission
+          leg a storm-timed send is the ungated-churn freeze class.
+        '';
+      }
+      {
+        assertion =
+          (config.systemd.timers ? btrbk-root-catchup)
+          && (config.systemd.timers.btrbk-root-catchup.timerConfig.Unit or null == "btrbk-root.service")
+          && builtins.elem "timers.target" (config.systemd.timers.btrbk-root-catchup.wantedBy or [ ]);
+        message = ''
+          snapshots.nix: btrbk-root-catchup.timer must exist, trigger btrbk-root.service and be
+          wanted by timers.target. Without it a refused 23:00 is not retried until the next night
+          (the 2026-11-20..27 eight-night starvation: root snapshot and pool copy 12 days stale).
         '';
       }
     ];
