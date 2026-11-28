@@ -1,9 +1,9 @@
 # Runbook: docs/services/reports-system.md
-# reports-system — report management web app (`server`,
+# reports-system: report management web app (`server`,
 # github:LarsArtmann/testing, product reports-system).
 #
 # DELEGATED to the upstream module (inputs.reports-system.nixosModules
-# .reports-system, repo nix/module.nix — VM-tested upstream by its
+# .reports-system, repo nix/module.nix, VM-tested upstream by its
 # checks.module-vm): options, the unit, the system user, the state
 # directory and portable hardening all live upstream. This file layers
 # ONLY the SystemNix concerns, per the DiscordSync/Monitor365 pattern
@@ -60,7 +60,7 @@
     {
       imports = [
         inputs.reports-system.nixosModules.reports-system
-        # Platform-truth catalog entry (ADR-008): unconditional — the app
+        # Platform-truth catalog entry (ADR-008): unconditional. The app
         # exists platform-wide even where a host has it disabled. The
         # catalog OPTION comes from nixosModules.catalog, which every host
         # importing this module must co-import (a missing import fails
@@ -89,7 +89,7 @@
 
         # Both secrets are agent-generated random values (runbook). Root-
         # owned ON PURPOSE: systemd reads EnvironmentFile as PID 1 and
-        # injects the variables into the service process — the service
+        # injects the variables into the service process, so the service
         # user never needs file access.
         sops.secrets = {
           reports_system_session_secret = {
@@ -128,7 +128,7 @@
           ];
         };
 
-        # Pool dir creator — the ONLY sanctioned creator of a directory
+        # Pool dir creator: the ONLY sanctioned creator of a directory
         # under the removable /mnt/pool mount (mkPoolDirUnit invariants).
         # Owned by the service user so the backup unit needs no root
         # capability: it reads the stores as their own owner.
@@ -256,7 +256,7 @@
                   "[STATUS] == 200"
                   # Functional, not just liveness: readiness answers 503
                   # when the database check fails, and the body names the
-                  # service — an error shell would carry neither.
+                  # service; an error shell would carry neither.
                   "[BODY] == pat(*\"service\":\"reports-system\"*)"
                   "[RESPONSE_TIME] < 1500"
                 ];
@@ -279,7 +279,7 @@
             homepage = {
               name = "Reports";
               group = "Productivity";
-              description = "Report management — drafts, review, analytics";
+              description = "Report management (drafts, review, analytics)";
               # Generic pack glyph (dashboard-icons text-document): the
               # project ships no brand mark.
               icon = "text-document.png";
