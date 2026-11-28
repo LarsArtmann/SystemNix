@@ -36,6 +36,7 @@
 }:
 let
   inherit (import ../lib/default.nix pkgs.lib) ports;
+  inherit (pkgs) lib;
 
   # The derivation the unit runs (the ai-meter flake input's package), so
   # the restatement leg starts the real binary by hand.
@@ -158,6 +159,11 @@ let
               type = lib.types.listOf lib.types.attrs;
               default = [ ];
             };
+            options.users.primaryUser = lib.mkOption { type = lib.types.str; };
+            options.networking.domain = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+            };
             config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
           }
         )
@@ -260,17 +266,6 @@ let
           }
         ];
         message = "the default client entry must be exactly name and key_file";
-      }
-      {
-        assertion = builtins.listToAttrs (
-          map (client: {
-            name = client.name;
-            value = removeAttrs client [ "name" "key_file" ];
-          }) fullConfig.clients
-        ) == {
-          vmtest.priority = "interactive";
-        } || builtins.length fullConfig.clients == 1;
-        message = "unreachable length guard";
       }
       {
         assertion = fullConfig.clients == [
@@ -556,11 +551,13 @@ in
         machine.wait_for_open_port(8107)
         machine.wait_for_open_port(8108)
         machine.succeed("curl -sf http://127.0.0.1:8107/health | grep ok")
-        # The key files the render names are the ones the module's mint wrote.
-        machine.succeed(
+        # The key file the render names is the one the module's mint wrote:
+        # the minted key authenticates (an unknown upstream answers 404, not 401).
+        status = machine.succeed(
             "curl -s -o /dev/null -w '%{http_code}' -XPOST http://127.0.0.1:8107/v1/nope/chat/completions"
             + " -H 'Authorization: Bearer '$(cat /run/ai-meter-keys/vmtest)"
             + " -H 'Content-Type: application/json' -d '{\"model\":\"m\"}'"
         )
+        assert status.strip() == "404", f"expected 404 with the minted key, got {status}"
   '';
 }
