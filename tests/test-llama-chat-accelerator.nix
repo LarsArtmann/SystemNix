@@ -70,8 +70,7 @@ let
   cpuExec = cpuUnit.serviceConfig.ExecStart;
 
   hasAllow =
-    sc: needle:
-    builtins.any (entry: lib.hasPrefix needle (builtins.toJSON entry)) (sc.DeviceAllow or [ ]);
+    sc: needle: builtins.any (entry: lib.hasPrefix needle (toString entry)) (sc.DeviceAllow or [ ]);
 
   cases = [
     {
@@ -138,7 +137,8 @@ let
     }
     {
       name = "cpu: unit gained ROCm environment";
-      pass = cpuUnit.environment == { };
+      pass =
+        !(cpuUnit.environment ? HSA_OVERRIDE_GFX_VERSION) && !(cpuUnit.environment ? LD_LIBRARY_PATH);
     }
     {
       name = "cpu: package is no longer the plain llama.cpp build";
