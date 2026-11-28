@@ -47,20 +47,22 @@ in
   # and the backend was stopped at the first check after 10 min — the
   # keep-alive window was never honored (live 02:57:39: llama-chat unloaded
   # mid-request). Pinned by tests/test-llama-chat-accelerator.nix.
-  templateActivity = lib.getExe (pkgs.writeShellApplication {
-    name = "template-activity-since";
-    runtimeInputs = [
-      pkgs.systemd
-      pkgs.gnugrep
-    ];
-    text = ''
-      template="''${1:?template prefix, e.g. llama-chat@}"
-      since="''${2:?window, e.g. 60min}"
-      lines=$(${journalctl} ${toString (map (id: "MESSAGE_ID=${id}") messageIds)} \
-        --since "$since ago" --output=json --output-fields=UNIT --no-pager --quiet 2>/dev/null) && rc=0 || rc=$?
-      count=$(printf '%s\n' "$lines" | ${grep} -c "\"UNIT\":\"$template") || true
-      [ "$rc" -eq 0 ] || exit 0
-      [ "''${count:-0}" -gt 0 ]
-    '';
-  });
+  templateActivity = lib.getExe (
+    pkgs.writeShellApplication {
+      name = "template-activity-since";
+      runtimeInputs = [
+        pkgs.systemd
+        pkgs.gnugrep
+      ];
+      text = ''
+        template="''${1:?template prefix, e.g. llama-chat@}"
+        since="''${2:?window, e.g. 60min}"
+        lines=$(${journalctl} ${toString (map (id: "MESSAGE_ID=${id}") messageIds)} \
+          --since "$since ago" --output=json --output-fields=UNIT --no-pager --quiet 2>/dev/null) && rc=0 || rc=$?
+        count=$(printf '%s\n' "$lines" | ${grep} -c "\"UNIT\":\"$template") || true
+        [ "$rc" -eq 0 ] || exit 0
+        [ "''${count:-0}" -gt 0 ]
+      '';
+    }
+  );
 }

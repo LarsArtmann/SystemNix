@@ -314,7 +314,7 @@ _: {
         memoryMax = lib.mkOption {
           type = lib.types.str;
           default = "48G";
-          description = "Memory ceiling. Measured 2026-10-08: 23.4 GB weights (file-backed, charged on cold cache) + ~8.9 GB anon (KV cache 32k ctx + compute buffers) = ~32.3 GB idle-serving — 32G would OOM-kill on cold boot; 48G leaves headroom.";
+          description = "Memory ceiling of the unit's cgroup. Measured 2026-10-08: 23.4 GB weights (file-backed, charged on cold cache) + ~8.9 GB anon (KV cache 32k ctx + compute buffers) = ~32.3 GB idle-serving — 32G would OOM-kill on cold boot; 48G leaves headroom. It does NOT bound the igpu posture's weights: GPUVM (GTT) allocations are not charged to the cgroup — the 2026-11-28 soak reported a 5.2 GB cgroup peak while ~27 GB sat in GTT.";
         };
 
         host = lib.mkOption {
@@ -483,9 +483,11 @@ _: {
             listenStreams = [ "${cfg.host}:${toString cfg.port}" ];
             socketConfig = {
               Accept = true;
-              # llama-server default n_slots=4; cap concurrent bridges below
-              # it — beyond that, connections queue in the backlog (slow
-              # answer, never refused).
+              # Four concurrent bridges. cpu: llama-server defaults to 4
+              # slots, so this caps the bridges below the slot count —
+              # beyond that, connections queue in the backlog (slow answer,
+              # never refused). igpu: the unit runs --parallel 1, so requests
+              # past the first queue INSIDE llama-server instead.
               MaxConnections = 4;
             };
           };

@@ -26,6 +26,9 @@ let
   # Co-import: the module declares a services.integration entry.
   integrationModule =
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
+  idleActivityHelper = import ../modules/nixos/services/_llama-idle-activity.nix {
+    inherit lib pkgs;
+  };
 
   primaryUserStub = {
     options.users.primaryUser = lib.mkOption { type = lib.types.str; };
@@ -143,6 +146,15 @@ let
     {
       name = "cpu: package is no longer the plain llama.cpp build";
       pass = cpu.services.llama-chat.package == pkgs.llama-cpp;
+    }
+    {
+      # Not accelerator-specific, but it unloads THIS backend: the idle check
+      # splices the helper as `if ${templateActivity} ...`, so the export must
+      # be the executable path. As the bare derivation every check ran the
+      # store directory (exit 126), read as "no activity", and stopped the
+      # backend at the first check after 10 min (live 2026-11-28 02:57).
+      name = "idle-activity helper exports the derivation root instead of the executable — every idle check stops its backend";
+      pass = lib.hasSuffix "/bin/template-activity-since" idleActivityHelper.templateActivity;
     }
   ];
 
