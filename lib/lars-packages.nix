@@ -164,7 +164,7 @@ lib.filterAttrs (_: v: v != null) {
   # owner's; see docs/todo/pipeline.md (buildflow float row) for the handoff.
   buildflow =
     flakePkgShim inputs.buildflow "default"
-      "sha256-WnSBXpNXpx+pCyvVfCU4XV/dQfDgKhRUC7mc7zpbKEU=";
+      "sha256-LjlMRBlV5TstJr7T8MEWrZ5gzQSb3hg7PspdMTxBdaY=";
   # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
   # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
   # packages.default with its own baked vendorHash (no follows into it).
