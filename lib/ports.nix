@@ -332,6 +332,13 @@
         # (protected layer — billing data).
         invoices-dashboard = 8110;
 
+        # reports-system — report management web app (`server`,
+        # services.reports-system, upstream nixosModules.reports-system
+        # unit), loopback-only; Caddy proxies reports.home.lan to it
+        # (protected layer — the app has its own login, no OIDC). 8113,
+        # NOT the upstream module default 8080.
+        reports-system = 8113;
+
         # pim-sync dashboard — read-only receipt/metrics WebUI (`pim-sync ui`,
         # upstream nixosModules.pim-sync dashboard unit), NetBird-mesh bind
         # on evo-x2 with bearer-token auth (upstream eval assertion refuses
