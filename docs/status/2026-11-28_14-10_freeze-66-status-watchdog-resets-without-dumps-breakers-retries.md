@@ -31,7 +31,7 @@ Live values read at 14:05 (`/proc/sys/kernel/*`, `watchdogd.conf`, `watchdog0`):
 
 Three independent reasons, in order of importance:
 
-1. **Hang-class cuts have nothing to dump.** The ledger's WDT cuts (`0x02000800`, pstore empty: #34-#51, #53, #60, #63) end with the journal cut mid-traffic and no panic. kdump only runs on a panic. The watchdog fires at 90 s without a pat; the hung-task detector needs 120 s and the soft-lockup detector 40 s of a CPU stuck in one kernel loop. A box that is thrashing (every CPU busy, every task slow, nothing stuck for 40 s in one place) trips neither, and the docs record that the detector threads get starved too. Result: reset by hardware, zero kernel evidence. The watchdog is the fastest actor on the stage, so it always wins.
+1. **Hang-class cuts have nothing to dump.** The ledger's WDT cuts (`0x02000800`, pstore empty: #34-#51, #53, #60, #63) end with the journal cut mid-traffic and no panic. kdump only runs on a panic. The watchdog fires at 90 s without a pat; the hung-task detector needs 120 s and the soft-lockup detector 40 s (2 x `watchdog_thresh`, by the kernel's rule) of a CPU stuck in one kernel loop. A box that is thrashing (every CPU busy, every task slow, nothing stuck for 40 s in one place) trips neither, and the docs record that the detector threads get starved too. Result: reset by hardware, zero kernel evidence. The watchdog is the fastest actor on the stage, so it always wins.
 2. **Panic-class cuts panic, and the dump dies in the capture kernel.** #52, #55, #56, #59, #61, #62, #64, #65 (ledger) and #66: the main kernel panics, kexec jumps into the capture kernel, and that kernel boots the same initrd and the same systemd into 512 MiB. In #66 it had 509 free pages at 7.3 s, killed `mount`, then journald, and panicked `System is deadlocked on memory` at 9.477 s. No vmcore. In #66 it also never applied its own auto-reboot sysctl, so the watchdog, not software, reset the box. This cut is the first one that shows the capture boot failing at a *default* watermark (`min:2432kB`, not the inherited 2 GiB one): about 370 MiB were simply in use (shmem 129 + slab 102 + btrfs 67 + iommu 44 + execmem 29 MiB). The sysctl fix that is live for the first time in this boot addresses the watermark, not the size.
 3. **The main kernel's panic text never reached pstore** on any of them, because the pre-fix kernels kexec before the kmsg dump. The dying boot (booted 2026-11-25 11:06:51) had no `crash_kexec_post_notifiers`. This boot has it. Untested.
 
@@ -56,7 +56,7 @@ Ranked by effect per effort. Basis in brackets.
 **The gates themselves, no. The things around them, yes.**
 
 - Deploy entry gates: correct and cheap; they refused twice today (09:30 exit 12 at io PSI 37 %, 11:26 exit 12 on trip recency).
-- `psi-wait-gate`: a sleep-poll, no IO. It held llama-vlm-cap for 13 checks to the cut. But it admits on one avg10 sample under 30 %: llama-chat was admitted at 24.14 %, 24.29 % and 24.50 % and the next sample read 33-51 %.
+- `psi-wait-gate`: a sleep-poll, no IO. It held llama-vlm-cap for 13 checks to the cut. But it admits on one avg10 sample under 30 %: llama-chat was admitted at 24.14 % (09:36:17), 24.29 % (10:19:47) and 24.50 % (10:33:34), while the guard heartbeats of the same hour read avg60 42-50 % with the disk at 100 %.
 - Collectors do: `system-health-metrics` (above), the 10-minute pile, and the deployed idle checks until 2026-11-26 read 1.9-2.4 GB of journal per run (72 GB once, per the TODO row, not re-measured).
 - The deadlock that matters: the gates refuse the deploy that carries the fix while the unfixed unit keeps the storm going. Fix in tree at 03:09; deploys refused at 09:33 and 11:26. The escape hatches are to shed load first (calm window) or to force (`DEPLOY_FORCE_PRESSURE=2`, the pattern that killed #40 and #49).
 
@@ -122,7 +122,7 @@ Missing: a reload budget, a condition-based resume, a CI and build-battery admis
 | What | Severity | Root cause | Mitigation |
 | ---- | -------- | ---------- | ---------- |
 | llama-chat idle check stops a backend under live traffic | HIGH: the storm behind a kernel panic, still live (13 loads on this boot) | `templateActivity` spliced as a store directory; probe error falls through to `systemctl stop` | in-tree fix `2818c0751`; undeployed; deploy refused by gates |
-| Every panic since 2026-11-17 lost its vmcore and panic text | HIGH: 66 cuts, zero kernel dumps | capture boot = full NixOS boot in 512 MiB; kexec before kmsg dump | fix live and unproven; cage size unaddressed |
+| Every panic since 2026-11-17 lost its vmcore and panic text | HIGH: no vmcore on record for any cut through #66 | capture boot = full NixOS boot in 512 MiB; kexec before kmsg dump | fix live and unproven; cage size unaddressed |
 | Hang-class cuts can never leave a dump | HIGH | watchdog 90 s < hung-task 120 s; thrash trips no lockup detector | decision row added |
 | IO-PAUSE trips mostly without a target (516 of 576) | MEDIUM | pausable set excludes the real engines (page-ins, CI, collectors) | existing IO-PAUSE DISARMED alert; no fix here |
 | The fix for the storm was refused at the deploy gate while the storm ran | MEDIUM | gates protect against deploy load; no "fix under storm" path | owner: calm window or socket stop |
