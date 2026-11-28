@@ -400,6 +400,41 @@ OUT=$(out)
 echo "$OUT" | grep -q 'signoz_traces.top_level_operations: absent — skipped' ||
   fail "leg6 absent table not reported as skipped: $OUT"
 
+# ── Leg 7: mutation — three breaks of the script, each must turn the legs
+#    above red (a harness that cannot see a broken converger proves nothing).
+#    The mutated copy runs this file as a child with the mutation leg off. ──
+if [ -z "${SIGNOZ_RETENTION_MUTANT_CHILD:-}" ]; then
+  MUT="$BASE/mutants"
+  mkdir -p "$MUT"
+  # (a) the verification after the repair pass is skipped
+  awk '
+    /^  verify_api_tables$/ && !seen { seen = 1; print "  :"; next }
+    { print }' "$SCRIPT" >"$MUT/skip-final-verify.sh"
+  # (b) an API-managed table is ALTERed by the script itself
+  awk '
+    /^  samples_v4_reduced_last_60s / && !seen {
+      seen = 1; sub(/^  /, "  samples_v4 "); print; next
+    }
+    { print }' "$SCRIPT" >"$MUT/alter-api-table.sh"
+  # (c) the repair pass is dropped
+  awk '!/  converge_v1 metrics "\$DAYS_METRICS" 1$/ && !/  converge_v1 traces "\$DAYS_TRACES" 1$/ && !/  converge_logs "\$DAYS_LOGS" 1$/' \
+    "$SCRIPT" >"$MUT/no-repair.sh"
+  for mutant in skip-final-verify alter-api-table no-repair; do
+    if cmp -s "$SCRIPT" "$MUT/$mutant.sh"; then
+      fail "leg7 mutation '$mutant' did not change the script (anchor lost)"
+      continue
+    fi
+    SIGNOZ_RETENTION_MUTANT_CHILD=1 SIGNOZ_RETENTION_SCRIPT="$MUT/$mutant.sh" \
+      bash "$0" >"$MUT/$mutant.log" 2>&1
+    MUT_RC=$?
+    if [ "$MUT_RC" -ne 0 ]; then
+      pass "leg7 mutant '$mutant' caught"
+    else
+      fail "leg7 mutant '$mutant' passed the harness: $(tail -2 "$MUT/$mutant.log")"
+    fi
+  done
+fi
+
 echo
 if [ "$FAILURES" -eq 0 ]; then
   echo "test-signoz-retention: all legs passed"
