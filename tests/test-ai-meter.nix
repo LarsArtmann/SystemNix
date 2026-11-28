@@ -148,6 +148,11 @@ let
       modules = [
         aiMeterModule
         catalogModule
+        # The VM node imports this too (and the ai-meter module's registry
+        # entry is guarded on the option's existence): without it the guard
+        # sees no services.integration and emits an EMPTY mkIf'd definition,
+        # which evalModules' check rejects ("option does not exist").
+        integrationModule
         (
           { lib, config, ... }:
           {

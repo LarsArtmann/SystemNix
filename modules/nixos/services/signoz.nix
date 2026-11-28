@@ -1397,7 +1397,8 @@ in
                   # journald entries arrive as body=Map(every journal field),
                   # no severity, no service.name. Extract the useful shape:
                   # body=MESSAGE, severity from PRIORITY (string "0".."7"),
-                  # resource service.name from the unit (containers win).
+                  # record-attribute service.name from the unit (containers
+                  # win) — groupbyattrs below moves it onto the resource.
                   # OTLP logs from instrumented services pass through untouched
                   # (guarded on IsMap(body) + PRIORITY, which only journald has).
                   "transform/journald" =
@@ -1421,10 +1422,19 @@ in
                             ''set(attributes["container_name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
                             ''set(attributes["code_file"], body["CODE_FILE"]) where ${journaldGuard} and body["CODE_FILE"] != nil''
                             ''set(attributes["code_func"], body["CODE_FUNC"]) where ${journaldGuard} and body["CODE_FUNC"] != nil''
-                            # service.name precedence: kernel identifier < unit < container
-                            ''set(resource.attributes["service.name"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
-                            ''set(resource.attributes["service.name"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
-                            ''set(resource.attributes["service.name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
+                            # service.name precedence: kernel identifier < unit < container.
+                            # It is a RECORD attribute here on purpose: the log context runs
+                            # once per record against a resource that every record of the
+                            # receiver batch shares, so a resource-level set from this context
+                            # stamps the last record's unit onto the whole batch (79% of the
+                            # journal mislabelled, measured 2026-11-28). groupbyattrs moves
+                            # this attribute onto a per-value resource after this transform.
+                            # A trailing ".service" is dropped so a unit's logs sit under the
+                            # same service.name its traces use (bank-sync, not bank-sync.service).
+                            ''set(attributes["service.name"], body["SYSLOG_IDENTIFIER"]) where ${journaldGuard} and body["SYSLOG_IDENTIFIER"] != nil''
+                            ''set(attributes["service.name"], body["_SYSTEMD_UNIT"]) where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                            ''replace_pattern(attributes["service.name"], "[.]service$", "") where ${journaldGuard} and body["_SYSTEMD_UNIT"] != nil''
+                            ''set(attributes["service.name"], body["CONTAINER_NAME"]) where ${journaldGuard} and body["CONTAINER_NAME"] != nil''
                           ]
                           ++ severity "0" "SEVERITY_NUMBER_FATAL" "FATAL"
                           ++ severity "1" "SEVERITY_NUMBER_FATAL" "FATAL"
@@ -1442,6 +1452,12 @@ in
                         }
                       ];
                     };
+                  # Moves the per-record service.name set by transform/journald onto the
+                  # resource, one ResourceLogs per value. OTLP logs carry no such record
+                  # attribute and pass through untouched.
+                  groupbyattrs = {
+                    keys = [ "service.name" ];
+                  };
                   memory_limiter = {
                     check_interval = "1s";
                     limit_mib = 768;
@@ -1606,6 +1622,7 @@ in
                       processors = [
                         "memory_limiter"
                         "transform/journald"
+                        "groupbyattrs"
                         "batch"
                       ];
                       exporters = [ "clickhouselogsexporter" ];
