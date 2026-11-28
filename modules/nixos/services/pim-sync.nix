@@ -15,17 +15,24 @@
 # pattern), onFailure Discord routing, and the integration-registry +
 # catalog entries (headless: subdomain/port null, vHost.layer "none").
 #
-# DEPLOYMENT STATE (2026-11-04): flip-ready DISABLED (enable = false in
-# configuration.nix). Upstream has NO idle no-op: discoverAccounts ERRORS
-# on an empty tokensDir (cmd/pim-sync/sync.go:359), so enabling without
-# secrets = failed oneshot every 5min + OnFailure alert storm + the
+# DEPLOYMENT STATE (2026-11-27): ENABLED in tree, DRY-RUN only
+# (enable = true, live = false in configuration.nix). The Google-side
+# sops keys are still PLACEHOLDER, so the unit carries an ExecCondition
+# gate (secretGate below): while any material is a placeholder the unit
+# is SKIPPED (systemd "condition failed" — inactive, no failure state,
+# no OnFailure), which is what makes the unconditional enable safe.
+# Upstream has NO idle no-op: discoverAccounts ERRORS on an empty
+# tokensDir (cmd/pim-sync/sync.go:359), so a gate-less enable would fail
+# every 5min, ride OnFailure into an alert storm, and trip the
 # failed-unit exit-4 deploy trap (dmarc-monitor class).
 #
 # sops wiring landed 2026-11-10 as the flip scaffold (audible-sync
 # precedent): platforms/nixos/secrets/pim-sync.yaml + the guarded
-# declarations hold PLACEHOLDER values, so sops-key-audit passes while the
-# enable=false posture stays inert. The unit's config-check ExecStartPre
-# fails loudly with the go-live checklist while any placeholder remains.
+# declarations. REAL today: the Stalwart DAV pair (2026-11-18) and the
+# dashboard bearer token (2026-11-27); the OAuth client JSON + the four
+# consent tokens are the owner's console/browser steps
+# (docs/services/pim-sync.md). The config-check ExecStartPre still fails
+# loudly on malformed material — it only runs once the gate passes.
 # Wire-up: DAV env via sops template, OAuth client JSON via secretFile,
 # token seeds via per-secret paths (tokenSeedDir = /var/lib/pim-sync-seed;
 # upstream seeds into writable state only-into-empty-slots, then owns the
@@ -126,6 +133,44 @@
           fi
         '';
       };
+
+      # Secret gate (2026-11-27) — the reason enable=true is safe while
+      # the Google-side keys are still PLACEHOLDER. systemd ExecCondition
+      # semantics are the skip channel: exit 0 = run, 1-254 = unit
+      # SKIPPED (inactive, no failure state, OnFailure does NOT fire),
+      # 255+ = real failure. So a placeholder SKIPS quietly (the 5min
+      # timer keeps proving the sops paths render) while a MISSING
+      # rendered file FAILS — a sops-nix render defect must never be
+      # mistaken for "waiting for the owner". The shape check stays in
+      # configCheck (ExecStartPre), which only runs once this passes.
+      secretGate = pkgs.writeShellApplication {
+        name = "pim-sync-secret-gate";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+        text = ''
+          set -euo pipefail
+          files=(
+            ${config.sops.secrets.pim_sync_oauth_client_secret.path}
+            ${config.sops.templates."pim-sync-dav-env".path}
+            ${config.sops.secrets.pim_sync_token_personal.path}
+            ${config.sops.secrets.pim_sync_token_work.path}
+            ${config.sops.secrets.pim_sync_token_personal_calendar.path}
+            ${config.sops.secrets.pim_sync_token_work_calendar.path}
+          )
+          for f in "''${files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "pim-sync: sops material MISSING: $f (render defect, not an owner gate)" >&2
+              exit 255
+            fi
+            if grep -q PLACEHOLDER "$f"; then
+              echo "pim-sync: owner material pending ($f is PLACEHOLDER) — skipping this run"
+              exit 1
+            fi
+          done
+        '';
+      };
     in
     {
       imports = [
@@ -193,7 +238,20 @@
           # routing (upstream sets the start-limit bounds itself).
           systemd.services.pim-sync = {
             inherit onFailure;
-            serviceConfig.ExecStartPre = [ (lib.getExe configCheck) ];
+            serviceConfig = {
+              # Order matters: the ExecCondition gate runs FIRST (skip
+              # while placeholders remain), the shape check only after it.
+              ExecCondition = [ (lib.getExe secretGate) ];
+              ExecStartPre = [ (lib.getExe configCheck) ];
+              # Dry-run cap aborts (exit 3) are INFORMATIONAL: the guard
+              # stops before any write and the run's whole value is its
+              # projected-change report. The flag default is 50 and a
+              # first projection against a fresh book exceeds it by
+              # design, so without this the dry-run window would alert
+              # every 5 minutes. Live keeps exit 3 a FAILURE (a cap abort
+              # there means writes were refused).
+              SuccessExitStatus = lib.mkIf (!cfg.live) [ 3 ];
+            };
           };
 
           # The ui unit is the upstream module's; this layer ONLY adds the

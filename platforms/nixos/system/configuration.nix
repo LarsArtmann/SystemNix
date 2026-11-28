@@ -1051,23 +1051,24 @@ in
       audiblesync.enable = true;
       # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (oneshot
       # + 5min jittered timer; Stalwart single truth, Google a sync edge).
-      # DORMANT until the owner gates complete (docs/services/pim-sync.md):
-      # (1) GCP OAuth client, publishing status "In production" (testing
-      # tokens die after 7 days — InboxClean lesson; console-only, the
-      # Desktop client has no gcloud API), (2) DONE agent-side
-      # 2026-11-18: bot.pim-sync@larsartmann.cloud provisioned on the pbx
-      # + app password in sops (CardDAV auth verified live), (3)
-      # per-account browser consent tokens, (4) flip pim-sync.enable +
-      # deploy (dry-run timer first, journal review, then live=true +
-      # maxChanges cap).
-      # enable = false DELIBERATE: upstream has NO idle no-op — an enabled
-      # unit without token files fails every 5min (discoverAccounts errors
-      # on an empty tokensDir, cmd/pim-sync/sync.go:359) → OnFailure alert
-      # storm + failed-unit exit-4 deploy trap (dmarc-monitor class).
+      # ENABLED 2026-11-27, DRY-RUN ONLY; the remaining owner gates are the
+      # Google side (docs/services/pim-sync.md): (1) GCP OAuth client,
+      # publishing status "In production" (testing tokens die after 7 days
+      # — InboxClean lesson; console-only, the Desktop client has no gcloud
+      # API), (2) per-account browser consent tokens (4 clicks). DONE
+      # agent-side: the pbx DAV account + app password (2026-11-18) and
+      # the dashboard bearer token (2026-11-27).
+      # enable = true is SAFE while those keys are still PLACEHOLDER
+      # because the wrapper adds an ExecCondition secret gate: the unit is
+      # SKIPPED (inactive, no failure, no OnFailure) until every material
+      # is real, so the 5min timer cannot become an alert storm or trip the
+      # failed-unit exit-4 deploy trap (dmarc-monitor class). live = false:
+      # dry-run until the owner reviews the first reports and says GO.
       # Wrapper: modules/nixos/services/pim-sync.nix pre-wires the package
-      # pin, onFailure, registry + catalog entries. Plan:
+      # pin, gate, onFailure, registry + catalog entries. Plan:
       # docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md
-      pim-sync.enable = false;
+      pim-sync.enable = true;
+      pim-sync.live = false;
       # Dashboard fleet rows (2026-11-19 plan B3; owner ruling 2026-11-18
       # fleet-ON): NetBird bind + sops-owned bearer token, so the flip
       # exposes the dashboard over the mesh with auth REQUIRED by the

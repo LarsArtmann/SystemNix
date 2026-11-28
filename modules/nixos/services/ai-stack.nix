@@ -18,7 +18,7 @@ _: {
       rocmEnv = rocm.env;
 
       # ============================================================================
-      # IMPORTANT: Do NOT add overrideAttrs with -DGGML_HIP_MMQ_MFMA=ON here.
+      # IMPORTANT: Do NOT add overrideAttrs with -DGGML_HIP_MFMA=ON here.
       # It is a NO-OP on RDNA 3.5 (gfx1150 / Strix Halo) and only changes the
       # store hash, defeating binary caching for a ~30 min source build every time.
       #
@@ -35,8 +35,11 @@ _: {
       # on EVERY nixpkgs bump because the changed derivation hash never matches
       # cache.nixos.org. Removed 2026-08-02 after verifying the flag has zero
       # effect on this hardware.
+      #
+      # Single-sourced in lib/rocm.nix (2026-11-28) so the llama-chat iGPU unit
+      # and this system package are the same derivation by construction.
       # ============================================================================
-      llama-cpp-rocwmma = pkgs.llama-cpp.override { rocmSupport = true; };
+      llama-cpp-rocwmma = rocm.llamaCppHip;
 
       cfg = config.services.ai-stack;
     in

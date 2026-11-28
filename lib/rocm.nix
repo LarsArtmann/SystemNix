@@ -24,6 +24,14 @@ in
 
   makeLdLibraryPath = lib: lib.makeLibraryPath runtimeLibs;
 
+  # llama.cpp with the HIP backend, built from the CALLER's nixpkgs. The same
+  # expression under the same pkgs is ONE derivation, so every consumer on
+  # the root nixpkgs (ai-stack's llama-server-rocm, the llama-chat unit)
+  # shares a single store path. No -DGGML_HIP_MMQ_MFMA override belongs
+  # here: it changes nothing on RDNA 3.5 and only defeats the binary cache
+  # (rationale in ai-stack.nix).
+  llamaCppHip = pkgs.llama-cpp.override { rocmSupport = true; };
+
   # Device-cgroup fragment for ROCm services. Allows ONLY the GPU nodes.
   #
   # The XDNA NPU node (/dev/accel/accel0, root:video 0660) is group-reachable
