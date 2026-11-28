@@ -18,7 +18,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Logs Pipeline Stale",
+            "name": "Logs Stale",
             "description": "1 = journald ingestion stopped (>30 min). Healthy: 0"
           },
           "plugin": {
@@ -291,7 +291,7 @@
         "kind": "Panel",
         "spec": {
           "display": {
-            "name": "Logs Pipeline Age (s)",
+            "name": "Logs Age (s)",
             "description": "Seconds since the newest ingested log record"
           },
           "plugin": {

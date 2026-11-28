@@ -904,19 +904,19 @@
                     };
                   }
                 ) "spec.variables is required";
-                # A tile two columns wide shows 22 characters of its title.
+                # A tile two columns wide shows 17 characters of its title.
                 narrowTileTitleFits = clean (
                   doc {
                     p = (chart "percent") // {
-                      display.name = "abcdefghijklmnopqrstuv";
+                      display.name = "abcdefghijklmnopq";
                     };
                   } [ (item 0 0 2 4 "p") ]
                 );
                 narrowTileTitleCut = flagged (doc {
                   p = (chart "percent") // {
-                    display.name = "abcdefghijklmnopqrstuvwx";
+                    display.name = "abcdefghijklmnopqrs";
                   };
-                } [ (item 0 0 2 4 "p") ]) "the header cuts it with an ellipsis past 22";
+                } [ (item 0 0 2 4 "p") ]) "the header cuts it with an ellipsis past 17";
                 wideTileTitleLong = clean (
                   doc {
                     p = (chart "percent") // {

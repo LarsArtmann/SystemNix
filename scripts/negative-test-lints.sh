@@ -482,7 +482,7 @@ run_case signozdash pie-composite-promql signoz-query-lint fail "composite sub-q
   'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.panels[] | select(.spec.plugin.kind == "signoz/PieChartPanel") | .spec.queries[0].spec.plugin) = {"kind":"signoz/CompositeQuery","spec":{"queries":[{"type":"promql","spec":{"name":"A","query":"up"}}]}}'
 run_case signozdash dangling-reference signoz-query-lint fail "references unknown panel 'nope'" \
   'jq:modules/nixos/services/dashboards/ai-meter.json:(.spec.layouts[3].spec.items[0].content["$ref"]) = "#/spec/panels/nope"'
-# The Avg Duration tile is removed from its row; its panel is never rendered.
+# The Avg Gate Wait tile is removed from its row; its panel is never rendered.
 run_case signozdash orphan-panel signoz-query-lint fail "is placed in no layout" \
   'jq:modules/nixos/services/dashboards/ai-meter.json:del(.spec.layouts[3].spec.items[1])'
 run_case signozdash missing-server-defaults signoz-query-lint fail 're-PUTs the dashboard on every deploy' \
@@ -491,13 +491,14 @@ run_case signozdash missing-server-defaults signoz-query-lint fail 're-PUTs the 
 # is replaced by a constant false, and its own leg goes red.
 run_case signozdash selftest-overlap-rule-dropped signoz-dashboard-lint-selftest fail 'leg secondSectionOverlap is false' \
   'sed:lib/signoz-dashboard-lint.nix:s/(rectanglesOverlap (elemAt sound i).item (elemAt sound j).item)/false/'
-# A tile two columns wide cuts its title past 22 characters (measured in a
-# headless render, 2026-11-26); the four tiles of gcp.json had been cut since
+# A tile two columns wide cuts its title past 17 characters at a 1280 px
+# viewport (measured in headless renders, 2026-11-26 at 1500 px and
+# 2026-11-28 at 1280 px); the four tiles of gcp.json had been cut since
 # September. The Failures / min tile is renamed past the limit.
-run_case signozdash tile-title-cut signoz-query-lint fail 'the header cuts it with an ellipsis past 22' \
+run_case signozdash tile-title-cut signoz-query-lint fail 'the header cuts it with an ellipsis past 17' \
   'sed:modules/nixos/services/dashboards/ai-meter.json:s/"name": "Failures \/ min"/"name": "Failures per minute today"/'
 run_case signozdash selftest-tile-title-rule-dropped signoz-dashboard-lint-selftest fail 'leg narrowTileTitleCut is false' \
-  'sed:lib/signoz-dashboard-lint.nix:s/maxNarrowTileTitle = 22;/maxNarrowTileTitle = 400;/'
+  'sed:lib/signoz-dashboard-lint.nix:s/maxNarrowTileTitle = 17;/maxNarrowTileTitle = 400;/'
 # The post-deploy dashboard drift verdict must stay able to fail: a comparison
 # blind to what the API serves, or to a dashboard it does not serve at all,
 # is the green it exists to disprove (the hand-edited ai-meter dashboard of

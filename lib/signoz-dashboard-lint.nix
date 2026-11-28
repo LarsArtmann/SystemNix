@@ -62,8 +62,13 @@ let
   # viewport and cuts the rest with an ellipsis (headless render 2026-11-26:
   # 22 fit, 23 and more were cut; a panel's info icon takes its share). The
   # cut always lands on the end: the window or the unit the title names.
+  # The limit holds the narrowest viewport the dashboards are read in, 1280 px
+  # (the ai-meter viewer's iframe is the whole window; headless render
+  # 2026-11-28): there 21 and more are cut, 18 fit only with narrow letters
+  # ("Unauthorized (24h)" lost 2 px on the live dashboard) and 17 fit. Wide
+  # letters (W, M, m) overflow earlier at any count, so measure a new title.
   narrowTileWidth = 2;
-  maxNarrowTileTitle = 22;
+  maxNarrowTileTitle = 17;
   refPrefix = "#/spec/panels/";
 
   # ── units ──────────────────────────────────────────────────────────────────
