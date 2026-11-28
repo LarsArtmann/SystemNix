@@ -58,18 +58,6 @@
         ;
       domain = config.networking.domain;
 
-      # monitor365's helper module references its clipboard options without
-      # declaring them from 407824512 up to its fix (monitor365 D1), so every
-      # eval that imports it dies with "attribute 'enableClipboard' missing"
-      # (SystemNix toplevel evals and deploys since the 08:01 lock wave).
-      # Those revs get the declarations below; the block retires by itself as
-      # soon as the locked module declares the option itself. Delete it after
-      # the first float onto the fixed upstream.
-      helperModule = inputs.monitor365 + "/nix/graphical-helper-module.nix";
-      helperDeclaresClipboard =
-        builtins.pathExists helperModule
-        && lib.hasInfix "enableClipboard = lib.mkEnableOption" (builtins.readFile helperModule);
-
       # Agent event buffer lives on the mirrored HDD pool (subvol reserved at
       # the 2026-08-16 pool bring-up, populated 2026-08-18 by
       # data-to-pool-migration.service) instead of the NVMe /data partition.
@@ -438,20 +426,6 @@
         inputs.monitor365.nixosModules.monitor365-server
         inputs.monitor365.nixosModules.monitor365-graphical-helper
       ];
-
-      options.services.monitor365-graphical-helper = lib.optionalAttrs (!helperDeclaresClipboard) {
-        enableClipboard = lib.mkEnableOption "clipboard collection in the graphical helper";
-        clipboardIntervalSeconds = lib.mkOption {
-          type = lib.types.ints.positive;
-          default = 2;
-          description = "Seconds between clipboard polls.";
-        };
-        clipboardCaptureContent = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether clipboard events carry the copied text itself.";
-        };
-      };
 
       config = lib.mkMerge [
         # ── Unified agent defaults ────────────────────────────────

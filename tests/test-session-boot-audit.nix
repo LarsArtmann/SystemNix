@@ -65,6 +65,20 @@ let
     '';
   };
 
+  # One directive line carrying TWO tokens: lib.split interleaves the
+  # separator as an empty list, and a `t != ""` token filter keeps it, so
+  # the audit crashed on the first such unit instead of firing (every
+  # evo-x2 eval broken, 2026-11-28).
+  multiTokenTextUnit = {
+    systemd.user.units."evil-multi.service".text = ''
+      [Unit]
+      Wants=network.target graphical-session.target
+
+      [Install]
+      WantedBy=default.target
+    '';
+  };
+
   cases = [
     {
       name = "historical-bug-not-caught";
@@ -85,6 +99,10 @@ let
     {
       name = "raw-text-unit-not-caught";
       pass = (failing (evalAssertions [ rawTextUnit ])) != [ ];
+    }
+    {
+      name = "multi-token-directive-line-not-caught";
+      pass = (failing (evalAssertions [ multiTokenTextUnit ])) != [ ];
     }
   ];
 
