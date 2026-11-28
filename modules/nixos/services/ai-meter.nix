@@ -259,7 +259,7 @@
         }
       ];
 
-      proxyConfig = builtins.toJSON {
+      proxyConfig = builtins.toJSON ({
         listen = "127.0.0.1:${toString cfg.port}";
         metrics_listen = "127.0.0.1:${toString cfg.metricsPort}";
         ledger_path = "${stateDir}/usage.jsonl";
@@ -289,7 +289,7 @@
         # spans stop landing).
         otlp_endpoint = "http://127.0.0.1:${toString ports.signoz-otlp-http}";
         deployment_environment = "production";
-      } // quotaSource;
+      } // quotaSource);
 
       clientList = lib.mapAttrsToList (name: client: {
         inherit name;
