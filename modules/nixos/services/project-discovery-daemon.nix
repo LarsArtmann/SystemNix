@@ -107,7 +107,7 @@
               # evidence, never by hand.
               (
                 inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                  vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
+                  vendorHash = "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
                 }
               );
           # Discovery runs git inside the search-path repos and reads
@@ -128,7 +128,7 @@
           admin = {
             package = lib.mkDefault (
               inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin.overrideAttrs {
-                vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
+                vendorHash = "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
               }
             );
             port = lib.mkDefault ports.project-discovery-admin;

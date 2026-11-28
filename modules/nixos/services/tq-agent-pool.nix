@@ -87,7 +87,7 @@ _: {
             # FOD was silently REUSED in cache, the 2026-10-28 trap). Same
             # value as the lars-packages `tq` surface — update BOTH together.
             # Drop when upstream bakes HqHkPDVQ.
-            vendorHash = "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=";
+            vendorHash = "sha256-fneDiCvxr6uv9Dx67rkgQsFVhi9LpqOqRQprqr4rAIs=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden

@@ -672,7 +672,7 @@ lib.filterAttrs (_: v: v != null) {
   # Drop when upstream bakes the got hash.
   project-discovery-daemon =
     flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
+      "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
@@ -742,7 +742,7 @@ lib.filterAttrs (_: v: v != null) {
   # IPEw5b8P (first-hand keep-going, toplevel-build3.log).
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-IPEw5b8Pl6Kpinxatp6H3c4N+Up/IepgQL0wIyiTeLw=";
+      "sha256-X0q2DlindNThmOeZBK9xWoSq0UznmjEgKSzecfPRPw8=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -846,6 +846,6 @@ lib.filterAttrs (_: v: v != null) {
     # was silently REUSED in cache, the 2026-10-28 trap). Same value as the
     # modules/nixos/services/tq-agent-pool.nix surface — update BOTH
     # together. Drop when upstream bakes HqHkPDVQ.
-    vendorHash = "sha256-HqHkPDVQzCzGP5GlaRy4wpumugJTLb2nEZt9UQlEIH0=";
+    vendorHash = "sha256-fneDiCvxr6uv9Dx67rkgQsFVhi9LpqOqRQprqr4rAIs=";
   });
 }
