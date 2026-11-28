@@ -509,7 +509,7 @@
             ) expectedEnvironment;
             wrapper =
               if missingOrWrong == { } then
-                unit.serviceConfig.ExecStart
+                unit.script
               else
                 throw "signoz-retention.service environment does not match services.signoz: ${builtins.toJSON missingOrWrong}";
           in
