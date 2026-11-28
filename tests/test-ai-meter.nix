@@ -151,6 +151,7 @@ let
         (
           { lib, config, ... }:
           {
+            config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
             options.sops.placeholder = lib.mkOption {
               type = lib.types.attrsOf lib.types.str;
               default = { };
@@ -164,7 +165,6 @@ let
               type = lib.types.nullOr lib.types.str;
               default = null;
             };
-            config.sops.placeholder = lib.mapAttrs (_: _: "") config.sops.secrets;
           }
         )
         {
