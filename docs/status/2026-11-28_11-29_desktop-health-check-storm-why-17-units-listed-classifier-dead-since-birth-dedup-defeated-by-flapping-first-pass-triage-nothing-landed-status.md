@@ -238,7 +238,7 @@ Candidates to mint after verification, one per line in both `TODO_LIST.md` and t
 Byte-identical copy of `~/.cache/healthcheck/new/body.sh` as written at 10:40, so the work survives a cache reap. To land it: paste into `text = ''…''` of the `healthCheck` `writeShellApplication` in `platforms/nixos/system/scheduled-tasks.nix`, escape the one shell expansion that Nix would read (`${trigger%% *}` becomes `''${trigger%% *}`), and replace the literal pattern `session-* | user@*` in `sweep_failed` with the Nix interpolation `${ignorePattern}`. Header lines `export DISPLAY=:0` through the final `fi` inclusive; `check_service caddy || true` … `sweep_failed user "user, failed"` replace the four generated blocks between the function definitions and the report.
 
 <details>
-<summary>Draft body (bash, 250 lines)</summary>
+<summary>Draft body (bash, 257 lines)</summary>
 
 ```bash
 export DISPLAY=:0
