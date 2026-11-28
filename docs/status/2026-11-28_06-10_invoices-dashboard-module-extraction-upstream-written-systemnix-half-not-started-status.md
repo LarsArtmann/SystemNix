@@ -3,6 +3,8 @@
 **Date:** 2026-11-28 06:10 CET · **Author:** Crush session (zai glm-5.4) · **Trigger:** owner stop-and-report
 **Ask that opened the session:** "`modules/nixos/services/invoices-dashboard.nix` seems like BS. Make sure we use the UI from `~/projects/invoices` and keep as much code as possible over there."
 
+**CLOSED 2026-11-28 (HARVESTED):** both halves landed the same day — upstream half on `origin/master` `35b25c66`, SystemNix half (thin layer, shim dropped, lock `8706f1fc → 35b25c66`, Gatus title "Invoice Ledger") in the shared tree; record: `CHANGELOG.md` 2026-11-28 "invoices-dashboard is integrated through the upstream `nixosModules.default` output". Open follow-ups harvested into `docs/todo/upstream.md` (timesheets extraction; first-backup proof).
+
 ---
 
 ## Scope line (what this report verified, and what it did not)
