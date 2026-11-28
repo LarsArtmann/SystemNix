@@ -235,9 +235,8 @@ let
       thresholdMode = key spanGaps "fillOnlyBelow" == true;
       duration = text (key spanGaps "fillLessThan");
     in
-    optional (
-      kind == "signoz/TimeSeriesPanel" && !(thresholdMode && duration != "")
-    ) "${where}: line chart spans every gap; chartAppearance.spanGaps needs fillOnlyBelow true and a fillLessThan duration (\"15m\"), or the chart draws a straight line across every interval without data";
+    optional (kind == "signoz/TimeSeriesPanel" && !(thresholdMode && duration != ""))
+      "${where}: line chart spans every gap; chartAppearance.spanGaps needs fillOnlyBelow true and a fillLessThan duration (\"15m\"), or the chart draws a straight line across every interval without data";
 
   # ── one panel ──────────────────────────────────────────────────────────────
   validatePanel =
@@ -286,7 +285,9 @@ let
               type: "${where}: composite sub-query type '${type}' is not supported by panel kind '${kind}'"
             ) unsupportedSubs;
       in
-      queryFindings ++ unitFindings where kind (sub spec "plugin") ++ gapFindings where kind (sub spec "plugin");
+      queryFindings
+      ++ unitFindings where kind (sub spec "plugin")
+      ++ gapFindings where kind (sub spec "plugin");
 
   # ── layouts ────────────────────────────────────────────────────────────────
   rectanglesOverlap =

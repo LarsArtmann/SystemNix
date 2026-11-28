@@ -1633,24 +1633,25 @@
         # behind a green provisioner. Runs the SAME
         # scripts/lib/signoz-dashboards-drift.sh the checker sources (never a
         # drifted copy), plus a wiring pin.
-        post-deploy-signoz-dashboards-selftest = pkgs.runCommand "post-deploy-signoz-dashboards-selftest"
-          {
-            nativeBuildInputs = with pkgs; [
-              bash
-              coreutils
-              gnugrep
-              jq
-            ];
-          }
-          ''
-            scratch=$(mktemp -d)
-            mkdir -p "$scratch/scripts/lib"
-            cp ${root}/scripts/post-deploy-check.sh "$scratch/scripts/post-deploy-check.sh"
-            cp ${root}/scripts/lib/signoz-dashboards-drift.sh "$scratch/scripts/lib/signoz-dashboards-drift.sh"
-            cp ${root}/scripts/test-post-deploy-signoz-dashboards.sh "$scratch/scripts/test-post-deploy-signoz-dashboards.sh"
-            bash "$scratch/scripts/test-post-deploy-signoz-dashboards.sh" "$scratch/scripts/post-deploy-check.sh"
-            touch $out
-          '';
+        post-deploy-signoz-dashboards-selftest =
+          pkgs.runCommand "post-deploy-signoz-dashboards-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+                jq
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts/lib"
+              cp ${root}/scripts/post-deploy-check.sh "$scratch/scripts/post-deploy-check.sh"
+              cp ${root}/scripts/lib/signoz-dashboards-drift.sh "$scratch/scripts/lib/signoz-dashboards-drift.sh"
+              cp ${root}/scripts/test-post-deploy-signoz-dashboards.sh "$scratch/scripts/test-post-deploy-signoz-dashboards.sh"
+              bash "$scratch/scripts/test-post-deploy-signoz-dashboards.sh" "$scratch/scripts/post-deploy-check.sh"
+              touch $out
+            '';
 
         # The offsite-borg §13/§16 smoke verdicts BLOCK the go-live
         # deploy (and FAIL the post-deploy smoke); the blocks only fire

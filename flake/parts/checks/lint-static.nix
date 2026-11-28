@@ -945,24 +945,18 @@
                 # A line chart joins whatever two points it has: the chart default
                 # spans every gap and drew an hour-long ramp where a model had no
                 # calls (ai-meter, 2026-11-28). Threshold mode breaks the line.
-                lineChartSpansEveryGap = flagged (
-                  doc {
-                    p = chartWithGaps "percent" false "";
-                  } [ (item 0 0 12 4 "p") ]
-                ) "line chart spans every gap";
-                lineChartThresholdWithoutDuration = flagged (
-                  doc {
-                    p = chartWithGaps "percent" true "";
-                  } [ (item 0 0 12 4 "p") ]
-                ) "line chart spans every gap";
-                lineChartWithoutAppearance = flagged (
-                  doc {
-                    p = panel {
-                      kind = "signoz/TimeSeriesPanel";
-                      spec.formatting.unit = "percent";
-                    } [ promqlQuery ];
-                  } [ (item 0 0 12 4 "p") ]
-                ) "line chart spans every gap";
+                lineChartSpansEveryGap = flagged (doc {
+                  p = chartWithGaps "percent" false "";
+                } [ (item 0 0 12 4 "p") ]) "line chart spans every gap";
+                lineChartThresholdWithoutDuration = flagged (doc {
+                  p = chartWithGaps "percent" true "";
+                } [ (item 0 0 12 4 "p") ]) "line chart spans every gap";
+                lineChartWithoutAppearance = flagged (doc {
+                  p = panel {
+                    kind = "signoz/TimeSeriesPanel";
+                    spec.formatting.unit = "percent";
+                  } [ promqlQuery ];
+                } [ (item 0 0 12 4 "p") ]) "line chart spans every gap";
                 numberTileHasNoGapToBreak = clean (
                   doc {
                     p = panel {
