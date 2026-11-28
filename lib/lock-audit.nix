@@ -62,6 +62,8 @@
       "vendorHash validated against upstream's own locked nixpkgs (baked upstream; first-hand probe 2026-11-21 at 8573311 built green from the remote ref); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
     "go-hotspot.nixpkgs" =
       "vendorHash validated against upstream's own locked nixpkgs (refreshed upstream 2026-11-26 after the baked value went stale; first-hand `nix build .` green through its own pins); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
+    "reports-system.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (baked upstream; the 04:33 reports-system integration report specifies the no-follow; first-hand eval probe at input declaration 2026-11-28); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
   },
 }:
 let

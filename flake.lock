@@ -10158,6 +10158,22 @@
     },
     "nixpkgs_17": {
       "locked": {
+        "lastModified": 1795234589,
+        "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "2786a2a72088ecf32aea5b3ec52099e6a7cff78f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_18": {
+      "locked": {
         "lastModified": 1795085501,
         "narHash": "sha256-S5keGWzaKpuXo9MNoIC2FfTIuTyTnx8P4NhYJMEsTLI=",
         "owner": "NixOS",
@@ -10172,7 +10188,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_18": {
+    "nixpkgs_19": {
       "locked": {
         "lastModified": 1792773339,
         "narHash": "sha256-rZLrzrC6i+jnTAlvPZHogKDulY7WWDEv9hJeHieO7Zw=",
@@ -10188,7 +10204,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_19": {
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1795234589,
         "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
@@ -10204,7 +10220,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
+    "nixpkgs_20": {
       "locked": {
         "lastModified": 1795234589,
         "narHash": "sha256-f/VVvxf5RsQgWVhUtefoca5ktVg0DA2bnkMOcmSnozo=",
@@ -11227,6 +11243,31 @@
         "url": "ssh://git@github.com/LarsArtmann/quotaboard"
       }
     },
+    "reports-system": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-nix-helpers": [
+          "go-nix-helpers"
+        ],
+        "nixpkgs": "nixpkgs_17"
+      },
+      "locked": {
+        "lastModified": 1795846446,
+        "narHash": "sha256-C2h1darU+qy3SKnx4DQKF+6ZJ6g2bctYHn4jy7eKmj4=",
+        "ref": "refs/heads/master",
+        "rev": "ce4abf1cd9ad537df65390a31d458c685d75989b",
+        "revCount": 506,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/testing"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/testing"
+      }
+    },
     "root": {
       "inputs": {
         "ai-meter": "ai-meter",
@@ -11319,6 +11360,7 @@
         "pyproject-nix": "pyproject-nix_2",
         "qmd": "qmd",
         "quotaboard": "quotaboard",
+        "reports-system": "reports-system",
         "rust-overlay": "rust-overlay_2",
         "samber-linter": "samber-linter_2",
         "signoz-collector-src": "signoz-collector-src",
@@ -11800,7 +11842,7 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "nixpkgs": "nixpkgs_17",
+        "nixpkgs": "nixpkgs_18",
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -12170,7 +12212,7 @@
     "templ_6": {
       "inputs": {
         "gitignore": "gitignore_5",
-        "nixpkgs": "nixpkgs_18",
+        "nixpkgs": "nixpkgs_19",
         "version": "version_5"
       },
       "locked": {
@@ -12193,7 +12235,7 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "nixpkgs": "nixpkgs_19",
+        "nixpkgs": "nixpkgs_20",
         "treefmt-nix": [
           "treefmt-nix"
         ]

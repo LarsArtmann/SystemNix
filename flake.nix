@@ -743,6 +743,19 @@
     cvagent = {
       url = "git+ssh://git@github.com/LarsArtmann/Code-To-CV-Agent?ref=refs/heads/master";
     };
+    # reports-system — report management web app (repo "testing", product
+    # reports-system). Portable unit lives upstream (nixosModules
+    # .reports-system, VM-tested via checks.module-vm); the SystemNix module
+    # layers only port/secret/backup/registry concerns. Upstream declares
+    # exactly flake-parts + go-nix-helpers + nixpkgs; the two infra inputs
+    # follow root, nixpkgs deliberately NOT followed (bank-sync/qmd
+    # vendorHash doctrine: upstream's go-modules vendorHash is baked against
+    # its own locked nixpkgs — deliberate row in lib/lock-audit.nix).
+    reports-system = {
+      url = "git+ssh://git@github.com/LarsArtmann/testing?ref=refs/heads/master";
+      inputs.flake-parts.follows = "flake-parts";
+      inputs.go-nix-helpers.follows = "go-nix-helpers";
+    };
     go-nix-helpers = {
       # Was INTERIM `git+file:///home/lars/worktrees/go-nix-helpers-vnfix` -
       # the /vN pseudo-version normalization fix (8c87f26) now lives on the
