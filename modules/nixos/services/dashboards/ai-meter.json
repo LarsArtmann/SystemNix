@@ -2721,7 +2721,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "disabled": false,
-                    "legend": "{{model}} {{code}}",
+                    "legend": "{{code}} {{model}}",
                     "name": "A",
                     "query": "sum by (model, code) (rate(ai_meter_requests_total[5m])) * 60",
                     "stats": false,
