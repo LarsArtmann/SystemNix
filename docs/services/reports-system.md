@@ -82,6 +82,6 @@ Restore procedure:
 
 ## Related
 
-- [timesheets.md](./timesheets.md) and [invoices-dashboard.md](./invoices-dashboard.md) — sibling loopback-behind-protected-vHost services with the same nightly sqlite dump shape
-- [../agents/integration-registry.md](../agents/integration-registry.md) — how the vHost/checks/tile/backup fan-out works
+- [timesheets.md](./timesheets.md) and [invoices-dashboard.md](./invoices-dashboard.md): sibling loopback-behind-protected-vHost services with the same nightly sqlite dump shape
+- [../agents/integration-registry.md](../agents/integration-registry.md): how the vHost/checks/tile/backup fan-out works
 - [../agents/data-ownership.md](../agents/data-ownership.md) — the two-store truth classification
