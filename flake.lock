@@ -1040,11 +1040,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795801656,
-        "narHash": "sha256-O5cgKp5EGOEz7jg0L4WP04KSyotctIn1CPsu0SQljsg=",
+        "lastModified": 1795829370,
+        "narHash": "sha256-9rAVre/hNccEDgSVWPKIyloWKrx/d+HaB6iAfFNHZJI=",
         "ref": "refs/heads/master",
-        "rev": "2a975d87bb4c807b7cd111cef9820d224dda823e",
-        "revCount": 555,
+        "rev": "5bc505364e3cd828a2c799a16cff6b7eeafa1505",
+        "revCount": 557,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       },
@@ -1189,11 +1189,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795803719,
-        "narHash": "sha256-HPmjZRvxk9i8LjFWSBcogqf/KjXFspObP2bnPBCC2lM=",
+        "lastModified": 1795831798,
+        "narHash": "sha256-iUpjnw7qIV+IlMoLoheWjoCkw3BGHO9FMRLyXdmjHlM=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "c876cc7e8934d1fc0345c7e6b0c6a8e6e18edc79",
+        "rev": "9a3aebf70b18c4e40a77fda5507891a150dd4402",
         "type": "github"
       },
       "original": {
@@ -7966,11 +7966,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795801821,
-        "narHash": "sha256-V+LNhX4TTCI8I1Gan31ty9xrzgFtDlO+gCNAA2PyN9I=",
+        "lastModified": 1795832079,
+        "narHash": "sha256-+U237rRKRk5njAc2LCHEBMu4l2IVbae/nN+8RLhDdIs=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "bd360ad5a636bba4915c9bb5b7df828edaf8a8ca",
+        "rev": "c9f67c882ab18b2325927a08caaadd0c54da3199",
         "type": "github"
       },
       "original": {
@@ -8694,11 +8694,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1795826391,
-        "narHash": "sha256-MREkyAfto2o7t3KQmiVranVofxBrNPeIPIGuonNgz4g=",
+        "lastModified": 1795832750,
+        "narHash": "sha256-Ob6/MxecpxwrDFiD5VINGk9ytmFSAi5xkLJBbyD/Uk8=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "46244b8cc8b30a64b6f213f944d6348bcf4b6bc2",
+        "rev": "b3d4c48fcb719874acc47d5a75b90385093561e4",
         "type": "github"
       },
       "original": {
@@ -10373,11 +10373,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1795828960,
-        "narHash": "sha256-V2PlWbuhp0jROYFaFXdGGvC0xTps11O80FbjdS8R4VY=",
+        "lastModified": 1795831464,
+        "narHash": "sha256-eni2RMUQjiPejLRJENK2slkYcZICEeSEe1053BAXnpk=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "babb6e3350ca2476906c77e71f0b81cdbe7c81c7",
+        "rev": "21871ddda42fc40ca2d4d08cef7a6fbaa3c50d03",
         "type": "github"
       },
       "original": {
@@ -10681,11 +10681,11 @@
         "project-discovery-sdk": "project-discovery-sdk_12"
       },
       "locked": {
-        "lastModified": 1795801615,
-        "narHash": "sha256-LSEYuumDXdu/epr/4Lz09hKVBBPtos3Z2fTnNA9nXic=",
+        "lastModified": 1795832095,
+        "narHash": "sha256-oUlWCi3V8TpV9miOZzubbCT1RSyp0+ciPta/D1MKDEo=",
         "ref": "refs/heads/master",
-        "rev": "6b97c2cb1c4b45562341962bf52deeece70fcf2f",
-        "revCount": 351,
+        "rev": "5cbc99c2d14c6e6e349c0927b0067515c677512c",
+        "revCount": 357,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },

@@ -12,7 +12,7 @@
 
 - **The repaired alert rules live.** They are in the tree only; the running generation (1032) still carries the old failure-rate rule, and it is firing as I write (§b 2).
 - **The provisioner's skip line for the v4 file and for the retitled gcp and telemetry-coverage files.** Only v3's skip was observed (06:48:31). Those three dashboards are live because I updated them by hand.
-- ~~**The `failed` column of "Models: Last 24 Hours" is inaccurate** (§d 3). It is live now and shows too many failures for every model.~~ Corrected 2026-11-28, as `28936f5c5` shows (the 16-54 report, §d 1): the column is right within a few percent once its window is aligned to the builder's steps; the 363 against 226 reading compared two windows that were not the same, and the column stayed.
+- ~~**The `failed` column of "Models: Last 24 Hours" is inaccurate** (§d 3). It is live now and shows too many failures for every model.~~ done — corrected 2026-11-28, as `28936f5c5` shows (the 16-54 report, §d 1): the column is right within a few percent once its window is aligned to the builder's steps; the 363 against 226 reading compared two windows that were not the same, and the column stayed.
 - **`nix flake check --no-build --all-systems` covers the tree as it stood at 18:46:48** (HEAD `982934d0a`, rc=0 at 19:30:25). After that I changed one line of `lib/signoz-dashboard-lint.nix` (`inherit promql;`), one comment, and ran the formatter; the four affected checks were rebuilt green afterwards, the full check was not re-run.
 - **The negative suite ran 18:33 to 18:46**, on the tree before that formatter pass.
 - `buildflow` only as `-s test-race`. No Go file changed. No golangci-lint.
@@ -29,7 +29,7 @@
 4. **The dashboard never refreshed every minute.** `refreshInterval` is stored and not applied by SigNoz's UI. Measured: no re-query in four minutes.
 5. **SigNoz's native AI observability shows ai-meter's data** (Overview and Explorer, opened in a real browser for the first time).
 6. **A new lint rule found five cut tile titles** in gcp and telemetry-coverage; fixed and live. gcp's four tiles now fill the row.
-7. **Open, in order:** the next deploy (carries v4, the two alert rules, the sibling's 270 s budget), ~~the inaccurate `failed` column~~ corrected 2026-11-28, as `28936f5c5` shows (the 16-54 report, §d 1): the column is right within a few percent, the annotations and TODO rows this report lists.
+7. **Open, in order:** the next deploy (carries v4, the two alert rules, the sibling's 270 s budget), ~~the inaccurate `failed` column~~ done — corrected 2026-11-28, as `28936f5c5` shows (the 16-54 report, §d 1): the column is right within a few percent, the annotations and TODO rows this report lists.
 
 ## a) FULLY DONE
 
