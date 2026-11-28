@@ -23,6 +23,9 @@ let
 
   llamaChatModule =
     (import ../modules/nixos/services/llama-chat.nix { }).flake.nixosModules.llama-chat;
+  # Co-import: the module declares a services.integration entry.
+  integrationModule =
+    (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
 
   primaryUserStub = {
     options.users.primaryUser = lib.mkOption { type = lib.types.str; };
@@ -35,8 +38,24 @@ let
       inherit system;
       modules = [
         llamaChatModule
+        integrationModule
         primaryUserStub
-        { system.stateVersion = "26.11"; }
+        # psi-wait-gate lives in the SystemNix overlay, not in plain nixpkgs:
+        # stub it so the unit's ExecStartPre renders without the overlay.
+        {
+          _module.args.pkgs = pkgs.extend (
+            _final: prev: {
+              psi-wait-gate = prev.runCommand "psi-wait-gate-stub" { } ''
+                mkdir -p $out/bin
+                touch $out/bin/psi-wait-gate
+              '';
+            }
+          );
+        }
+        {
+          system.stateVersion = "26.11";
+          services.llama-chat.enable = true;
+        }
         extra
       ];
     }).config;

@@ -132,7 +132,13 @@ _: {
         # llama.cpp #19482 ROCr spin — `--load-mode auto` already resolves
         # to none on iGPUs, but that resolution rides on HIP's integrated
         # flag, so it is spelled out here.
-        + lib.optionalString onIgpu " --gpu-layers ${cfg.gpuLayers} --load-mode none"
+        # --parallel 1: one inference slot. The 2026-11-25 request-time
+        # wedge on the pinned embeddings build spun in
+        # amdgpu_amdkfd_gpuvm_alloc_memory_of_gpu with four slots taken at
+        # once while /health stayed 200; serializing removes the
+        # concurrent-GPUVM-alloc path. Concurrent requests queue instead of
+        # interleaving — at iGPU speed a queued turn waits seconds.
+        + lib.optionalString onIgpu " --gpu-layers ${cfg.gpuLayers} --load-mode none --parallel 1"
         + " --jinja"
         # Single-quoted for systemd: the unit parser strips bare double
         # quotes and word-splits the JSON into separate argv entries

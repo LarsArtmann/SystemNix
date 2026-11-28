@@ -55,22 +55,22 @@
 
 ## b) PARTIALLY DONE
 
-1. **Live versus tree.** The live dashboard equals the tree's rendering, but only because this session PUT it by hand. `/run/current-system/etc/signoz/dashboards/ai-meter.json` has 13 panels. Durable after the next deploy, not before.
-2. **Gates after the port.** Done: `signoz-query-lint`, `signoz-dashboard-lint-selftest`, `ai-meter-spend-promql`, `ai-meter-vm`, both negative-test groups. Not done on the real tree: `nix flake check --no-build`, `buildflow -s test-race`, a standalone `deadnix`/`statix` on the new Nix file, `nix fmt -- --fail-on-change` on the three Markdown files and `CHANGELOG.md` (the four Nix files were formatted in the copy and ported after).
-3. **TODO bookkeeping.** Two rows ticked (uncommitted). Not done: the "Owner visual check: ai-meter.home.lan …" row still asks for a LAN check that this session did (and its queue and library titles already differed before this session); no `[watch]` row for the SigNoz-upgrade re-derivation yet; the 17-59 report's 15 follow-ups are not annotated.
-4. **caddy and gcp.** Fixed in the tree; live they still carry the old stored form until the deploy (then one PUT, then skip).
+1. ~~**Live versus tree.** The live dashboard equals the tree's rendering, but only because this session PUT it by hand. `/run/current-system/etc/signoz/dashboards/ai-meter.json` has 13 panels. Durable after the next deploy, not before.~~ done — durable since the deploys of 2026-11-26 and 2026-11-27 (v6 went live by hand on 2026-11-28 and is durable with the next deploy)
+2. ~~**Gates after the port.** Done: `signoz-query-lint`, `signoz-dashboard-lint-selftest`, `ai-meter-spend-promql`, `ai-meter-vm`, both negative-test groups. Not done on the real tree: `nix flake check --no-build`, `buildflow -s test-race`, a standalone `deadnix`/`statix` on the new Nix file, `nix fmt -- --fail-on-change` on the three Markdown files and `CHANGELOG.md` (the four Nix files were formatted in the copy and ported after).~~ done — gates green on the final tree on 2026-11-28 (the all-systems flake check, nix fmt, deadnix and statix); buildflow test-race was not run by the dashboard sessions
+3. ~~**TODO bookkeeping.** Two rows ticked (uncommitted). Not done: the "Owner visual check: ai-meter.home.lan …" row still asks for a LAN check that this session did (and its queue and library titles already differed before this session); no `[watch]` row for the SigNoz-upgrade re-derivation yet; the 17-59 report's 15 follow-ups are not annotated.~~ done at `7c28a543a`
+4. ~~**caddy and gcp.** Fixed in the tree; live they still carry the old stored form until the deploy (then one PUT, then skip).~~ done — caddy and gcp were PUT once and skipped from then on (2026-11-26 06:17 and 06:48)
 
 ## c) NOT STARTED
 
-1. Deploy, and with it the provisioner's "Unchanged: … skipping" for ai-meter, caddy and gcp on the run after the first.
-2. The three span-export alert rules' PromQL ("AI Trace Export Failing", "AI Trace Export Silent", "AI Traces Not Landing In SigNoz") against `/api/v5/query_range`.
-3. `nix flake check --no-build` on the real tree.
+1. ~~Deploy, and with it the provisioner's "Unchanged: … skipping" for ai-meter, caddy and gcp on the run after the first.~~ done — deployed on 2026-11-26: Updating in place at 06:17, Unchanged and skipping at 06:48
+2. ~~The three span-export alert rules' PromQL ("AI Trace Export Failing", "AI Trace Export Silent", "AI Traces Not Landing In SigNoz") against `/api/v5/query_range`.~~ done — (23-28 report)
+3. ~~`nix flake check --no-build` on the real tree.~~ done — the all-systems flake check is green on 2026-11-28 at 02:32
 4. `buildflow -s test-race`.
-5. `nix fmt -- --fail-on-change -- docs/services/ai-meter.md docs/agents/monitoring.md docs/DOMAIN_LANGUAGE.md CHANGELOG.md`.
-6. Standalone `deadnix` and `statix` on `lib/signoz-dashboard-lint.nix`.
-7. TODO: narrow the visual-check row to the off-LAN path on both surfaces, add the `[watch]` row, annotate the 17-59 report.
+5. ~~`nix fmt -- --fail-on-change -- docs/services/ai-meter.md docs/agents/monitoring.md docs/DOMAIN_LANGUAGE.md CHANGELOG.md`.~~ done — nix fmt on the touched files on 2026-11-28 (three files reformatted, 6f2dd16c7)
+6. ~~Standalone `deadnix` and `statix` on `lib/signoz-dashboard-lint.nix`.~~ done — deadnix and statix silent on the six Nix files on 2026-11-28
+7. ~~TODO: narrow the visual-check row to the off-LAN path on both surfaces, add the `[watch]` row, annotate the 17-59 report.~~ done at `7c28a543a`
 8. Scratch cleanup: `~/.cache/aimeter/r2/sandbox` (133 MB), `~/.cache/aimeter/r2/helium-profile` (252 MB), `/tmp/*.nix` and `/tmp/patch-*.py`.
-9. Optional, not started: the dashboard builder as Nix instead of a scratch Python script; a repo script for "verify live and render headless"; a pre-deploy round trip for dashboards; a 24-hour spend column per model (tables cannot run the priced queries); a traces link panel.
+9. Optional, not started: the dashboard builder as Nix instead of a scratch Python script; a repo script for "verify live and render headless"; a pre-deploy round trip for dashboards; a 24-hour spend column per model (tables cannot run the priced queries); a traces link panel. **→ routed to docs/todo/monitoring.md "The dashboard builder: Nix data in the repo, a Go generator, or hand edits under the lint", "Dashboard round trip as a repo command: render, API round trip, every panel query on the live engine, a kept copy, the PUT" and "A 24-hour spend per model on the ai-meter dashboard"; the traces link exists since 0779937ac (the notes panel links to the AI views)**
 
 ## d) WHAT WENT WRONG
 
@@ -100,42 +100,42 @@
 
 **In flight in this session, deliberately not harvested into the queue** (`TODO_LIST.md` and the domain libraries): items 1 to 9 are this session's own remaining steps on files it already changed. A `[ready]` row would hand the same files to a parallel session. They become rows only if the owner wants them done elsewhere.
 
-1. Owner decision (§g): deploy. Then read `journalctl -u signoz-provision` for "Updating in place" x3 and, on the following run, "Unchanged: systemnix-ai-meter — skipping" (also caddy, gcp).
-2. `nix flake check --no-build 2>&1 | tee ~/.cache/aimeter/r2/gates/fc.log` on the real tree.
-3. `nix fmt -- --fail-on-change -- docs/services/ai-meter.md docs/agents/monitoring.md docs/DOMAIN_LANGUAGE.md CHANGELOG.md TODO_LIST.md docs/todo/ai-stack.md docs/todo/pipeline.md`, then look at `git status` for unintended files.
+1. ~~Owner decision (§g): deploy. Then read `journalctl -u signoz-provision` for "Updating in place" x3 and, on the following run, "Unchanged: systemnix-ai-meter — skipping" (also caddy, gcp).~~ done — deployed on 2026-11-26: Updating in place at 06:17, Unchanged and skipping at 06:48
+2. ~~`nix flake check --no-build 2>&1 | tee ~/.cache/aimeter/r2/gates/fc.log` on the real tree.~~ done — the all-systems flake check is green on 2026-11-28 at 02:32
+3. ~~`nix fmt -- --fail-on-change -- docs/services/ai-meter.md docs/agents/monitoring.md docs/DOMAIN_LANGUAGE.md CHANGELOG.md TODO_LIST.md docs/todo/ai-stack.md docs/todo/pipeline.md`, then look at `git status` for unintended files.~~ done — nix fmt on the touched files on 2026-11-28 (6f2dd16c7)
 4. `buildflow -s test-race` at a quiet moment.
-5. Standalone `deadnix` and `statix` on `lib/signoz-dashboard-lint.nix` and the changed parts of `flake/parts/checks/lint-static.nix`.
-6. Run the three span-export rules' PromQL against `/api/v5/query_range` and record the values.
-7. TODO rows: retitle "Owner visual check: ai-meter.home.lan embedded dashboard renders (LAN + off-LAN forward-auth path)" to the off-LAN half on both surfaces (LAN verified 2026-11-26 01:59), add a `[watch]` row "after a SigNoz upgrade: re-derive `lib/signoz-unit-ids.txt` and re-normalize the dashboard files" to `docs/todo/monitoring.md`, annotate the 15 follow-ups of the 17-59 report.
-8. Tick "SigNoz provisioning idempotency" only after item 1 shows the skip.
+5. ~~Standalone `deadnix` and `statix` on `lib/signoz-dashboard-lint.nix` and the changed parts of `flake/parts/checks/lint-static.nix`.~~ done — deadnix and statix silent on the six Nix files on 2026-11-28
+6. ~~Run the three span-export rules' PromQL against `/api/v5/query_range` and record the values.~~ done — (23-28 report)
+7. ~~TODO rows: retitle "Owner visual check: ai-meter.home.lan embedded dashboard renders (LAN + off-LAN forward-auth path)" to the off-LAN half on both surfaces (LAN verified 2026-11-26 01:59), add a `[watch]` row "after a SigNoz upgrade: re-derive `lib/signoz-unit-ids.txt` and re-normalize the dashboard files" to `docs/todo/monitoring.md`, annotate the 15 follow-ups of the 17-59 report.~~ done at `7c28a543a`
+8. ~~Tick "SigNoz provisioning idempotency" only after item 1 shows the skip.~~ done at `7c28a543a`
 9. Clean the scratch (§c item 8).
-10. Second headless render after the deploy: dashboard page and viewer page.
-11. For the admission session (their T04.5): the dashboard reads 3,148 calls lost to admission in 24 h, about 43 % of gated outcomes are timeouts, average wait 19 to 22 s, allowance 6 of 8, 4 quota answers (01:41 to 01:59). Their call, not mine.
-12. Decide the refresh interval (§g).
+10. ~~Second headless render after the deploy: dashboard page and viewer page.~~ done — headless renders followed the deploys of 2026-11-26, 2026-11-27 and 2026-11-28 (dashboard page and viewer page)
+11. ~~For the admission session (their T04.5): the dashboard reads 3,148 calls lost to admission in 24 h, about 43 % of gated outcomes are timeouts, average wait 19 to 22 s, allowance 6 of 8, 4 quota answers (01:41 to 01:59). Their call, not mine.~~ **NOT-DO — the number was wrong (23-28 report, section d, item 1): the calls were sent back and sent again, nobody lost them.**
+12. ~~Decide the refresh interval (§g).~~ **NOT-DO — moot: refreshInterval is stored and not applied by the UI (measured on 2026-11-26).**
 13. Decide the commit policy (§g).
-14. Builder as Nix (§e item 1).
-15. Repo script for "verify every panel live and render the page headless" (§e item 3).
-16. Pre-deploy dashboard round trip (§e item 2).
-17. Post-deploy "provisioner skipped everything on re-run" line (§e item 5).
-18. 24-hour spend per model as a table column (needs a route other than the builder; a time series of the rolling 24 h per model is possible today with a fifth placeholder).
-19. A traces link panel or a note in the viewer header to SigNoz's AI views.
-20. `llama-embeddings` answers 502 for every `bge-m3` call of paperless (12,473 calls in 24 h, 0 % success on the table). Known and owner-gated ("Local-LLM decision row", 2026-11-24 21-07 report). The dashboard now shows it as a 100 % error rate.
-21. The `synthetic` upstream has no price row, so `syn:large:text` meters at $0 by doctrine. Owner decision if a reference price is wanted.
-22. SigNoz answers `501` on `/api/v4/licenses/active` once per page load (cloud license check in the OSS build). Cosmetic; nothing to do.
-23. The queue row "ai-meter follow-ups: gemini-via-proxy verification, hermes wiring, SigNoz dashboard" has no library twin, and its dashboard part is done. Fix both in one edit.
-24. The evaluation warning "integration subdomain(s) without catalog entries: ai-meter" (seen while building the VM check) belongs to the DNS catalog migration of another session. Tell that session.
-25. Add "a settled headless capture before the first PUT" to the dashboard section of the runbook (one sentence).
-26. `docs/agents/shell-devtools.md`: note that the Edit tool's "modified since last read" result is a refusal (a session trap worth a line).
-27. Re-run the full negative suite once in CI (the nightly workflow runs all groups; confirm `signozdash` appears in its log).
-28. After the deploy: confirm the "ai-meter dashboard" and "ai-meter viewer" gatus checks stay green.
+14. Builder as Nix (§e item 1). **→ routed to docs/todo/monitoring.md "The dashboard builder: Nix data in the repo, a Go generator, or hand edits under the lint"**
+15. Repo script for "verify every panel live and render the page headless" (§e item 3). **→ routed to docs/todo/monitoring.md "Dashboard round trip as a repo command: render, API round trip, every panel query on the live engine, a kept copy, the PUT"**
+16. Pre-deploy dashboard round trip (§e item 2). **→ routed to the same row, "Dashboard round trip as a repo command", in docs/todo/monitoring.md**
+17. ~~Post-deploy "provisioner skipped everything on re-run" line (§e item 5).~~ done at `497bad814`
+18. 24-hour spend per model as a table column (needs a route other than the builder; a time series of the rolling 24 h per model is possible today with a fifth placeholder). **→ routed to docs/todo/monitoring.md "A 24-hour spend per model on the ai-meter dashboard"**
+19. ~~A traces link panel or a note in the viewer header to SigNoz's AI views.~~ done at `0779937ac`
+20. `llama-embeddings` answers 502 for every `bge-m3` call of paperless (12,473 calls in 24 h, 0 % success on the table). Known and owner-gated ("Local-LLM decision row", 2026-11-24 21-07 report). The dashboard now shows it as a 100 % error rate. **→ answered by events: llama-embeddings serves again since the 2026-11-27 10:27 deploy (1,592 of 1,622 calls answered 200 in 15.2 hours); the keep-or-retire question → routed to docs/todo/ai-stack.md "llama-embeddings: keep, repair or retire the bge-m3 route"**
+21. The `synthetic` upstream has no price row, so `syn:large:text` meters at $0 by doctrine. Owner decision if a reference price is wanted. **→ routed to docs/todo/ai-stack.md "syn:large:text: a reference price or none"**
+22. ~~SigNoz answers `501` on `/api/v4/licenses/active` once per page load (cloud license check in the OSS build). Cosmetic; nothing to do.~~ **Won't implement — cosmetic, nothing to do (the cloud license check of the OSS build).**
+23. ~~The queue row "ai-meter follow-ups: gemini-via-proxy verification, hermes wiring, SigNoz dashboard" has no library twin, and its dashboard part is done. Fix both in one edit.~~ done (docs-health pass 2026-11-28)
+24. ~~The evaluation warning "integration subdomain(s) without catalog entries: ai-meter" (seen while building the VM check) belongs to the DNS catalog migration of another session. Tell that session.~~ done — answered by events: on 2026-11-28 the evaluation warning names paperless, ai-meter has its catalog entry
+25. ~~Add "a settled headless capture before the first PUT" to the dashboard section of the runbook (one sentence).~~ done — the runbook carries it ("Changing the dashboard", step 3)
+26. ~~`docs/agents/shell-devtools.md`: note that the Edit tool's "modified since last read" result is a refusal (a session trap worth a line).~~ done (docs-health pass 2026-11-28)
+27. Re-run the full negative suite once in CI (the nightly workflow runs all groups; confirm `signozdash` appears in its log). **→ routed to docs/todo/pipeline.md "Negative-test harness: INFRA class, abort on a failed pristine fetch, live doc-count mutations, --check-mutations": the nightly workflow is red on authentication, so no log names any group**
+28. ~~After the deploy: confirm the "ai-meter dashboard" and "ai-meter viewer" gatus checks stay green.~~ done — both gatus conditions read by hand on 2026-11-28 at 02:08 (the page answers 200 with the pinned id and relativeTime=3h, the dashboard API answers the slug); the verdict of gatus itself is behind authentication
 29. Look at the dashboard once on the owner's screen (font sizes, the 1-minute refresh feel, the Admission section wording).
-30. If the owner wants the dashboard in PapDashboard with a direct tile: it exists as the viewer tile already; nothing to do unless the owner wants the SigNoz page itself linked.
+30. ~~If the owner wants the dashboard in PapDashboard with a direct tile: it exists as the viewer tile already; nothing to do unless the owner wants the SigNoz page itself linked.~~ **NOT-DO — nothing to do, the viewer tile exists; NOT-DO unless the owner wants the SigNoz page linked.**
 
 ## g) QUESTIONS
 
-1. **Deploy.** The tree carries the new dashboard file, caddy, gcp and the validator; the live dashboard exists only as a hand-made update, and a `signoz` restart or reboot before the next deploy puts the old 13-panel dashboard back. May I deploy HEAD myself (`scripts/deploy-when-quiescent.sh --fire`), or is another session's deploy carrying it? The tree also holds other sessions' in-flight edits, and the host was under IO pressure all night (PSI some 48 to 56 % at 05:39).
+1. ~~**Deploy.** The tree carries the new dashboard file, caddy, gcp and the validator; the live dashboard exists only as a hand-made update, and a `signoz` restart or reboot before the next deploy puts the old 13-panel dashboard back. May I deploy HEAD myself (`scripts/deploy-when-quiescent.sh --fire`), or is another session's deploy carrying it? The tree also holds other sessions' in-flight edits, and the host was under IO pressure all night (PSI some 48 to 56 % at 05:39).~~ done — answered by events: the deploys of 2026-11-26 and 2026-11-27 carried it
 2. **Commits.** May I commit this session's own files with descriptive messages? Today everything rides heuristic daemon commits, including `fa1c23d1c` with the dry-run title.
-3. **Refresh.** Keep the one-minute refresh (about 50 ClickHouse queries per minute while the dashboard is open; every other dashboard uses five minutes), or go to five minutes?
+3. ~~**Refresh.** Keep the one-minute refresh (about 50 ClickHouse queries per minute while the dashboard is open; every other dashboard uses five minutes), or go to five minutes?~~ **NOT-DO — moot: refreshInterval is stored and not applied (measured on 2026-11-26).**
 
 ---
 
