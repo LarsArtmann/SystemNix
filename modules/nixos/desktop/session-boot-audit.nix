@@ -34,7 +34,11 @@
         "graphical-session.target"
       ];
 
-      splitTokens = value: builtins.filter (t: t != "") (lib.split "[[:space:]]+" value);
+      # lib.split interleaves the separators as empty lists; keep the
+      # non-empty strings only (a `t != ""` filter let the `[ ]` elements
+      # through and crashed the audit on the first multi-token value).
+      splitTokens =
+        value: builtins.filter (t: builtins.isString t && t != "") (lib.split "[[:space:]]+" value);
 
       valueToList =
         v:
