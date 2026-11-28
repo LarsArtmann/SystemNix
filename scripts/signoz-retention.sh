@@ -112,9 +112,14 @@ converge_v1() {
   else
     echo "signoz-retention: $signal: re-issuing settings/ttl for $days days (repair)"
   fi
-  # HTTP 409 = "TTL is already running": a ttl_setting row is still pending.
   http POST "$path&duration=${want_h}h"
-  http_ok || die "$signal: POST $path failed (HTTP $HTTP_STATUS): $(body_head)"
+  if ! http_ok && [ "$HTTP_STATUS" != 409 ]; then
+    die "$signal: POST $path failed (HTTP $HTTP_STATUS): $(body_head)"
+  fi
+  if ! http_ok; then
+    # HTTP 409 = "TTL is already running": a ttl_setting row is still pending.
+    echo "signoz-retention: $signal: another TTL change is running (HTTP 409) — waiting for it"
+  fi
   deadline=$((SECONDS + 120))
   while :; do
     sleep "$POLL_SECONDS"
