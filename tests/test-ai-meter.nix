@@ -144,7 +144,7 @@ let
   # (scripts/negative-test-lints.sh, group aimeter) build.
   renderModule =
     settings:
-    ((pkgs.nixos {
+    (pkgs.nixos {
       imports = [
         aiMeterModule
         catalogModule
