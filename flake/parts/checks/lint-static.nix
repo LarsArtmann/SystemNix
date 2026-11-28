@@ -727,7 +727,7 @@
                 panel {
                   kind = "signoz/TimeSeriesPanel";
                   spec.formatting.unit = unit;
-                  spec.plugin.spec.chartAppearance.spanGaps = {
+                  spec.chartAppearance.spanGaps = {
                     fillOnlyBelow = true;
                     fillLessThan = "15m";
                   };
@@ -934,7 +934,7 @@
                 lineChartSpansEveryGap = flagged (
                   doc {
                     p = (chart "percent") // {
-                      spec.plugin.spec.chartAppearance.spanGaps = {
+                      spec.chartAppearance.spanGaps = {
                         fillOnlyBelow = false;
                         fillLessThan = "";
                       };
@@ -944,7 +944,7 @@
                 lineChartThresholdWithoutDuration = flagged (
                   doc {
                     p = (chart "percent") // {
-                      spec.plugin.spec.chartAppearance.spanGaps = {
+                      spec.chartAppearance.spanGaps = {
                         fillOnlyBelow = true;
                         fillLessThan = "";
                       };
