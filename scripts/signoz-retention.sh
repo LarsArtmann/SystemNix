@@ -163,7 +163,7 @@ converge_logs() {
   else
     echo "signoz-retention: logs: re-issuing settings/ttl for $days days (repair)"
   fi
-  http POST "$path" "$(jq -n --argjson days "$days" '{type: "logs", defaultTTLDays: $days, ttlConditions: []}')"
+  http POST "$path" "$(jq -nc --argjson days "$days" '{type: "logs", defaultTTLDays: $days, ttlConditions: []}')"
   http_ok || die "logs: POST $path failed (HTTP $HTTP_STATUS): $(body_head)"
   echo "signoz-retention: logs: $days days applied"
 }

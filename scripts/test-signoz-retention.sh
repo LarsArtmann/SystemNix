@@ -226,7 +226,11 @@ seed_store() {
   echo 15 >"$state/api-logs-days"
 }
 
-# run_retention STATE [VAR=value ...] → script output; exit code in RUN_RC
+# run_retention STATE [VAR=value ...] — runs the script with the output in
+# $OUT_FILE and the exit code in RUN_RC (both in the caller's shell: a command
+# substitution would strand the code in a subshell and every "non-zero"
+# assertion would pass vacuously).
+OUT_FILE="$BASE/last-output.txt"
 RUN_RC=0
 run_retention() {
   local state=$1
@@ -236,8 +240,10 @@ run_retention() {
     DB_METRICS=signoz_metrics DB_TRACES=signoz_traces DB_LOGS=signoz_logs \
     RETENTION_DAYS_METRICS=90 RETENTION_DAYS_TRACES=90 RETENTION_DAYS_LOGS=90 \
     SIGNOZ_RETENTION_POLL_SECONDS=0 SIGNOZ_RETENTION_WAIT_SECONDS=0 \
-    PATH="$STUB_DIR/bin:$PATH" "$@" bash "$SCRIPT" 2>&1 || RUN_RC=$?
+    PATH="$STUB_DIR/bin:$PATH" "$@" bash "$SCRIPT" >"$OUT_FILE" 2>&1 || RUN_RC=$?
 }
+# out — the output of the last run
+out() { cat "$OUT_FILE"; }
 
 # store_exec STATE SNIPPET — edit a fake store through the lib helpers
 store_exec() {
@@ -263,7 +269,8 @@ at_90_days() { grep -qE 'toIntervalSecond\(7776000\)|toIntervalDay\(90\)'; }
 # ── Leg 1: drift → API calls for the three signals, ALTERs on the 12
 #    tables the API does not know, every table at 90 days afterwards ──────
 S1=$(new_state)
-OUT=$(run_retention "$S1")
+run_retention "$S1"
+OUT=$(out)
 [ "$RUN_RC" -eq 0 ] && pass "leg1 exit 0" || fail "leg1 exit $RUN_RC: $OUT"
 echo "$OUT" | grep -q '^signoz-retention: converged — metrics 90d, traces 90d, logs 90d$' &&
   pass "leg1 converged line" || fail "leg1 converged line missing: $OUT"
@@ -313,7 +320,8 @@ ttl_of "$S1" signoz_traces durationSort | grep -qF 'toIntervalSecond(1296000)' &
 S2="$S1"
 : >"$S2/queries.log"
 : >"$S2/curl.log"
-OUT=$(run_retention "$S2")
+run_retention "$S2"
+OUT=$(out)
 [ "$RUN_RC" -eq 0 ] && pass "leg2 exit 0" || fail "leg2 exit $RUN_RC: $OUT"
 [ "$(post_count "$S2")" -eq 0 ] && pass "leg2 no POST when in sync" || fail "leg2 POSTed while in sync: $(grep '^POST' "$S2/curl.log")"
 [ "$(alter_count "$S2")" -eq 0 ] && pass "leg2 no ALTER when in sync" || fail "leg2 ALTERed while in sync"
@@ -323,9 +331,10 @@ echo "$OUT" | grep -q 'metrics: SigNoz already reports 90 days' &&
 # ── Leg 3: the API reports the target but one of its tables is stale →
 #    the repair pass re-issues the API calls and heals it ────────────────
 S3=$(new_state)
-run_retention "$S3" >/dev/null
+run_retention "$S3"
 store_exec "$S3" 'stub_set_seconds signoz_metrics time_series_v4_1week 5184000'
-OUT=$(run_retention "$S3")
+run_retention "$S3"
+OUT=$(out)
 [ "$RUN_RC" -eq 0 ] && pass "leg3 exit 0 after repair" || fail "leg3 exit $RUN_RC: $OUT"
 [ "$(post_count "$S3")" -eq 6 ] && pass "leg3 repair re-issued the three API calls" || fail "leg3 repair POST count $(post_count "$S3")"
 ttl_of "$S3" signoz_metrics time_series_v4_1week | grep -qF 'toIntervalSecond(7776000)' &&
@@ -337,14 +346,16 @@ echo "$OUT" | grep -q '1 API-managed table(s) off target — re-issuing' ||
 #    table that lost its TTL, a bad day count ────────────────────────────
 S4=$(new_state)
 touch "$S4/post-fails"
-OUT=$(run_retention "$S4")
+run_retention "$S4"
+OUT=$(out)
 [ "$RUN_RC" -ne 0 ] && pass "leg4a non-zero on failing POST" || fail "leg4a exit 0 despite failing POST: $OUT"
 echo "$OUT" | grep -q 'metrics: POST /api/v1/settings/ttl failed (HTTP 500)' ||
   fail "leg4a POST failure not named: $OUT"
 
 S4B=$(new_state)
 store_exec "$S4B" 'stub_set_seconds signoz_metrics exp_hist 5184000; echo "signoz_metrics.exp_hist" >"$STUB_STATE/stub-stuck"'
-OUT=$(run_retention "$S4B")
+run_retention "$S4B"
+OUT=$(out)
 [ "$RUN_RC" -ne 0 ] && pass "leg4b non-zero when a table stays stale after repair" || fail "leg4b exit 0 with a stale table: $OUT"
 echo "$OUT" | grep -q "signoz_metrics.exp_hist: TTL is .*toIntervalSecond(5184000).*want 90 days" ||
   fail "leg4b stale table not named with its live TTL: $OUT"
@@ -353,13 +364,15 @@ echo "$OUT" | grep -q 'still off target after the repair pass' ||
 
 S4C=$(new_state)
 store_exec "$S4C" 'stub_put_engine signoz_metrics metadata "MergeTree ORDER BY metric_name SETTINGS index_granularity = 8192"'
-OUT=$(run_retention "$S4C")
+run_retention "$S4C"
+OUT=$(out)
 [ "$RUN_RC" -ne 0 ] && pass "leg4c non-zero when a table lost its TTL clause" || fail "leg4c exit 0 with a TTL-less table: $OUT"
 echo "$OUT" | grep -q 'signoz_metrics.metadata: cannot read a table-level TTL to move' ||
   fail "leg4c TTL-less table not named: $OUT"
 
 S4D=$(new_state)
-OUT=$(run_retention "$S4D" RETENTION_DAYS_LOGS=0)
+run_retention "$S4D" RETENTION_DAYS_LOGS=0
+OUT=$(out)
 [ "$RUN_RC" -ne 0 ] && pass "leg4d non-zero on a non-positive day count" || fail "leg4d exit 0 on 0 days: $OUT"
 if [ ! -e "$S4D/curl.log" ] && [ ! -e "$S4D/queries.log" ]; then
   pass "leg4d validates before touching the store or the API"
@@ -371,7 +384,8 @@ fi
 #    failure, when that change lands on the target ───────────────────────
 S5=$(new_state)
 touch "$S5/post-409-once"
-OUT=$(run_retention "$S5")
+run_retention "$S5"
+OUT=$(out)
 [ "$RUN_RC" -eq 0 ] && pass "leg5 exit 0 after a 409" || fail "leg5 exit $RUN_RC: $OUT"
 echo "$OUT" | grep -q 'another TTL change is running (HTTP 409) — waiting' ||
   fail "leg5 409 wait line missing: $OUT"
@@ -379,7 +393,8 @@ echo "$OUT" | grep -q 'another TTL change is running (HTTP 409) — waiting' ||
 # ── Leg 6: an absent table is skipped, never a failure ──────────────────
 S6=$(new_state)
 awk -F'\t' '!($2 == "top_level_operations")' "$S6/tables.tsv" >"$S6/tables.new" && mv "$S6/tables.new" "$S6/tables.tsv"
-OUT=$(run_retention "$S6")
+run_retention "$S6"
+OUT=$(out)
 [ "$RUN_RC" -eq 0 ] && pass "leg6 exit 0 with an absent table" || fail "leg6 exit $RUN_RC: $OUT"
 echo "$OUT" | grep -q 'signoz_traces.top_level_operations: absent — skipped' ||
   fail "leg6 absent table not reported as skipped: $OUT"
