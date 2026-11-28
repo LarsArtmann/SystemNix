@@ -108,7 +108,16 @@
       # shim pattern only when a future lock bump hits a fresh FOD mismatch
       # upstream has not baked yet (class comment: lib/lars-packages.nix
       # flakePkgShim).
-      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server;
+      # RE-ADDED 2026-11-28 (pre-deploy §11, ~/.cache/systemnix-fix/s11-run2.log
+      # at tree 3f9d2145e): papdashboard@b45ce49d (upstream tip, lock == tip)
+      # bakes spec KolwF06r but the FOD builds got fFrbr8eh under the current
+      # root graph. Drop when upstream bakes fFrbr8eh or re-measures on a
+      # graph-matching lock.
+      papdashboardPkg =
+        inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
+          {
+            vendorHash = "sha256-fFrbr8eh5oxb1VQhgObtfu6hupp+AK9Nc0bkI6vsBOY=";
+          };
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";
