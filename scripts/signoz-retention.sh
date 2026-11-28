@@ -206,12 +206,12 @@ ttl_clause() {
 at_seconds() { [[ "$1" == *"toIntervalSecond($2)"* ]]; }
 at_days() { [[ "$1" == *"toIntervalDay($2)"* ]]; }
 
-INTERVAL_RE='^(.+)[[:space:]]+[+]toInterval[A-Za-z]+[(][0-9]+[)]([[:space:]]+DELETE)?$'
+INTERVAL_RE='^[A-Za-z]+[(][0-9]+[)]([ ]DELETE)?$'
 
 # set_ttl_seconds DB TABLE SECONDS — moves only the interval of the existing
 # table-level TTL; the time expression is read from the live table.
 set_ttl_seconds() {
-  local db=$1 table=$2 seconds=$3 clause time_expr rc
+  local db=$1 table=$2 seconds=$3 clause time_expr interval rc
   if clause=$(ttl_clause "$db" "$table"); then
     :
   else
@@ -226,10 +226,12 @@ set_ttl_seconds() {
     echo "signoz-retention:   $db.$table: already at $((seconds / 86400)) days"
     return 0
   fi
-  if ! [[ "$clause" =~ $INTERVAL_RE ]]; then
+  # ClickHouse renders the clause as "<time expression> + toInterval<Unit>(<n>)".
+  interval=${clause##* + toInterval}
+  time_expr=${clause% + toInterval*}
+  if [ -z "$time_expr" ] || ! [[ "$interval" =~ $INTERVAL_RE ]]; then
     die "$db.$table: TTL clause '$clause' is not a fixed interval — move it by hand"
   fi
-  time_expr=${BASH_REMATCH[1]}
   echo "signoz-retention:   $db.$table: '$clause' → $((seconds / 86400)) days"
   ch --query "ALTER TABLE $db.$table MODIFY TTL $time_expr + toIntervalSecond($seconds) DELETE SETTINGS materialize_ttl_after_modify = 0" ||
     die "$db.$table: ALTER TABLE ... MODIFY TTL failed"
