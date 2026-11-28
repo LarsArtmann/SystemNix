@@ -144,14 +144,13 @@ let
   # (scripts/negative-test-lints.sh, group aimeter) build.
   renderModule =
     settings:
-    (pkgs.lib.evalModules {
-      modules = [
+    ((pkgs.nixos {
+      imports = [
         aiMeterModule
         catalogModule
-        # The VM node imports this too (and the ai-meter module's registry
-        # entry is guarded on the option's existence): without it the guard
-        # sees no services.integration and emits an EMPTY mkIf'd definition,
-        # which evalModules' check rejects ("option does not exist").
+        # The ai-meter module's registry entry is guarded on the option's
+        # existence; without this module the guard emits an EMPTY mkIf'd
+        # definition and the eval rejects it ("option does not exist").
         integrationModule
         ../tests/mock-sops.nix
         (
@@ -162,15 +161,9 @@ let
               type = lib.types.attrsOf lib.types.str;
               default = { };
             };
-            options.assertions = lib.mkOption {
-              type = lib.types.listOf lib.types.attrs;
-              default = [ ];
-            };
+            # SystemNix's option — stock NixOS does not carry it, and the
+            # ai-meter module reads it for its service-user default.
             options.users.primaryUser = lib.mkOption { type = lib.types.str; };
-            options.networking.domain = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-            };
           }
         )
         {
