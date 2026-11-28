@@ -26,6 +26,25 @@
 #        --model /data/ai/models/gguf/bge-m3.gguf [--minutes 10] \
 #        [--port 18848] [--force]
 #
+# Modes (2026-11-28, the llama-chat iGPU flip):
+#   --mode embedding     default; the candidate runs with --embedding (the
+#                        llama-rag unit shape)
+#   --mode chat          no --embedding; the candidate runs as a chat server —
+#                        pass the unit's own flags through repeated
+#                        --server-arg (e.g. --server-arg=-ngl --server-arg=all)
+#   --warmup-max SECONDS load grace before the verdict window (default 180;
+#                        a 23 GB cold page-in needs far more, so chat soaks
+#                        raise it)
+#   --memory-max BYTES   MemoryMax= on the transient unit (e.g. 40G)
+#   --as-user NAME       run as NAME:users + supplementary group render, the
+#                        exact identity of the deployed ROCm units (default
+#                        root: the historical harness shape)
+#
+# The chat model's request-time wedge class (2026-11-25: /health 200 while no
+# token is ever processed) is INVISIBLE to this harness — it judges the LOAD
+# only. After a chat PASS, probe a real completion against --port yourself
+# before trusting the build.
+#
 # The llama-rag module must be DISABLED while soaking (default guard; the
 # candidate binds a scratch port, but a concurrent real server on the GPU
 # invalidates the CPU baseline). Run INSIDE a quiet-IO window: the guard
@@ -44,6 +63,11 @@ PORT=18848
 ALIAS="soak-candidate"
 FORCE=0
 CTX=8192
+MODE="embedding"
+WARMUP_MAX=180
+MEMORY_MAX=""
+AS_USER=""
+SERVER_ARGS=()
 
 usage() {
   awk 'NR == 1 { next } !/^#/ { exit } { sub(/^# ?/, ""); print }' "$0"
@@ -76,6 +100,26 @@ while [ $# -gt 0 ]; do
     FORCE=1
     shift
     ;;
+  --mode)
+    MODE="${2:-}"
+    shift 2
+    ;;
+  --server-arg)
+    SERVER_ARGS+=("${2:-}")
+    shift 2
+    ;;
+  --warmup-max)
+    WARMUP_MAX="${2:-}"
+    shift 2
+    ;;
+  --memory-max)
+    MEMORY_MAX="${2:-}"
+    shift 2
+    ;;
+  --as-user)
+    AS_USER="${2:-}"
+    shift 2
+    ;;
   -h | --help)
     usage
     ;;
@@ -100,6 +144,19 @@ done
   echo -e "${RED}FAIL:${NC} --model is not readable: $MODEL" >&2
   exit 2
 }
+case "$MODE" in
+  embedding | chat) ;;
+  *)
+    echo -e "${RED}FAIL:${NC} --mode must be 'embedding' or 'chat', got '$MODE'" >&2
+    exit 2
+    ;;
+esac
+case "$WARMUP_MAX" in
+  '' | *[!0-9]*)
+    echo -e "${RED}FAIL:${NC} --warmup-max must be a whole number of seconds, got '$WARMUP_MAX'" >&2
+    exit 2
+    ;;
+esac
 
 # Guard: llama-rag must be config-disabled while soaking. systemd-run under
 # root sees the real unit state; INACTIVE covers both "disabled" and
@@ -134,10 +191,21 @@ ENV_ARGS=(
 )
 
 SCOPE="llama-rag-soak-$$"
+RUN_ARGS=()
+if [ -n "$MEMORY_MAX" ]; then
+  RUN_ARGS+=(--property="MemoryMax=$MEMORY_MAX")
+fi
+if [ -n "$AS_USER" ]; then
+  RUN_ARGS+=(--uid="$AS_USER" --gid=users --property=SupplementaryGroups=render)
+fi
+MODE_ARGS=()
+if [ "$MODE" = "embedding" ]; then
+  MODE_ARGS+=(--embedding)
+fi
 systemd-run --unit="$SCOPE" --collect \
-  "${DEVICE_ARGS[@]}" "${ENV_ARGS[@]}" \
-  "$SERVER" --embedding -m "$MODEL" --alias "$ALIAS" \
-  --host 127.0.0.1 --port "$PORT" --ctx-size "$CTX" \
+  "${DEVICE_ARGS[@]}" "${ENV_ARGS[@]}" "${RUN_ARGS[@]}" \
+  "$SERVER" "${MODE_ARGS[@]}" -m "$MODEL" --alias "$ALIAS" \
+  --host 127.0.0.1 --port "$PORT" --ctx-size "$CTX" "${SERVER_ARGS[@]}" \
   >/dev/null
 
 cleanup() {
@@ -145,17 +213,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Resolve the server's main PID from the scope cgroup. The `|| true` is
-# load-bearing under `set -euo pipefail`: a not-yet-listed process makes
-# grep exit 1, and an unguarded pipeline here would kill the script
-# silently BEFORE the retry loop below ever runs (first real execution
-# 2026-10-04: instant silent exit at t=0). Empty output is the normal
-# race the loop is designed to absorb.
+# Resolve the server's main PID from the unit. systemd-run starts a simple
+# service whose only process IS the main PID, so systemd owns the answer.
+# (Until 2026-11-28 this grepped `systemd-cgls` output for the full binary
+# path — systemd-cgls truncates long command lines to `llama-…`, so the grep
+# never matched and every real run exited "process never appeared" at t=30s,
+# 30s after a load that had already succeeded. The harness had never reached
+# a verdict.) Empty output is the race the retry loop absorbs: 0 = not yet
+# forked.
 get_pid() {
-  systemd-cgls -u "$SCOPE.service" --no-pager 2>/dev/null |
-    grep -oE '[0-9]+ .*/'"$(basename "$SERVER")" |
-    head -1 |
-    awk '{print $1}' || true
+  local pid
+  pid="$(systemctl show "$SCOPE.service" -p MainPID --value 2>/dev/null)" || return 0
+  case "$pid" in
+    '' | 0 | *[!0-9]*) return 0 ;;
+  esac
+  printf '%s\n' "$pid"
 }
 
 # CPU-time sample: utime+stime (ticks) from /proc/<pid>/stat field 14+15.
@@ -180,7 +252,6 @@ echo "soak: pid=$PID"
 
 # Warmup grace: model load + HSA init legitimately burn CPU. The verdict
 # window starts after the load settles OR after WARMUP_MAX, whichever first.
-WARMUP_MAX=180
 HEALTH_OK=""
 start_epoch="$(date +%s)"
 while [ "$(($(date +%s) - start_epoch))" -lt "$WARMUP_MAX" ]; do
