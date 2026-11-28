@@ -69,7 +69,7 @@
 5. ~~`nix fmt -- --fail-on-change -- docs/services/ai-meter.md docs/agents/monitoring.md docs/DOMAIN_LANGUAGE.md CHANGELOG.md`.~~ done — nix fmt on the touched files on 2026-11-28 (three files reformatted, 6f2dd16c7)
 6. ~~Standalone `deadnix` and `statix` on `lib/signoz-dashboard-lint.nix`.~~ done — deadnix and statix silent on the six Nix files on 2026-11-28
 7. ~~TODO: narrow the visual-check row to the off-LAN path on both surfaces, add the `[watch]` row, annotate the 17-59 report.~~ done at `7c28a543a`
-8. Scratch cleanup: `~/.cache/aimeter/r2/sandbox` (133 MB), `~/.cache/aimeter/r2/helium-profile` (252 MB), `/tmp/*.nix` and `/tmp/patch-*.py`.
+8. ~~Scratch cleanup: `~/.cache/aimeter/r2/sandbox` (133 MB), `~/.cache/aimeter/r2/helium-profile` (252 MB), `/tmp/*.nix` and `/tmp/patch-*.py`.~~ done — sandbox (134 MB) and helium-profile (264 MB) went to the trash on 2026-11-28 after the last headless render; /tmp held no .nix or patch-*.py file
 9. Optional, not started: the dashboard builder as Nix instead of a scratch Python script; a repo script for "verify live and render headless"; a pre-deploy round trip for dashboards; a 24-hour spend column per model (tables cannot run the priced queries); a traces link panel. **→ routed to docs/todo/monitoring.md "The dashboard builder: Nix data in the repo, a Go generator, or hand edits under the lint", "Dashboard round trip as a repo command: render, API round trip, every panel query on the live engine, a kept copy, the PUT" and "A 24-hour spend per model on the ai-meter dashboard"; the traces link exists since 0779937ac (the notes panel links to the AI views)**
 
 ## d) WHAT WENT WRONG
@@ -108,7 +108,7 @@
 6. ~~Run the three span-export rules' PromQL against `/api/v5/query_range` and record the values.~~ done — (23-28 report)
 7. ~~TODO rows: retitle "Owner visual check: ai-meter.home.lan embedded dashboard renders (LAN + off-LAN forward-auth path)" to the off-LAN half on both surfaces (LAN verified 2026-11-26 01:59), add a `[watch]` row "after a SigNoz upgrade: re-derive `lib/signoz-unit-ids.txt` and re-normalize the dashboard files" to `docs/todo/monitoring.md`, annotate the 15 follow-ups of the 17-59 report.~~ done at `7c28a543a`
 8. ~~Tick "SigNoz provisioning idempotency" only after item 1 shows the skip.~~ done at `7c28a543a`
-9. Clean the scratch (§c item 8).
+9. ~~Clean the scratch (§c item 8).~~ done — on 2026-11-28 (section c, item 8)
 10. ~~Second headless render after the deploy: dashboard page and viewer page.~~ done — headless renders followed the deploys of 2026-11-26, 2026-11-27 and 2026-11-28 (dashboard page and viewer page)
 11. ~~For the admission session (their T04.5): the dashboard reads 3,148 calls lost to admission in 24 h, about 43 % of gated outcomes are timeouts, average wait 19 to 22 s, allowance 6 of 8, 4 quota answers (01:41 to 01:59). Their call, not mine.~~ **NOT-DO — the number was wrong (23-28 report, section d, item 1): the calls were sent back and sent again, nobody lost them.**
 12. ~~Decide the refresh interval (§g).~~ **NOT-DO — moot: refreshInterval is stored and not applied by the UI (measured on 2026-11-26).**

@@ -43,7 +43,7 @@ let
         # psi-wait-gate lives in the SystemNix overlay, not in plain nixpkgs:
         # stub it so the unit's ExecStartPre renders without the overlay.
         {
-          _module.args.pkgs = pkgs.extend (
+          nixpkgs.pkgs = pkgs.extend (
             _final: prev: {
               psi-wait-gate = prev.runCommand "psi-wait-gate-stub" { } ''
                 mkdir -p $out/bin
