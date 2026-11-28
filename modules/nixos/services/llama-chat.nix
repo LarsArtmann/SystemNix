@@ -385,10 +385,12 @@ _: {
             # ROCm runtime env for the HIP build — the llama-rag unit shape:
             # the HSA vars plus the path of the dlopen'ed ROCm libs.
             environment = lib.mkIf onIgpu (
-              rocm.env
-              // {
-                LD_LIBRARY_PATH = rocm.makeLdLibraryPath lib;
-              }
+              lib.mkMerge [
+                rocm.env
+                {
+                  LD_LIBRARY_PATH = rocm.makeLdLibraryPath lib;
+                }
+              ]
             );
 
             serviceConfig = lib.mkMerge (
