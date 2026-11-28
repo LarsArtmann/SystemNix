@@ -670,9 +670,15 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-24 nixpkgs-root float wave — NEW shim: spec
   # +YuAxieZ, got kEd17MIY (first-hand keep-going, toplevel-build3.log).
   # Drop when upstream bakes the got hash.
-  project-discovery-daemon =
-    flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
+  # vendorHash shim DROPPED (2026-11-28, ALL surfaces with
+  # modules/nixos/services/project-discovery-daemon.nix — daemon + admin):
+  # the 03:33 daemon lock float (ec99c8956) moved pdd to 5cbc99c ("build:
+  # bump go-daemon to v0.5.0"), which re-measured the hash upstream; spec
+  # FzTrkHOx, got 7VswA7CM = the bake at flake.nix:76 (first-hand pre-deploy
+  # §11, 2026-11-28_03-47-10.log) — the documented drop-safety test (got ==
+  # bake), so the override was bit-neutral treadmill. Re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
@@ -740,6 +746,13 @@ lib.filterAttrs (_: v: v != null) {
   # bW3OHQ3D, got +JUDdQKw (first-hand keep-going, keepgoing-1119.log).
   # RE-STALE 2026-11-24 nixpkgs-root float wave: spec +JUDdQKw, got
   # IPEw5b8P (first-hand keep-going, toplevel-build3.log).
+  # RE-STALE 2026-11-28 02:28 daemon lock float (ba3437f5b): pma 52322091 →
+  # 71795cc9; spec IPEw5b8P, got X0q2Dlin (first-hand pre-deploy §11,
+  # 2026-11-28_02-58-16.log and _03-47-10.log — same got twice). NOT
+  # drop-safe: got ≠ the upstream bake at 71795cc9 (flake.nix:121). Module
+  # twin (projects-management-automation.nix) moved in the same pass. Drop
+  # when upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence,
+  # never by hand.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
       "sha256-X0q2DlindNThmOeZBK9xWoSq0UznmjEgKSzecfPRPw8=";
@@ -779,13 +792,29 @@ lib.filterAttrs (_: v: v != null) {
   # registry vHost timesheets.home.lan; the CLI writes the same SQLite event
   # store via --db — this PATH binary and the unit share one store path;
   # runbook docs/services/timesheets.md). NON-FOLLOWER input (own nixpkgs
-  # lock): upstream-baked vendorHash stays valid at branch tip. 2026-11-12:
+  # lock) — "upstream-baked vendorHash stays valid at branch tip" held only
+  # while upstream re-measured after go.sum changes; it did not (shim
+  # below). 2026-11-12:
   # doCheck=false — upstream's event-replay test suite fails in-sandbox at
   # tip (proof5-final.log, [FAILED] 423.280s); and rev 0304e2ae is
   # EVAL-DEAD here (upstream deleted go.sum; mkPreparedSource filesets
   # over it). Re-enable checks when the suite is sandbox-safe.
+  # vendorHash shim ADDED (2026-11-28, BOTH surfaces with the `package`
+  # default in modules/nixos/services/timesheets.nix — the SAME
+  # overrideAttrs on both, so ONE derivation): the 02:28 daemon lock float
+  # (ba3437f5b) moved timesheets 2697de8b → f22a31a, where upstream's bake
+  # 5HuSKGky (2026-11-22, 1819c6e) predates its go.sum change d3b759d
+  # (2026-11-27 18:40) and no longer reproduces; spec 5HuSKGky, got
+  # VD4UNBfk (first-hand pre-deploy §11, 2026-11-28_02-58-16.log and
+  # _03-47-10.log — same got twice). No *.nix site here carries the stale
+  # literal (it lives upstream), so fod-hash-diff.sh could not place this
+  # one; the literal below was verified byte-for-byte against the log. Drop
+  # when the lock moves past an upstream rev baking the got hash (the
+  # owner-push half is queued in docs/todo/upstream.md); re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
   timesheets = inputs.timesheets.packages.${system}.default.overrideAttrs {
     doCheck = false;
+    vendorHash = "sha256-VD4UNBfkTb1SJtkWlzpHZ2Wtymag+7jx7Vujtoi5B6c=";
   };
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
@@ -846,6 +875,13 @@ lib.filterAttrs (_: v: v != null) {
     # was silently REUSED in cache, the 2026-10-28 trap). Same value as the
     # modules/nixos/services/tq-agent-pool.nix surface — update BOTH
     # together. Drop when upstream bakes HqHkPDVQ.
+    # RE-STALE 2026-11-28 03:33 daemon lock float (ec99c8956): at
+    # go-taskqueue@c9f67c88 (0.4.2) spec HqHkPDVQ, got fneDiCvx (first-hand
+    # check-mode rebuild, pre-deploy §11 cached-FOD audit — the stale FOD
+    # was REUSED in cache again, the 2026-10-28 trap). NOT drop-safe: got ≠
+    # the upstream bake at c9f67c88 (flake.nix:78). Same value as the
+    # modules/nixos/services/tq-agent-pool.nix surface — BOTH moved in the
+    # same pass. Drop when upstream bakes fneDiCvx.
     vendorHash = "sha256-fneDiCvxr6uv9Dx67rkgQsFVhi9LpqOqRQprqr4rAIs=";
   });
 }
