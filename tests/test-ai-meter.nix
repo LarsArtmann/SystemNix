@@ -319,7 +319,7 @@ in
   name = "ai-meter";
 
   nodes.machine =
-    { ... }:
+    { lib, ... }:
     {
       imports = [
         aiMeterModule
@@ -346,15 +346,21 @@ in
         )
       ];
 
-      services.ai-meter = {
-        enable = true;
-        clients.vmtest.user = "root";
-        # Non-root consumer: exercises the CAP_CHOWN chown path the prod
-        # clients (lars, paperless-gpt, inboxclean) actually take — a
-        # chown-to-ROOT target is a kernel no-op that would mask a
-        # missing capability (exactly how the first mint draft slipped).
-        clients.vmtest2.user = "nobody";
-      } // newOptions;
+      services.ai-meter =
+        lib.recursiveUpdate
+          {
+            enable = true;
+            clients.vmtest.user = "root";
+            # Non-root consumer: exercises the CAP_CHOWN chown path the prod
+            # clients (lars, paperless-gpt, inboxclean) actually take — a
+            # chown-to-ROOT target is a kernel no-op that would mask a
+            # missing capability (exactly how the first mint draft slipped).
+            clients.vmtest2.user = "nobody";
+          }
+          # Deep merge, not `//`: newOptions carries clients.vmtest.priority,
+          # and a shallow union replaces the whole clients attrset and drops
+          # .user (the serviceConfig = X // Y audit class).
+          newOptions;
 
       # Point the template at the store-rendered config (mock-sops cannot
       # decrypt anything; the module's readOnly configFile follows).
