@@ -411,8 +411,6 @@
       ];
     in
     {
-      inherit assertions;
-
       # Platform-truth catalog entry (ADR-008): unconditional — describes what
       # EXISTS platform-wide. Hosts/VMs importing this module MUST co-import
       # nixosModules.catalog (loud eval failure otherwise).
@@ -646,7 +644,11 @@
         };
       };
 
-      config = lib.mkIf cfg.enable {
+      # The assertions hold whenever the service is enabled, whatever else
+      # the host sets.
+      config = lib.mkMerge [
+        { inherit assertions; }
+        (lib.mkIf cfg.enable {
         services.ai-meter.configFile = config.sops.templates."ai-meter-config".path;
 
         users.users.ai-meter = {
@@ -849,6 +851,7 @@
             ];
           };
         };
-      };
+        })
+      ];
     };
 }
