@@ -106,8 +106,9 @@
               # upstream bakes the got hash; re-add ONLY via nix-hash-fix
               # evidence, never by hand.
               (
-                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-                  { vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc="; }
+                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+                  vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
+                }
               );
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service
@@ -125,12 +126,11 @@
           # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
           # Port from the registry, never a literal.
           admin = {
-            package =
-              lib.mkDefault
-                (
-                  (inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin).overrideAttrs
-                    { vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc="; }
-                );
+            package = lib.mkDefault (
+              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin.overrideAttrs {
+                vendorHash = "sha256-FzTrkHOx5h1qIuZXIPY35S97Pff9AhlPhLN006KR6Mc=";
+              }
+            );
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };

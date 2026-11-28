@@ -499,13 +499,13 @@ _: {
         else if v.layer == "protected" then
           protectedVHost {
             inherit (v) port;
-            hostOverride = v.hostOverride;
+            inherit (v) hostOverride;
             frameExtra = frameHeadersFor v;
           }
         else
           plainVHost {
             inherit (v) port;
-            hostOverride = v.hostOverride;
+            inherit (v) hostOverride;
             frameExtra = frameHeadersFor v;
           };
 

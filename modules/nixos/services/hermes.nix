@@ -188,7 +188,7 @@
           # #2/#3 FAILED tree_converged, find returned empty in a debug
           # run). Name the drift axis that tripped it before touching the
           # guard: which entry is stray, or which root stat is off.
-          echo "hermes-perms: guard-drift probe: stray='${stray:-none}' root=$(stat -c '%U:%G %a' ${cfg.stateDir} 2>/dev/null)"
+          echo "hermes-perms: guard-drift probe: stray='${"stray:-none"}' root=$(stat -c '%U:%G %a' ${cfg.stateDir} 2>/dev/null)"
 
           echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
           # Never chown -R the whole stateDir: the read-only projects bind

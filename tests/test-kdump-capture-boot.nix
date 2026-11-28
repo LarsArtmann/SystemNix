@@ -26,7 +26,8 @@
 # efi_pstore backend exists, exactly like the host.
 { pkgs, ... }:
 let
-  capturePath = (import ../modules/nixos/services/kdump-capture-path.nix { }).flake.nixosModules.kdump-capture-path;
+  capturePath =
+    (import ../modules/nixos/services/kdump-capture-path.nix { }).flake.nixosModules.kdump-capture-path;
   captureUnits = import ../modules/nixos/services/_kdump-capture-units.nix;
 in
 {

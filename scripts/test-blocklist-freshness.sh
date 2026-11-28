@@ -50,8 +50,8 @@ expect() {
   local leg="$1" want="$2" now="$3"
   shift 3
   local got
-  got="$(bash "$subject" --state-dir "$state" --stale-after 2592000 --now "$now" "$@")" \
-    || fail "$leg: unexpected non-zero exit"
+  got="$(bash "$subject" --state-dir "$state" --stale-after 2592000 --now "$now" "$@")" ||
+    fail "$leg: unexpected non-zero exit"
   [[ $got == "$want" ]] || fail "$leg: got '$got', want '$want'"
   ok "$leg"
 }
@@ -110,8 +110,8 @@ skey="$(printf '%s' "$sb_a" | md5sum | cut -d' ' -f1)"
 printf '%s %s HaGeZi-ultimate\n%s not-a-number StevenBlack-everything\n' "$hkey" "$t0" "$skey" >"$state/blocklist-since"
 expect "a bad epoch restarts only its own list" "9 0" "$((t0 + 9))" "$hagezi_a" "$sb_a"
 
-grep -q "^$skey $((t0 + 9)) StevenBlack-everything$" "$state/blocklist-since" \
-  || fail "the restarted list did not get the injected now ($((t0 + 9))) as its first-seen moment"
+grep -q "^$skey $((t0 + 9)) StevenBlack-everything$" "$state/blocklist-since" ||
+  fail "the restarted list did not get the injected now ($((t0 + 9))) as its first-seen moment"
 ok "the restarted list is recorded with the current now"
 
 state_before="$(cat "$state/blocklist-since")"

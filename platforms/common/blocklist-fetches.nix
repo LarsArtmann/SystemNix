@@ -19,7 +19,7 @@ let
 in
 pkgs.linkFarm "blocklist-fetches" (
   map (bl: {
-    name = bl.name;
+    inherit (bl) name;
     path = pkgs.fetchurl {
       inherit (bl) url hash;
       name = "${bl.name}-raw";

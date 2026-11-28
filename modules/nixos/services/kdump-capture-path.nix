@@ -76,7 +76,8 @@ _: {
 
         assertions = [
           {
-            assertion = config.systemd.services.systemd-sysctl.unitConfig.ConditionPathExists == "!${captureMarker}";
+            assertion =
+              config.systemd.services.systemd-sysctl.unitConfig.ConditionPathExists == "!${captureMarker}";
             message = "kdump-capture-path: systemd-sysctl must stay conditioned on !/proc/vmcore, the capture boot must not apply the host sysctl bag (2026-11-25 cuts 08:57:47 + 11:05:51).";
           }
           {

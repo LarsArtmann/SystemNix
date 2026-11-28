@@ -48,7 +48,7 @@ _: {
         harden
         ioTier
         ;
-      templateActivity = (import ./_llama-idle-activity.nix { inherit lib pkgs; }).templateActivity;
+      inherit ((import ./_llama-idle-activity.nix { inherit lib pkgs; })) templateActivity;
       inherit (config.users) primaryUser;
 
       serverType = lib.types.submodule {

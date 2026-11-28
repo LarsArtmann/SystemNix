@@ -25,9 +25,9 @@ FIXTURES="$(mktemp -d)"
 trap 'rm -rf "$FIXTURES"' EXIT
 fixture_get() {
   case "$1" in
-    "/api/v2/dashboards?limit=100&offset=0") cat "$FIXTURES/list.json" ;;
-    /api/v2/dashboards/*) cat "$FIXTURES/live${1#/api/v2/dashboards/}.json" ;;
-    *) return 1 ;;
+  "/api/v2/dashboards?limit=100&offset=0") cat "$FIXTURES/list.json" ;;
+  /api/v2/dashboards/*) cat "$FIXTURES/live${1#/api/v2/dashboards/}.json" ;;
+  *) return 1 ;;
   esac
 }
 
@@ -35,9 +35,18 @@ PASS=0
 FAIL=0
 SKIP=0
 LAST=""
-report_pass() { PASS=$((PASS + 1)); LAST="PASS $1"; }
-report_fail() { FAIL=$((FAIL + 1)); LAST="FAIL $1"; }
-report_skip() { SKIP=$((SKIP + 1)); LAST="SKIP $1"; }
+report_pass() {
+  PASS=$((PASS + 1))
+  LAST="PASS $1"
+}
+report_fail() {
+  FAIL=$((FAIL + 1))
+  LAST="FAIL $1"
+}
+report_skip() {
+  SKIP=$((SKIP + 1))
+  LAST="SKIP $1"
+}
 record_fail() { :; }
 
 passed=0
@@ -47,13 +56,13 @@ failed=0
 expect() {
   local name="$1" verdict="$2" needle="$3" dir="${4:-$FIXTURES/files}"
   PASS=0 FAIL=0 SKIP=0 LAST=""
-  systemnix_signoz_dashboards_drift "$dir" fixture_get > /dev/null 2>&1
+  systemnix_signoz_dashboards_drift "$dir" fixture_get >/dev/null 2>&1
   # PASS, FAIL and SKIP counters joined: one verdict of the wanted kind, no other.
   local want
   case "$verdict" in
-    PASS) want="100" ;;
-    FAIL) want="010" ;;
-    SKIP) want="001" ;;
+  PASS) want="100" ;;
+  FAIL) want="010" ;;
+  SKIP) want="001" ;;
   esac
   if [ "$PASS$FAIL$SKIP" = "$want" ] && grep -qF -- "$needle" <<<"$LAST"; then
     passed=$((passed + 1))
@@ -66,17 +75,17 @@ expect() {
 
 # dashboard_file <dir> <slug> <panel-title>: what the deploy ships.
 dashboard_file() {
-  jq -n --arg slug "$2" --arg title "$3" '{name: $slug, tags: [{key: "owner", value: "systemnix"}], spec: {display: {name: $title}, panels: {}, layouts: [], duration: "3h", refreshInterval: "", links: []}}' > "$1/$2.json"
+  jq -n --arg slug "$2" --arg title "$3" '{name: $slug, tags: [{key: "owner", value: "systemnix"}], spec: {display: {name: $title}, panels: {}, layouts: [], duration: "3h", refreshInterval: "", links: []}}' >"$1/$2.json"
 }
 
 # dashboard_live <id> <slug> <title>: the API's answer for one dashboard,
 # its keys in another order than the file's (the server sorts nothing for us).
 dashboard_live() {
-  jq -n --arg id "$1" --arg slug "$2" --arg title "$3" '{status: "success", data: {id: $id, name: $slug, createdAt: "2026-11-01T00:00:00Z", updatedAt: "2026-11-02T00:00:00Z", spec: {links: [], refreshInterval: "", duration: "3h", layouts: [], panels: {}, display: {name: $title}}, tags: [{value: "systemnix", key: "owner"}]}}' > "$FIXTURES/live$1.json"
+  jq -n --arg id "$1" --arg slug "$2" --arg title "$3" '{status: "success", data: {id: $id, name: $slug, createdAt: "2026-11-01T00:00:00Z", updatedAt: "2026-11-02T00:00:00Z", spec: {links: [], refreshInterval: "", duration: "3h", layouts: [], panels: {}, display: {name: $title}}, tags: [{value: "systemnix", key: "owner"}]}}' >"$FIXTURES/live$1.json"
 }
 
 dashboard_list() {
-  jq -n --argjson entries "$1" '{data: {dashboards: $entries}}' > "$FIXTURES/list.json"
+  jq -n --argjson entries "$1" '{data: {dashboards: $entries}}' >"$FIXTURES/list.json"
 }
 
 # ---- three files: one identical, one edited by hand, one not served ----
@@ -97,14 +106,14 @@ dashboard_list '[{"id": "id-3", "name": "systemnix-three"}, {"id": "id-2", "name
 expect "identical, key order aside" PASS "3 of 3 live dashboards equal their files"
 
 # ---- a file without a slug ----
-printf '{"tags": [], "spec": {"display": {"name": "No slug"}}}\n' > "$FIXTURES/files/systemnix-broken.json"
+printf '{"tags": [], "spec": {"display": {"name": "No slug"}}}\n' >"$FIXTURES/files/systemnix-broken.json"
 expect "no slug" FAIL "systemnix-broken.json(no slug)"
 rm "$FIXTURES/files/systemnix-broken.json"
 
 # ---- the API answers nothing, or with an error: a SKIP, never a FAIL ----
 mv "$FIXTURES/list.json" "$FIXTURES/list.kept"
 expect "api silent" SKIP "API did not answer"
-printf '{"status": "error", "error": "unauthorized"}\n' > "$FIXTURES/list.json"
+printf '{"status": "error", "error": "unauthorized"}\n' >"$FIXTURES/list.json"
 expect "api answers an error" SKIP "API did not answer"
 # ---- the API serves no dashboard at all while files exist: a FAIL ----
 dashboard_list '[]'

@@ -95,7 +95,7 @@ _: {
     let
       cfg = config.services.llama-chat;
       libHelpers = import ../../../lib/default.nix lib;
-      templateActivity = (import ./_llama-idle-activity.nix { inherit lib pkgs; }).templateActivity;
+      inherit ((import ./_llama-idle-activity.nix { inherit lib pkgs; })) templateActivity;
       inherit (libHelpers)
         harden
         ioTier

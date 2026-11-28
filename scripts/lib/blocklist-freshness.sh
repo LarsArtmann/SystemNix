@@ -30,7 +30,10 @@ files=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
   --state-dir | --stale-after | --now)
-    [[ $# -ge 2 ]] || { echo "blocklist-freshness: $1 needs a value" >&2; exit 2; }
+    [[ $# -ge 2 ]] || {
+      echo "blocklist-freshness: $1 needs a value" >&2
+      exit 2
+    }
     case "$1" in
     --state-dir) state_dir="$2" ;;
     --stale-after) stale_after="$2" ;;
@@ -45,13 +48,22 @@ while [[ $# -gt 0 ]]; do
       shift
     done
     ;;
-  -*) echo "blocklist-freshness: unknown option: $1" >&2; exit 2 ;;
-  *) files+=("$1"); shift ;;
+  -*)
+    echo "blocklist-freshness: unknown option: $1" >&2
+    exit 2
+    ;;
+  *)
+    files+=("$1")
+    shift
+    ;;
   esac
 done
 
 for required in "$state_dir" "$stale_after" "$now"; do
-  [[ -n $required ]] || { echo "blocklist-freshness: --state-dir, --stale-after and --now are all required" >&2; exit 2; }
+  [[ -n $required ]] || {
+    echo "blocklist-freshness: --state-dir, --stale-after and --now are all required" >&2
+    exit 2
+  }
 done
 [[ $stale_after =~ ^[0-9]+$ && $now =~ ^[0-9]+$ ]] || {
   echo "blocklist-freshness: --stale-after and --now must be non-negative integers" >&2
@@ -88,7 +100,7 @@ for list_file in "${files[@]}"; do
   fi
   new_state+="$key $since $(basename "$list_file")"$'\n'
   age=$((now - since))
-  if (( age > oldest )); then
+  if ((age > oldest)); then
     oldest=$age
   fi
 done
@@ -98,7 +110,7 @@ printf '%s' "$new_state" >"$staging"
 mv -f "$staging" "$state"
 
 stale=0
-if (( oldest > stale_after )); then
+if ((oldest > stale_after)); then
   stale=1
 fi
 printf '%s %s\n' "$oldest" "$stale"

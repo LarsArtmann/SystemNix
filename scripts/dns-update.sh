@@ -505,10 +505,10 @@ NIX
     grep -c -F "$1" "$fixture" || true
   }
 
-  if run_flow hashes >"$tmp/flow.log" 2>&1 \
-    && [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] \
-    && [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] \
-    && [[ $(count_of "$commit") == 1 ]]; then
+  if run_flow hashes >"$tmp/flow.log" 2>&1 &&
+    [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] &&
+    [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] &&
+    [[ $(count_of "$commit") == 1 ]]; then
     ok "--hashes-only rewrites stale hashes and leaves the pins alone"
   else
     bad "--hashes-only did not repair the fixture: $(tail -3 "$tmp/flow.log" | tr '\n' ' ')"
@@ -563,12 +563,12 @@ NIX
   fi
 
   cp "$tmp/pristine.nix" "$fixture"
-  if run_flow bump "$new_commit" >"$tmp/flow-bump.log" 2>&1 \
-    && [[ $(count_of "$new_commit") == 1 ]] \
-    && [[ $(count_of "$hagezi_commit") == 1 ]] \
-    && grep -q "\"$HAGEZI_RAW_PREFIX/$new_commit/" "$fixture" \
-    && [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] \
-    && [[ $(count_of "$commit") == 1 ]]; then
+  if run_flow bump "$new_commit" >"$tmp/flow-bump.log" 2>&1 &&
+    [[ $(count_of "$new_commit") == 1 ]] &&
+    [[ $(count_of "$hagezi_commit") == 1 ]] &&
+    grep -q "\"$HAGEZI_RAW_PREFIX/$new_commit/" "$fixture" &&
+    [[ $(count_of AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA) == 0 ]] &&
+    [[ $(count_of "$commit") == 1 ]]; then
     ok "--bump-hagezi rewrites the helper line, re-hashes, and leaves StevenBlack alone"
   else
     bad "--bump-hagezi did not land: $(tail -3 "$tmp/flow-bump.log" | tr '\n' ' ')"
@@ -587,10 +587,10 @@ NIX
 
   # The default mode advances the StevenBlack pin and hashes in one piece.
   cp "$tmp/pristine.nix" "$fixture"
-  if run_flow advance >"$tmp/flow-advance.log" 2>&1 \
-    && [[ $(count_of 2222222222222222222222222222222222222222) == 1 ]] \
-    && [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] \
-    && [[ $(count_of "$hagezi_commit") == 2 ]]; then
+  if run_flow advance >"$tmp/flow-advance.log" 2>&1 &&
+    [[ $(count_of 2222222222222222222222222222222222222222) == 1 ]] &&
+    [[ $(count_of BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB) == 0 ]] &&
+    [[ $(count_of "$hagezi_commit") == 2 ]]; then
     ok "the default mode advances the StevenBlack pin and re-hashes"
   else
     bad "the default mode did not land: $(tail -3 "$tmp/flow-advance.log" | tr '\n' ' ')"
@@ -599,9 +599,9 @@ NIX
   # The same mode with one unreachable list moves nothing: the pin advance
   # used to be written to the tree before a single hash was checked.
   cp "$tmp/pristine-gone.nix" "$fixture"
-  if run_flow advance >"$tmp/flow-advance-fail.log" 2>&1 \
-    || grep -q 'could not extract current StevenBlack' "$tmp/flow-advance-fail.log" \
-    || ! grep -q 'FAILED (nix-prefetch-url)' "$tmp/flow-advance-fail.log"; then
+  if run_flow advance >"$tmp/flow-advance-fail.log" 2>&1 ||
+    grep -q 'could not extract current StevenBlack' "$tmp/flow-advance-fail.log" ||
+    ! grep -q 'FAILED (nix-prefetch-url)' "$tmp/flow-advance-fail.log"; then
     bad "the default mode succeeded with an unreachable list"
   elif cmp -s "$tmp/pristine-gone.nix" "$fixture"; then
     ok "the default mode with an unreachable list leaves the pin and the file untouched"

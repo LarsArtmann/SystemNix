@@ -77,10 +77,10 @@ use_go_env() {
 # .envrc uses `use flake` must re-prepend ~/.config/direnv/bin below it
 # (monitor365 and printer-monitor .envrc files do).
 if [ -x "${HOME}/.config/direnv/bin/cargo" ]; then
-	case ":${PATH}:" in
-		*":${HOME}/.config/direnv/bin:"*) ;;
-		*) export PATH="${HOME}/.config/direnv/bin:${PATH}" ;;
-	esac
+  case ":${PATH}:" in
+  *":${HOME}/.config/direnv/bin:"*) ;;
+  *) export PATH="${HOME}/.config/direnv/bin:${PATH}" ;;
+  esac
 fi
 
 # ─── Dead Automount Guard (/mnt/buildcache) ──────────────────────────────────

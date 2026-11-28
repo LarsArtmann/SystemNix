@@ -41,7 +41,10 @@ in
   # treated as activity: the caller keeps a model it cannot prove idle.
   templateActivity = pkgs.writeShellApplication {
     name = "template-activity-since";
-    runtimeInputs = [ pkgs.systemd pkgs.gnugrep ];
+    runtimeInputs = [
+      pkgs.systemd
+      pkgs.gnugrep
+    ];
     text = ''
       template="''${1:?template prefix, e.g. llama-chat@}"
       since="''${2:?window, e.g. 60min}"

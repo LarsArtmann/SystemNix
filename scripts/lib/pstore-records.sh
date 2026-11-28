@@ -225,9 +225,9 @@ PSTORE_BYTES=0       # bytes of the assembled dump text
 PSTORE_ARCH_HITS=0   # records whose body came from the archive (root run)
 PSTORE_HDR_OF=()     # record header line ("Panic#1 Part2"), keyed like PSTORE_BODY
 PSTORE_ARCHIVE_OF=() # archive path under /var/lib/systemd/pstore ('' when the
-                     # message does not name one), keyed like PSTORE_BODY
-PSTORE_EPOCH=''      # scratch of pstore_epoch_of
-PSTORE_VAL=''        # scratch of pstore_json_getv
+# message does not name one), keyed like PSTORE_BODY
+PSTORE_EPOCH='' # scratch of pstore_epoch_of
+PSTORE_VAL=''   # scratch of pstore_json_getv
 
 pstore_epoch_of() { # <MESSAGE text> -> sets PSTORE_EPOCH ('' and rc 1 when undecodable); fork-free
   local m="$1" id
@@ -443,7 +443,7 @@ pstore_facts() { # PSTORE_* records -> key=value lines (token= first): whose log
         case "$line" in
         *'Kernel panic - not syncing'*) panic_lines=$((panic_lines + 1)) ;;
         esac
-      done <<< "${PSTORE_BODY[i]%$'\n'}"
+      done <<<"${PSTORE_BODY[i]%$'\n'}"
     done
   done
   if [ "$PSTORE_N" -eq 0 ]; then
@@ -518,7 +518,7 @@ pstore_facts_for() { # <next-boot id or ''> -> pstore_facts block plus fetch=ok|
     printf 'token=none\nfetch=error\n'
     return 0
   fi
-  pstore_jsonl_parse <<< "$jsonl"
+  pstore_jsonl_parse <<<"$jsonl"
   pstore_facts
   printf 'fetch=ok\n'
   return 0
@@ -533,7 +533,7 @@ pstore_fact() { # <key=value block> <key> -> value on stdout ('' and rc 1 when a
       return 0
       ;;
     esac
-  done <<< "$1"
+  done <<<"$1"
   return 1
 }
 
@@ -658,7 +658,10 @@ JSONL
   # never as the zero-record token alone.
   block=$(PSTORE_STUB_FAIL='boot -9 unreadable' pstore_facts_for 0)
   check "error: fetch=error" grep -qx 'fetch=error' <<<"$block"
-  check "error: rc of the raw fetch" test "$(PSTORE_STUB_FAIL=x pstore_journal_fetch 0 >/dev/null 2>&1; echo "$?")" = 1
+  check "error: rc of the raw fetch" test "$(
+    PSTORE_STUB_FAIL=x pstore_journal_fetch 0 >/dev/null 2>&1
+    echo "$?"
+  )" = 1
 
   # Main-kernel dump (the shape a working capture path leaves): long uptime
   # stamps, no memory report, an Oops kind.

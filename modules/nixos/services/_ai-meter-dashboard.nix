@@ -153,7 +153,7 @@ in
     ;
 
   # How a model name is spelled inside the generated `model=~` selectors.
-  escapeRegex = escapeRegex;
+  inherit escapeRegex;
 
   # Substitutes the spend queries into the dashboard template. Throws
   # when a placeholder is missing or occurs more than once, so a renamed or
@@ -174,7 +174,7 @@ in
         placeholder:
         (lib.stringLength template - lib.stringLength (lib.replaceStrings [ placeholder ] [ "" ] template))
         / lib.stringLength placeholder;
-      found = lib.genAttrs (builtins.attrNames queries) (placeholder: occurrences placeholder);
+      found = lib.genAttrs (builtins.attrNames queries) occurrences;
       broken = lib.filterAttrs (_: times: times != 1) found;
       complaint = lib.concatStringsSep ", " (
         lib.mapAttrsToList (placeholder: times: "'${placeholder}' occurs ${toString times} times") broken

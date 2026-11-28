@@ -83,9 +83,9 @@
           # Y7HkZSMx, got /OE8Z7by (first-hand keep-going,
           # ~/.cache/gtd-pipeline/toplevel-build4.log). Drop when upstream
           # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
-          default =
-            inputs.invoices.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              { vendorHash = "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8="; };
+          default = inputs.invoices.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-/OE8Z7bygtEIjGlvwIgC6jkmw249gcpiu3du/F19eF8=";
+          };
           defaultText = lib.mdDoc "inputs.invoices default with the inline vendorHash shim (see the option comment)";
           description = "invoices package to serve the dashboard with.";
         };

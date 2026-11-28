@@ -29,7 +29,7 @@ systemnix_signoz_dashboards_drift() {
   local dashboards_dir="${1:-/etc/signoz/dashboards}"
   local fetch="${2:-systemnix_signoz_api_get}"
   local dash_list dash_count
-  if ! compgen -G "${dashboards_dir}/*.json" > /dev/null; then
+  if ! compgen -G "${dashboards_dir}/*.json" >/dev/null; then
     report_skip "SigNoz dashboards - no dashboard files in ${dashboards_dir}"
     return 0
   fi

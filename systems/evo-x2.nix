@@ -120,6 +120,6 @@ nixpkgs.lib.nixosSystem {
     # (d1980f3+): push nixos-modules first, then
     # `nix flake update nixos-modules` here, or this eval is red.
     inputs.nixos-modules.nixosModules.modloc
-    {programs.modloc.enable = true;}
+    { programs.modloc.enable = true; }
   ];
 }

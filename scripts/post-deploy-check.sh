@@ -276,7 +276,7 @@ kdump_boot_epoch() {
     echo "$KDUMP_BOOT_EPOCH"
     return 0
   fi
-  echo $(( $(date +%s) - $(cut -d. -f1 /proc/uptime 2>/dev/null || echo 0) ))
+  echo $(($(date +%s) - $(cut -d. -f1 /proc/uptime 2>/dev/null || echo 0)))
 }
 
 # kdump_prev_boot_epoch - start of the boot BEFORE this one (the boot that
@@ -2517,7 +2517,7 @@ if [ -z "$_polkit_problems" ]; then
 else
   report_fail "Desktop - polkit render:${_polkit_problems}"
 fi
-_qqc_other_count=$(( $(printf '%s' "$_qqc_all_lines" | grep -c . || true) - ${_qqc_unit_count:-0} ))
+_qqc_other_count=$(($(printf '%s' "$_qqc_all_lines" | grep -c . || true) - ${_qqc_unit_count:-0}))
 if [ "${_qqc_other_count:-0}" -gt 0 ]; then
   _qqc_note=""
   if [ "${_qqc_unit_count:-0}" -eq 0 ]; then
