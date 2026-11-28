@@ -259,37 +259,40 @@
         }
       ];
 
-      proxyConfig = builtins.toJSON ({
-        listen = "127.0.0.1:${toString cfg.port}";
-        metrics_listen = "127.0.0.1:${toString cfg.metricsPort}";
-        ledger_path = "${stateDir}/usage.jsonl";
-        inject_stream_usage = true;
-        # Daemon reads the ai-meter-owned mirror copies (see mintScript) —
-        # never the consumer-owned 0400 originals.
-        clients = lib.mapAttrsToList (
-          name: client:
-          {
-            inherit name;
-            key_file = "${keysDir}/config/${name}";
-          }
-          # The proxy defaults an absent priority to background.
-          // lib.optionalAttrs (client.priority != null) {
-            inherit (client) priority;
-          }
-        ) cfg.clients;
-        upstreams = upstreamsRendered;
-        costs = lib.mapAttrs (_: cost: {
-          inherit (cost) input;
-          inherit (cost) output;
-          cached_input = cost.cachedInput;
-        }) cfg.costs;
-        # Span export into SigNoz's native AI observability. The collector's
-        # OTLP/HTTP receiver is the registry port (signoz-coverage registers
-        # this unit as wiring "config": the runtime collector pages when the
-        # spans stop landing).
-        otlp_endpoint = "http://127.0.0.1:${toString ports.signoz-otlp-http}";
-        deployment_environment = "production";
-      } // quotaSource);
+      proxyConfig = builtins.toJSON (
+        {
+          listen = "127.0.0.1:${toString cfg.port}";
+          metrics_listen = "127.0.0.1:${toString cfg.metricsPort}";
+          ledger_path = "${stateDir}/usage.jsonl";
+          inject_stream_usage = true;
+          # Daemon reads the ai-meter-owned mirror copies (see mintScript) —
+          # never the consumer-owned 0400 originals.
+          clients = lib.mapAttrsToList (
+            name: client:
+            {
+              inherit name;
+              key_file = "${keysDir}/config/${name}";
+            }
+            # The proxy defaults an absent priority to background.
+            // lib.optionalAttrs (client.priority != null) {
+              inherit (client) priority;
+            }
+          ) cfg.clients;
+          upstreams = upstreamsRendered;
+          costs = lib.mapAttrs (_: cost: {
+            inherit (cost) input;
+            inherit (cost) output;
+            cached_input = cost.cachedInput;
+          }) cfg.costs;
+          # Span export into SigNoz's native AI observability. The collector's
+          # OTLP/HTTP receiver is the registry port (signoz-coverage registers
+          # this unit as wiring "config": the runtime collector pages when the
+          # spans stop landing).
+          otlp_endpoint = "http://127.0.0.1:${toString ports.signoz-otlp-http}";
+          deployment_environment = "production";
+        }
+        // quotaSource
+      );
 
       clientList = lib.mapAttrsToList (name: client: {
         inherit name;
@@ -355,13 +358,19 @@
         // lib.optionalAttrs ((upstreamExtras.${up.name}.quotaProvider or null) != null) {
           quota_provider = upstreamExtras.${up.name}.quotaProvider;
         }
-        // lib.optionalAttrs (up ? admission && (cfg.priorityAgingSeconds != null || cfg.interactiveReserve != null)) {
-          admission = up.admission // lib.optionalAttrs (cfg.priorityAgingSeconds != null) {
-            priority_aging_seconds = cfg.priorityAgingSeconds;
-          } // lib.optionalAttrs (cfg.interactiveReserve != null) {
-            interactive_reserve = cfg.interactiveReserve;
-          };
-        }
+        //
+          lib.optionalAttrs
+            (up ? admission && (cfg.priorityAgingSeconds != null || cfg.interactiveReserve != null))
+            {
+              admission =
+                up.admission
+                // lib.optionalAttrs (cfg.priorityAgingSeconds != null) {
+                  priority_aging_seconds = cfg.priorityAgingSeconds;
+                }
+                // lib.optionalAttrs (cfg.interactiveReserve != null) {
+                  interactive_reserve = cfg.interactiveReserve;
+                };
+            }
       ) upstreams;
 
       # Off by default: rendered (and so read by the proxy) only when the
@@ -387,13 +396,19 @@
       # them at eval, before the unit is ever built.
       assertions = [
         {
-          assertion = cfg.interactiveReserve == null
-            || builtins.all (up: cfg.interactiveReserve >= 0 && cfg.interactiveReserve < up.admission.max_concurrency) gatedUpstreams;
-          message = "services.ai-meter.interactiveReserve (${toString cfg.interactiveReserve}) must be between 0 and max_concurrency-1 of every gated upstream (${lib.concatMapStringsSep ", " (up: "${up.name}: ${toString (up.admission.max_concurrency - 1)}") gatedUpstreams}); the proxy refuses to start otherwise";
+          assertion =
+            cfg.interactiveReserve == null
+            || builtins.all (
+              up: cfg.interactiveReserve >= 0 && cfg.interactiveReserve < up.admission.max_concurrency
+            ) gatedUpstreams;
+          message = "services.ai-meter.interactiveReserve (${toString cfg.interactiveReserve}) must be between 0 and max_concurrency-1 of every gated upstream (${
+            lib.concatMapStringsSep ", " (
+              up: "${up.name}: ${toString (up.admission.max_concurrency - 1)}"
+            ) gatedUpstreams
+          }); the proxy refuses to start otherwise";
         }
         {
-          assertion = !cfg.quotaSource.enable
-            || cfg.quotaSource.staleSeconds >= cfg.quotaSource.pollSeconds;
+          assertion = !cfg.quotaSource.enable || cfg.quotaSource.staleSeconds >= cfg.quotaSource.pollSeconds;
           message = "services.ai-meter.quotaSource.staleSeconds (${toString cfg.quotaSource.staleSeconds}) must be at least pollSeconds (${toString cfg.quotaSource.pollSeconds}); the proxy refuses to start otherwise";
         }
         {
@@ -405,8 +420,12 @@
           message = "services.ai-meter.upstreams.<name>.quotaProvider is only allowed on an upstream with an admission block (${lib.concatStringsSep ", " gatedNames}); set on: ${lib.concatStringsSep ", " providerUpstreams}";
         }
         {
-          assertion = builtins.all (name: builtins.elem name (map (up: up.name) upstreams)) (builtins.attrNames upstreamExtras);
-          message = "services.ai-meter.upstreams.<name> names an upstream this module does not render; known: ${lib.concatStringsSep ", " (map (up: up.name) upstreams)}";
+          assertion = builtins.all (name: builtins.elem name (map (up: up.name) upstreams)) (
+            builtins.attrNames upstreamExtras
+          );
+          message = "services.ai-meter.upstreams.<name> names an upstream this module does not render; known: ${
+            lib.concatStringsSep ", " (map (up: up.name) upstreams)
+          }";
         }
       ];
     in
@@ -469,10 +488,12 @@
                   '';
                 };
                 priority = lib.mkOption {
-                  type = lib.types.nullOr (lib.types.enum [
-                    "interactive"
-                    "background"
-                  ]);
+                  type = lib.types.nullOr (
+                    lib.types.enum [
+                      "interactive"
+                      "background"
+                    ]
+                  );
                   default = null;
                   description = ''
                     The client's class at a crowded gate: "interactive" (a
@@ -550,19 +571,21 @@
         };
 
         upstreams = lib.mkOption {
-          type = lib.types.attrsOf (lib.types.submodule {
-            options = {
-              quotaProvider = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = null;
-                description = ''
-                  The provider id quotaboard tracks for this upstream.
-                  Needs quotaSource.enable and an upstream with an admission
-                  block (both asserted). null renders nothing.
-                '';
+          type = lib.types.attrsOf (
+            lib.types.submodule {
+              options = {
+                quotaProvider = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    The provider id quotaboard tracks for this upstream.
+                    Needs quotaSource.enable and an upstream with an admission
+                    block (both asserted). null renders nothing.
+                  '';
+                };
               };
-            };
-          });
+            }
+          );
           default = { };
           description = ''
             Per-upstream settings on top of the upstream list the module
@@ -649,208 +672,208 @@
       config = lib.mkMerge [
         { inherit assertions; }
         (lib.mkIf cfg.enable {
-        services.ai-meter.configFile = config.sops.templates."ai-meter-config".path;
+          services.ai-meter.configFile = config.sops.templates."ai-meter-config".path;
 
-        users.users.ai-meter = {
-          isSystemUser = true;
-          group = "ai-meter";
-          home = stateDir;
-          description = "ai-meter metering proxy";
-        };
-        users.groups.ai-meter = { };
+          users.users.ai-meter = {
+            isSystemUser = true;
+            group = "ai-meter";
+            home = stateDir;
+            description = "ai-meter metering proxy";
+          };
+          users.groups.ai-meter = { };
 
-        # --- Upstream provider keys (sops copies owned by the service user) --
-        # Same encrypted keys as the crush/openseo blocks, re-declared so this
-        # module never breaks if those blocks become enablement-guarded.
-        sops.secrets = builtins.listToAttrs (
-          map
-            (
-              {
-                name,
-                sopsFile ? ../../../platforms/nixos/secrets/crush.yaml,
-                key,
-              }:
-              {
-                name = "ai-meter-${name}-key";
-                value = {
-                  inherit sopsFile key;
-                  owner = "ai-meter";
-                  group = "ai-meter";
-                  restartUnits = [ "ai-meter.service" ];
-                };
-              }
-            )
-            [
-              {
-                name = "zai";
-                key = "zai_api_key";
-              }
-              {
-                name = "gemini";
-                key = "gemini_api_key";
-              }
-              {
-                # Remapped copy of crush-daily.yaml's synthetic_api_key
-                # (the same key CV's openaicompat chat copied into
-                # cv.yaml — one subscription, three declarations). The
-                # sops-key-audit validates the yaml key exists.
-                name = "synthetic";
-                key = "synthetic_api_key";
-                sopsFile = ../../../platforms/nixos/secrets/crush-daily.yaml;
-              }
-            ]
-        );
+          # --- Upstream provider keys (sops copies owned by the service user) --
+          # Same encrypted keys as the crush/openseo blocks, re-declared so this
+          # module never breaks if those blocks become enablement-guarded.
+          sops.secrets = builtins.listToAttrs (
+            map
+              (
+                {
+                  name,
+                  sopsFile ? ../../../platforms/nixos/secrets/crush.yaml,
+                  key,
+                }:
+                {
+                  name = "ai-meter-${name}-key";
+                  value = {
+                    inherit sopsFile key;
+                    owner = "ai-meter";
+                    group = "ai-meter";
+                    restartUnits = [ "ai-meter.service" ];
+                  };
+                }
+              )
+              [
+                {
+                  name = "zai";
+                  key = "zai_api_key";
+                }
+                {
+                  name = "gemini";
+                  key = "gemini_api_key";
+                }
+                {
+                  # Remapped copy of crush-daily.yaml's synthetic_api_key
+                  # (the same key CV's openaicompat chat copied into
+                  # cv.yaml — one subscription, three declarations). The
+                  # sops-key-audit validates the yaml key exists.
+                  name = "synthetic";
+                  key = "synthetic_api_key";
+                  sopsFile = ../../../platforms/nixos/secrets/crush-daily.yaml;
+                }
+              ]
+          );
 
-        sops.templates."ai-meter-config" = {
-          owner = "ai-meter";
-          group = "ai-meter";
-          mode = "0400";
-          restartUnits = [ "ai-meter.service" ];
-          content = proxyConfig;
-        };
+          sops.templates."ai-meter-config" = {
+            owner = "ai-meter";
+            group = "ai-meter";
+            mode = "0400";
+            restartUnits = [ "ai-meter.service" ];
+            content = proxyConfig;
+          };
 
-        # --- Runtime client-key mint -----------------------------------------
-        systemd.services.ai-meter-keys = {
-          description = "ai-meter - runtime client key mint";
-          wantedBy = [ "multi-user.target" ];
-          before = [ "ai-meter.service" ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              # writeShellScript's store path IS the executable (no bin/).
-              ExecStart = "${mintScript}";
-              RuntimeDirectory = "ai-meter-keys";
-              RuntimeDirectoryMode = "0711";
-              # Re-runs (deploy convergence) must not wipe consumer keys:
-              # the dir lives for the boot, not the unit activation.
-              RuntimeDirectoryPreserve = true;
-              # The mint chowns keys to consumer users and to ai-meter, and
-              # chmods files it no longer owns (install runs chown BEFORE
-              # chmod; consumer loop runs chmod after chown) — impossible
-              # under harden's empty default bounding set. A chown-to-ROOT
-              # target is a kernel no-op that hides this (the first VM run
-              # passed mint with a root client; the prod-shape clients would
-              # have failed). Exactly a provisioner's three caps:
-              #   CAP_CHOWN        - hand keys to consumer users / ai-meter
-              #   CAP_DAC_OVERRIDE - re-open 0400 mirrors on converging re-runs
-              #   CAP_FOWNER       - chmod files already chowned away
-              CapabilityBoundingSet = [
-                "CAP_CHOWN"
-                "CAP_DAC_OVERRIDE"
-                "CAP_FOWNER"
-              ];
-            }
-            (harden { ProtectSystem = "strict"; })
-            (serviceOneshotDefaults { })
-          ];
-        };
-
-        # --- Daemon ------------------------------------------------------------
-        systemd.services.ai-meter = {
-          description = "ai-meter - metering proxy for OpenAI-compatible AI calls";
-          after = [
-            "network-online.target"
-            "ai-meter-keys.service"
-          ];
-          wants = [ "network-online.target" ];
-          requires = [ "ai-meter-keys.service" ];
-          wantedBy = [ "multi-user.target" ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            {
-              User = "ai-meter";
-              Group = "ai-meter";
-              StateDirectory = "ai-meter";
-              StateDirectoryMode = "0700";
-              ExecStart = "${lib.getExe cfg.package} -config ${cfg.configFile}";
-              RestartSec = "3s";
-            }
-            (harden { MemoryMax = "256M"; })
-            (serviceDefaults { })
-          ];
-        };
-
-        # --- Registry entry: viewer vHost + loopback checks -------------------
-        # ai-meter.<domain> serves the static viewer page (vHost.root, Layer 2
-        # protected) embedding the SigNoz ai-meter dashboard. The proxy itself
-        # stays loopback-only by design (8107) with the admin plane (8108)
-        # scraped by SigNoz. The entry carries NO port (exactly-one assertion:
-        # root wins), so the loopback checks below keep their absolute URLs;
-        # the two absolute-https checks cover the viewer page itself and the
-        # pinned dashboard id (drift detector).
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          ai-meter = {
-            inherit (cfg) enable;
-            subdomain = "ai-meter";
-            vHost.layer = "protected";
-            vHost.root = "${viewer}";
-            monitored = true;
-            homepage = {
-              icon = "prometheus.png";
-            };
-            checks = [
+          # --- Runtime client-key mint -----------------------------------------
+          systemd.services.ai-meter-keys = {
+            description = "ai-meter - runtime client key mint";
+            wantedBy = [ "multi-user.target" ];
+            before = [ "ai-meter.service" ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
               {
-                name = "ai-meter";
-                group = "AI";
-                url = "http://localhost:${toString cfg.port}/health";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 500"
+                Type = "oneshot";
+                RemainAfterExit = true;
+                # writeShellScript's store path IS the executable (no bin/).
+                ExecStart = "${mintScript}";
+                RuntimeDirectory = "ai-meter-keys";
+                RuntimeDirectoryMode = "0711";
+                # Re-runs (deploy convergence) must not wipe consumer keys:
+                # the dir lives for the boot, not the unit activation.
+                RuntimeDirectoryPreserve = true;
+                # The mint chowns keys to consumer users and to ai-meter, and
+                # chmods files it no longer owns (install runs chown BEFORE
+                # chmod; consumer loop runs chmod after chown) — impossible
+                # under harden's empty default bounding set. A chown-to-ROOT
+                # target is a kernel no-op that hides this (the first VM run
+                # passed mint with a root client; the prod-shape clients would
+                # have failed). Exactly a provisioner's three caps:
+                #   CAP_CHOWN        - hand keys to consumer users / ai-meter
+                #   CAP_DAC_OVERRIDE - re-open 0400 mirrors on converging re-runs
+                #   CAP_FOWNER       - chmod files already chowned away
+                CapabilityBoundingSet = [
+                  "CAP_CHOWN"
+                  "CAP_DAC_OVERRIDE"
+                  "CAP_FOWNER"
                 ];
-                alert = "ai-meter proxy down - all routed AI calls (crush, paperless-gpt, inboxclean) are failing. Check: journalctl -u ai-meter -n 50";
               }
-              {
-                # Functional: the admin plane must actually EXPOSE the metering
-                # families (presence check; values are per-call), including
-                # the span-export outcomes the trace-pipeline alerts read.
-                name = "ai-meter metrics";
-                group = "AI";
-                url = "http://localhost:${toString cfg.metricsPort}/metrics";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*ai_meter_requests_total*)"
-                  "[BODY] == pat(*# TYPE ai_meter_spans_exported_total counter*)"
-                ];
-                alert = "ai-meter admin plane down - metering metrics are not scrapeable. Check: journalctl -u ai-meter -n 50";
-              }
-              {
-                name = "ai-meter viewer";
-                group = "AI";
-                url = "https://ai-meter.${domain}/";
-                interval = "5m";
-                conditions = [
-                  "[STATUS] == 200"
-                  # The range parameter is part of the contract: without it the
-                  # page opens on whatever range each browser last picked.
-                  "[BODY] == pat(*signoz.${domain}/dashboard/${dashboardId}*relativeTime=${dashboardRange}*)"
-                ];
-                alert = "ai-meter viewer page broken - the iframe embed lost its dashboard target or its time range. Check: journalctl -u caddy -n 50 and dashboardId/dashboardFile in modules/nixos/services/ai-meter.nix";
-              }
-              {
-                # Drift detector: fails when the provisioned dashboard is
-                # deleted/recreated (SigNoz mints a NEW id on recreation, so
-                # the pinned dashboardId above must be updated).
-                name = "ai-meter dashboard";
-                group = "AI";
-                url = "https://signoz.${domain}/api/v2/dashboards/${dashboardId}";
-                interval = "30m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*systemnix-ai-meter*)"
-                ];
-                alert = "ai-meter SigNoz dashboard drifted - the pinned dashboardId no longer resolves (dashboard deleted/recreated). Look up the new id (see dashboardId comment in modules/nixos/services/ai-meter.nix) and update it";
-              }
+              (harden { ProtectSystem = "strict"; })
+              (serviceOneshotDefaults { })
             ];
           };
-        };
+
+          # --- Daemon ------------------------------------------------------------
+          systemd.services.ai-meter = {
+            description = "ai-meter - metering proxy for OpenAI-compatible AI calls";
+            after = [
+              "network-online.target"
+              "ai-meter-keys.service"
+            ];
+            wants = [ "network-online.target" ];
+            requires = [ "ai-meter-keys.service" ];
+            wantedBy = [ "multi-user.target" ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                User = "ai-meter";
+                Group = "ai-meter";
+                StateDirectory = "ai-meter";
+                StateDirectoryMode = "0700";
+                ExecStart = "${lib.getExe cfg.package} -config ${cfg.configFile}";
+                RestartSec = "3s";
+              }
+              (harden { MemoryMax = "256M"; })
+              (serviceDefaults { })
+            ];
+          };
+
+          # --- Registry entry: viewer vHost + loopback checks -------------------
+          # ai-meter.<domain> serves the static viewer page (vHost.root, Layer 2
+          # protected) embedding the SigNoz ai-meter dashboard. The proxy itself
+          # stays loopback-only by design (8107) with the admin plane (8108)
+          # scraped by SigNoz. The entry carries NO port (exactly-one assertion:
+          # root wins), so the loopback checks below keep their absolute URLs;
+          # the two absolute-https checks cover the viewer page itself and the
+          # pinned dashboard id (drift detector).
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            ai-meter = {
+              inherit (cfg) enable;
+              subdomain = "ai-meter";
+              vHost.layer = "protected";
+              vHost.root = "${viewer}";
+              monitored = true;
+              homepage = {
+                icon = "prometheus.png";
+              };
+              checks = [
+                {
+                  name = "ai-meter";
+                  group = "AI";
+                  url = "http://localhost:${toString cfg.port}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 500"
+                  ];
+                  alert = "ai-meter proxy down - all routed AI calls (crush, paperless-gpt, inboxclean) are failing. Check: journalctl -u ai-meter -n 50";
+                }
+                {
+                  # Functional: the admin plane must actually EXPOSE the metering
+                  # families (presence check; values are per-call), including
+                  # the span-export outcomes the trace-pipeline alerts read.
+                  name = "ai-meter metrics";
+                  group = "AI";
+                  url = "http://localhost:${toString cfg.metricsPort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*ai_meter_requests_total*)"
+                    "[BODY] == pat(*# TYPE ai_meter_spans_exported_total counter*)"
+                  ];
+                  alert = "ai-meter admin plane down - metering metrics are not scrapeable. Check: journalctl -u ai-meter -n 50";
+                }
+                {
+                  name = "ai-meter viewer";
+                  group = "AI";
+                  url = "https://ai-meter.${domain}/";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # The range parameter is part of the contract: without it the
+                    # page opens on whatever range each browser last picked.
+                    "[BODY] == pat(*signoz.${domain}/dashboard/${dashboardId}*relativeTime=${dashboardRange}*)"
+                  ];
+                  alert = "ai-meter viewer page broken - the iframe embed lost its dashboard target or its time range. Check: journalctl -u caddy -n 50 and dashboardId/dashboardFile in modules/nixos/services/ai-meter.nix";
+                }
+                {
+                  # Drift detector: fails when the provisioned dashboard is
+                  # deleted/recreated (SigNoz mints a NEW id on recreation, so
+                  # the pinned dashboardId above must be updated).
+                  name = "ai-meter dashboard";
+                  group = "AI";
+                  url = "https://signoz.${domain}/api/v2/dashboards/${dashboardId}";
+                  interval = "30m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*systemnix-ai-meter*)"
+                  ];
+                  alert = "ai-meter SigNoz dashboard drifted - the pinned dashboardId no longer resolves (dashboard deleted/recreated). Look up the new id (see dashboardId comment in modules/nixos/services/ai-meter.nix) and update it";
+                }
+              ];
+            };
+          };
         })
       ];
     };
