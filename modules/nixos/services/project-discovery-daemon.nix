@@ -23,8 +23,8 @@
 # upstream — inputs.project-discovery-daemon.nixosModules.default, which
 # also renders the admin WebUI bridge unit (services.project-
 # discovery-daemon.admin). SystemNix layers ONLY site specifics: the
-# vendorHash shim (lock-graph staleness class, see package below — now on
-# BOTH the daemon and admin package surfaces), the primary-user default,
+# vendorHash shim while a lock wave re-stales upstream's bake (drop-protocol
+# history under `package` below), the primary-user default,
 # the projects-subvol mount gate, onFailure alerting, ioTier, the fleet
 # harden bounds, the port-registry wiring, and the integration entry.
 {
@@ -105,11 +105,14 @@
               # ~/.cache/gtd-pipeline/toplevel-build4.log). Drop when
               # upstream bakes the got hash; re-add ONLY via nix-hash-fix
               # evidence, never by hand.
-              (
-                inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                  vendorHash = "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
-                }
-              );
+              # vendorHash shim DROPPED (2026-11-28, ALL surfaces with
+              # lib/lars-packages.nix — daemon + admin): the 03:33 lock float
+              # (ec99c8956) moved pdd to 5cbc99c ("build: bump go-daemon to
+              # v0.5.0"), which re-measured the hash upstream; spec FzTrkHOx,
+              # got 7VswA7CM = the bake at flake.nix:76 (first-hand pre-deploy
+              # §11, 2026-11-28_03-47-10.log) — the drop-safety test (got ==
+              # bake). Re-add ONLY via nix-hash-fix evidence, never by hand.
+              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service
           # users cannot see a 0700 home).
@@ -126,11 +129,11 @@
           # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
           # Port from the registry, never a literal.
           admin = {
-            package = lib.mkDefault (
-              inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin.overrideAttrs {
-                vendorHash = "sha256-7VswA7CMKJKJApUiiF3rl093xyZpK1T3Y1WLZtWysRo=";
-              }
-            );
+            # vendorHash shim DROPPED (2026-11-28) with the daemon package
+            # above and lib/lars-packages.nix — same evidence (got 7VswA7CM ==
+            # the upstream bake at 5cbc99c). Re-add ONLY via nix-hash-fix
+            # evidence, never by hand.
+            package = lib.mkDefault inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.admin;
             port = lib.mkDefault ports.project-discovery-admin;
           };
         };

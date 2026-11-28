@@ -70,8 +70,17 @@
           # event-replay test suite fails in-sandbox (proof5-final.log); the
           # 0304e2ae pin attempt is EVAL-DEAD (upstream deleted go.sum).
           # Re-add a shim only via nix-hash-fix evidence, never by hand.
+          # vendorHash shim RE-ADDED (2026-11-28; twin of the `timesheets`
+          # surface in lib/lars-packages.nix — the SAME overrideAttrs on
+          # both, so ONE derivation): the 02:28 daemon lock float (ba3437f5b)
+          # moved timesheets → f22a31a, whose upstream bake 5HuSKGky predates
+          # its go.sum change d3b759d; spec 5HuSKGky, got VD4UNBfk (first-hand
+          # pre-deploy §11, 2026-11-28_02-58-16.log and _03-47-10.log — same
+          # got twice). Drop when the lock moves past an upstream rev baking
+          # the got hash; update BOTH surfaces together.
           default = inputs.timesheets.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
             doCheck = false;
+            vendorHash = "sha256-VD4UNBfkTb1SJtkWlzpHZ2Wtymag+7jx7Vujtoi5B6c=";
           };
           defaultText = lib.literalExpression "inputs.timesheets.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "timesheet package to serve the API with.";

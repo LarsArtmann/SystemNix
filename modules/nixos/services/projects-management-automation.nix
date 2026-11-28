@@ -127,6 +127,11 @@
           # IPEw5b8P (first-hand keep-going,
           # ~/.cache/gtd-pipeline/toplevel-build4.log; twin surface in
           # lib/lars-packages.nix updated the same wave).
+          # RE-STALE 2026-11-28 02:28 daemon lock float (ba3437f5b): pma
+          # 52322091 → 71795cc9; spec IPEw5b8P, got X0q2Dlin (first-hand
+          # pre-deploy §11, 2026-11-28_02-58-16.log and _03-47-10.log). NOT
+          # drop-safe: got ≠ the upstream bake at 71795cc9 (flake.nix:121).
+          # Twin surface in lib/lars-packages.nix moved in the same pass.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {

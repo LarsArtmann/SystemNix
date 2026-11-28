@@ -87,6 +87,13 @@ _: {
             # FOD was silently REUSED in cache, the 2026-10-28 trap). Same
             # value as the lars-packages `tq` surface — update BOTH together.
             # Drop when upstream bakes HqHkPDVQ.
+            # RE-STALE 2026-11-28 03:33 daemon lock float (ec99c8956): at
+            # go-taskqueue@c9f67c88 (0.4.2) spec HqHkPDVQ, got fneDiCvx
+            # (first-hand check-mode rebuild, pre-deploy §11 cached-FOD audit —
+            # REUSED in cache again). NOT drop-safe: got ≠ the upstream bake at
+            # c9f67c88 (flake.nix:78). Same value as the lars-packages `tq`
+            # surface — BOTH moved in the same pass. Drop when upstream bakes
+            # fneDiCvx.
             vendorHash = "sha256-fneDiCvxr6uv9Dx67rkgQsFVhi9LpqOqRQprqr4rAIs=";
           });
       inherit (import ../../../lib/default.nix lib)

@@ -625,7 +625,9 @@
     # ships). NON-FOLLOWER class: packages.default added upstream
     # 0304e2a with the go-modules vendorHash probed under its own lock
     # (go 1.27.2 source-tarball pin; first-hand probe 2026-11-10), so no
-    # follows and no consumer shim.
+    # follows. A consumer-side vendorHash shim exists since 2026-11-28
+    # (upstream's bake went stale; see `timesheets` in lib/lars-packages.nix
+    # and the module twin — drop it when upstream bakes the got hash).
     timesheets = {
       url = "git+ssh://git@github.com/LarsArtmann/timesheets?ref=refs/heads/master";
     };
