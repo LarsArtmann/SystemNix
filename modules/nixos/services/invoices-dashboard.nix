@@ -282,11 +282,12 @@
                       "[STATUS] == 200"
                       "[RESPONSE_TIME] < 1000"
                       # Functional, not just liveness: the dashboard page
-                      # title is "Invoice Dashboard" — an error shell would
-                      # not carry it.
-                      "[BODY] == pat(*Invoice Dashboard*)"
+                      # title is "Invoice Ledger" (since invoices
+                      # b4f32117; was "Invoice Dashboard") — an error shell
+                      # would not carry it.
+                      "[BODY] == pat(*Invoice Ledger</title>*)"
                     ];
-                    alert = "Invoices dashboard page broken — / no longer renders the Invoice Dashboard. Check: systemctl status invoices-dashboard, journalctl -u invoices-dashboard -n 50.";
+                    alert = "Invoices dashboard page broken — / no longer renders the Invoice Ledger page. Check: systemctl status invoices-dashboard, journalctl -u invoices-dashboard -n 50.";
                   }
                 ];
                 homepage = {

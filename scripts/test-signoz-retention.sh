@@ -53,7 +53,7 @@ stub_rewrite_interval() {
     echo "stub: no fixed TTL interval in $db.$table: $clause" >&2
     return 1
   fi
-  new_clause=${clause% + toInterval*}$interval
+  new_clause="${clause% + toInterval*} $interval"
   stub_put_engine "$db" "$table" "${engine/"$clause"/"$new_clause"}"
 }
 
